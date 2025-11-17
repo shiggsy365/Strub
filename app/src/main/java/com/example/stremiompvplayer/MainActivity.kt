@@ -15,6 +15,7 @@ import com.example.stremiompvplayer.ui.search.SearchFragment
 import com.example.stremiompvplayer.ui.series.SeriesFragment
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
+import android.widget.TextView
 
 class MainActivity : AppCompatActivity() {
 
@@ -45,7 +46,7 @@ class MainActivity : AppCompatActivity() {
             val user = database.getUser(userId)
             user?.let {
                 // Set avatar color
-                binding.userAvatar.setColorFilter(it.avatarColor)
+                binding.userAvatar.setBackgroundColor(it.avatarColor)
 
                 // Set first initial
                 binding.userInitial.text = it.name.first().uppercase()

@@ -1678,6 +1678,7 @@ color cardview_dark_background
 color cardview_light_background
 color cardview_shadow_end_color
 color cardview_shadow_start_color
+color chip_background_selector
 color default_background
 color design_bottom_navigation_shadow_color
 color design_box_stroke_color

@@ -56,63 +56,57 @@
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipDiscover"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/discover"
-                android:textSize="20sp"
                 android:textColor="@android:color/white"
-                app:chipBackgroundColor="@color/button_background" />
+                app:chipBackgroundColor="@color/chip_background_selector" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipMovies"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/movies"
-                android:textSize="20sp"
                 android:textColor="@android:color/white"
-                app:chipBackgroundColor="@color/button_background" />
+                app:chipBackgroundColor="@color/chip_background_selector" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipSeries"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/series"
-                android:textSize="20sp"
                 android:textColor="@android:color/white"
-                app:chipBackgroundColor="@color/button_background" />
+                app:chipBackgroundColor="@color/chip_background_selector" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipLibrary"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/library"
-                android:textSize="20sp"
                 android:textColor="@android:color/white"
-                app:chipBackgroundColor="@color/button_background" />
+                app:chipBackgroundColor="@color/chip_background_selector" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipSearch"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/search"
-                android:textSize="20sp"
                 android:textColor="@android:color/white"
-                app:chipBackgroundColor="@color/button_background" />
+                app:chipBackgroundColor="@color/chip_background_selector" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipMore"
-                style="@style/Widget.Material3.Chip.Filter"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="..."
-                android:textSize="20sp"
                 android:textColor="@android:color/white"
-                app:chipBackgroundColor="@color/button_background" />
+                app:chipBackgroundColor="@color/chip_background_selector" />
 
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
