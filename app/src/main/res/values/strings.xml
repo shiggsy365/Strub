@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Stremio MPV Player</string>
+    <string name="loading">Loading…</string>
+    <string name="error_loading_addon">Failed to load addon</string>
+    <string name="error_loading_catalog">Failed to load catalog</string>
+    <string name="error_loading_streams">Failed to load streams</string>
+    <string name="no_streams_available">No playable streams available</string>
+    <string name="mpv_not_available">MPV player not available. Please ensure libmpv is properly compiled.</string>
+    <string name="title_activity_test">Leanback TestActivity</string>
+    <string name="browse_title">Videos by Your Company</string>
+    <string name="related_movies">Related Videos</string>
+    <string name="grid_view">Grid View</string>
+    <string name="error_fragment">Error Fragment</string>
+    <string name="personal_settings">Personal Settings</string>
+    <string name="watch_trailer_1">Watch trailer</string>
+    <string name="watch_trailer_2">FREE</string>
+    <string name="rent_1">Rent By Day</string>
+    <string name="rent_2">From $1.99</string>
+    <string name="buy_1">Buy and Own</string>
+    <string name="buy_2">AT $9.99</string>
+    <string name="movie">Movie</string>
+
+    <!-- Error messages -->
+    <string name="error_fragment_message">An error occurred</string>
+    <string name="dismiss_error">Dismiss</string>
+</resources>

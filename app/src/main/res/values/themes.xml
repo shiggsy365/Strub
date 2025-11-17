@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme using Material Components -->
+    <style name="Theme.StremioMPVPlayer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#E50914</item>
+        <item name="colorPrimaryDark">#B20710</item>
+        <item name="colorAccent">#E50914</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">#BBBBBB</item>
+
+        <!-- TV Focus highlighting -->
+        <item name="android:colorFocusedHighlight">#FFE50914</item>
+        <item name="android:focusedByDefault">true</item>
+    </style>
+
+    <!-- Android TV Leanback Theme with better focus -->
+    <style name="Theme.StremioMPVPlayer.Leanback" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="colorPrimary">#E50914</item>
+        <item name="colorAccent">#E50914</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:colorFocusedHighlight">#FFE50914</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+    <!-- TV Button Style with clear focus -->
+    <style name="TVButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:layout_margin">8dp</item>
+        <item name="backgroundTint">@color/button_background</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+    </style>
+
+    <!-- Fullscreen theme for player -->
+    <style name="Theme.StremioMPVPlayer.Fullscreen" parent="Theme.StremioMPVPlayer">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+</resources>
