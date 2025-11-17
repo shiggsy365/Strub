@@ -21,6 +21,8 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var database: AppDatabase
     private lateinit var settings: UserSettings
+
+    private lateinit var addonAdapter: AddonListAdapter
     private var currentUserId: String? = null
 
 
@@ -35,20 +37,28 @@ class SettingsActivity : AppCompatActivity() {
                 binding.addonsRecycler.visibility = View.VISIBLE
                 binding.noAddonsText.visibility = View.GONE
 
-                val adapter = AddonListAdapter(addons.toMutableList()) { addonUrl ->
+                addonAdapter = AddonListAdapter(addons.toMutableList()) { addonUrl ->
                     // Remove addon
-                    database.removeAddonUrl(userId, addonUrl)
-                    setupAddonsList() // Refresh list
-                    Toast.makeText(this, "Addon removed", Toast.LENGTH_SHORT).show()
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle("Remove Addon")
+                        .setMessage("Are you sure you want to remove this addon?")
+                        .setPositiveButton("Remove") { _, _ ->
+                            database.removeAddonUrl(userId, addonUrl)
+                            setupAddonsList() // Refresh list
+                            Toast.makeText(this, "Addon removed", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
                 }
 
                 binding.addonsRecycler.apply {
                     layoutManager = LinearLayoutManager(this@SettingsActivity)
-                    this.adapter = adapter
+                    adapter = addonAdapter
                 }
             }
         }
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
@@ -68,6 +78,7 @@ class SettingsActivity : AppCompatActivity() {
         setupToolbar()
         loadSettings()
         setupListeners()
+        setupAddonsList()
     }
 
     private fun setupToolbar() {
@@ -241,7 +252,7 @@ class SettingsActivity : AppCompatActivity() {
                         database.addAddonUrl(userId, url)
                         Log.d("SettingsActivity", "Addon added successfully: $url")
                         Toast.makeText(this, "Addon added successfully!", Toast.LENGTH_LONG).show()
-                        loadAddons()
+                        setupAddonsList()
 
                         // Success - stay on this screen so user can add more or see the confirmation
                         dialog.dismiss()

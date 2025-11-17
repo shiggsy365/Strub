@@ -82,6 +82,11 @@
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
+        <activity
+            android:name=".DetailsActivity2"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.StremioMPVPlayer" />
     </application>
 
 </manifest>

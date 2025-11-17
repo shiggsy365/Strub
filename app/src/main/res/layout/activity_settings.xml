@@ -311,10 +311,22 @@
                         android:padding="16dp"
                         android:visibility="gone" />
 
+                    <TextView
+                        android:id="@+id/noAddonsText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="No addons configured yet"
+                        android:textColor="#888888"
+                        android:textSize="14sp"
+                        android:padding="16dp"
+                        android:gravity="center"
+                        android:visibility="visible" />
+
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/addonsRecycler"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:visibility="gone" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/addAddonButton"
