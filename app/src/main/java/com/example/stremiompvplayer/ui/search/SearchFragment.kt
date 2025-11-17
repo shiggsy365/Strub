@@ -1,5 +1,6 @@
 package com.example.stremiompvplayer.ui.search
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,6 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.databinding.FragmentSearchBinding

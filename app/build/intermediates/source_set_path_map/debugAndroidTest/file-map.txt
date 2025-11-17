@@ -1,6 +1,0 @@
-com.example.stremiompvplayer.test.app-jetified-core-1.5.0-0 /home/jon/.gradle/caches/transforms-3/7d7cc84864c9a31acada57ad9a090d87/transformed/jetified-core-1.5.0/res
-com.example.stremiompvplayer.test.app-jetified-annotation-experimental-1.3.0-1 /home/jon/.gradle/caches/transforms-3/f183ad980a8965a2028caec44e3b17d5/transformed/jetified-annotation-experimental-1.3.0/res
-com.example.stremiompvplayer.test.app-androidTest-2 /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/build/generated/res/resValues/androidTest/debug
-com.example.stremiompvplayer.test.app-mergeDebugAndroidTestResources-3 /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
-com.example.stremiompvplayer.test.app-mergeDebugAndroidTestResources-4 /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
-com.example.stremiompvplayer.test.app-merged_res-5 /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/build/intermediates/merged_res/debugAndroidTest

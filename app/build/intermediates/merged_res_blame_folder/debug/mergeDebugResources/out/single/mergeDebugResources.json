@@ -32,10 +32,6 @@
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/drawable/movie.png"
     },
     {
-        "merged": "com.example.stremiompvplayer.app-debug-46:/layout_item_addon.xml.flat",
-        "source": "com.example.stremiompvplayer.app-main-48:/layout/item_addon.xml"
-    },
-    {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_activity_test.xml.flat",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_test.xml"
     },
@@ -52,6 +48,10 @@
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/item_poster.xml"
     },
     {
+        "merged": "com.example.stremiompvplayer.app-debug-46:/layout_fragment_playback_video.xml.flat",
+        "source": "com.example.stremiompvplayer.app-main-48:/layout/fragment_playback_video.xml"
+    },
+    {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/mipmap-xxhdpi/ic_launcher_round.webp"
     },
@@ -66,10 +66,6 @@
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/drawable_ic_launcher_foreground.xml.flat",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/drawable/ic_launcher_foreground.xml"
-    },
-    {
-        "merged": "com.example.stremiompvplayer.app-debug-46:/layout_fragment_search.xml.flat",
-        "source": "com.example.stremiompvplayer.app-main-48:/layout/fragment_search.xml"
     },
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/mipmap-xxxhdpi_ic_launcher.webp.flat",
@@ -96,16 +92,12 @@
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/mipmap-xxxhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "com.example.stremiompvplayer.app-debug-46:/layout_activity_details2.xml.flat",
-        "source": "com.example.stremiompvplayer.app-main-48:/layout/activity_details2.xml"
+        "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_fragment_library.xml.flat",
+        "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/fragment_library.xml"
     },
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/drawable_app_icon_your_company.png.flat",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/drawable/app_icon_your_company.png"
-    },
-    {
-        "merged": "com.example.stremiompvplayer.app-debug-46:/layout_activity_settings.xml.flat",
-        "source": "com.example.stremiompvplayer.app-main-48:/layout/activity_settings.xml"
     },
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/drawable_button_background.xml.flat",
@@ -118,10 +110,6 @@
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_item_content.xml.flat",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/item_content.xml"
-    },
-    {
-        "merged": "com.example.stremiompvplayer.app-debug-46:/layout_fragment_discover.xml.flat",
-        "source": "com.example.stremiompvplayer.app-main-48:/layout/fragment_discover.xml"
     },
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_activity_user_selection.xml.flat",
@@ -140,6 +128,10 @@
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
+        "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_fragment_discover.xml.flat",
+        "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/fragment_discover.xml"
+    },
+    {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_activity_details2.xml.flat",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_details2.xml"
     },
@@ -148,20 +140,20 @@
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/mipmap-hdpi/ic_launcher.webp"
     },
     {
-        "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_activity_settings.xml.flat",
-        "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_settings.xml"
+        "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_fragment_search.xml.flat",
+        "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/fragment_search.xml"
     },
     {
-        "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_activity_addon_list_adapter.xml.flat",
-        "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_addon_list_adapter.xml"
+        "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_activity_settings.xml.flat",
+        "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_settings.xml"
     },
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_activity_player.xml.flat",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_player.xml"
     },
     {
-        "merged": "com.example.stremiompvplayer.app-debug-46:/layout_fragment_library.xml.flat",
-        "source": "com.example.stremiompvplayer.app-main-48:/layout/fragment_library.xml"
+        "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/layout_item_addon.xml.flat",
+        "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/item_addon.xml"
     },
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-debug-46:/mipmap-xxhdpi_ic_launcher.webp.flat",

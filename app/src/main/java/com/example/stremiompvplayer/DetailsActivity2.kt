@@ -34,7 +34,7 @@ class DetailsActivity2 : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityDetails2Binding.Companion.inflate(layoutInflater)
+        binding = ActivityDetails2Binding.inflate(layoutInflater)
         setContentView(binding.root)
 
         database = AppDatabase.Companion.getInstance(this)

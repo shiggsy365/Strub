@@ -4881,7 +4881,6 @@ layout abc_search_dropdown_item_icons_2line
 layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
-layout activity_addon_list_adapter
 layout activity_details
 layout activity_details2
 layout activity_main
@@ -4920,6 +4919,7 @@ layout exo_track_selection_dialog
 layout expand_button
 layout fragment_discover
 layout fragment_library
+layout fragment_playback_video
 layout fragment_search
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
@@ -5213,6 +5213,7 @@ string exposed_dropdown_menu_content_description
 string fab_transformation_scrim_behavior
 string fab_transformation_sheet_behavior
 string grid_view
+string hello_blank_fragment
 string hide_bottom_view_on_scroll_behavior
 string icon_content_description
 string item_view_role_description

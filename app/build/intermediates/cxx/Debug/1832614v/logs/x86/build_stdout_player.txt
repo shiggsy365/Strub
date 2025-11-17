@@ -1,2 +1,0 @@
-ninja: Entering directory `/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/.cxx/Debug/1832614v/x86'
-ninja: no work to do.

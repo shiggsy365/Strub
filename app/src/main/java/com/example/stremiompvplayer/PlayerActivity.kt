@@ -4,10 +4,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.stremiompvplayer.databinding.ActivityPlayerBinding
 
@@ -45,7 +47,7 @@ class PlayerActivity : AppCompatActivity() {
         setupControls()
     }
 
-    private fun setupExoPlayer() {
+    @OptIn(UnstableApi::class) private fun setupExoPlayer() {
         exoPlayer = ExoPlayer.Builder(this).build().apply {
             // Set the player to the PlayerView
             binding.playerView.player = this
@@ -99,7 +101,7 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun toggleControls() {
+    @OptIn(UnstableApi::class) private fun toggleControls() {
         if (binding.playerView.isControllerFullyVisible) {
             binding.playerView.hideController()
         } else {
@@ -107,11 +109,11 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun showControls() {
+    @OptIn(UnstableApi::class) private fun showControls() {
         binding.playerView.showController()
     }
 
-    private fun hideControls() {
+    @OptIn(UnstableApi::class) private fun hideControls() {
         binding.playerView.hideController()
     }
 

@@ -53,3 +53,12 @@ class DiscoverSectionAdapter(
         }
     }
 }
+
+// DiscoverSection data class - shared across Discover, Movies, and Series fragments
+data class DiscoverSection(
+    val title: String,
+    val items: List<MetaPreview>,
+    val addonUrl: String,
+    val catalogId: String,
+    val type: String
+)

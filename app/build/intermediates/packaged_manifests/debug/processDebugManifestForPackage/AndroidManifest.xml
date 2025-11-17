@@ -55,9 +55,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.stremiompvplayer.DetailsActivity2"
-            android:exported="false" />
-        <activity
             android:name="com.example.stremiompvplayer.PlaybackActivity"
             android:exported="false" />
         <activity
@@ -99,7 +96,7 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
         <activity
-            android:name="com.example.stremiompvplayer.ui.details.DetailsActivity2"
+            android:name="com.example.stremiompvplayer.ui.library.DetailsActivity2"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer" />

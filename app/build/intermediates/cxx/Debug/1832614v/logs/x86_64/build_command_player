@@ -1,4 +1,0 @@
-/home/jon/Android/Sdk/cmake/3.22.1/bin/ninja \
-  -C \
-  /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/.cxx/Debug/1832614v/x86_64 \
-  player

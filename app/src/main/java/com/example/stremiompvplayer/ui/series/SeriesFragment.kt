@@ -1,5 +1,6 @@
 package com.example.stremiompvplayer.ui.series
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,10 +12,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.models.MetaPreview
 import com.example.stremiompvplayer.network.StremioClient
+import com.example.stremiompvplayer.ui.discover.DiscoverSection
 import com.example.stremiompvplayer.ui.discover.DiscoverSectionAdapter
 import kotlinx.coroutines.launch
 
@@ -34,7 +37,7 @@ class SeriesFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_discover, container, false)
 
-        database = AppDatabase.Companion.getInstance(requireContext())
+        database = AppDatabase.getInstance(requireContext())
         stremioClient = StremioClient()
 
         recyclerView = view.findViewById(R.id.discoverRecycler)

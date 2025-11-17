@@ -39,9 +39,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".DetailsActivity2"
-            android:exported="false" />
-        <activity
             android:name=".PlaybackActivity"
             android:exported="false" />
         <activity
@@ -83,7 +80,7 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
         <activity
-            android:name=".DetailsActivity2"
+            android:name=".ui.library.DetailsActivity2"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer" />

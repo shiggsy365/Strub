@@ -50,9 +50,9 @@
             android:layout_gravity="top|end"
             android:layout_margin="12dp"
             android:src="@android:drawable/btn_star_big_on"
-            android:tint="@android:color/white"
             android:visibility="gone"
-            android:contentDescription="In Library" />
+            android:contentDescription="In Library"
+            app:tint="@android:color/white" />
 
         <!-- Title overlay for focused state -->
         <LinearLayout
