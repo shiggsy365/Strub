@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-87:12
-INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-87:12
-INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-87:12
-INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-87:12
+ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-92:12
+INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-92:12
+INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-92:12
+INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-92:12
 MERGED from [androidx.databinding:viewbinding:8.13.1] /home/jon/.gradle/caches/8.13/transforms/b07e1cfcfcbc972baafda38ed808443e/transformed/jetified-viewbinding-8.13.1/AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] /home/jon/.gradle/caches/8.13/transforms/75658eebeaed9cb40b2e5797a27a78ed/transformed/material-1.11.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/jon/.gradle/caches/8.13/transforms/af5c99229352ddd900731615e2e701a5/transformed/constraintlayout-2.1.4/AndroidManifest.xml:2:1-11:12
@@ -117,8 +117,8 @@ ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/s
 	android:name
 		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:15:22-65
 application
-ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:17:5-85:19
-INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:17:5-85:19
+ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:17:5-90:19
+INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:17:5-90:19
 MERGED from [com.google.android.material:material:1.11.0] /home/jon/.gradle/caches/8.13/transforms/75658eebeaed9cb40b2e5797a27a78ed/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] /home/jon/.gradle/caches/8.13/transforms/75658eebeaed9cb40b2e5797a27a78ed/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/jon/.gradle/caches/8.13/transforms/af5c99229352ddd900731615e2e701a5/transformed/constraintlayout-2.1.4/AndroidManifest.xml:9:5-20
@@ -263,6 +263,16 @@ ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/s
 		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:84:13-69
 	android:name
 		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:80:13-43
+activity#com.example.stremiompvplayer.ui.details.DetailsActivity2
+ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:85:9-89:61
+	android:screenOrientation
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:88:13-50
+	android:exported
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:87:13-37
+	android:theme
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:89:13-58
+	android:name
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:86:13-56
 uses-sdk
 INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml

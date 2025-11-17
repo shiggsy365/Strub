@@ -3998,7 +3998,9 @@ id activated
 id activity_chooser_view_content
 id add
 id addAddonButton
+id addonNameText
 id addonUrl
+id addonUrlText
 id addonsRecycler
 id alertTitle
 id aligned
@@ -4020,6 +4022,7 @@ id autoPlaySwitch
 id avatarContainer
 id avatarInitial
 id background
+id backgroundImage
 id background_container
 id background_imagein
 id background_imageout
@@ -4091,6 +4094,7 @@ id constraint
 id container
 id container_list
 id content
+id contentLayout
 id contentPanel
 id content_container
 id content_fragment
@@ -4120,6 +4124,7 @@ id decor_content_parent
 id decor_title
 id decor_title_container
 id default_activity_button
+id deleteButton
 id deltaRelative
 id dependency_ordering
 id description
@@ -4149,6 +4154,7 @@ id disableHome
 id disableIntraAutoTransition
 id disablePostScroll
 id disableScroll
+id discoverRecycler
 id disjoint
 id dragAnticlockwise
 id dragClockwise
@@ -4170,6 +4176,7 @@ id edit_query
 id edit_text_id
 id elastic
 id embed
+id emptyText
 id end
 id endToStart
 id end_padder
@@ -4255,6 +4262,7 @@ id fragmentContainer
 id fragment_container_view_tag
 id frost
 id fullscreen_header
+id genresText
 id ghost_view
 id ghost_view_holder
 id glide_custom_view_target_tag
@@ -4359,7 +4367,9 @@ id lb_slide_transition_value
 id left
 id leftToRight
 id legacy
+id libraryButton
 id libraryIndicator
+id libraryRecycler
 id line1
 id line3
 id linear
@@ -4507,6 +4517,7 @@ id peekHeight
 id percent
 id picker
 id pin
+id playButton
 id playback_controls_dock
 id playback_fragment_background
 id playback_fragment_root
@@ -4521,6 +4532,7 @@ id pressed
 id progress_circular
 id progress_horizontal
 id radio
+id ratingText
 id ratio
 id rectangles
 id recycler_view
@@ -4548,6 +4560,9 @@ id scrollIndicatorDown
 id scrollIndicatorUp
 id scrollView
 id scrollable
+id searchButton
+id searchInput
+id searchResults
 id search_badge
 id search_bar
 id search_button
@@ -4903,8 +4918,12 @@ layout exo_styled_settings_list_item
 layout exo_styled_sub_settings_list_item
 layout exo_track_selection_dialog
 layout expand_button
+layout fragment_discover
+layout fragment_library
+layout fragment_search
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
+layout item_addon
 layout item_addon_list
 layout item_content
 layout item_content_section

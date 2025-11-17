@@ -4,16 +4,20 @@
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/item_content.xml"
     },
     {
+        "merged": "com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/fragment_discover.xml",
+        "source": "com.example.stremiompvplayer.app-main-48:/layout/fragment_discover.xml"
+    },
+    {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/activity_addon_list_adapter.xml",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_addon_list_adapter.xml"
     },
     {
-        "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/activity_user_selection.xml",
-        "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_user_selection.xml"
+        "merged": "com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/item_addon.xml",
+        "source": "com.example.stremiompvplayer.app-main-48:/layout/item_addon.xml"
     },
     {
-        "merged": "com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/activity_main.xml",
-        "source": "com.example.stremiompvplayer.app-main-48:/layout/activity_main.xml"
+        "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/activity_user_selection.xml",
+        "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_user_selection.xml"
     },
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/activity_player.xml",
@@ -26,6 +30,10 @@
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/item_stream.xml",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/item_stream.xml"
+    },
+    {
+        "merged": "com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/activity_details2.xml",
+        "source": "com.example.stremiompvplayer.app-main-48:/layout/activity_details2.xml"
     },
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/activity_test.xml",
@@ -60,11 +68,23 @@
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_main.xml"
     },
     {
+        "merged": "com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/fragment_library.xml",
+        "source": "com.example.stremiompvplayer.app-main-48:/layout/fragment_library.xml"
+    },
+    {
+        "merged": "com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/fragment_search.xml",
+        "source": "com.example.stremiompvplayer.app-main-48:/layout/fragment_search.xml"
+    },
+    {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/activity_details.xml",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/activity_details.xml"
     },
     {
         "merged": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/dialog_user_menu.xml",
         "source": "/home/jon/.gradle/daemon/8.13/com.example.stremiompvplayer.app-main-48:/layout/dialog_user_menu.xml"
+    },
+    {
+        "merged": "com.example.stremiompvplayer.app-mergeDebugResources-45:/layout/activity_settings.xml",
+        "source": "com.example.stremiompvplayer.app-main-48:/layout/activity_settings.xml"
     }
 ]

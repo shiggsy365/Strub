@@ -98,6 +98,11 @@
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
+        <activity
+            android:name="com.example.stremiompvplayer.ui.details.DetailsActivity2"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.StremioMPVPlayer" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"
