@@ -46,6 +46,9 @@ public final class ActivitySettingsBinding implements ViewBinding {
   public final MaterialButton colorYellow;
 
   @NonNull
+  public final TextView noAddonsText;
+
+  @NonNull
   public final MaterialButton signOutButton;
 
   @NonNull
@@ -70,10 +73,11 @@ public final class ActivitySettingsBinding implements ViewBinding {
       @NonNull MaterialButton addAddonButton, @NonNull RecyclerView addonsRecycler,
       @NonNull SwitchMaterial autoPlaySwitch, @NonNull MaterialButton colorCyan,
       @NonNull MaterialButton colorGreen, @NonNull MaterialButton colorWhite,
-      @NonNull MaterialButton colorYellow, @NonNull MaterialButton signOutButton,
-      @NonNull TextView subtitlePreview, @NonNull SeekBar subtitleSizeSeekBar,
-      @NonNull TextView subtitleSizeValue, @NonNull SwitchMaterial subtitlesEnabledSwitch,
-      @NonNull MaterialButton switchUserButton, @NonNull MaterialToolbar toolbar) {
+      @NonNull MaterialButton colorYellow, @NonNull TextView noAddonsText,
+      @NonNull MaterialButton signOutButton, @NonNull TextView subtitlePreview,
+      @NonNull SeekBar subtitleSizeSeekBar, @NonNull TextView subtitleSizeValue,
+      @NonNull SwitchMaterial subtitlesEnabledSwitch, @NonNull MaterialButton switchUserButton,
+      @NonNull MaterialToolbar toolbar) {
     this.rootView = rootView;
     this.addAddonButton = addAddonButton;
     this.addonsRecycler = addonsRecycler;
@@ -82,6 +86,7 @@ public final class ActivitySettingsBinding implements ViewBinding {
     this.colorGreen = colorGreen;
     this.colorWhite = colorWhite;
     this.colorYellow = colorYellow;
+    this.noAddonsText = noAddonsText;
     this.signOutButton = signOutButton;
     this.subtitlePreview = subtitlePreview;
     this.subtitleSizeSeekBar = subtitleSizeSeekBar;
@@ -160,6 +165,12 @@ public final class ActivitySettingsBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.noAddonsText;
+      TextView noAddonsText = ViewBindings.findChildViewById(rootView, id);
+      if (noAddonsText == null) {
+        break missingId;
+      }
+
       id = R.id.signOutButton;
       MaterialButton signOutButton = ViewBindings.findChildViewById(rootView, id);
       if (signOutButton == null) {
@@ -204,7 +215,7 @@ public final class ActivitySettingsBinding implements ViewBinding {
 
       return new ActivitySettingsBinding((CoordinatorLayout) rootView, addAddonButton,
           addonsRecycler, autoPlaySwitch, colorCyan, colorGreen, colorWhite, colorYellow,
-          signOutButton, subtitlePreview, subtitleSizeSeekBar, subtitleSizeValue,
+          noAddonsText, signOutButton, subtitlePreview, subtitleSizeSeekBar, subtitleSizeValue,
           subtitlesEnabledSwitch, switchUserButton, toolbar);
     }
     String missingId = rootView.getResources().getResourceName(id);

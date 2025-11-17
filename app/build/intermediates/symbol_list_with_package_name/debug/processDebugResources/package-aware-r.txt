@@ -4459,6 +4459,7 @@ id navigator_container
 id never
 id neverCompleteToEnd
 id neverCompleteToStart
+id noAddonsText
 id noScroll
 id noState
 id none
