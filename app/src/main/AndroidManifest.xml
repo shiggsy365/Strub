@@ -3,10 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Android TV requirements -->
     <uses-feature
         android:name="android.hardware.touchscreen"
         android:required="false" />
@@ -14,16 +11,42 @@
         android:name="android.software.leanback"
         android:required="true" />
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <application
         android:allowBackup="true"
+        android:banner="@mipmap/ic_launcher"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:banner="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.StremioMPVPlayer.Leanback"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".AddonListAdapter"
+            android:banner="@drawable/app_icon_your_company"
+            android:exported="true"
+            android:icon="@drawable/app_icon_your_company"
+            android:label="@string/title_activity_addon_list_adapter"
+            android:logo="@drawable/app_icon_your_company"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".DetailsActivity2"
+            android:exported="false" />
+        <activity
+            android:name=".PlaybackActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BrowseErrorActivity"
+            android:exported="false" />
 
         <!-- Test Activity - TEMPORARY Entry Point -->
         <activity
@@ -33,40 +56,32 @@
             android:theme="@style/Theme.StremioMPVPlayer">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- Main Activity -->
+        </activity> <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/Theme.StremioMPVPlayer" />
-
-        <!-- User Selection Activity -->
+            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- User Selection Activity -->
         <activity
             android:name=".UserSelectionActivity"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/Theme.StremioMPVPlayer" />
-
-        <!-- Settings Activity -->
+            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- Settings Activity -->
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/Theme.StremioMPVPlayer" />
-
-        <!-- Player Activity -->
+            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- Player Activity -->
         <activity
             android:name=".PlayerActivity"
-            android:exported="false"
             android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
-
     </application>
 
 </manifest>

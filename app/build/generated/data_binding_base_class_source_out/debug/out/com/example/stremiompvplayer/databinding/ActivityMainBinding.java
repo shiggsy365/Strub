@@ -4,18 +4,16 @@ package com.example.stremiompvplayer.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.stremiompvplayer.R;
+import com.google.android.material.chip.Chip;
 import java.lang.NullPointerException;
 import java.lang.Override;
 import java.lang.String;
@@ -25,74 +23,55 @@ public final class ActivityMainBinding implements ViewBinding {
   private final ConstraintLayout rootView;
 
   @NonNull
-  public final Button chipHome;
+  public final Chip chipDiscover;
 
   @NonNull
-  public final Button chipMovies;
+  public final Chip chipLibrary;
 
   @NonNull
-  public final Button chipMyList;
+  public final Chip chipMore;
 
   @NonNull
-  public final Button chipSeries;
+  public final Chip chipMovies;
 
   @NonNull
-  public final RecyclerView continueWatchingRecycler;
+  public final Chip chipSearch;
 
   @NonNull
-  public final LinearLayout continueWatchingSection;
+  public final Chip chipSeries;
 
   @NonNull
-  public final TextView emptyView;
-
-  @NonNull
-  public final RecyclerView myListRecycler;
-
-  @NonNull
-  public final LinearLayout myListSection;
+  public final FrameLayout fragmentContainer;
 
   @NonNull
   public final HorizontalScrollView navigationScroll;
 
   @NonNull
-  public final ProgressBar progressBar;
+  public final View userAvatar;
 
   @NonNull
-  public final Button searchButton;
+  public final FrameLayout userAvatarContainer;
 
   @NonNull
-  public final RecyclerView sectionsRecycler;
+  public final TextView userInitial;
 
-  @NonNull
-  public final LinearLayout topBar;
-
-  @NonNull
-  public final Button userProfileButton;
-
-  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button chipHome,
-      @NonNull Button chipMovies, @NonNull Button chipMyList, @NonNull Button chipSeries,
-      @NonNull RecyclerView continueWatchingRecycler, @NonNull LinearLayout continueWatchingSection,
-      @NonNull TextView emptyView, @NonNull RecyclerView myListRecycler,
-      @NonNull LinearLayout myListSection, @NonNull HorizontalScrollView navigationScroll,
-      @NonNull ProgressBar progressBar, @NonNull Button searchButton,
-      @NonNull RecyclerView sectionsRecycler, @NonNull LinearLayout topBar,
-      @NonNull Button userProfileButton) {
+  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Chip chipDiscover,
+      @NonNull Chip chipLibrary, @NonNull Chip chipMore, @NonNull Chip chipMovies,
+      @NonNull Chip chipSearch, @NonNull Chip chipSeries, @NonNull FrameLayout fragmentContainer,
+      @NonNull HorizontalScrollView navigationScroll, @NonNull View userAvatar,
+      @NonNull FrameLayout userAvatarContainer, @NonNull TextView userInitial) {
     this.rootView = rootView;
-    this.chipHome = chipHome;
+    this.chipDiscover = chipDiscover;
+    this.chipLibrary = chipLibrary;
+    this.chipMore = chipMore;
     this.chipMovies = chipMovies;
-    this.chipMyList = chipMyList;
+    this.chipSearch = chipSearch;
     this.chipSeries = chipSeries;
-    this.continueWatchingRecycler = continueWatchingRecycler;
-    this.continueWatchingSection = continueWatchingSection;
-    this.emptyView = emptyView;
-    this.myListRecycler = myListRecycler;
-    this.myListSection = myListSection;
+    this.fragmentContainer = fragmentContainer;
     this.navigationScroll = navigationScroll;
-    this.progressBar = progressBar;
-    this.searchButton = searchButton;
-    this.sectionsRecycler = sectionsRecycler;
-    this.topBar = topBar;
-    this.userProfileButton = userProfileButton;
+    this.userAvatar = userAvatar;
+    this.userAvatarContainer = userAvatarContainer;
+    this.userInitial = userInitial;
   }
 
   @Override
@@ -122,57 +101,45 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.chipHome;
-      Button chipHome = ViewBindings.findChildViewById(rootView, id);
-      if (chipHome == null) {
+      id = R.id.chipDiscover;
+      Chip chipDiscover = ViewBindings.findChildViewById(rootView, id);
+      if (chipDiscover == null) {
+        break missingId;
+      }
+
+      id = R.id.chipLibrary;
+      Chip chipLibrary = ViewBindings.findChildViewById(rootView, id);
+      if (chipLibrary == null) {
+        break missingId;
+      }
+
+      id = R.id.chipMore;
+      Chip chipMore = ViewBindings.findChildViewById(rootView, id);
+      if (chipMore == null) {
         break missingId;
       }
 
       id = R.id.chipMovies;
-      Button chipMovies = ViewBindings.findChildViewById(rootView, id);
+      Chip chipMovies = ViewBindings.findChildViewById(rootView, id);
       if (chipMovies == null) {
         break missingId;
       }
 
-      id = R.id.chipMyList;
-      Button chipMyList = ViewBindings.findChildViewById(rootView, id);
-      if (chipMyList == null) {
+      id = R.id.chipSearch;
+      Chip chipSearch = ViewBindings.findChildViewById(rootView, id);
+      if (chipSearch == null) {
         break missingId;
       }
 
       id = R.id.chipSeries;
-      Button chipSeries = ViewBindings.findChildViewById(rootView, id);
+      Chip chipSeries = ViewBindings.findChildViewById(rootView, id);
       if (chipSeries == null) {
         break missingId;
       }
 
-      id = R.id.continueWatchingRecycler;
-      RecyclerView continueWatchingRecycler = ViewBindings.findChildViewById(rootView, id);
-      if (continueWatchingRecycler == null) {
-        break missingId;
-      }
-
-      id = R.id.continueWatchingSection;
-      LinearLayout continueWatchingSection = ViewBindings.findChildViewById(rootView, id);
-      if (continueWatchingSection == null) {
-        break missingId;
-      }
-
-      id = R.id.emptyView;
-      TextView emptyView = ViewBindings.findChildViewById(rootView, id);
-      if (emptyView == null) {
-        break missingId;
-      }
-
-      id = R.id.myListRecycler;
-      RecyclerView myListRecycler = ViewBindings.findChildViewById(rootView, id);
-      if (myListRecycler == null) {
-        break missingId;
-      }
-
-      id = R.id.myListSection;
-      LinearLayout myListSection = ViewBindings.findChildViewById(rootView, id);
-      if (myListSection == null) {
+      id = R.id.fragmentContainer;
+      FrameLayout fragmentContainer = ViewBindings.findChildViewById(rootView, id);
+      if (fragmentContainer == null) {
         break missingId;
       }
 
@@ -182,40 +149,27 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.progressBar;
-      ProgressBar progressBar = ViewBindings.findChildViewById(rootView, id);
-      if (progressBar == null) {
+      id = R.id.userAvatar;
+      View userAvatar = ViewBindings.findChildViewById(rootView, id);
+      if (userAvatar == null) {
         break missingId;
       }
 
-      id = R.id.searchButton;
-      Button searchButton = ViewBindings.findChildViewById(rootView, id);
-      if (searchButton == null) {
+      id = R.id.userAvatarContainer;
+      FrameLayout userAvatarContainer = ViewBindings.findChildViewById(rootView, id);
+      if (userAvatarContainer == null) {
         break missingId;
       }
 
-      id = R.id.sectionsRecycler;
-      RecyclerView sectionsRecycler = ViewBindings.findChildViewById(rootView, id);
-      if (sectionsRecycler == null) {
+      id = R.id.userInitial;
+      TextView userInitial = ViewBindings.findChildViewById(rootView, id);
+      if (userInitial == null) {
         break missingId;
       }
 
-      id = R.id.topBar;
-      LinearLayout topBar = ViewBindings.findChildViewById(rootView, id);
-      if (topBar == null) {
-        break missingId;
-      }
-
-      id = R.id.userProfileButton;
-      Button userProfileButton = ViewBindings.findChildViewById(rootView, id);
-      if (userProfileButton == null) {
-        break missingId;
-      }
-
-      return new ActivityMainBinding((ConstraintLayout) rootView, chipHome, chipMovies, chipMyList,
-          chipSeries, continueWatchingRecycler, continueWatchingSection, emptyView, myListRecycler,
-          myListSection, navigationScroll, progressBar, searchButton, sectionsRecycler, topBar,
-          userProfileButton);
+      return new ActivityMainBinding((ConstraintLayout) rootView, chipDiscover, chipLibrary,
+          chipMore, chipMovies, chipSearch, chipSeries, fragmentContainer, navigationScroll,
+          userAvatar, userAvatarContainer, userInitial);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

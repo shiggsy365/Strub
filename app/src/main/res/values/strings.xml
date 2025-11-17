@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Stremio MPV Player</string>
-    <string name="loading">Loading…</string>
-    <string name="error_loading_addon">Failed to load addon</string>
-    <string name="error_loading_catalog">Failed to load catalog</string>
-    <string name="error_loading_streams">Failed to load streams</string>
-    <string name="no_streams_available">No playable streams available</string>
-    <string name="mpv_not_available">MPV player not available. Please ensure libmpv is properly compiled.</string>
-    <string name="title_activity_test">Leanback TestActivity</string>
+    <string name="app_name">Strub</string>
+    <string name="discover">Discover</string>
+    <string name="movies">Movies</string>
+    <string name="series">Series</string>
+    <string name="library">Library</string>
+    <string name="search">Search</string>
+    <string name="add_to_library">Add to Library</string>
+    <string name="add_to_movie_hub">Add to Movie Hub</string>
+    <string name="add_to_series_hub">Add to Series Hub</string>
+    <string name="switch_user">Switch User</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="add_addon">+ Add Addon</string>
+    <string name="remove_addon">Remove</string>
+    <string name="no_addons">No addons configured yet</string>
+    <string name="title_activity_addon_list_adapter">Leanback AddonListAdapter</string>
     <string name="browse_title">Videos by Your Company</string>
     <string name="related_movies">Related Videos</string>
     <string name="grid_view">Grid View</string>

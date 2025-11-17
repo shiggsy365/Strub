@@ -4,10 +4,13 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.stremiompvplayer.adapters.AddonListAdapter
 import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
 import com.example.stremiompvplayer.models.UserSettings
@@ -20,6 +23,32 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var settings: UserSettings
     private var currentUserId: String? = null
 
+
+    private fun setupAddonsList() {
+        currentUserId?.let { userId ->
+            val addons = database.getUserAddonUrls(userId)
+
+            if (addons.isEmpty()) {
+                binding.addonsRecycler.visibility = View.GONE
+                binding.noAddonsText.visibility = View.VISIBLE
+            } else {
+                binding.addonsRecycler.visibility = View.VISIBLE
+                binding.noAddonsText.visibility = View.GONE
+
+                val adapter = AddonListAdapter(addons.toMutableList()) { addonUrl ->
+                    // Remove addon
+                    database.removeAddonUrl(userId, addonUrl)
+                    setupAddonsList() // Refresh list
+                    Toast.makeText(this, "Addon removed", Toast.LENGTH_SHORT).show()
+                }
+
+                binding.addonsRecycler.apply {
+                    layoutManager = LinearLayoutManager(this@SettingsActivity)
+                    this.adapter = adapter
+                }
+            }
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
@@ -125,6 +154,13 @@ class SettingsActivity : AppCompatActivity() {
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
             finish()
+        }
+
+        binding.addAddonButton.apply {
+            textSize = 22f // Larger font
+            setOnClickListener {
+                showAddAddonDialog()
+            }
         }
 
         binding.signOutButton.setOnClickListener {
