@@ -13,13 +13,17 @@ import com.example.stremiompvplayer.models.WatchProgress;
 import kotlinx.coroutines.Dispatchers;
 import com.example.stremiompvplayer.models.FeedList;
 import com.example.stremiompvplayer.models.HubSlot;
+import com.example.stremiompvplayer.models.UserCatalog;
+import com.example.stremiompvplayer.models.CollectedItem;
 
-@kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u0000H\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010 \n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u000e\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0003\b\'\u0018\u0000 \u00172\u00020\u0001:\u0002\u0016\u0017B\u0005\u00a2\u0006\u0002\u0010\u0002J\b\u0010\u0003\u001a\u00020\u0004H&J\u0014\u0010\u0005\u001a\b\u0012\u0004\u0012\u00020\u00070\u00062\u0006\u0010\b\u001a\u00020\tJ\b\u0010\n\u001a\u00020\u000bH&J\b\u0010\f\u001a\u00020\rH&J\b\u0010\u000e\u001a\u00020\u000fH&J\b\u0010\u0010\u001a\u00020\u0011H&J\b\u0010\u0012\u001a\u00020\u0013H&J\b\u0010\u0014\u001a\u00020\u0015H&\u00a8\u0006\u0018"}, d2 = {"Lcom/example/stremiompvplayer/data/AppDatabase;", "Landroidx/room/RoomDatabase;", "()V", "feedListDao", "Lcom/example/stremiompvplayer/data/FeedListDao;", "getLibraryItems", "", "Lcom/example/stremiompvplayer/models/LibraryItem;", "userId", "", "hubSlotDao", "Lcom/example/stremiompvplayer/data/HubSlotDao;", "libraryItemDao", "Lcom/example/stremiompvplayer/data/LibraryItemDao;", "nextUpItemDao", "Lcom/example/stremiompvplayer/data/NextUpItemDao;", "userDao", "Lcom/example/stremiompvplayer/data/UserDao;", "userSettingsDao", "Lcom/example/stremiompvplayer/data/UserSettingsDao;", "watchProgressDao", "Lcom/example/stremiompvplayer/data/WatchProgressDao;", "AppDatabaseCallback", "Companion", "app_debug"})
-@androidx.room.Database(entities = {com.example.stremiompvplayer.models.FeedList.class, com.example.stremiompvplayer.models.HubSlot.class, com.example.stremiompvplayer.models.User.class, com.example.stremiompvplayer.models.LibraryItem.class, com.example.stremiompvplayer.models.WatchProgress.class, com.example.stremiompvplayer.models.NextUpItem.class, com.example.stremiompvplayer.models.UserSettings.class}, version = 1, exportSchema = false)
+@kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u0000T\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010 \n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u000e\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0003\b\'\u0018\u0000 \u001b2\u00020\u0001:\u0002\u001a\u001bB\u0005\u00a2\u0006\u0002\u0010\u0002J\b\u0010\u0003\u001a\u00020\u0004H&J\b\u0010\u0005\u001a\u00020\u0006H&J\u0014\u0010\u0007\u001a\b\u0012\u0004\u0012\u00020\t0\b2\u0006\u0010\n\u001a\u00020\u000bJ\b\u0010\f\u001a\u00020\rH&J\b\u0010\u000e\u001a\u00020\u000fH&J\b\u0010\u0010\u001a\u00020\u0011H&J\b\u0010\u0012\u001a\u00020\u0013H&J\b\u0010\u0014\u001a\u00020\u0015H&J\b\u0010\u0016\u001a\u00020\u0017H&J\b\u0010\u0018\u001a\u00020\u0019H&\u00a8\u0006\u001c"}, d2 = {"Lcom/example/stremiompvplayer/data/AppDatabase;", "Landroidx/room/RoomDatabase;", "()V", "collectedItemDao", "Lcom/example/stremiompvplayer/data/CollectedItemDao;", "feedListDao", "Lcom/example/stremiompvplayer/data/FeedListDao;", "getLibraryItems", "", "Lcom/example/stremiompvplayer/models/LibraryItem;", "userId", "", "hubSlotDao", "Lcom/example/stremiompvplayer/data/HubSlotDao;", "libraryItemDao", "Lcom/example/stremiompvplayer/data/LibraryItemDao;", "nextUpItemDao", "Lcom/example/stremiompvplayer/data/NextUpItemDao;", "userCatalogDao", "Lcom/example/stremiompvplayer/data/UserCatalogDao;", "userDao", "Lcom/example/stremiompvplayer/data/UserDao;", "userSettingsDao", "Lcom/example/stremiompvplayer/data/UserSettingsDao;", "watchProgressDao", "Lcom/example/stremiompvplayer/data/WatchProgressDao;", "AppDatabaseCallback", "Companion", "app_debug"})
+@androidx.room.Database(entities = {com.example.stremiompvplayer.models.FeedList.class, com.example.stremiompvplayer.models.HubSlot.class, com.example.stremiompvplayer.models.User.class, com.example.stremiompvplayer.models.LibraryItem.class, com.example.stremiompvplayer.models.WatchProgress.class, com.example.stremiompvplayer.models.NextUpItem.class, com.example.stremiompvplayer.models.UserSettings.class, com.example.stremiompvplayer.models.UserCatalog.class, com.example.stremiompvplayer.models.CollectedItem.class}, version = 2, exportSchema = false)
 public abstract class AppDatabase extends androidx.room.RoomDatabase {
     @kotlin.jvm.Volatile()
     @org.jetbrains.annotations.Nullable()
     private static volatile com.example.stremiompvplayer.data.AppDatabase INSTANCE;
+    @org.jetbrains.annotations.NotNull()
+    private static final androidx.room.migration.Migration MIGRATION_1_2 = null;
     @org.jetbrains.annotations.NotNull()
     public static final com.example.stremiompvplayer.data.AppDatabase.Companion Companion = null;
     
@@ -38,6 +42,12 @@ public abstract class AppDatabase extends androidx.room.RoomDatabase {
     
     @org.jetbrains.annotations.NotNull()
     public abstract com.example.stremiompvplayer.data.LibraryItemDao libraryItemDao();
+    
+    @org.jetbrains.annotations.NotNull()
+    public abstract com.example.stremiompvplayer.data.UserCatalogDao userCatalogDao();
+    
+    @org.jetbrains.annotations.NotNull()
+    public abstract com.example.stremiompvplayer.data.CollectedItemDao collectedItemDao();
     
     @org.jetbrains.annotations.NotNull()
     public abstract com.example.stremiompvplayer.data.WatchProgressDao watchProgressDao();
@@ -77,7 +87,7 @@ public abstract class AppDatabase extends androidx.room.RoomDatabase {
         }
     }
     
-    @kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u0000\u001a\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\b\u0086\u0003\u0018\u00002\u00020\u0001B\u0007\b\u0002\u00a2\u0006\u0002\u0010\u0002J\u000e\u0010\u0005\u001a\u00020\u00042\u0006\u0010\u0006\u001a\u00020\u0007R\u0010\u0010\u0003\u001a\u0004\u0018\u00010\u0004X\u0082\u000e\u00a2\u0006\u0002\n\u0000\u00a8\u0006\b"}, d2 = {"Lcom/example/stremiompvplayer/data/AppDatabase$Companion;", "", "()V", "INSTANCE", "Lcom/example/stremiompvplayer/data/AppDatabase;", "getInstance", "context", "Landroid/content/Context;", "app_debug"})
+    @kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u0000 \n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\b\u0086\u0003\u0018\u00002\u00020\u0001B\u0007\b\u0002\u00a2\u0006\u0002\u0010\u0002J\u000e\u0010\u0007\u001a\u00020\u00042\u0006\u0010\b\u001a\u00020\tR\u0010\u0010\u0003\u001a\u0004\u0018\u00010\u0004X\u0082\u000e\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0005\u001a\u00020\u0006X\u0082\u0004\u00a2\u0006\u0002\n\u0000\u00a8\u0006\n"}, d2 = {"Lcom/example/stremiompvplayer/data/AppDatabase$Companion;", "", "()V", "INSTANCE", "Lcom/example/stremiompvplayer/data/AppDatabase;", "MIGRATION_1_2", "Landroidx/room/migration/Migration;", "getInstance", "context", "Landroid/content/Context;", "app_debug"})
     public static final class Companion {
         
         private Companion() {

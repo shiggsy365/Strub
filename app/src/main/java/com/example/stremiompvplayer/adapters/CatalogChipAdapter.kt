@@ -16,7 +16,8 @@ import com.google.android.material.chip.Chip
  * It uses ListAdapter for efficient updates and manages the selected state visually.
  */
 class CatalogChipAdapter(
-    private val onClick: (Catalog) -> Unit
+    private val onClick: (Catalog) -> Unit,
+    private val onLongClick: ((Catalog) -> Unit)? = null
 ) : ListAdapter<Catalog, CatalogChipAdapter.ChipViewHolder>(CatalogDiffCallback()) {
 
     // 1. FIX: Changed to 'private var' to allow reassignment by setSelectedPosition

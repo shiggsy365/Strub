@@ -61,7 +61,7 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/discover"
+                    android:text="Discover ▼"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector" />
 

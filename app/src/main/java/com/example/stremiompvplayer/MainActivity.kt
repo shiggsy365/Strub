@@ -7,11 +7,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.stremiompvplayer.databinding.ActivityMainBinding
-import com.example.stremiompvplayer.ui.discover.DiscoverFragment
 import com.example.stremiompvplayer.ui.library.LibraryFragment
 import com.example.stremiompvplayer.ui.movies.MoviesFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
-import com.example.stremiompvplayer.ui.series.SeriesFragment
 // IMPORTS FIXED: Point to the utils package where we defined User and SharedPreferencesManager
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.utils.User
@@ -19,6 +17,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 // IMPORT ADDED: Intent for UserSelectionActivity
 import com.example.stremiompvplayer.UserSelectionActivity
+import android.widget.PopupMenu
 
 class MainActivity : AppCompatActivity() {
 
@@ -56,7 +55,7 @@ class MainActivity : AppCompatActivity() {
 
         // Load default tab
         if (savedInstanceState == null) {
-            loadFragment(DiscoverFragment())
+        //    loadFragment(DiscoverFragment())
             binding.chipDiscover.isChecked = true
         }
     }
@@ -123,30 +122,84 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
-        binding.chipDiscover.setOnClickListener {
-            loadFragment(DiscoverFragment())
-        }
+        // Discover dropdown
+    //    binding.chipDiscover.setOnClickListener {
+    //        showDiscoverMenu()
+    //    }
 
         binding.chipMovies.setOnClickListener {
-            loadFragment(MoviesFragment())
+        loadFragment(MoviesFragment())
         }
 
-        binding.chipSeries.setOnClickListener {
-            loadFragment(SeriesFragment())
-        }
+    //    binding.chipSeries.setOnClickListener {
+     //       loadFragment(SeriesFragment())
+     //   }
 
+        // Library dropdown
         binding.chipLibrary.setOnClickListener {
-            loadFragment(LibraryFragment())
+        //    showLibraryMenu()
         }
 
-        binding.chipSearch.setOnClickListener {
-            loadFragment(SearchFragment())
-        }
-
-        binding.chipMore.setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
-        }
+        // ... other chips
     }
+
+ //   private fun showDiscoverMenu() {
+ //       val popup = PopupMenu(this, binding.chipDiscover)
+ //       popup.menuInflater.inflate(R.menu.menu_discover, popup.menu)
+ //       popup.setOnMenuItemClickListener { item ->
+ //           when (item.itemId) {
+ //               R.id.discover_movies -> {
+ //                   val fragment = DiscoverFragment().apply {
+ //                       arguments = Bundle().apply {
+ //                           putString("filter_type", "movie")
+ //                       }
+ //                   }
+ //                   loadFragment(fragment)
+ //                   true
+  //              }
+   //             R.id.discover_series -> {
+    //                val fragment = DiscoverFragment().apply {
+     //                   arguments = Bundle().apply {
+      //                      putString("filter_type", "series")
+     //                   }
+     //                }
+    //                loadFragment(fragment)
+  //                  true
+//                }
+//                else -> false
+//            }
+//        }
+//        popup.show()
+//    }
+
+//    private fun showLibraryMenu() {
+//        val popup = PopupMenu(this, binding.chipLibrary)
+//        popup.menuInflater.inflate(R.menu.menu_library, popup.menu)
+//        popup.setOnMenuItemClickListener { item ->
+//            when (item.itemId) {
+//                R.id.library_movies -> {
+//                    val fragment = LibraryFragment().apply {
+//                        arguments = Bundle().apply {
+//                            putString("item_type", "movie")
+//                        }
+//                    }
+//                    loadFragment(fragment)
+ //                   true
+  //              }
+   //             R.id.library_series -> {
+    //                val fragment = LibraryFragment().apply {
+     //                   arguments = Bundle().apply {
+    //                        putString("item_type", "series")
+    //                    }
+    //                }
+    //                loadFragment(fragment)
+     //               true
+     //           }
+     //           else -> false
+   //         }
+   //     }
+   //     popup.show()
+   // }
 
     private fun loadFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()

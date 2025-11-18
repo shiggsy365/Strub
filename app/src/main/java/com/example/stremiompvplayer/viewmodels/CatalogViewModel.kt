@@ -1,5 +1,6 @@
 package com.example.stremiompvplayer.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -7,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.stremiompvplayer.data.CatalogRepository
 import com.example.stremiompvplayer.models.Catalog
 import com.example.stremiompvplayer.models.MetaItem
+import com.example.stremiompvplayer.models.Stream
 import kotlinx.coroutines.launch
 
 sealed class CatalogUiState {
@@ -20,6 +22,9 @@ class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() 
     private val _uiState = MutableLiveData<CatalogUiState>(CatalogUiState.Loading)
     val uiState: LiveData<CatalogUiState> = _uiState
 
+    private val _streams = MutableLiveData<List<Stream>>()
+    val streams: LiveData<List<Stream>> = _streams
+
     private var allManifestCatalogs: List<Catalog> = emptyList()
 
     init {
@@ -27,22 +32,29 @@ class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() 
     }
 
     private fun fetchManifestAndDefaultCatalog() {
+        Log.d("CatalogViewModel", "Fetching manifest...")
         viewModelScope.launch {
             repository.fetchManifest().onSuccess { manifest ->
+                Log.d("CatalogViewModel", "Manifest fetched: ${manifest.name}")
+
                 allManifestCatalogs = manifest.catalogs.filter {
                     // Filter out search catalogs and catalogs with no type
                     !(it.name ?: "").contains("search", ignoreCase = true) && it.type.isNotEmpty()
                 }
 
+                Log.d("CatalogViewModel", "Found ${allManifestCatalogs.size} total catalogs")
+
                 // Load the first available catalog by default
                 val firstCatalog = allManifestCatalogs.firstOrNull()
                 if (firstCatalog != null) {
+                    Log.d("CatalogViewModel", "Loading first catalog: ${firstCatalog.name} (${firstCatalog.type}/${firstCatalog.id})")
                     fetchCatalog(firstCatalog.type, firstCatalog.id)
                 } else {
                     _uiState.value = CatalogUiState.Error("No content catalogs found in manifest.")
                 }
-            }.onFailure {
-                _uiState.value = CatalogUiState.Error("Failed to load manifest: ${it.message}")
+            }.onFailure { error ->
+                Log.e("CatalogViewModel", "Failed to load manifest: ${error.message}")
+                _uiState.value = CatalogUiState.Error("Failed to load manifest: ${error.message}")
             }
         }
     }
@@ -52,16 +64,33 @@ class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() 
     }
 
     fun fetchCatalog(type: String, id: String) {
-        _uiState.value = CatalogUiState.Loading // Set loading state before fetch
+        Log.d("CatalogViewModel", "Fetching catalog: $type/$id")
+        _uiState.value = CatalogUiState.Loading
 
         viewModelScope.launch {
             repository.fetchCatalogItems(type, id).onSuccess { catalogResponse ->
+                Log.d("CatalogViewModel", "Catalog fetched successfully: ${catalogResponse.metas.size} items")
                 _uiState.value = CatalogUiState.Success(
                     catalogs = getCatalogsByType(type),
                     items = catalogResponse.metas
                 )
-            }.onFailure {
-                _uiState.value = CatalogUiState.Error("Failed to load catalog '$id': ${it.message}")
+            }.onFailure { error ->
+                Log.e("CatalogViewModel", "Failed to load catalog '$id': ${error.message}")
+                _uiState.value = CatalogUiState.Error("Failed to load catalog '$id': ${error.message}")
+            }
+        }
+    }
+
+    fun fetchStreams(type: String, id: String) {
+        Log.d("CatalogViewModel", "Fetching streams for: $type/$id")
+        viewModelScope.launch {
+            repository.fetchStreams(type, id).onSuccess { streamResponse ->
+                Log.d("CatalogViewModel", "Streams fetched successfully: ${streamResponse.streams.size} streams")
+                _streams.postValue(streamResponse.streams)
+            }.onFailure { error ->
+                Log.e("CatalogViewModel", "Failed to fetch streams: ${error.message}")
+                // Post empty list on error
+                _streams.postValue(emptyList())
             }
         }
     }

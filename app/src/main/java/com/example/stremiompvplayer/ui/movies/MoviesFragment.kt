@@ -2,87 +2,154 @@ package com.example.stremiompvplayer.ui.movies
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import android.widget.EditText
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.stremiompvplayer.DetailsActivity2
+import com.example.stremiompvplayer.PlayerActivity
+import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentMoviesBinding
-import com.example.stremiompvplayer.databinding.MetaDetailPaneBinding // NEW IMPORT
 import com.example.stremiompvplayer.models.Catalog
-import com.example.stremiompvplayer.models.FeedList
+import com.example.stremiompvplayer.models.CollectedItem
 import com.example.stremiompvplayer.models.MetaItem
-import com.example.stremiompvplayer.adapters.CatalogChipAdapter // NEW IMPORT
-import com.example.stremiompvplayer.ui.discover.DiscoverSectionAdapter
+import com.example.stremiompvplayer.models.Stream
+import com.example.stremiompvplayer.models.UserCatalog
+import com.example.stremiompvplayer.adapters.CatalogChipAdapter
+import com.example.stremiompvplayer.adapters.StreamAdapter
+import com.example.stremiompvplayer.adapters.PosterAdapter
+import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.CatalogViewModel
 import com.example.stremiompvplayer.viewmodels.CatalogUiState
-import android.util.Log
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 
 class MoviesFragment : Fragment() {
 
-    // 1. BINDING AND VIEW MODEL SETUP
     private var _binding: FragmentMoviesBinding? = null
     private val binding get() = _binding!!
-
-    // NEW: Binding for the details pane (will hold title, description, image)
-    private lateinit var detailsPaneBinding: MetaDetailPaneBinding
 
     private val viewModel: CatalogViewModel by viewModels {
         ServiceLocator.provideCatalogViewModelFactory(requireContext())
     }
 
-    private lateinit var contentAdapter: DiscoverSectionAdapter
     private lateinit var catalogChipAdapter: CatalogChipAdapter
+    private lateinit var streamAdapter: StreamAdapter
+    private lateinit var posterAdapter: PosterAdapter
+    private lateinit var prefsManager: SharedPreferencesManager
+    private lateinit var db: AppDatabase
+
+    private var currentMetaItem: MetaItem? = null
+    private var currentUserId: String? = null
+    private var userCatalogs: List<UserCatalog> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // 2. USE THE NEW DEDICATED LAYOUT FILE
         _binding = FragmentMoviesBinding.inflate(inflater, container, false)
+        prefsManager = SharedPreferencesManager.getInstance(requireContext())
+        db = AppDatabase.getInstance(requireContext())
+        currentUserId = prefsManager.getCurrentUserId()
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 3. Setup and Inject the Details Pane
-        val layoutInflater = LayoutInflater.from(requireContext())
-        detailsPaneBinding = MetaDetailPaneBinding.inflate(layoutInflater)
-        binding.detailsPane.addView(detailsPaneBinding.root)
+        setupCatalogChips()
+        setupStreamsRecycler()
+        setupMovieGrid()
+        observeUserCatalogs()
+        observeViewModel()
+    }
 
-        // 4. Initialize Adapters
-        contentAdapter = DiscoverSectionAdapter { metaItem ->
-            onPosterClick(metaItem)
-        }
+    private fun setupCatalogChips() {
+        catalogChipAdapter = CatalogChipAdapter(
+            onClick = { catalog ->
+                Log.d("MoviesFragment", "Catalog clicked: ${catalog.name}")
+                viewModel.fetchCatalog(catalog.type, catalog.id)
+            },
+            onLongClick = { catalog ->
+                showCatalogOptionsDialog(catalog)
+            }
+        )
 
-        catalogChipAdapter = CatalogChipAdapter { catalog ->
-            // When a chip is clicked, fetch the content for that catalog
-            viewModel.fetchCatalog(catalog.type, catalog.id)
-        }
-
-        // 5. Setup RecyclerViews
         binding.catalogChipsRecycler.apply {
             layoutManager = LinearLayoutManager(context, RecyclerView.HORIZONTAL, false)
             adapter = catalogChipAdapter
         }
+    }
 
-        binding.moviesGridRecycler.apply {
-            // Setup for 7-wide grid display to get narrow posters
-            layoutManager = GridLayoutManager(context, 7)
-            adapter = contentAdapter
+    private fun setupStreamsRecycler() {
+        streamAdapter = StreamAdapter { stream ->
+            onStreamClick(stream)
         }
 
-        // Start observing data flow
-        observeViewModel()
+        binding.streamsRecycler.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = streamAdapter
+        }
+    }
+
+    private fun setupMovieGrid() {
+        posterAdapter = PosterAdapter(
+            items = emptyList(),
+            onClick = { metaItem ->
+                displayMovieDetails(metaItem)
+            },
+            onLongClick = { metaItem ->
+                showCollectionDialog(metaItem)
+            }
+        )
+
+        binding.moviesGridRecycler.apply {
+            layoutManager = GridLayoutManager(context, 7)
+            adapter = posterAdapter
+        }
+    }
+
+    private fun observeUserCatalogs() {
+        val userId = currentUserId ?: return
+
+        db.userCatalogDao().getCatalogsForPage(userId, "movies").observe(viewLifecycleOwner) { catalogs ->
+            Log.d("MoviesFragment", "User catalogs updated: ${catalogs.size} catalogs")
+            userCatalogs = catalogs
+
+            if (catalogs.isEmpty()) {
+                showEmptyState()
+            } else {
+                hideEmptyState()
+
+                val chipCatalogs = catalogs.map { userCatalog ->
+                    Catalog(
+                        type = userCatalog.catalogType,
+                        id = userCatalog.catalogId,
+                        name = userCatalog.displayName,
+                        extraProps = null
+                    )
+                }
+
+                catalogChipAdapter.setCatalogs(chipCatalogs)
+
+                if (currentMetaItem == null) {
+                    catalogs.firstOrNull()?.let { firstCatalog ->
+                        viewModel.fetchCatalog(firstCatalog.catalogType, firstCatalog.catalogId)
+                    }
+                }
+            }
+        }
     }
 
     private fun observeViewModel() {
@@ -90,8 +157,6 @@ class MoviesFragment : Fragment() {
             when (state) {
                 is CatalogUiState.Loading -> {
                     binding.progressBar.visibility = View.VISIBLE
-                    // Clear previous content visual indicators
-                    binding.moviesGridRecycler.visibility = View.GONE
                 }
                 is CatalogUiState.Error -> {
                     binding.progressBar.visibility = View.GONE
@@ -100,73 +165,248 @@ class MoviesFragment : Fragment() {
                 is CatalogUiState.Success -> {
                     binding.progressBar.visibility = View.GONE
 
-                    // 1. Filter and set data for the horizontal chip list
-                    val movieCatalogs = state.catalogs.filter { it.type == "movie" }
-                    setupCatalogChips(movieCatalogs)
+                    if (state.items.isNotEmpty()) {
+                        posterAdapter.updateData(state.items)
 
-                    // 2. Display the posters, wrapped in a FeedList section
-                    val movieSection = FeedList(
-                        id = "movie_page",
-                        userId = "",
-                        name = "Movies",
-                        catalogUrl = "",
-                        type = "movie",
-                        catalogId = movieCatalogs.firstOrNull()?.id ?: "default_movie_catalog",
-                        orderIndex = 0
-                    ).apply {
-                        content = state.items // List<MetaItem>
-                    }
-
-                    // Submission to the DiscoverSectionAdapter (List<FeedList>)
-                    contentAdapter.submitList(listOf(movieSection))
-                    binding.moviesGridRecycler.visibility = View.VISIBLE
-
-                    // 3. Auto-select and display details of the first item
-                    state.items.firstOrNull()?.let { firstItem ->
-                        updateDetailsPane(firstItem)
+                        if (currentMetaItem == null) {
+                            state.items.firstOrNull()?.let { firstMovie ->
+                                displayMovieDetails(firstMovie)
+                            }
+                        }
                     }
                 }
             }
         }
+
+        viewModel.streams.observe(viewLifecycleOwner) { streams ->
+            displayStreams(streams)
+        }
     }
 
-    private fun setupCatalogChips(movieCatalogs: List<Catalog>) {
-        if (movieCatalogs.isEmpty()) {
-            Log.w("MoviesFragment", "No movie catalogs were received.")
+    private fun showEmptyState() {
+        binding.catalogChipsRecycler.visibility = View.GONE
+        Toast.makeText(
+            context,
+            "No catalogs added. Go to Discover to add catalogs!",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
+    private fun hideEmptyState() {
+        binding.catalogChipsRecycler.visibility = View.VISIBLE
+    }
+
+    private fun showCatalogOptionsDialog(catalog: Catalog) {
+        val userCatalog = userCatalogs.find {
+            it.catalogId == catalog.id && it.catalogType == catalog.type
+        } ?: return
+
+        val options = arrayOf("Move", "Rename", "Remove")
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(catalog.name)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showMoveCatalogDialog(userCatalog)
+                    1 -> showRenameCatalogDialog(userCatalog)
+                    2 -> showRemoveCatalogDialog(userCatalog)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showMoveCatalogDialog(userCatalog: UserCatalog) {
+        val currentPosition = userCatalogs.indexOf(userCatalog)
+        if (currentPosition == -1) return
+
+        val positions = userCatalogs.mapIndexed { index, catalog ->
+            "${index + 1}. ${catalog.displayName}"
+        }.toTypedArray()
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Move to Position")
+            .setSingleChoiceItems(positions, currentPosition) { dialog, which ->
+                if (which != currentPosition) {
+                    moveCatalog(userCatalog, currentPosition, which)
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun moveCatalog(catalog: UserCatalog, fromPosition: Int, toPosition: Int) {
+        lifecycleScope.launch {
+            try {
+                val reorderedList = userCatalogs.toMutableList()
+                reorderedList.removeAt(fromPosition)
+                reorderedList.add(toPosition, catalog)
+
+                reorderedList.forEachIndexed { index, userCatalog ->
+                    db.userCatalogDao().updateDisplayOrder(userCatalog.id, index)
+                }
+
+                Toast.makeText(context, "Catalog moved", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showRenameCatalogDialog(userCatalog: UserCatalog) {
+        val input = EditText(requireContext()).apply {
+            setText(userCatalog.displayName)
+            inputType = InputType.TYPE_CLASS_TEXT
+            setPadding(48, 32, 48, 32)
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Rename Catalog")
+            .setView(input)
+            .setPositiveButton("Rename") { _, _ ->
+                val newName = input.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    renameCatalog(userCatalog, newName)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun renameCatalog(catalog: UserCatalog, newName: String) {
+        lifecycleScope.launch {
+            try {
+                db.userCatalogDao().updateCustomName(catalog.id, newName)
+                Toast.makeText(context, "Catalog renamed", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showRemoveCatalogDialog(userCatalog: UserCatalog) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Remove Catalog")
+            .setMessage("Remove \"${userCatalog.displayName}\" from Movies page?")
+            .setPositiveButton("Remove") { _, _ ->
+                removeCatalog(userCatalog)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun removeCatalog(catalog: UserCatalog) {
+        lifecycleScope.launch {
+            try {
+                db.userCatalogDao().delete(catalog)
+                Toast.makeText(context, "Catalog removed", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showCollectionDialog(metaItem: MetaItem) {
+        val userId = currentUserId ?: return
+
+        lifecycleScope.launch {
+            val collectedId = "${userId}_${metaItem.id}"
+            val isCollected = db.collectedItemDao().isCollected(collectedId) > 0
+
+            if (isCollected) {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Remove from Library")
+                    .setMessage("Remove \"${metaItem.name}\" from your library?")
+                    .setPositiveButton("Remove") { _, _ ->
+                        uncollectItem(collectedId)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            } else {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Add to Library")
+                    .setMessage("Add \"${metaItem.name}\" to your library?")
+                    .setPositiveButton("Collect") { _, _ ->
+                        collectItem(metaItem)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+        }
+    }
+
+    private fun collectItem(metaItem: MetaItem) {
+        val userId = currentUserId ?: return
+
+        lifecycleScope.launch {
+            try {
+                val collectedItem = CollectedItem.fromMetaItem(userId, metaItem)
+                db.collectedItemDao().insert(collectedItem)
+                Toast.makeText(context, "Added to library", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun uncollectItem(collectedId: String) {
+        lifecycleScope.launch {
+            try {
+                db.collectedItemDao().deleteById(collectedId)
+                Toast.makeText(context, "Removed from library", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun displayMovieDetails(metaItem: MetaItem) {
+        currentMetaItem = metaItem
+
+        Glide.with(this)
+            .load(metaItem.poster)
+            .centerCrop()
+            .into(binding.selectedPoster)
+
+        binding.movieTitle.text = metaItem.name
+        binding.movieDescription.text = metaItem.description ?: "No description"
+
+        fetchStreamsForMovie(metaItem)
+    }
+
+    private fun fetchStreamsForMovie(metaItem: MetaItem) {
+        binding.noStreamsText.visibility = View.VISIBLE
+        binding.streamsRecycler.visibility = View.GONE
+        binding.noStreamsText.text = "Loading streams..."
+
+        viewModel.fetchStreams(metaItem.type, metaItem.id)
+    }
+
+    private fun displayStreams(streams: List<Stream>) {
+        if (streams.isEmpty()) {
+            binding.noStreamsText.visibility = View.VISIBLE
+            binding.streamsRecycler.visibility = View.GONE
+            binding.noStreamsText.text = "No streams available"
         } else {
-            // Update the Chip Adapter with the list of movie catalogs
-            catalogChipAdapter.setCatalogs(movieCatalogs)
+            binding.noStreamsText.visibility = View.GONE
+            binding.streamsRecycler.visibility = View.VISIBLE
+            streamAdapter.submitList(streams)
         }
     }
 
-    // NEW: Function to update the details pane content
-    private fun updateDetailsPane(metaItem: MetaItem) {
-        detailsPaneBinding.detailTitle.text = metaItem.name
-        detailsPaneBinding.detailDescription.text = metaItem.description
-
-        // Use Glide to load the poster into the detail image view
-        context?.let {
-            Glide.with(it)
-                .load(metaItem.poster)
-                .centerCrop()
-                .into(detailsPaneBinding.detailImage)
+    private fun onStreamClick(stream: Stream) {
+        val url = stream.url
+        if (url.isNullOrBlank()) {
+            Toast.makeText(context, "Invalid stream URL", Toast.LENGTH_SHORT).show()
+            return
         }
 
-        // NOTE: Stream dropdown population logic (fetchStreams) would go here.
-    }
-
-    private fun onPosterClick(metaItem: MetaItem) {
-        // Update the detail pane when a poster in the grid is clicked
-        updateDetailsPane(metaItem)
-
-        // Navigate or load details streams
-        /*
-        val intent = Intent(activity, DetailsActivity2::class.java).apply {
-            putExtra("id", metaItem.id)
-            putExtra("type", metaItem.type)
+        val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
+            putExtra("stream", stream)
+            putExtra("meta", currentMetaItem)
         }
         startActivity(intent)
-        */
     }
 
     override fun onDestroyView() {

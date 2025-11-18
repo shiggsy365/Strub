@@ -15,6 +15,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.example.stremiompvplayer.models.FeedList
 import com.example.stremiompvplayer.models.HubSlot
+import com.example.stremiompvplayer.models.UserCatalog
+import com.example.stremiompvplayer.models.CollectedItem
+import androidx.room.migration.Migration
 
 @Database(
     entities = [
@@ -25,9 +28,11 @@ import com.example.stremiompvplayer.models.HubSlot
         LibraryItem::class,
         WatchProgress::class,
         NextUpItem::class,
-        UserSettings::class
+        UserSettings::class,
+        UserCatalog::class,
+        CollectedItem::class,
     ],
-    version = 1,
+    version = 2, // INCREMENT VERSION!
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -39,6 +44,8 @@ abstract class AppDatabase : RoomDatabase() {
     // FIX: Add DAOs for stub models
     abstract fun userDao(): UserDao
     abstract fun libraryItemDao(): LibraryItemDao
+    abstract fun userCatalogDao(): UserCatalogDao
+    abstract fun collectedItemDao(): CollectedItemDao
     abstract fun watchProgressDao(): WatchProgressDao
     abstract fun nextUpItemDao(): NextUpItemDao
     abstract fun userSettingsDao(): UserSettingsDao
@@ -52,7 +59,46 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        // CHANGE: Rename getDatabase to getInstance to match calling code
+        // NEW: Add migration from version 1 to 2
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Create user_catalogs table
+                database.execSQL("""
+                CREATE TABLE IF NOT EXISTS user_catalogs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    userId TEXT NOT NULL,
+                    catalogId TEXT NOT NULL,
+                    catalogType TEXT NOT NULL,
+                    catalogName TEXT NOT NULL,
+                    customName TEXT,
+                    displayOrder INTEGER NOT NULL,
+                    pageType TEXT NOT NULL,
+                    addonUrl TEXT NOT NULL,
+                    manifestId TEXT NOT NULL,
+                    dateAdded INTEGER NOT NULL
+                )
+            """)
+
+                // Create collected_items table
+                database.execSQL("""
+                CREATE TABLE IF NOT EXISTS collected_items (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    userId TEXT NOT NULL,
+                    itemId TEXT NOT NULL,
+                    itemType TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    poster TEXT,
+                    background TEXT,
+                    description TEXT,
+                    collectedDate INTEGER NOT NULL,
+                    year TEXT,
+                    genres TEXT,
+                    rating TEXT
+                )
+            """)
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -60,14 +106,12 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "stremio_database"
                 )
-                    // REMOVED: Removed addCallback for simplicity as the scope is missing
+                    .addMigrations(MIGRATION_1_2)  // ← ADD THIS LINE
                     .build()
                 INSTANCE = instance
                 instance
             }
         }
-
-        // REMOVED: Removed getDatabase(context: Context, scope: CoroutineScope) since it's not used
     }
 // NOTE: You may need to remove the AppDatabaseCallback entire inner class as well
 
