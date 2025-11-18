@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/.cxx/Debug/1832614v/arm64-v8a",
-  "command": "/home/jon/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=aarch64-none-linux-android24 --sysroot=/home/jon/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Dplayer_EXPORTS -I/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/cpp/mpv/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -o CMakeFiles/player.dir/mpv_player.cpp.o -c /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/cpp/mpv_player.cpp",
-  "file": "/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/cpp/mpv_player.cpp"
-}
-]

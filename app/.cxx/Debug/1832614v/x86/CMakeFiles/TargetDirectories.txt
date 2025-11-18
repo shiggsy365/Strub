@@ -1,3 +1,0 @@
-/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/.cxx/Debug/1832614v/x86/CMakeFiles/player.dir
-/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/.cxx/Debug/1832614v/x86/CMakeFiles/edit_cache.dir
-/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/.cxx/Debug/1832614v/x86/CMakeFiles/rebuild_cache.dir
