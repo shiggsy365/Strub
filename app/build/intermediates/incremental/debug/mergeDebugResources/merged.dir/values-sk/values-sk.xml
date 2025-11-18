@@ -57,7 +57,6 @@
     <string name="bottomsheet_action_collapse">Zbaliť dolný hárok</string>
     <string name="bottomsheet_action_expand">Rozbaliť dolný hárok</string>
     <string name="bottomsheet_action_expand_halfway">Rozbaliť napoly</string>
-    <string name="bottomsheet_drag_handle_clicked">Dvojité klepnutie na presúvadlo</string>
     <string name="bottomsheet_drag_handle_content_description">Presúvadlo</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"Prijať"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"Video"</string>
@@ -69,8 +68,26 @@
     <string name="character_counter_content_description">Zadané znaky: %1$d z %2$d</string>
     <string name="character_counter_overflowed_content_description">Bol prekročený povolený počet znakov (%1$d z %2$d)</string>
     <string name="clear_text_end_icon_content_description">Vymazať text</string>
+    <string name="default_notification_channel_name">Prehráva sa</string>
     <string name="error_a11y_label">Chyba: neplatné</string>
     <string name="error_icon_content_description">Chyba</string>
+    <string name="error_message_authentication_expired">Ak chcete použiť túto aplikáciu, prihláste sa</string>
+    <string name="error_message_bad_value">Nesprávne vstupné údaje</string>
+    <string name="error_message_concurrent_stream_limit">Počúva sa na príliš veľa zariadeniach</string>
+    <string name="error_message_content_already_playing">Tento obsah sa už prehráva</string>
+    <string name="error_message_disconnected">Odpojené od prehrávača</string>
+    <string name="error_message_end_of_playlist">Poradie je prázdne</string>
+    <string name="error_message_fallback">Vyskytol sa problém. Skúste to neskôr.</string>
+    <string name="error_message_info_cancelled">Nepodarilo sa dokončiť. Skúste to znova.</string>
+    <string name="error_message_invalid_state">Teraz to nie je možné</string>
+    <string name="error_message_io">Chyba vstupu alebo výstupu</string>
+    <string name="error_message_not_available_in_region">Daný obsah tu nie je k dispozícii</string>
+    <string name="error_message_not_supported">Táto aplikácia to nedokáže</string>
+    <string name="error_message_parental_control_restricted">Daný obsah je blokovaný</string>
+    <string name="error_message_permission_denied">Prístup bol odmietnutý</string>
+    <string name="error_message_premium_account_required">Vyžaduje sa prémiový prístup</string>
+    <string name="error_message_setup_required">Vyžaduje sa nastavenie</string>
+    <string name="error_message_skip_limit_reached">Nie je možné preskočiť žiadne ďalšie skladby</string>
     <string name="exo_controls_cc_disabled_description">Povoliť titulky</string>
     <string name="exo_controls_cc_enabled_description">Zakázať titulky</string>
     <string name="exo_controls_fastforward_description">Pretočiť dopredu</string>
@@ -95,6 +112,15 @@
     <string name="exo_controls_shuffle_on_description">Vypnúť režim náhodného prehrávania</string>
     <string name="exo_controls_stop_description">Zastaviť</string>
     <string name="exo_controls_vr_description">režim VR</string>
+    <string name="exo_download_completed">Sťahovanie bolo dokončené</string>
+    <string name="exo_download_description">Stiahnuť</string>
+    <string name="exo_download_downloading">Sťahuje sa</string>
+    <string name="exo_download_failed">Nepodarilo sa stiahnuť</string>
+    <string name="exo_download_notification_channel_name">Stiahnuté</string>
+    <string name="exo_download_paused">Sťahovanie je pozastavené</string>
+    <string name="exo_download_paused_for_network">Sťahovanie čaká na sieť</string>
+    <string name="exo_download_paused_for_wifi">Sťahovanie čaká na Wi‑Fi</string>
+    <string name="exo_download_removing">Odstraňuje sa stiahnutý obsah</string>
     <string name="exo_item_list">%1$s, %2$s</string>
     <string name="exo_track_bitrate">%1$.2f MB/s</string>
     <string name="exo_track_mono">Mono</string>
@@ -113,15 +139,58 @@
     <string name="exo_track_surround_5_point_1">Priestorový zvuk 5.1</string>
     <string name="exo_track_surround_7_point_1">Priestorový zvuk 7.1</string>
     <string name="exo_track_unknown">Neznáme</string>
+    <string name="exo_track_unknown_name">Neznáme (%1$s)</string>
     <string name="exposed_dropdown_menu_content_description">Zobraziť rozbaľovaciu ponuku</string>
     <string name="icon_content_description">Ikona dialógového okna</string>
     <string name="item_view_role_description">Tabulátor</string>
+    <string msgid="4657191930956702614" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
+    <string msgid="4597148235912710942" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
+    <string msgid="893619591225519922" name="lb_guidedaction_continue_title">"Pokračovať"</string>
+    <string msgid="3330958750346333890" name="lb_guidedaction_finish_title">"Dokončiť"</string>
+    <string msgid="3228326776757666747" name="lb_media_player_error">"Kód chyby MediaPlayer %1$d extra %2$d"</string>
+    <string msgid="8084428500709675515" name="lb_navigation_menu_contentDescription">"Navigačná ponuka"</string>
+    <string msgid="2394451791544864917" name="lb_onboarding_accessibility_next">"Ďalej"</string>
+    <string msgid="5549711907371161292" name="lb_onboarding_get_started">"ZAČÍNAME"</string>
+    <string msgid="8691966842977635128" name="lb_playback_controls_closed_captioning_disable">"Vypnúť skryté titulky"</string>
+    <string msgid="2346334170216706076" name="lb_playback_controls_closed_captioning_enable">"Zapnúť skryté titulky"</string>
+    <string msgid="740570111678243493" name="lb_playback_controls_fast_forward">"Pretočiť dopredu"</string>
+    <string msgid="5734614175721471329" name="lb_playback_controls_fast_forward_multiplier">"Pretočiť dopredu %1$dX"</string>
+    <string msgid="5859666950961624736" name="lb_playback_controls_hidden">"Ovládacie prvky médií sú skryté, zobrazíte ich stlačením krížového ovládača"</string>
+    <string msgid="1209119371486219736" name="lb_playback_controls_high_quality_disable">"Zakázať médiá vo vysokej kvalite"</string>
+    <string msgid="3057698527166674705" name="lb_playback_controls_high_quality_enable">"Povoliť médiá vo vysokej kvalite"</string>
+    <string msgid="8730341244454469032" name="lb_playback_controls_more_actions">"Ďalšie akcie"</string>
+    <string msgid="917331776961802657" name="lb_playback_controls_pause">"Pozastaviť"</string>
+    <string msgid="5770668162543767702" name="lb_playback_controls_picture_in_picture">"Prejsť do režimu obraz v obraze"</string>
+    <string msgid="7088090604803481121" name="lb_playback_controls_play">"Prehrať"</string>
+    <string msgid="8429099206716245199" name="lb_playback_controls_repeat_all">"Opakovať všetko"</string>
+    <string msgid="1614290959784265209" name="lb_playback_controls_repeat_none">"Neopakovať"</string>
+    <string msgid="676658705837320560" name="lb_playback_controls_repeat_one">"Opakovať jednu položku"</string>
+    <string msgid="2866333981131020771" name="lb_playback_controls_rewind">"Pretočiť späť"</string>
+    <string msgid="6038956370475252734" name="lb_playback_controls_rewind_multiplier">"Pretočiť späť %1$dX"</string>
+    <string msgid="8690223891515602822" name="lb_playback_controls_shown">"Ovládacie prvky médií sa zobrazujú"</string>
+    <string msgid="6793109999253893369" name="lb_playback_controls_shuffle_disable">"Vypnúť náhodné prehrávanie"</string>
+    <string msgid="5151681938752704485" name="lb_playback_controls_shuffle_enable">"Zapnúť náhodné prehrávanie"</string>
+    <string msgid="8117512422682146745" name="lb_playback_controls_skip_next">"Prejsť na ďalšiu položku"</string>
+    <string msgid="3481218248309447059" name="lb_playback_controls_skip_previous">"Prejsť na predchádzajúcu položku"</string>
+    <string msgid="3544533410444618518" name="lb_playback_controls_thumb_down">"Zrušiť Nepáči sa mi"</string>
+    <string msgid="8475278766138652105" name="lb_playback_controls_thumb_down_outline">"Vybrať Nepáči sa mi"</string>
+    <string msgid="3458671378107738666" name="lb_playback_controls_thumb_up">"Zrušiť Páči sa mi"</string>
+    <string msgid="1385865732502550659" name="lb_playback_controls_thumb_up_outline">"Vybrať Páči sa mi"</string>
+    <string msgid="1471121602610716654" name="lb_playback_time_separator">"/"</string>
+    <string msgid="5700349211583074131" name="lb_search_bar_hint">"Hľadať"</string>
+    <string msgid="5926531297066387462" name="lb_search_bar_hint_speech">"Hovorením spustíte vyhľadávanie"</string>
+    <string msgid="4826526877249029043" name="lb_search_bar_hint_with_title">"Vyhľadať výraz <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
+    <string msgid="6032250334706920550" name="lb_search_bar_hint_with_title_speech">"Vyslovením výrazu <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> spustíte jeho vyhľad."</string>
+    <string name="m3_loading_indicator_content_description">Načítava sa</string>
     <string name="material_clock_toggle_content_description">Vyberte AM alebo PM</string>
     <string name="material_hour_24h_suffix">%1$s hodín</string>
     <string name="material_hour_selection">Vybrať hodinu</string>
     <string name="material_hour_suffix">%1$s</string>
     <string name="material_minute_selection">Vyberte minúty</string>
     <string name="material_minute_suffix">%1$s min</string>
+    <string name="material_slider_range_end">Koniec rozsahu</string>
+    <string name="material_slider_range_start">Začiatok rozsahu</string>
+    <string name="material_slider_value">Hodnota</string>
     <string name="material_timepicker_am">AM</string>
     <string name="material_timepicker_clock_mode_description">Ak chcete zadať čas, prepnite na režim hodín.</string>
     <string name="material_timepicker_hour">Hodina</string>
@@ -129,6 +198,12 @@
     <string name="material_timepicker_pm">PM</string>
     <string name="material_timepicker_select_time">Vyberte čas</string>
     <string name="material_timepicker_text_input_mode_description">Ak chcete zadať čas, prepnite na textový režim vstupu</string>
+    <string name="media3_controls_pause_description">Pozastaviť</string>
+    <string name="media3_controls_play_description">Prehrať</string>
+    <string name="media3_controls_seek_back_description">Hľadať smerom dozadu</string>
+    <string name="media3_controls_seek_forward_description">Hľadať smerom dopredu</string>
+    <string name="media3_controls_seek_to_next_description">Hľadať v ďalšej položke</string>
+    <string name="media3_controls_seek_to_previous_description">Hľadať v predchádzajúcej položke</string>
     <string name="mtrl_badge_numberless_content_description">Nové upozornenie</string>
     <string name="mtrl_checkbox_state_description_checked">Začiarknuté</string>
     <string name="mtrl_checkbox_state_description_indeterminate">Čiastočne začiarknuté</string>
@@ -155,10 +230,10 @@
     <string name="mtrl_picker_navigate_to_year_description">Prejsť na rok %1$d</string>
     <string name="mtrl_picker_out_of_range">Mimo rozsahu: %1$s</string>
     <string name="mtrl_picker_range_header_only_end_selected">Dátum začatia – %1$s</string>
-    <string name="mtrl_picker_range_header_only_start_selected">%1$s – dátum ukončenia</string>
+    <string name="mtrl_picker_range_header_only_start_selected">%1$s – Dátum ukončenia</string>
     <string name="mtrl_picker_range_header_selected">%1$s – %2$s</string>
     <string name="mtrl_picker_range_header_title">Vyberte rozsah</string>
-    <string name="mtrl_picker_range_header_unselected">Dátum začatia – dátum ukončenia</string>
+    <string name="mtrl_picker_range_header_unselected">Dátum začatia – Dátum ukončenia</string>
     <string name="mtrl_picker_save">Uložiť</string>
     <string name="mtrl_picker_start_date_description">Dátum začatia %1$s</string>
     <string name="mtrl_picker_text_input_date_hint">Dátum</string>
@@ -169,11 +244,14 @@
     <string name="mtrl_picker_text_input_year_abbr">r</string>
     <string name="mtrl_picker_today_description">Dnes %1$s</string>
     <string name="mtrl_picker_toggle_to_calendar_input_mode">Prepnúť na kalendárový režim vstupu</string>
-    <string name="mtrl_picker_toggle_to_day_selection">Klepnutím prepnete na zobrazenie kalendára</string>
+    <string name="mtrl_picker_toggle_to_day_selection">Prepnúť na zobrazenie kalendára</string>
     <string name="mtrl_picker_toggle_to_text_input_mode">Prepnúť na textový režim vstupu</string>
-    <string name="mtrl_picker_toggle_to_year_selection">Klepnutím prepnete na zobrazenie jednotlivých rokov</string>
+    <string name="mtrl_picker_toggle_to_year_selection">Prepnúť na zobrazenie rokov</string>
+    <string name="mtrl_picker_toggled_to_day_selection">Prepnuté na zobrazenie kalendára</string>
+    <string name="mtrl_picker_toggled_to_year_selection">Prepnuté na zobrazenie rokov</string>
     <string name="mtrl_timepicker_cancel">Zrušiť</string>
     <string name="mtrl_timepicker_confirm">OK</string>
+    <string msgid="1301877238242752863" name="orb_search_action">"Akcia vyhľadávania"</string>
     <string name="password_toggle_content_description">Zobraziť heslo</string>
     <string msgid="6264217191555673260" name="search_menu_title">"Hľadať"</string>
     <string name="searchview_clear_text_content_description">Vymazať text</string>

@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         // This is the Android plugin
-        classpath 'com.android.tools.build:gradle:8.2.0' // A stable plugin version
+        classpath 'com.android.tools.build:gradle:8.13.1' // A stable plugin version
         // This is the Kotlin plugin
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22" // A stable kotlin version
     }
@@ -19,6 +19,16 @@ allprojects {
         google()
         mavenCentral()
     }
+}
+
+
+subprojects {project.configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.jetbrains.kotlin' && details.requested.name.startsWith('kotlin-stdlib')) {
+            details.useVersion('1.9.22') // Force the stdlib version to match your plugin
+        }
+    }
+}
 }
 
 task clean(type: Delete) {

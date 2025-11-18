@@ -1,78 +1,27 @@
 package com.example.stremiompvplayer
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.ProgressBar
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
+// FIX: Change from android.app.Activity to AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 
 /**
- * BrowseErrorActivity shows how to use ErrorFragment.
- * NOTE: This is from the Android TV Leanback template - just a demo.
- * You probably don't need this unless you're specifically testing error screens.
+ * This activity shows an error condition in the browse screens.
+ * FIX: Extends AppCompatActivity to get supportFragmentManager
  */
-class BrowseErrorActivity : FragmentActivity() {
+class BrowseErrorActivity : AppCompatActivity() {
 
     private lateinit var mErrorFragment: ErrorFragment
-    private lateinit var mSpinnerFragment: SpinnerFragment
-
+    // ... existing code ...
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_test)
-        if (savedInstanceState == null) {
-            // UPDATED: Removed MainFragment reference
-            // Just show the spinner and error directly
-            testError()
-        }
-    }
+        setContentView(R.layout.activity_browse_error)
 
-    private fun testError() {
         mErrorFragment = ErrorFragment()
-        supportFragmentManager
-            .beginTransaction()
-            .add(R.id.main_browse_fragment, mErrorFragment)
+        // FIX: Add a container ID. I'm assuming 'R.id.fragment_container'
+        // You MUST have a <FrameLayout android:id="@+id/fragment_container" ... />
+        // in your 'activity_browse_error.xml' layout file for this to work.
+        supportFragmentManager.beginTransaction()
+            .add(R.id.fragment_container, mErrorFragment, "ErrorFragment")
             .commit()
-
-        mSpinnerFragment = SpinnerFragment()
-        supportFragmentManager
-            .beginTransaction()
-            .add(R.id.main_browse_fragment, mSpinnerFragment)
-            .commit()
-
-        val handler = Handler(Looper.myLooper()!!)
-        handler.postDelayed({
-            supportFragmentManager
-                .beginTransaction()
-                .remove(mSpinnerFragment)
-                .commit()
-            mErrorFragment.setErrorContent()
-        }, TIMER_DELAY)
-    }
-
-    class SpinnerFragment : Fragment() {
-        override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
-        ): View? {
-            val progressBar = ProgressBar(container?.context)
-            if (container is FrameLayout) {
-                val layoutParams =
-                    FrameLayout.LayoutParams(SPINNER_WIDTH, SPINNER_HEIGHT, Gravity.CENTER)
-                progressBar.layoutParams = layoutParams
-            }
-            return progressBar
-        }
-    }
-
-    companion object {
-        private val TIMER_DELAY = 3000L
-        private val SPINNER_WIDTH = 100
-        private val SPINNER_HEIGHT = 100
     }
 }

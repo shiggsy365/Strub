@@ -51,7 +51,6 @@
     <string name="bottomsheet_action_collapse">Ծալել ներքևի էկրանը</string>
     <string name="bottomsheet_action_expand">Ծավալել ներքևի էկրանը</string>
     <string name="bottomsheet_action_expand_halfway">Ծավալել կիսով չափ</string>
-    <string name="bottomsheet_drag_handle_clicked">Կրկնակի հպում տեղափոխման նշիչին</string>
     <string name="bottomsheet_drag_handle_content_description">Տեղափոխման նշիչ</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"Պատասխանել"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"Տեսազանգ"</string>
@@ -63,8 +62,26 @@
     <string name="character_counter_content_description">Մուտքագրված նիշեր՝ %1$d/%2$d</string>
     <string name="character_counter_overflowed_content_description">Նիշերի առավելագույն քանակը գերազանցվել է (%1$d/%2$d)</string>
     <string name="clear_text_end_icon_content_description">Ջնջել տեքստը</string>
+    <string name="default_notification_channel_name">Այժմ նվագարկվում է</string>
     <string name="error_a11y_label">Սխալ՝ անվավեր է</string>
     <string name="error_icon_content_description">Սխալ</string>
+    <string name="error_message_authentication_expired">Մուտք գործեք՝ հավելվածն օգտագործելու համար</string>
+    <string name="error_message_bad_value">Սխալ մուտքային տվյալներ</string>
+    <string name="error_message_concurrent_stream_limit">Չափից շատ սարքերում է բովանդակություն նվագարկվում</string>
+    <string name="error_message_content_already_playing">Բովանդակությունն արդեն նվագարկվում է</string>
+    <string name="error_message_disconnected">Անջատված է մուլտիմեդիա հավելվածից</string>
+    <string name="error_message_end_of_playlist">Հերթացանկը դատարկ է</string>
+    <string name="error_message_fallback">Սխալ առաջացավ։ Փորձեք ավելի ուշ։</string>
+    <string name="error_message_info_cancelled">Չհաջողվեց ավարտել։ Նորից փորձեք։</string>
+    <string name="error_message_invalid_state">Այս գործողությունը ներկայումս հասանելի չէ</string>
+    <string name="error_message_io">Ներածման/արտածման սխալ</string>
+    <string name="error_message_not_available_in_region">Բովանդակությունն անհասանելի է այս տարածաշրջանում</string>
+    <string name="error_message_not_supported">Գործողությունը հասանելի չէ այս հավելվածում</string>
+    <string name="error_message_parental_control_restricted">Բովանդակությունն արգելափակված է</string>
+    <string name="error_message_permission_denied">Մուտքը մերժված է</string>
+    <string name="error_message_premium_account_required">Անհրաժեշտ է պրեմիում հաշիվ</string>
+    <string name="error_message_setup_required">Պահանջվում է կարգավորում</string>
+    <string name="error_message_skip_limit_reached">Այլևս հնարավոր չէ կատարումներ բաց թողնել</string>
     <string name="exo_controls_cc_disabled_description">Միացնել ենթագրերը</string>
     <string name="exo_controls_cc_enabled_description">Անջատել ենթագրերը</string>
     <string name="exo_controls_fastforward_description">Առաջ</string>
@@ -89,6 +106,15 @@
     <string name="exo_controls_shuffle_on_description">Անջատել խառը նվագարկման ռեժիմը</string>
     <string name="exo_controls_stop_description">Կանգնեցնել</string>
     <string name="exo_controls_vr_description">VR ռեժիմ</string>
+    <string name="exo_download_completed">Ներբեռնումն ավարտվեց</string>
+    <string name="exo_download_description">Ներբեռնել</string>
+    <string name="exo_download_downloading">Ներբեռնում</string>
+    <string name="exo_download_failed">Չհաջողվեց ներբեռնել</string>
+    <string name="exo_download_notification_channel_name">Ներբեռնումներ</string>
+    <string name="exo_download_paused">Ներբեռնումները դադարեցված են</string>
+    <string name="exo_download_paused_for_network">Ցանցի որոնում</string>
+    <string name="exo_download_paused_for_wifi">Wi-Fi ցանցի որոնում</string>
+    <string name="exo_download_removing">Ներբեռնումները հեռացվում են</string>
     <string name="exo_item_list">%1$s, %2$s</string>
     <string name="exo_track_bitrate">%1$.2f Մբիթ/վ</string>
     <string name="exo_track_mono">Մոնո</string>
@@ -107,15 +133,58 @@
     <string name="exo_track_surround_5_point_1">5․1 ծավալային ձայն</string>
     <string name="exo_track_surround_7_point_1">7․1 ծավալային ձայն</string>
     <string name="exo_track_unknown">Անհայտ</string>
+    <string name="exo_track_unknown_name">Անհայտ (%1$s)</string>
     <string name="exposed_dropdown_menu_content_description">Ցույց տալ իջնող ընտրացանկը</string>
     <string name="icon_content_description">Երկխոսության պատուհանի պատկերակ</string>
     <string name="item_view_role_description">Ներդիր</string>
+    <string msgid="4657191930956702614" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
+    <string msgid="4597148235912710942" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
+    <string msgid="893619591225519922" name="lb_guidedaction_continue_title">"Շարունակել"</string>
+    <string msgid="3330958750346333890" name="lb_guidedaction_finish_title">"Ավարտել"</string>
+    <string msgid="3228326776757666747" name="lb_media_player_error">"Մեդիա նվագարկչի սխալի կոդ` %1$d (լրացուցիչ %2$d)"</string>
+    <string msgid="8084428500709675515" name="lb_navigation_menu_contentDescription">"Նավիգացիայի ընտրացանկ"</string>
+    <string msgid="2394451791544864917" name="lb_onboarding_accessibility_next">"Հաջորդը"</string>
+    <string msgid="5549711907371161292" name="lb_onboarding_get_started">"ՍԿՍԵL"</string>
+    <string msgid="8691966842977635128" name="lb_playback_controls_closed_captioning_disable">"Անջատել ենթագրերը"</string>
+    <string msgid="2346334170216706076" name="lb_playback_controls_closed_captioning_enable">"Միացնել ենթագրերը"</string>
+    <string msgid="740570111678243493" name="lb_playback_controls_fast_forward">"Առաջ գնալ"</string>
+    <string msgid="5734614175721471329" name="lb_playback_controls_fast_forward_multiplier">"Առաջ գնալ՝ %1$dX"</string>
+    <string msgid="5859666950961624736" name="lb_playback_controls_hidden">"Մեդիայի կառավարման տարրերը թաքցված են։ Ցուցադրելու համար սեղմեք D-pad-ը:"</string>
+    <string msgid="1209119371486219736" name="lb_playback_controls_high_quality_disable">"Անջատել բարձր որակը"</string>
+    <string msgid="3057698527166674705" name="lb_playback_controls_high_quality_enable">"Միացնել բարձր որակը"</string>
+    <string msgid="8730341244454469032" name="lb_playback_controls_more_actions">"Այլ գործողություններ"</string>
+    <string msgid="917331776961802657" name="lb_playback_controls_pause">"Ընդհատել"</string>
+    <string msgid="5770668162543767702" name="lb_playback_controls_picture_in_picture">"Միացնել «Նկար նկարի մեջ» ռեժիմը"</string>
+    <string msgid="7088090604803481121" name="lb_playback_controls_play">"Նվագարկել"</string>
+    <string msgid="8429099206716245199" name="lb_playback_controls_repeat_all">"Կրկնել բոլորը"</string>
+    <string msgid="1614290959784265209" name="lb_playback_controls_repeat_none">"Չկրկնել"</string>
+    <string msgid="676658705837320560" name="lb_playback_controls_repeat_one">"Կրկնել մեկը"</string>
+    <string msgid="2866333981131020771" name="lb_playback_controls_rewind">"Հետ գնալ"</string>
+    <string msgid="6038956370475252734" name="lb_playback_controls_rewind_multiplier">"Հետ գնալ՝ %1$dX"</string>
+    <string msgid="8690223891515602822" name="lb_playback_controls_shown">"Մեդիայի կառավարման տարրերը ցուցադրված են"</string>
+    <string msgid="6793109999253893369" name="lb_playback_controls_shuffle_disable">"Անջատել խառը նվագարկումը"</string>
+    <string msgid="5151681938752704485" name="lb_playback_controls_shuffle_enable">"Միացնել խառը նվագարկումը"</string>
+    <string msgid="8117512422682146745" name="lb_playback_controls_skip_next">"Անցնել հաջորդին"</string>
+    <string msgid="3481218248309447059" name="lb_playback_controls_skip_previous">"Անցնել նախորդին"</string>
+    <string msgid="3544533410444618518" name="lb_playback_controls_thumb_down">"Չեղարկել «Չեմ հավանում»-ը"</string>
+    <string msgid="8475278766138652105" name="lb_playback_controls_thumb_down_outline">"Սեղմել «Չեմ հավանում»"</string>
+    <string msgid="3458671378107738666" name="lb_playback_controls_thumb_up">"Չեղարկել «Հավանում եմ»-ը"</string>
+    <string msgid="1385865732502550659" name="lb_playback_controls_thumb_up_outline">"Սեղմել «Հավանում եմ»"</string>
+    <string msgid="1471121602610716654" name="lb_playback_time_separator">"/"</string>
+    <string msgid="5700349211583074131" name="lb_search_bar_hint">"Որոնում"</string>
+    <string msgid="5926531297066387462" name="lb_search_bar_hint_speech">"Խոսեք՝ որոնելու համար"</string>
+    <string msgid="4826526877249029043" name="lb_search_bar_hint_with_title">"Որոնեք <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
+    <string msgid="6032250334706920550" name="lb_search_bar_hint_with_title_speech">"Խոսեք՝ <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> որոնելու համար"</string>
+    <string name="m3_loading_indicator_content_description">Բեռնում</string>
     <string name="material_clock_toggle_content_description">Ընտրել AM կամ PM</string>
     <string name="material_hour_24h_suffix">%1$s ժամ</string>
     <string name="material_hour_selection">Ընտրել ժամը</string>
     <string name="material_hour_suffix">Ժամը %1$s է</string>
     <string name="material_minute_selection">Ընտրեք րոպեն</string>
     <string name="material_minute_suffix">%1$s րոպե</string>
+    <string name="material_slider_range_end">Ընդգրկույթի վերջ</string>
+    <string name="material_slider_range_start">Ընդգրկույթի սկիզբ</string>
+    <string name="material_slider_value">Արժեք</string>
     <string name="material_timepicker_am">AM</string>
     <string name="material_timepicker_clock_mode_description">Ժամը մուտքագրելու համար միացրեք ժամացույցի ռեժիմը:</string>
     <string name="material_timepicker_hour">Ժամ</string>
@@ -123,6 +192,12 @@
     <string name="material_timepicker_pm">PM</string>
     <string name="material_timepicker_select_time">Ժամանակի ընտրություն</string>
     <string name="material_timepicker_text_input_mode_description">Ժամը մուտքագրելու համար միացրեք տեքստի մուտքագրման ռեժիմը:</string>
+    <string name="media3_controls_pause_description">Դադարեցնել</string>
+    <string name="media3_controls_play_description">Նվագարկել</string>
+    <string name="media3_controls_seek_back_description">Հետ գնալ</string>
+    <string name="media3_controls_seek_forward_description">Առաջ գնալ</string>
+    <string name="media3_controls_seek_to_next_description">Անցնել հաջորդ տարրին</string>
+    <string name="media3_controls_seek_to_previous_description">Անցնել նախորդ տարրին</string>
     <string name="mtrl_badge_numberless_content_description">Նոր ծանուցում</string>
     <string name="mtrl_checkbox_state_description_checked">Նշված է</string>
     <string name="mtrl_checkbox_state_description_indeterminate">Մասնակի է նշված</string>
@@ -163,12 +238,15 @@
     <string name="mtrl_picker_text_input_year_abbr">տ</string>
     <string name="mtrl_picker_today_description">Այսօր (%1$s)</string>
     <string name="mtrl_picker_toggle_to_calendar_input_mode">Անցնել օրացույցի մուտքագրման ռեժիմ</string>
-    <string name="mtrl_picker_toggle_to_day_selection">Հպեք՝ Օրացույցի դիտակերպին անցնելու համար</string>
+    <string name="mtrl_picker_toggle_to_day_selection">Ցույց տալ Օրացույցը</string>
     <string name="mtrl_picker_toggle_to_text_input_mode">Անցնել տեքստի մուտքագրման ռեժիմին</string>
-    <string name="mtrl_picker_toggle_to_year_selection">Հպեք՝ տարվա դիտակերպին անցնելու համար</string>
+    <string name="mtrl_picker_toggle_to_year_selection">Օրացույցը ցույց տալիս ըստ տարիների</string>
+    <string name="mtrl_picker_toggled_to_day_selection">Անցում կատարվեց Օրացույցի դիտակերպին</string>
+    <string name="mtrl_picker_toggled_to_year_selection">Անցում կատարվեց տարվա դիտակերպին</string>
     <string name="mtrl_timepicker_cancel">Չեղարկել</string>
     <string name="mtrl_timepicker_confirm">Եղավ</string>
-    <string name="password_toggle_content_description">Ցուցադրել գաղտնաբառը</string>
+    <string msgid="1301877238242752863" name="orb_search_action">"Որոնում"</string>
+    <string name="password_toggle_content_description">Ցույց տալ գաղտնաբառը</string>
     <string msgid="6264217191555673260" name="search_menu_title">"Որոնել"</string>
     <string name="searchview_clear_text_content_description">Ջնջել տեքստը</string>
     <string name="searchview_navigation_content_description">Հետ</string>

@@ -14,8 +14,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.stremiompvplayer.adapters.ContentAdapter
 import com.example.stremiompvplayer.databinding.FragmentSearchBinding
 import com.example.stremiompvplayer.models.Manifest
-import com.example.stremiompvplayer.models.MetaItem // NEW: Use MetaItem
-import com.example.stremiompvplayer.models.MetaPreview // Still need this for adapter
+import com.example.stremiompvplayer.models.MetaItem // NEW: Use MetaItemimport com.example.stremiompvplayer.databinding.DialogUserMenuBinding
+// FIX: Remove MetaPreview
+// import com.example.stremiompvplayer.models.MetaPreview
 import com.example.stremiompvplayer.network.StremioClient
 import com.example.stremiompvplayer.ui.details.DetailsActivity2
 import com.example.stremiompvplayer.viewmodels.MainViewModel // NEW: Use ViewModel
@@ -68,7 +69,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        // The adapter expects MetaPreview
+        // FIX: The adapter now expects MetaItem
         searchAdapter = ContentAdapter(emptyList()) { item ->
             onPosterClick(item)
         }
@@ -126,11 +127,14 @@ class SearchFragment : Fragment() {
                         stremioApi.getCatalog(searchUrl)
                     }
                     // We need to convert MetaItem to MetaPreview
+                    // FIX: No conversion needed, adapter takes MetaItem
                     // FIX: Use MetaPreview constructor
+                    /*
                     val metaPreviews = catalogResponse.metas.map {
                         MetaPreview(it.id, it.type, it.name, it.poster)
                     }
-                    searchAdapter.updateData(metaPreviews)
+                    */
+                    searchAdapter.updateData(catalogResponse.metas)
                 } else {
                     Toast.makeText(context, "This addon doesn't support search", Toast.LENGTH_SHORT)
                         .show()
@@ -143,7 +147,7 @@ class SearchFragment : Fragment() {
         }
     }
 
-    private fun onPosterClick(metaItem: MetaPreview) {
+    private fun onPosterClick(metaItem: MetaItem) {
         val intent = Intent(activity, DetailsActivity2::class.java).apply {
             putExtra("id", metaItem.id)
             putExtra("type", metaItem.type)

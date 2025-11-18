@@ -1,173 +1,148 @@
 package com.example.stremiompvplayer
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.util.Log
 import android.view.View
-import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+// FIX: Add all Media3 and OptIn imports
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+// FIX: Add databinding import
 import com.example.stremiompvplayer.databinding.ActivityPlayerBinding
+import com.example.stremiompvplayer.models.Meta
+import com.example.stremiompvplayer.models.Stream
 
 class PlayerActivity : AppCompatActivity() {
 
+    // FIX: Use databinding
     private lateinit var binding: ActivityPlayerBinding
-    private var exoPlayer: ExoPlayer? = null
-    private val handler = Handler(Looper.getMainLooper())
-    private var isControlsVisible = false
-    private var streamUrl: String? = null
-    private var streamTitle: String? = null
-
-    private val hideControlsRunnable = Runnable {
-        hideControls()
-    }
-
-    private val updateProgressRunnable = object : Runnable {
-        override fun run() {
-            updateProgress()
-            handler.postDelayed(this, 1000)
-        }
-    }
+    private var player: ExoPlayer? = null
+    private var currentStream: Stream? = null
+    // ... existing code ...
+    private var currentPosition: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // FIX: Use databinding
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        streamUrl = intent.getStringExtra("STREAM_URL")
-        streamTitle = intent.getStringExtra("STREAM_TITLE")
+        currentStream = intent.getSerializableExtra("stream") as? Stream
+        currentMeta = intent.getSerializableExtra("meta") as? Meta
 
-        binding.titleTextView.text = streamTitle ?: "Playing Stream"
+        if (currentStream == null) {
+            Log.e("PlayerActivity", "No stream data provided")
+            finish()
+            return
+        }
 
-        setupExoPlayer()
-        setupControls()
+        // FIX: Use binding
+        binding.title.text = currentMeta?.name ?: currentStream?.name
+        binding.subtitle.text = currentStream?.title
     }
 
-    @OptIn(UnstableApi::class) private fun setupExoPlayer() {
-        exoPlayer = ExoPlayer.Builder(this).build().apply {
-            // Set the player to the PlayerView
-            binding.playerView.player = this
+    @OptIn(UnstableApi::class)
+    private fun initializePlayer() {
+        player = ExoPlayer.Builder(this).build()
+        // FIX: Use binding
+        binding.playerView.player = player
 
-            // Add listener for playback events
-            addListener(object : Player.Listener {
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    when (playbackState) {
-                        Player.STATE_BUFFERING -> {
-                            binding.loadingProgress.visibility = View.VISIBLE
-                        }
-                        Player.STATE_READY -> {
-                            binding.loadingProgress.visibility = View.GONE
-                            showControls()
-                        }
-                        Player.STATE_ENDED -> {
-                            finish()
-                        }
+        player?.addListener(object : Player.Listener {
+            // FIX: Correct override signature
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_BUFFERING -> {
+                        // FIX: Use binding
+                        binding.progressBar.visibility = View.VISIBLE
+                    }
+                    Player.STATE_READY -> {
+                        // FIX: Use binding
+                        binding.progressBar.visibility = View.GONE
+                    }
+                    Player.STATE_ENDED -> {
+                        // Handle end of playback
+                    }
+                    Player.STATE_IDLE -> {
+                        // Handle idle state
                     }
                 }
-
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    updatePlayPauseButton(isPlaying)
-                }
-
-                override fun onPlayerError(error: PlaybackException) {
-                    showError(error.message ?: "Playback error occurred")
-                }
-            })
-
-            // Load and play the stream
-            streamUrl?.let { url ->
-                val mediaItem = MediaItem.fromUri(url)
-                setMediaItem(mediaItem)
-                prepare()
-                play()
             }
-        }
 
-        // Use ExoPlayer's built-in controls initially
-        binding.playerView.useController = true
-        binding.playerView.controllerShowTimeoutMs = 5000
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                // Handle play/pause state change
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                Log.e("PlayerActivity", "Player Error: ${error.message}", error)
+            }
+        })
+
+        val mediaItem = MediaItem.fromUri(currentStream?.url ?: "")
+        player?.setMediaItem(mediaItem)
+        player?.prepare()
+        player?.play()
+
+        // FIX: Use binding
+        binding.nextEpisode.setOnClickListener { /* TODO */ }
+        binding.prevEpisode.setOnClickListener { /* TODO */ }
     }
 
-    private fun setupControls() {
-        // Optional: Add custom controls if needed
-        // For now, ExoPlayer's built-in controls work great
-
-        binding.playerView.setOnClickListener {
-            toggleControls()
-        }
+    public override fun onStart() {
+        super.onStart()
+        initializePlayer()
     }
 
-    @OptIn(UnstableApi::class) private fun toggleControls() {
-        if (binding.playerView.isControllerFullyVisible) {
-            binding.playerView.hideController()
-        } else {
-            binding.playerView.showController()
-        }
-    }
-
-    @OptIn(UnstableApi::class) private fun showControls() {
-        binding.playerView.showController()
-    }
-
-    @OptIn(UnstableApi::class) private fun hideControls() {
-        binding.playerView.hideController()
-    }
-
-    private fun updateProgress() {
-        exoPlayer?.let {
-            val position = (it.currentPosition / 1000).toInt()
-            val duration = if (it.duration > 0) (it.duration / 1000).toInt() else 0
-
-            binding.currentTimeText.text = formatTime(position)
-            binding.durationText.text = formatTime(duration)
-        }
-    }
-
-    private fun updatePlayPauseButton(playing: Boolean) {
-        // ExoPlayer's UI handles this automatically
-        // This is here for compatibility if you add custom controls
-    }
-
-    private fun formatTime(seconds: Int): String {
-        val hours = seconds / 3600
-        val minutes = (seconds % 3600) / 60
-        val secs = seconds % 60
-
-        return if (hours > 0) {
-            String.format("%d:%02d:%02d", hours, minutes, secs)
-        } else {
-            String.format("%02d:%02d", minutes, secs)
-        }
-    }
-
-    private fun showError(message: String) {
-        binding.loadingProgress.visibility = View.GONE
-        binding.errorText.visibility = View.VISIBLE
-        binding.errorText.text = message
-    }
-
-    override fun onResume() {
+    @OptIn(UnstableApi::class)
+    public override fun onResume() {
         super.onResume()
-        exoPlayer?.play()
-        handler.post(updateProgressRunnable)
+        if (player == null) {
+            initializePlayer()
+        }
     }
 
-    override fun onPause() {
+    @OptIn(UnstableApi::class)
+    public override fun onPause() {
         super.onPause()
-        exoPlayer?.pause()
-        handler.removeCallbacks(updateProgressRunnable)
-        handler.removeCallbacks(hideControlsRunnable)
+        currentPosition = player?.currentPosition ?: 0
+        releasePlayer()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        handler.removeCallbacks(updateProgressRunnable)
-        handler.removeCallbacks(hideControlsRunnable)
-        exoPlayer?.release()
-        exoPlayer = null
+    @OptIn(UnstableApi::class)
+    public override fun onStop() {
+        super.onStop()
+        releasePlayer()
+    }
+
+    private fun releasePlayer() {
+        player?.let {
+            it.release()
+            player = null
+            // Save currentPosition to database here
+            Log.d("PlayerActivity", "Saving position: $currentPosition")
+            // FIX: Use binding
+            binding.playerView.player = null
+        }
+    }
+
+    // Handle window focus changes
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            hideSystemUi()
+        }
+    }
+
+    private fun hideSystemUi() {
+        // FIX: Use binding
+        binding.root.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
     }
 }

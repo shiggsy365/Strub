@@ -24,7 +24,7 @@
     <string msgid="5976598919945601918" name="abc_action_bar_home_description">"ಹೋಮ್‌ಗೆ ನ್ಯಾವಿಗೇಟ್ ಮಾಡಿ"</string>
     <string msgid="8388173803310557296" name="abc_action_bar_up_description">"ಮೇಲಕ್ಕೆ ನ್ಯಾವಿಗೇಟ್ ಮಾಡಿ"</string>
     <string msgid="3937310113216875497" name="abc_action_menu_overflow_description">"ಇನ್ನಷ್ಟು ಆಯ್ಕೆಗಳು"</string>
-    <string msgid="4692188335987374352" name="abc_action_mode_done">"ಮುಗಿದಿದೆ"</string>
+    <string msgid="4692188335987374352" name="abc_action_mode_done">"ಆಯಿತು"</string>
     <string msgid="1189761859438369441" name="abc_activity_chooser_view_see_all">"ಎಲ್ಲವನ್ನೂ ನೋಡಿ"</string>
     <string msgid="2165779757652331008" name="abc_activitychooserview_choose_application">"ಆ್ಯಪ್‌ವೊಂದನ್ನು ಆಯ್ಕೆಮಾಡಿ"</string>
     <string msgid="4215997306490295099" name="abc_capital_off">"ಆಫ್"</string>
@@ -51,7 +51,6 @@
     <string name="bottomsheet_action_collapse">ಕೆಳಭಾಗದ ಶೀಟ್ ಅನ್ನು ಕುಗ್ಗಿಸಿ</string>
     <string name="bottomsheet_action_expand">ಕೆಳಭಾಗದ ಶೀಟ್ ಅನ್ನು ವಿಸ್ತರಿಸಿ</string>
     <string name="bottomsheet_action_expand_halfway">ಅರ್ಧದಷ್ಟು ವಿಸ್ತರಿಸಿ</string>
-    <string name="bottomsheet_drag_handle_clicked">ಹ್ಯಾಂಡಲ್ ಡ್ರ್ಯಾಗ್ ಮಾಡಿ ಎಂಬುದನ್ನು ಡಬಲ್-ಟ್ಯಾಪ್ ಮಾಡಲಾಗಿದೆ</string>
     <string name="bottomsheet_drag_handle_content_description">ಹ್ಯಾಂಡಲ್ ಡ್ರ್ಯಾಗ್ ಮಾಡಿ</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"ಉತ್ತರಿಸಿ"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"ವೀಡಿಯೊ"</string>
@@ -63,8 +62,26 @@
     <string name="character_counter_content_description">%2$d ರಲ್ಲಿ %1$d ಅಕ್ಷರಗಳನ್ನು ನಮೂದಿಸಲಾಗಿದೆ</string>
     <string name="character_counter_overflowed_content_description">ಅಕ್ಷರ ಮಿತಿಯು %2$d ರಲ್ಲಿ %1$d ಮೀರಿದೆ</string>
     <string name="clear_text_end_icon_content_description">ಪಠ್ಯ ತೆರವುಗೊಳಿಸಿ</string>
+    <string name="default_notification_channel_name">ಇದೀಗ ಪ್ಲೇ ಮಾಡಲಾಗುತ್ತಿದೆ</string>
     <string name="error_a11y_label">ದೋಷ: ಅಮಾನ್ಯ</string>
     <string name="error_icon_content_description">ದೋಷ</string>
+    <string name="error_message_authentication_expired">ಈ ಆ್ಯಪ್ ಬಳಸಲು ಸೈನ್ ಇನ್ ಮಾಡಿ</string>
+    <string name="error_message_bad_value">ತಪ್ಪಾದ ಇನ್‌ಪುಟ್ ಡೇಟಾ</string>
+    <string name="error_message_concurrent_stream_limit">ಹಲವಾರು ಸಾಧನಗಳಲ್ಲಿ ಆಲಿಸಲಾಗುತ್ತಿದೆ</string>
+    <string name="error_message_content_already_playing">ಈಗಾಗಲೇ ಆ ಕಂಟೆಂಟ್‌ ಅನ್ನು ಪ್ಲೇ ಮಾಡಲಾಗುತ್ತಿದೆ</string>
+    <string name="error_message_disconnected">ಮಾಧ್ಯಮ ಆ್ಯಪ್‌ನಿಂದ ಸಂಪರ್ಕ ಕಡಿತಗೊಂಡಿದೆ</string>
+    <string name="error_message_end_of_playlist">ಸರದಿಯಲ್ಲಿ ಯಾವುದು ಬಾಕಿ ಉಳಿದಿಲ್ಲ</string>
+    <string name="error_message_fallback">ಏನೋ ತಪ್ಪಾಗಿದೆ. ನಂತರ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="error_message_info_cancelled">ಪೂರ್ಣಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಪುನಃ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="error_message_invalid_state">ಸದ್ಯಕ್ಕೆ ಅದನ್ನು ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ</string>
+    <string name="error_message_io">ಇನ್‌ಪುಟ್/ಔಟ್‌‌ಪುಟ್ ದೋಷ</string>
+    <string name="error_message_not_available_in_region">ಆ ಕಂಟೆಂಟ್‌ ಅನ್ನು ಇಲ್ಲಿ ಪಡೆದುಕೊಳ್ಳಲು ಸಾಧ್ಯವಿಲ್ಲ</string>
+    <string name="error_message_not_supported">ಈ ಆ್ಯಪ್‌ನಿಂದ ಅದನ್ನು ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ</string>
+    <string name="error_message_parental_control_restricted">ಕಂಟೆಂಟ್‌ ಅನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ</string>
+    <string name="error_message_permission_denied">ಆ್ಯಕ್ಸೆಸ್ ಅನ್ನು ನಿರಾಕರಿಸಲಾಗಿದೆ</string>
+    <string name="error_message_premium_account_required">ಪ್ರೀಮಿಯಂ ಆ್ಯಕ್ಸೆಸ್‌ನ ಅಗತ್ಯವಿದೆ</string>
+    <string name="error_message_setup_required">ಸೆಟಪ್ ಅಗತ್ಯವಿದೆ</string>
+    <string name="error_message_skip_limit_reached">ಇನ್ನು ಮುಂದೆ ಟ್ರ್ಯಾಕ್‌ಗಳನ್ನು ಸ್ಕಿಪ್ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ</string>
     <string name="exo_controls_cc_disabled_description">ಸಬ್‌ಟೈಟಲ್‌ಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ</string>
     <string name="exo_controls_cc_enabled_description">ಸಬ್‌ಟೈಟಲ್‌ಗಳನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ</string>
     <string name="exo_controls_fastforward_description">ಫಾಸ್ಟ್ ಫಾರ್ವರ್ಡ್</string>
@@ -89,6 +106,15 @@
     <string name="exo_controls_shuffle_on_description">ಶಫಲ್ ಮೋಡ್ ಅನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ</string>
     <string name="exo_controls_stop_description">ನಿಲ್ಲಿಸಿ</string>
     <string name="exo_controls_vr_description">VR ಮೋಡ್</string>
+    <string name="exo_download_completed">ಡೌನ್‌ಲೋಡ್ ಪೂರ್ಣಗೊಂಡಿದೆ</string>
+    <string name="exo_download_description">ಡೌನ್‌ಲೋಡ್‌</string>
+    <string name="exo_download_downloading">ಡೌನ್‌ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ</string>
+    <string name="exo_download_failed">ಡೌನ್‌ಲೋಡ್‌ ವಿಫಲಗೊಂಡಿದೆ</string>
+    <string name="exo_download_notification_channel_name">ಡೌನ್‌ಲೋಡ್‌ಗಳು</string>
+    <string name="exo_download_paused">ಡೌನ್‌ಲೋಡ್‌ಗಳನ್ನು ವಿರಾಮಗೊಳಿಸಲಾಗಿದೆ</string>
+    <string name="exo_download_paused_for_network">ಡೌನ್‌ಲೋಡ್‌ಗಳು ನೆಟ್‌ವರ್ಕ್‌ಗಾಗಿ ಕಾಯುತ್ತಿವೆ</string>
+    <string name="exo_download_paused_for_wifi">ಡೌನ್‌ಲೋಡ್‌ಗಳು Wi-Fi ಗಾಗಿ ಕಾಯುತ್ತಿವೆ</string>
+    <string name="exo_download_removing">ಡೌನ್ಲೋಡ್‌ಗಳನ್ನು ತೆಗೆದುಹಾಕಲಾಗುತ್ತಿದೆ</string>
     <string name="exo_item_list">%1$s, %2$s</string>
     <string name="exo_track_bitrate">%1$.2f Mbps</string>
     <string name="exo_track_mono">ಮೊನೊ</string>
@@ -107,15 +133,58 @@
     <string name="exo_track_surround_5_point_1">5.1 ಸರೌಂಡ್ ಶಬ್ದ</string>
     <string name="exo_track_surround_7_point_1">7.1 ಸರೌಂಡ್ ಶಬ್ದ</string>
     <string name="exo_track_unknown">ಅಪರಿಚಿತ</string>
+    <string name="exo_track_unknown_name">ಅಪರಿಚಿತ (%1$s)</string>
     <string name="exposed_dropdown_menu_content_description">ಡ್ರಾಪ್‌ಡೌನ್ ಮೆನು ತೋರಿಸಿ</string>
     <string name="icon_content_description">ಡೈಲಾಗ್ ಐಕಾನ್</string>
     <string name="item_view_role_description">ಟ್ಯಾಬ್</string>
+    <string msgid="4657191930956702614" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
+    <string msgid="4597148235912710942" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
+    <string msgid="893619591225519922" name="lb_guidedaction_continue_title">"ಮುಂದುವರಿಸಿ"</string>
+    <string msgid="3330958750346333890" name="lb_guidedaction_finish_title">"ಪೂರ್ಣಗೊಳಿಸಿ"</string>
+    <string msgid="3228326776757666747" name="lb_media_player_error">"ಮೀಡಿಯಾ ಪ್ಲೇಯರ್ ದೋಷ ಕೋಡ್ %1$d ಹೆಚ್ಚುವರಿ %2$d"</string>
+    <string msgid="8084428500709675515" name="lb_navigation_menu_contentDescription">"ನ್ಯಾವಿಗೇಶನ್‌ ಮೆನು"</string>
+    <string msgid="2394451791544864917" name="lb_onboarding_accessibility_next">"ಮುಂದೆ"</string>
+    <string msgid="5549711907371161292" name="lb_onboarding_get_started">"ಪ್ರಾರಂಭಿಸಿ"</string>
+    <string msgid="8691966842977635128" name="lb_playback_controls_closed_captioning_disable">"ಮುಚ್ಚಿದ ಶೀರ್ಷಿಕೆಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ"</string>
+    <string msgid="2346334170216706076" name="lb_playback_controls_closed_captioning_enable">"ಮುಚ್ಚಿದ ಶೀರ್ಷಿಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ"</string>
+    <string msgid="740570111678243493" name="lb_playback_controls_fast_forward">"ಫಾಸ್ಟ್ ಫಾರ್ವರ್ಡ್"</string>
+    <string msgid="5734614175721471329" name="lb_playback_controls_fast_forward_multiplier">"ಫಾಸ್ಟ್ ಫಾರ್ವರ್ಡ್ %1$dX"</string>
+    <string msgid="5859666950961624736" name="lb_playback_controls_hidden">"ಮಾಧ್ಯಮ ನಿಯಂತ್ರಣಗಳನ್ನು ಮರೆಮಾಡಲಾಗಿದೆ, ತೋರಿಸಲು d-pad ಒತ್ತಿರಿ"</string>
+    <string msgid="1209119371486219736" name="lb_playback_controls_high_quality_disable">"ಹೆಚ್ಚು ಗುಣಮಟ್ಟವನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ"</string>
+    <string msgid="3057698527166674705" name="lb_playback_controls_high_quality_enable">"ಹೆಚ್ಚು ಗುಣಮಟ್ಟವನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ"</string>
+    <string msgid="8730341244454469032" name="lb_playback_controls_more_actions">"ಇನ್ನಷ್ಟು ಕ್ರಿಯೆಗಳು"</string>
+    <string msgid="917331776961802657" name="lb_playback_controls_pause">"ವಿರಾಮ"</string>
+    <string msgid="5770668162543767702" name="lb_playback_controls_picture_in_picture">"ಚಿತ್ರವನ್ನು ಚಿತ್ರ ಮೋಡ್‌ನಲ್ಲಿ ಪ್ರವೇಶಿಸಿ"</string>
+    <string msgid="7088090604803481121" name="lb_playback_controls_play">"ಪ್ಲೇ"</string>
+    <string msgid="8429099206716245199" name="lb_playback_controls_repeat_all">"ಎಲ್ಲವನ್ನು ಪುನರಾವರ್ತಿಸಿ"</string>
+    <string msgid="1614290959784265209" name="lb_playback_controls_repeat_none">"ಯಾವುದನ್ನೂ ಪುನರಾವರ್ತಿಸಬೇಡಿ"</string>
+    <string msgid="676658705837320560" name="lb_playback_controls_repeat_one">"ಒಂದನ್ನು ಪುನರಾವರ್ತಿಸಿ"</string>
+    <string msgid="2866333981131020771" name="lb_playback_controls_rewind">"ರಿವೈಂಡ್"</string>
+    <string msgid="6038956370475252734" name="lb_playback_controls_rewind_multiplier">"ರಿವೈಂಡ್ %1$dX"</string>
+    <string msgid="8690223891515602822" name="lb_playback_controls_shown">"ಮಾಧ್ಯಮ ನಿಯಂತ್ರಣಗಳನ್ನು ತೋರಿಸಲಾಗಿದೆ"</string>
+    <string msgid="6793109999253893369" name="lb_playback_controls_shuffle_disable">"ಶಫಲ್ ಮಾಡುವುದನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ"</string>
+    <string msgid="5151681938752704485" name="lb_playback_controls_shuffle_enable">"ಶಫಲ್ ಮಾಡುವುದನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ"</string>
+    <string msgid="8117512422682146745" name="lb_playback_controls_skip_next">"ಮುಂದೆ ಸ್ಕಿಪ್ ಮಾಡಿ"</string>
+    <string msgid="3481218248309447059" name="lb_playback_controls_skip_previous">"ಹಿಂದೆ ಸ್ಕಿಪ್ ಮಾಡಿ"</string>
+    <string msgid="3544533410444618518" name="lb_playback_controls_thumb_down">"ಥಂಬ್ ಡೌನ್ ಆಯ್ಕೆರದ್ದುಮಾಡಿ"</string>
+    <string msgid="8475278766138652105" name="lb_playback_controls_thumb_down_outline">"ಥಂಬ್ ಡೌನ್ ಆಯ್ಕೆಮಾಡಿ"</string>
+    <string msgid="3458671378107738666" name="lb_playback_controls_thumb_up">"ಥಂಬ್ ಅಪ್ ಆಯ್ಕೆರದ್ದುಮಾಡಿ"</string>
+    <string msgid="1385865732502550659" name="lb_playback_controls_thumb_up_outline">"ಥಂಬ್ ಅಪ್ ಆಯ್ಕೆಮಾಡಿ"</string>
+    <string msgid="1471121602610716654" name="lb_playback_time_separator">"/"</string>
+    <string msgid="5700349211583074131" name="lb_search_bar_hint">"ಹುಡುಕಿ"</string>
+    <string msgid="5926531297066387462" name="lb_search_bar_hint_speech">"ಹುಡುಕಲು ಮಾತನಾಡಿ"</string>
+    <string msgid="4826526877249029043" name="lb_search_bar_hint_with_title">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> ಹುಡುಕಿ"</string>
+    <string msgid="6032250334706920550" name="lb_search_bar_hint_with_title_speech">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> ಮಾತನಾಡಿ ಹುಡುಕಾಟ ನಡೆಸಿ"</string>
+    <string name="m3_loading_indicator_content_description">ಲೋಡ್ ಆಗುತ್ತಿದೆ</string>
     <string name="material_clock_toggle_content_description">ಬೆಳಿಗ್ಗೆ ಅಥವಾ ಮಧ್ಯಾಹ್ನ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="material_hour_24h_suffix">%1$s ಗಂಟೆಗಳು</string>
     <string name="material_hour_selection">ಸಮಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="material_hour_suffix">%1$s ಗಂಟೆ</string>
     <string name="material_minute_selection">ನಿಮಿಷಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="material_minute_suffix">%1$s ನಿಮಿಷಗಳು</string>
+    <string name="material_slider_range_end">ಶ್ರೇಣಿಯ ಅಂತ್ಯ</string>
+    <string name="material_slider_range_start">ಶ್ರೇಣಿಯ ಪ್ರಾರಂಭ</string>
+    <string name="material_slider_value">ಮೌಲ್ಯ</string>
     <string name="material_timepicker_am">AM</string>
     <string name="material_timepicker_clock_mode_description">ಸಮಯವನ್ನು ನಮೂದಿಸಲು ಗಡಿಯಾರದ ನಮೂನೆಗೆ ಬದಲಿಸಿ.</string>
     <string name="material_timepicker_hour">ಗಂಟೆ</string>
@@ -123,6 +192,12 @@
     <string name="material_timepicker_pm">PM</string>
     <string name="material_timepicker_select_time">ಸಮಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="material_timepicker_text_input_mode_description">ಸಮಯವನ್ನು ನಮೂದಿಸಲು ಪಠ್ಯದ ನಮೂನೆಗೆ ಬದಲಿಸಿ.</string>
+    <string name="media3_controls_pause_description">ವಿರಾಮಗೊಳಿಸಿ</string>
+    <string name="media3_controls_play_description">ಪ್ಲೇ ಮಾಡಿ</string>
+    <string name="media3_controls_seek_back_description">ಹಿಂದಕ್ಕೆ ಸೀಕ್ ಮಾಡಿ</string>
+    <string name="media3_controls_seek_forward_description">ಮುಂದಕ್ಕೆ ಸೀಕ್ ಮಾಡಿ</string>
+    <string name="media3_controls_seek_to_next_description">ಮುಂದಿನ ಐಟಂಗೆ ಸೀಕ್ ಮಾಡಿ</string>
+    <string name="media3_controls_seek_to_previous_description">ಹಿಂದಿನ ಐಟಂಗೆ ಸೀಕ್ ಮಾಡಿ</string>
     <string name="mtrl_badge_numberless_content_description">ಹೊಸ ನೋಟಿಫಿಕೇಶನ್</string>
     <string name="mtrl_checkbox_state_description_checked">ಪರೀಕ್ಷಿಸಲಾಗಿದೆ</string>
     <string name="mtrl_checkbox_state_description_indeterminate">ಭಾಗಶಃ ಪರೀಕ್ಷಿಸಲಾಗಿದೆ</string>
@@ -131,7 +206,7 @@
     <string name="mtrl_exceed_max_badge_number_content_description" ns2:ignore="PluralsCandidate">%1$d ಕ್ಕಿಂತ ಹೆಚ್ಚು ಹೊಸ ಅಧಿಸೂಚನೆಗಳು</string>
     <string name="mtrl_picker_a11y_next_month">ಮುಂದಿನ ತಿಂಗಳಿಗೆ ಬದಲಿಸಿ</string>
     <string name="mtrl_picker_a11y_prev_month">ಹಿಂದಿನ ತಿಂಗಳಿಗೆ ಬದಲಿಸಿ</string>
-    <string name="mtrl_picker_announce_current_range_selection">ಪ್ರಾರಂಭ ದಿನಾಂಕದ ಆಯ್ಕೆ: %1$s – ಅಂತಿಮ ದಿನಾಂಕದ ಆಯ್ಕೆ: %2$s</string>
+    <string name="mtrl_picker_announce_current_range_selection">ಪ್ರಾರಂಭ ದಿನಾಂಕದ ಆಯ್ಕೆ: %1$s – ಮುಕ್ತಾಯ ದಿನಾಂಕದ ಆಯ್ಕೆ: %2$s</string>
     <string name="mtrl_picker_announce_current_selection">ಪ್ರಸ್ತುತ ಆಯ್ಕೆ: %1$s</string>
     <string name="mtrl_picker_announce_current_selection_none">ಯಾವುದೂ ಇಲ್ಲ</string>
     <string name="mtrl_picker_cancel">ರದ್ದುಮಾಡಿ</string>
@@ -153,7 +228,7 @@
     <string name="mtrl_picker_range_header_selected">%1$s – %2$s</string>
     <string name="mtrl_picker_range_header_title">ಶ್ರೇಣಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="mtrl_picker_range_header_unselected">ಪ್ರಾರಂಭ ದಿನಾಂಕ – ಮುಕ್ತಾಯ ದಿನಾಂಕ</string>
-    <string name="mtrl_picker_save">ಉಳಿಸಿ</string>
+    <string name="mtrl_picker_save">ಸೇವ್ ಮಾಡಿ</string>
     <string name="mtrl_picker_start_date_description">ಪ್ರಾರಂಭದ ದಿನಾಂಕ %1$s</string>
     <string name="mtrl_picker_text_input_date_hint">ದಿನಾಂಕ</string>
     <string name="mtrl_picker_text_input_date_range_end_hint">ಮುಕ್ತಾಯ ದಿನಾಂಕ</string>
@@ -163,11 +238,14 @@
     <string name="mtrl_picker_text_input_year_abbr">ವ</string>
     <string name="mtrl_picker_today_description">ಇಂದು %1$s</string>
     <string name="mtrl_picker_toggle_to_calendar_input_mode">ಕ್ಯಾಲೆಂಡರ್ ಇನ್‌ಪುಟ್ ಮೋಡ್‌ಗೆ ಬದಲಿಸಿ</string>
-    <string name="mtrl_picker_toggle_to_day_selection">Calendar ವೀಕ್ಷಣೆಗೆ ಬದಲಾಯಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ</string>
+    <string name="mtrl_picker_toggle_to_day_selection">Calendar ವೀಕ್ಷಣೆಗೆ ಬದಲಿಸಿ</string>
     <string name="mtrl_picker_toggle_to_text_input_mode">ಪಠ್ಯ ಇನ್‌ಪುಟ್ ಮೋಡ್‌ಗೆ ಬದಲಿಸಿ</string>
-    <string name="mtrl_picker_toggle_to_year_selection">ವರ್ಷದ ವೀಕ್ಷಣೆಗೆ ಬದಲಾಯಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ</string>
+    <string name="mtrl_picker_toggle_to_year_selection">ವರ್ಷದ ವೀಕ್ಷಣೆಗೆ ಬದಲಾಯಿಸಿ</string>
+    <string name="mtrl_picker_toggled_to_day_selection">Calendar ವೀಕ್ಷಣೆಗೆ ಬದಲಾಯಿಸಲಾಗಿದೆ</string>
+    <string name="mtrl_picker_toggled_to_year_selection">ವರ್ಷದ ವೀಕ್ಷಣೆಗೆ ಬದಲಾಯಿಸಲಾಗಿದೆ</string>
     <string name="mtrl_timepicker_cancel">ರದ್ದುಮಾಡಿ</string>
     <string name="mtrl_timepicker_confirm">ಸರಿ</string>
+    <string msgid="1301877238242752863" name="orb_search_action">"ಹುಡುಕಾಟ ಕ್ರಿಯೆ"</string>
     <string name="password_toggle_content_description">ಪಾಸ್‌ವರ್ಡ್ ತೋರಿಸಿ</string>
     <string msgid="6264217191555673260" name="search_menu_title">"ಹುಡುಕಿ"</string>
     <string name="searchview_clear_text_content_description">ಪಠ್ಯವನ್ನು ತೆರವುಗೊಳಿಸಿ</string>

@@ -4,12 +4,16 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
+// FIX: Add missing import
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.databinding.ActivityMainBinding
+import com.example.stremiompvplayer.databinding.DialogUserMenuBinding
 import com.example.stremiompvplayer.ui.discover.DiscoverFragment
 import com.example.stremiompvplayer.ui.library.LibraryFragment
+// ... existing code ...
+import androidx.fragment.app.Fragment
 import com.example.stremiompvplayer.ui.movies.MoviesFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
 import com.example.stremiompvplayer.ui.series.SeriesFragment
@@ -19,7 +23,6 @@ import android.widget.TextView
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.viewModels
-import com.example.stremiompvplayer.databinding.DialogUserMenuBinding
 import com.example.stremiompvplayer.models.FeedList
 import com.example.stremiompvplayer.models.User
 import com.example.stremiompvplayer.viewmodels.MainViewModel

@@ -51,7 +51,6 @@
     <string name="bottomsheet_action_collapse">तळाशी असलेली शीट कोलॅप्स करा</string>
     <string name="bottomsheet_action_expand">तळाशी असलेल्या शीटचा विस्तार करा</string>
     <string name="bottomsheet_action_expand_halfway">पूर्णपणे विस्तृत करा</string>
-    <string name="bottomsheet_drag_handle_clicked">ड्रॅग हॅंडलवर दोनदा टॅप केले आहे</string>
     <string name="bottomsheet_drag_handle_content_description">ड्रॅग हॅंडल</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"उत्तर द्या"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"व्हिडिओ"</string>
@@ -63,8 +62,26 @@
     <string name="character_counter_content_description">%2$d पैकी %1$d वर्ण एंटर केले आहे</string>
     <string name="character_counter_overflowed_content_description">%2$d पैकी %1$d वर्णमर्यादा ओलांडली आहे</string>
     <string name="clear_text_end_icon_content_description">मजकूर साफ करा</string>
+    <string name="default_notification_channel_name">आता प्ले करत आहे</string>
     <string name="error_a11y_label">एरर: चुकीचा</string>
     <string name="error_icon_content_description">एरर</string>
+    <string name="error_message_authentication_expired">हे अ‍ॅप वापरण्यासाठी साइन इन करा</string>
+    <string name="error_message_bad_value">इनपुट डेटा चुकीचा आहे</string>
+    <string name="error_message_concurrent_stream_limit">खूप जास्‍त डिव्हाइसवर ऐकले जात आहे</string>
+    <string name="error_message_content_already_playing">तो आशय आधीपासून प्ले करत आहे</string>
+    <string name="error_message_disconnected">मीडिया अ‍ॅपवरून डिस्कनेक्ट केले आहे</string>
+    <string name="error_message_end_of_playlist">इतर काहीही क्यू केलेले नाही</string>
+    <string name="error_message_fallback">काहीतरी चुकले. नंतर प्रयत्न करा.</string>
+    <string name="error_message_info_cancelled">पूर्ण करता आले नाही. पुन्हा प्रयत्न करा.</string>
+    <string name="error_message_invalid_state">ते आता करू शकत नाही</string>
+    <string name="error_message_io">इनपुट/आउटपुट एरर</string>
+    <string name="error_message_not_available_in_region">तो आशय येथे मिळवू शकत नाही</string>
+    <string name="error_message_not_supported">हे ॲप ते करू शकत नाही</string>
+    <string name="error_message_parental_control_restricted">तो आशय ब्लॉक केलेला आहे</string>
+    <string name="error_message_permission_denied">अ‍ॅक्सेस नाकारला</string>
+    <string name="error_message_premium_account_required">प्रीमियम ॲक्सेस आवश्यक आहे</string>
+    <string name="error_message_setup_required">सेटअप आवश्यक आहे</string>
+    <string name="error_message_skip_limit_reached">आणखी गाणी वगळू शकत नाही</string>
     <string name="exo_controls_cc_disabled_description">सबटायटल सुरू करा</string>
     <string name="exo_controls_cc_enabled_description">सबटायटल बंद करा</string>
     <string name="exo_controls_fastforward_description">फास्ट फॉरवर्ड करा</string>
@@ -89,6 +106,15 @@
     <string name="exo_controls_shuffle_on_description">शफल मोड बंद करा</string>
     <string name="exo_controls_stop_description">थांबा</string>
     <string name="exo_controls_vr_description">VR मोड</string>
+    <string name="exo_download_completed">डाउनलोड पूर्ण झाले</string>
+    <string name="exo_download_description">डाउनलोड करा</string>
+    <string name="exo_download_downloading">डाउनलोड होत आहे</string>
+    <string name="exo_download_failed">डाउनलोड अयशस्वी झाले</string>
+    <string name="exo_download_notification_channel_name">डाउनलोड</string>
+    <string name="exo_download_paused">डाउनलोड थांबवले</string>
+    <string name="exo_download_paused_for_network">डाउनलोड नेटवर्कची प्रतीक्षा करत आहेत</string>
+    <string name="exo_download_paused_for_wifi">डाउनलोड वायफाय ची प्रतीक्षा करत आहेत</string>
+    <string name="exo_download_removing">डाउनलोड काढून टाकत आहे</string>
     <string name="exo_item_list">%1$s, %2$s</string>
     <string name="exo_track_bitrate">%1$.2f Mbps</string>
     <string name="exo_track_mono">मोनो</string>
@@ -107,15 +133,58 @@
     <string name="exo_track_surround_5_point_1">५.१ सराउंड साउंड</string>
     <string name="exo_track_surround_7_point_1">७.१ सराउंड साउंड</string>
     <string name="exo_track_unknown">अज्ञात</string>
+    <string name="exo_track_unknown_name">अज्ञात (%1$s)</string>
     <string name="exposed_dropdown_menu_content_description">ड्रॉपडाउन मेनू दाखवा</string>
     <string name="icon_content_description">डायलॉग आयकन</string>
     <string name="item_view_role_description">टॅब</string>
+    <string msgid="4657191930956702614" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
+    <string msgid="4597148235912710942" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
+    <string msgid="893619591225519922" name="lb_guidedaction_continue_title">"सुरू ठेवा"</string>
+    <string msgid="3330958750346333890" name="lb_guidedaction_finish_title">"समाप्त"</string>
+    <string msgid="3228326776757666747" name="lb_media_player_error">"मीडियाप्लेअर एरर कोड %1$d अतिरिक्त %2$d"</string>
+    <string msgid="8084428500709675515" name="lb_navigation_menu_contentDescription">"नेव्हिगेशन मेनू"</string>
+    <string msgid="2394451791544864917" name="lb_onboarding_accessibility_next">"पुढील"</string>
+    <string msgid="5549711907371161292" name="lb_onboarding_get_started">"सुरू करा"</string>
+    <string msgid="8691966842977635128" name="lb_playback_controls_closed_captioning_disable">"सबटायटल बंद करा"</string>
+    <string msgid="2346334170216706076" name="lb_playback_controls_closed_captioning_enable">"सबटायटल बंद करा"</string>
+    <string msgid="740570111678243493" name="lb_playback_controls_fast_forward">"पुढे ढकला"</string>
+    <string msgid="5734614175721471329" name="lb_playback_controls_fast_forward_multiplier">"फास्ट फॉरवर्ड %1$d"</string>
+    <string msgid="5859666950961624736" name="lb_playback_controls_hidden">"मीडिया नियंत्रणे लपलेली आहेत, दर्शवण्‍यासाठी d-pad प्रेस करा"</string>
+    <string msgid="1209119371486219736" name="lb_playback_controls_high_quality_disable">"उच्च गुणवत्ता बंद करा"</string>
+    <string msgid="3057698527166674705" name="lb_playback_controls_high_quality_enable">"उच्च गुणवत्ता सुरू करा"</string>
+    <string msgid="8730341244454469032" name="lb_playback_controls_more_actions">"आणखी क्रिया"</string>
+    <string msgid="917331776961802657" name="lb_playback_controls_pause">"विराम द्या"</string>
+    <string msgid="5770668162543767702" name="lb_playback_controls_picture_in_picture">"चित्रात-चित्र मोडमध्ये एंटर करा"</string>
+    <string msgid="7088090604803481121" name="lb_playback_controls_play">"प्ले"</string>
+    <string msgid="8429099206716245199" name="lb_playback_controls_repeat_all">"सर्व रिपीट करा"</string>
+    <string msgid="1614290959784265209" name="lb_playback_controls_repeat_none">"काहीही रिपीट करू नका"</string>
+    <string msgid="676658705837320560" name="lb_playback_controls_repeat_one">"एक रिपीट करा"</string>
+    <string msgid="2866333981131020771" name="lb_playback_controls_rewind">"रीवाइंड करा"</string>
+    <string msgid="6038956370475252734" name="lb_playback_controls_rewind_multiplier">"रीवाइंड %1$dX"</string>
+    <string msgid="8690223891515602822" name="lb_playback_controls_shown">"मीडिया नियंत्रणे दर्शवली आहेत"</string>
+    <string msgid="6793109999253893369" name="lb_playback_controls_shuffle_disable">"शफल करा बंद करा"</string>
+    <string msgid="5151681938752704485" name="lb_playback_controls_shuffle_enable">"शफल करा सुरू करा"</string>
+    <string msgid="8117512422682146745" name="lb_playback_controls_skip_next">"पुढील वगळा"</string>
+    <string msgid="3481218248309447059" name="lb_playback_controls_skip_previous">"मागील वगळा"</string>
+    <string msgid="3544533410444618518" name="lb_playback_controls_thumb_down">"थंब डाउन निवड रद्द करा"</string>
+    <string msgid="8475278766138652105" name="lb_playback_controls_thumb_down_outline">"थंब डाउन निवडा"</string>
+    <string msgid="3458671378107738666" name="lb_playback_controls_thumb_up">"थंब अप निवड रद्द करा"</string>
+    <string msgid="1385865732502550659" name="lb_playback_controls_thumb_up_outline">"थंब अप निवडा"</string>
+    <string msgid="1471121602610716654" name="lb_playback_time_separator">"/"</string>
+    <string msgid="5700349211583074131" name="lb_search_bar_hint">"शोधा"</string>
+    <string msgid="5926531297066387462" name="lb_search_bar_hint_speech">"शोधण्यासाठी बोला"</string>
+    <string msgid="4826526877249029043" name="lb_search_bar_hint_with_title">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> शोधा"</string>
+    <string msgid="6032250334706920550" name="lb_search_bar_hint_with_title_speech">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> शोधण्यासाठी बोला"</string>
+    <string name="m3_loading_indicator_content_description">लोड करत आहे</string>
     <string name="material_clock_toggle_content_description">AM किंवा PM निवडा</string>
     <string name="material_hour_24h_suffix">%1$s तास</string>
     <string name="material_hour_selection">वेळ निवडा</string>
     <string name="material_hour_suffix">%1$s वाजता</string>
     <string name="material_minute_selection">मिनिटे निवडा</string>
     <string name="material_minute_suffix">%1$s मिनिटे</string>
+    <string name="material_slider_range_end">रेंजचा शेवट</string>
+    <string name="material_slider_range_start">रेंजची सुरुवात</string>
+    <string name="material_slider_value">मूल्य</string>
     <string name="material_timepicker_am">AM</string>
     <string name="material_timepicker_clock_mode_description">वेळेच्या इनपुटसाठी घड्याळ मोडवर स्विच करा.</string>
     <string name="material_timepicker_hour">तास</string>
@@ -123,6 +192,12 @@
     <string name="material_timepicker_pm">PM</string>
     <string name="material_timepicker_select_time">वेळ निवडा</string>
     <string name="material_timepicker_text_input_mode_description">वेळ इनपुटसाठी मजकूर इनपुट मोडवर स्विच करा.</string>
+    <string name="media3_controls_pause_description">थांबवा</string>
+    <string name="media3_controls_play_description">प्ले करा</string>
+    <string name="media3_controls_seek_back_description">मागे जा</string>
+    <string name="media3_controls_seek_forward_description">पुढे जा</string>
+    <string name="media3_controls_seek_to_next_description">पुढील आयटमवर जा</string>
+    <string name="media3_controls_seek_to_previous_description">मागील आयटम वर जा</string>
     <string name="mtrl_badge_numberless_content_description">नवीन सूचना</string>
     <string name="mtrl_checkbox_state_description_checked">निवडलेले</string>
     <string name="mtrl_checkbox_state_description_indeterminate">अंशतः निवडलेले</string>
@@ -163,11 +238,14 @@
     <string name="mtrl_picker_text_input_year_abbr">व</string>
     <string name="mtrl_picker_today_description">आज %1$s</string>
     <string name="mtrl_picker_toggle_to_calendar_input_mode">कॅलेंडर इनपुट मोडवर स्विच करा</string>
-    <string name="mtrl_picker_toggle_to_day_selection">कॅलेंडर या दृश्यावर स्विच करण्यासाठी टॅप करा</string>
+    <string name="mtrl_picker_toggle_to_day_selection">कॅलेंडर व्ह्यूवर स्विच करा</string>
     <string name="mtrl_picker_toggle_to_text_input_mode">मजकूर इनपुट मोडवर स्विच करा</string>
-    <string name="mtrl_picker_toggle_to_year_selection">वर्ष या दृश्यावर स्विच करण्यासाठी टॅप करा</string>
+    <string name="mtrl_picker_toggle_to_year_selection">वर्ष व्ह्यूवर स्विच करा</string>
+    <string name="mtrl_picker_toggled_to_day_selection">Calendar दृश्यावर स्विच केले आहे</string>
+    <string name="mtrl_picker_toggled_to_year_selection">वर्षाच्या दृश्यावर स्विच केले आहे</string>
     <string name="mtrl_timepicker_cancel">रद्द करा</string>
     <string name="mtrl_timepicker_confirm">ओके</string>
+    <string msgid="1301877238242752863" name="orb_search_action">"शोध क्रिया"</string>
     <string name="password_toggle_content_description">पासवर्ड दाखवा</string>
     <string msgid="6264217191555673260" name="search_menu_title">"शोध"</string>
     <string name="searchview_clear_text_content_description">मजकूर साफ करा</string>

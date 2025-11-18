@@ -5,17 +5,16 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-// FIX: Import stub models
 import com.example.stremiompvplayer.models.LibraryItem
 import com.example.stremiompvplayer.models.NextUpItem
 import com.example.stremiompvplayer.models.User
 import com.example.stremiompvplayer.models.UserSettings
 import com.example.stremiompvplayer.models.WatchProgress
-// NEW: Add imports for FeedList and HubSlot
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.example.stremiompvplayer.models.FeedList
 import com.example.stremiompvplayer.models.HubSlot
-import kotlinx_coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [

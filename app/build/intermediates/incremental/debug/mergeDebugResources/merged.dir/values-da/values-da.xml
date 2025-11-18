@@ -51,7 +51,6 @@
     <string name="bottomsheet_action_collapse">Skjul feltet i bunden</string>
     <string name="bottomsheet_action_expand">Udvid feltet i bunden</string>
     <string name="bottomsheet_action_expand_halfway">Udvid halvdelen</string>
-    <string name="bottomsheet_drag_handle_clicked">Du har trykket to gange på håndtaget</string>
     <string name="bottomsheet_drag_handle_content_description">Håndtag</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"Besvar"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"Video"</string>
@@ -63,8 +62,26 @@
     <string name="character_counter_content_description">Du har brugt %1$d ud af %2$d tegn</string>
     <string name="character_counter_overflowed_content_description">Du har brugt %1$d tegn og dermed overskredet tegnbegrænsningen på %2$d.</string>
     <string name="clear_text_end_icon_content_description">Ryd tekst</string>
+    <string name="default_notification_channel_name">Afspilles nu</string>
     <string name="error_a11y_label">Fejl: ugyldig</string>
     <string name="error_icon_content_description">Fejl</string>
+    <string name="error_message_authentication_expired">Log ind for at bruge denne app</string>
+    <string name="error_message_bad_value">Dataene for input er ikke korrekte</string>
+    <string name="error_message_concurrent_stream_limit">Du lytter på for mange enheder</string>
+    <string name="error_message_content_already_playing">Indholdet afspilles allerede</string>
+    <string name="error_message_disconnected">Forbindelsen til medieappen er afbrudt</string>
+    <string name="error_message_end_of_playlist">Der er ikke mere i køen</string>
+    <string name="error_message_fallback">Der er noget galt. Prøv igen senere.</string>
+    <string name="error_message_info_cancelled">Handlingen kunne ikke gennemføres. Prøv igen.</string>
+    <string name="error_message_invalid_state">Det er ikke muligt lige nu</string>
+    <string name="error_message_io">Fejl i input/output</string>
+    <string name="error_message_not_available_in_region">Indholdet er ikke tilgængeligt her</string>
+    <string name="error_message_not_supported">Det kan denne app ikke gøre</string>
+    <string name="error_message_parental_control_restricted">Indholdet er blokeret</string>
+    <string name="error_message_permission_denied">Adgangen blev nægtet</string>
+    <string name="error_message_premium_account_required">Dette kræver en Premium-konto</string>
+    <string name="error_message_setup_required">Konfiguration er påkrævet</string>
+    <string name="error_message_skip_limit_reached">Du kan ikke springe flere numre over</string>
     <string name="exo_controls_cc_disabled_description">Aktivér undertekster</string>
     <string name="exo_controls_cc_enabled_description">Deaktiver undertekster</string>
     <string name="exo_controls_fastforward_description">Spol frem</string>
@@ -89,6 +106,15 @@
     <string name="exo_controls_shuffle_on_description">Deaktiver Bland</string>
     <string name="exo_controls_stop_description">Stop</string>
     <string name="exo_controls_vr_description">VR-tilstand</string>
+    <string name="exo_download_completed">Downloaden er udført</string>
+    <string name="exo_download_description">Download</string>
+    <string name="exo_download_downloading">Downloader</string>
+    <string name="exo_download_failed">Download mislykkedes</string>
+    <string name="exo_download_notification_channel_name">Downloads</string>
+    <string name="exo_download_paused">Downloads er sat på pause</string>
+    <string name="exo_download_paused_for_network">Downloads venter på netværksforbindelse</string>
+    <string name="exo_download_paused_for_wifi">Downloads venter på Wi-Fi-netværk</string>
+    <string name="exo_download_removing">Fjerner downloads</string>
     <string name="exo_item_list">%1$s, %2$s</string>
     <string name="exo_track_bitrate">%1$.2f Mbps</string>
     <string name="exo_track_mono">Mono</string>
@@ -107,15 +133,58 @@
     <string name="exo_track_surround_5_point_1">5.1 surround sound</string>
     <string name="exo_track_surround_7_point_1">7.1 surroundsound</string>
     <string name="exo_track_unknown">Ukendt</string>
+    <string name="exo_track_unknown_name">Ukendt (%1$s)</string>
     <string name="exposed_dropdown_menu_content_description">Vis rullemenuen</string>
     <string name="icon_content_description">Ikon for dialogboks</string>
     <string name="item_view_role_description">Fane</string>
+    <string msgid="4657191930956702614" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
+    <string msgid="4597148235912710942" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
+    <string msgid="893619591225519922" name="lb_guidedaction_continue_title">"Fortsæt"</string>
+    <string msgid="3330958750346333890" name="lb_guidedaction_finish_title">"Afslut"</string>
+    <string msgid="3228326776757666747" name="lb_media_player_error">"MediaPlayer-fejlkode %1$d ekstra %2$d"</string>
+    <string msgid="8084428500709675515" name="lb_navigation_menu_contentDescription">"Navigationsmenu"</string>
+    <string msgid="2394451791544864917" name="lb_onboarding_accessibility_next">"Næste"</string>
+    <string msgid="5549711907371161292" name="lb_onboarding_get_started">"KOM GODT I GANG"</string>
+    <string msgid="8691966842977635128" name="lb_playback_controls_closed_captioning_disable">"Slå undertekster fra"</string>
+    <string msgid="2346334170216706076" name="lb_playback_controls_closed_captioning_enable">"Slå undertekster til"</string>
+    <string msgid="740570111678243493" name="lb_playback_controls_fast_forward">"Spol frem"</string>
+    <string msgid="5734614175721471329" name="lb_playback_controls_fast_forward_multiplier">"Spol frem %1$dX"</string>
+    <string msgid="5859666950961624736" name="lb_playback_controls_hidden">"Knapperne til afspilning er skjult. Tryk på D-pad\'en for at se dem"</string>
+    <string msgid="1209119371486219736" name="lb_playback_controls_high_quality_disable">"Slå høj kvalitet fra"</string>
+    <string msgid="3057698527166674705" name="lb_playback_controls_high_quality_enable">"Slå høj kvalitet til"</string>
+    <string msgid="8730341244454469032" name="lb_playback_controls_more_actions">"Flere handlinger"</string>
+    <string msgid="917331776961802657" name="lb_playback_controls_pause">"Sæt på pause"</string>
+    <string msgid="5770668162543767702" name="lb_playback_controls_picture_in_picture">"Tilstand med integreret billede"</string>
+    <string msgid="7088090604803481121" name="lb_playback_controls_play">"Afspil"</string>
+    <string msgid="8429099206716245199" name="lb_playback_controls_repeat_all">"Gentag alle"</string>
+    <string msgid="1614290959784265209" name="lb_playback_controls_repeat_none">"Gentag ingen"</string>
+    <string msgid="676658705837320560" name="lb_playback_controls_repeat_one">"Gentag én"</string>
+    <string msgid="2866333981131020771" name="lb_playback_controls_rewind">"Spol tilbage"</string>
+    <string msgid="6038956370475252734" name="lb_playback_controls_rewind_multiplier">"Spol tilbage %1$dX"</string>
+    <string msgid="8690223891515602822" name="lb_playback_controls_shown">"Knapperne til afspilning er synlige"</string>
+    <string msgid="6793109999253893369" name="lb_playback_controls_shuffle_disable">"Slå bland fra"</string>
+    <string msgid="5151681938752704485" name="lb_playback_controls_shuffle_enable">"Slå bland til"</string>
+    <string msgid="8117512422682146745" name="lb_playback_controls_skip_next">"Spring til næste"</string>
+    <string msgid="3481218248309447059" name="lb_playback_controls_skip_previous">"Spring til forrige"</string>
+    <string msgid="3544533410444618518" name="lb_playback_controls_thumb_down">"Fravælg tommelfinger ned"</string>
+    <string msgid="8475278766138652105" name="lb_playback_controls_thumb_down_outline">"Vælg tommelfinger ned"</string>
+    <string msgid="3458671378107738666" name="lb_playback_controls_thumb_up">"Fravælg tommelfinger op"</string>
+    <string msgid="1385865732502550659" name="lb_playback_controls_thumb_up_outline">"Vælg tommelfinger op"</string>
+    <string msgid="1471121602610716654" name="lb_playback_time_separator">"/"</string>
+    <string msgid="5700349211583074131" name="lb_search_bar_hint">"Søg"</string>
+    <string msgid="5926531297066387462" name="lb_search_bar_hint_speech">"Tal for at søge"</string>
+    <string msgid="4826526877249029043" name="lb_search_bar_hint_with_title">"Søg efter <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
+    <string msgid="6032250334706920550" name="lb_search_bar_hint_with_title_speech">"Tal for at søge efter <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
+    <string name="m3_loading_indicator_content_description">Indlæser</string>
     <string name="material_clock_toggle_content_description">Vælg AM eller PM</string>
     <string name="material_hour_24h_suffix">%1$s timer</string>
     <string name="material_hour_selection">Vælg time</string>
     <string name="material_hour_suffix">klokken %1$s</string>
     <string name="material_minute_selection">Vælg minutter</string>
     <string name="material_minute_suffix">%1$s minutter</string>
+    <string name="material_slider_range_end">Slut på interval</string>
+    <string name="material_slider_range_start">Start på interval</string>
+    <string name="material_slider_value">Værdi</string>
     <string name="material_timepicker_am">AM</string>
     <string name="material_timepicker_clock_mode_description">Skift til urtilstand for at angive klokkeslæt.</string>
     <string name="material_timepicker_hour">Time</string>
@@ -123,6 +192,12 @@
     <string name="material_timepicker_pm">e.m.</string>
     <string name="material_timepicker_select_time">Vælg tidspunkt</string>
     <string name="material_timepicker_text_input_mode_description">Skift til teksttilstand for at angive klokkeslæt.</string>
+    <string name="media3_controls_pause_description">Sæt på pause</string>
+    <string name="media3_controls_play_description">Afspil</string>
+    <string name="media3_controls_seek_back_description">Hop tilbage</string>
+    <string name="media3_controls_seek_forward_description">Hop frem</string>
+    <string name="media3_controls_seek_to_next_description">Hop til næste element</string>
+    <string name="media3_controls_seek_to_previous_description">Hop til forrige element</string>
     <string name="mtrl_badge_numberless_content_description">Ny notifikation</string>
     <string name="mtrl_checkbox_state_description_checked">Markeret</string>
     <string name="mtrl_checkbox_state_description_indeterminate">Delvist markeret</string>
@@ -149,10 +224,10 @@
     <string name="mtrl_picker_navigate_to_year_description">Gå til år %1$d</string>
     <string name="mtrl_picker_out_of_range">Uden for interval: %1$s</string>
     <string name="mtrl_picker_range_header_only_end_selected">Startdato – %1$s</string>
-    <string name="mtrl_picker_range_header_only_start_selected">%1$s – slutdato</string>
+    <string name="mtrl_picker_range_header_only_start_selected">%1$s – Slutdato</string>
     <string name="mtrl_picker_range_header_selected">%1$s – %2$s</string>
     <string name="mtrl_picker_range_header_title">Vælg interval</string>
-    <string name="mtrl_picker_range_header_unselected">Startdato – slutdato</string>
+    <string name="mtrl_picker_range_header_unselected">Startdato – Slutdato</string>
     <string name="mtrl_picker_save">Gem</string>
     <string name="mtrl_picker_start_date_description">Startdato %1$s</string>
     <string name="mtrl_picker_text_input_date_hint">Dato</string>
@@ -163,11 +238,14 @@
     <string name="mtrl_picker_text_input_year_abbr">å</string>
     <string name="mtrl_picker_today_description">I dag %1$s</string>
     <string name="mtrl_picker_toggle_to_calendar_input_mode">Skift til input-tilstand for kalender</string>
-    <string name="mtrl_picker_toggle_to_day_selection">Tryk for at skifte til kalendervisning</string>
+    <string name="mtrl_picker_toggle_to_day_selection">Skift til kalendervisning</string>
     <string name="mtrl_picker_toggle_to_text_input_mode">Skift til input-tilstand for tekst</string>
-    <string name="mtrl_picker_toggle_to_year_selection">Tryk for at skifte til årsvisning</string>
+    <string name="mtrl_picker_toggle_to_year_selection">Skift til årsvisning</string>
+    <string name="mtrl_picker_toggled_to_day_selection">Skiftede til kalendervisning</string>
+    <string name="mtrl_picker_toggled_to_year_selection">Skiftede til årsvisning</string>
     <string name="mtrl_timepicker_cancel">Annuller</string>
     <string name="mtrl_timepicker_confirm">OK</string>
+    <string msgid="1301877238242752863" name="orb_search_action">"Søg handling"</string>
     <string name="password_toggle_content_description">Vis adgangskode</string>
     <string msgid="6264217191555673260" name="search_menu_title">"Søg"</string>
     <string name="searchview_clear_text_content_description">Ryd tekst</string>

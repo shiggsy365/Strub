@@ -51,7 +51,6 @@
     <string name="bottomsheet_action_collapse">បង្រួមសន្លឹក​ខាងក្រោម</string>
     <string name="bottomsheet_action_expand">ពង្រីកសន្លឹក​ខាងក្រោម</string>
     <string name="bottomsheet_action_expand_halfway">ពង្រីក​ពាក់កណ្ដាល</string>
-    <string name="bottomsheet_drag_handle_clicked">បានប៉ះដង​អូស​ពីរដង</string>
     <string name="bottomsheet_drag_handle_content_description">ដង​អូស</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"ឆ្លើយ"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"វីដេអូ"</string>
@@ -63,8 +62,26 @@
     <string name="character_counter_content_description">តួ​អក្សរ​បាន​បញ្ចូល​ %1$d នៃ %2$d</string>
     <string name="character_counter_overflowed_content_description">ដែនកំណត់តួអក្សរបានលើស %1$d នៃ %2$d</string>
     <string name="clear_text_end_icon_content_description">សម្អាតអក្សរ</string>
+    <string name="default_notification_channel_name">កំពុងចាក់</string>
     <string name="error_a11y_label">បញ្ហា៖ មិនត្រឹមត្រូវ</string>
     <string name="error_icon_content_description">បញ្ហា</string>
+    <string name="error_message_authentication_expired">ចូលគណនី ដើម្បីប្រើកម្មវិធីនេះ</string>
+    <string name="error_message_bad_value">ទិន្នន័យបញ្ចូលមិនត្រឹមត្រូវ</string>
+    <string name="error_message_concurrent_stream_limit">កំពុងស្ដាប់​នៅលើ​ឧបករណ៍​ច្រើនពេក</string>
+    <string name="error_message_content_already_playing">កំពុងចាក់​ខ្លឹមសារនោះ​ស្រាប់ហើយ</string>
+    <string name="error_message_disconnected">បានផ្ដាច់ពីកម្មវិធី​មេឌៀ</string>
+    <string name="error_message_end_of_playlist">មិនមានអ្វី​ផ្សេងទៀត​នៅក្នុង​ជួរទេ</string>
+    <string name="error_message_fallback">មានអ្វីមួយ​ខុស​ប្រក្រតី។ សូមព្យាយាម​នៅពេលក្រោយ។</string>
+    <string name="error_message_info_cancelled">មិនអាច​បញ្ចប់បានទេ។ សូមព្យាយាមម្ដងទៀត។</string>
+    <string name="error_message_invalid_state">មិនអាច​ធ្វើតាមសំណើនោះ​ឥឡូវនេះ​បានទេ</string>
+    <string name="error_message_io">បញ្ហាធាតុចូល/ធាតុចេញ</string>
+    <string name="error_message_not_available_in_region">មិនអាច​យក​ខ្លឹមសារនោះ​នៅទីនេះ​បានទេ</string>
+    <string name="error_message_not_supported">កម្មវិធីនេះ​មិនអាចធ្វើ​តាមសំណើនោះ​បានទេ</string>
+    <string name="error_message_parental_control_restricted">ខ្លឹមសារនោះ​ត្រូវបានទប់ស្កាត់</string>
+    <string name="error_message_permission_denied">បាន​បដិសេធ​ការចូល​ប្រើប្រាស់</string>
+    <string name="error_message_premium_account_required">តម្រូវឱ្យមាន​ការចូលប្រើ​លំដាប់ខ្ពស់</string>
+    <string name="error_message_setup_required">តម្រូវឱ្យ​រៀបចំ</string>
+    <string name="error_message_skip_limit_reached">មិនអាច​រំលងចម្រៀង​បានទៀតទេ</string>
     <string name="exo_controls_cc_disabled_description">បើកអក្សររត់</string>
     <string name="exo_controls_cc_enabled_description">បិទអក្សររត់</string>
     <string name="exo_controls_fastforward_description">ទៅ​មុខ​​​រហ័ស</string>
@@ -89,6 +106,15 @@
     <string name="exo_controls_shuffle_on_description">បិទ​មុខងារច្របល់</string>
     <string name="exo_controls_stop_description">ឈប់</string>
     <string name="exo_controls_vr_description">មុខងារ VR</string>
+    <string name="exo_download_completed">បាន​បញ្ចប់​ការទាញយក</string>
+    <string name="exo_download_description">ទាញយក</string>
+    <string name="exo_download_downloading">កំពុង​ទាញ​យក</string>
+    <string name="exo_download_failed">មិន​អាច​ទាញយក​បាន​ទេ</string>
+    <string name="exo_download_notification_channel_name">ទាញយក</string>
+    <string name="exo_download_paused">ការទាញយក​ត្រូវបានផ្អាក</string>
+    <string name="exo_download_paused_for_network">ការទាញយក​កំពុងរង់ចាំ​ការតភ្ជាប់បណ្ដាញ</string>
+    <string name="exo_download_paused_for_wifi">ការទាញយក​កំពុងរង់ចាំ​ការតភ្ជាប់ Wi-Fi</string>
+    <string name="exo_download_removing">កំពុង​លុប​ការទាញយក</string>
     <string name="exo_item_list">%1$s, %2$s</string>
     <string name="exo_track_bitrate">%1$.2f Mbps</string>
     <string name="exo_track_mono">ម៉ូ​ណូ</string>
@@ -107,15 +133,58 @@
     <string name="exo_track_surround_5_point_1">សំឡេង​រងំ​ខ្នាត 5.1</string>
     <string name="exo_track_surround_7_point_1">សំឡេង​រងំ​ខ្នាត 7.1</string>
     <string name="exo_track_unknown">មិនស្គាល់</string>
+    <string name="exo_track_unknown_name">មិនស្គាល់ (%1$s)</string>
     <string name="exposed_dropdown_menu_content_description">បង្ហាញ​ម៉ឺនុយ​ធ្លាក់ចុះ</string>
     <string name="icon_content_description">រូប​ប្រអប់បញ្ចូល</string>
     <string name="item_view_role_description">ផ្ទាំង</string>
+    <string msgid="4657191930956702614" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
+    <string msgid="4597148235912710942" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
+    <string msgid="893619591225519922" name="lb_guidedaction_continue_title">"បន្ត"</string>
+    <string msgid="3330958750346333890" name="lb_guidedaction_finish_title">"បញ្ចប់"</string>
+    <string msgid="3228326776757666747" name="lb_media_player_error">"លេខកូដ​បញ្ហា​ MediaPlayer %1$d extra %2$d"</string>
+    <string msgid="8084428500709675515" name="lb_navigation_menu_contentDescription">"ម៉ឺនុយរុករក"</string>
+    <string msgid="2394451791544864917" name="lb_onboarding_accessibility_next">"បន្ទាប់"</string>
+    <string msgid="5549711907371161292" name="lb_onboarding_get_started">"ចាប់ផ្ដើម"</string>
+    <string msgid="8691966842977635128" name="lb_playback_controls_closed_captioning_disable">"បិទ​អក្សរ​រត់"</string>
+    <string msgid="2346334170216706076" name="lb_playback_controls_closed_captioning_enable">"បើក​អក្សរ​រត់"</string>
+    <string msgid="740570111678243493" name="lb_playback_controls_fast_forward">"ទៅមុខ​រហ័ស"</string>
+    <string msgid="5734614175721471329" name="lb_playback_controls_fast_forward_multiplier">"ទៅមុខ​រហ័ស %1$dX"</string>
+    <string msgid="5859666950961624736" name="lb_playback_controls_hidden">"ការ​គ្រប់គ្រង​មេឌៀ​ត្រូវ​បាន​លាក់ សូមចុច d-pad ដើម្បី​បង្ហាញ"</string>
+    <string msgid="1209119371486219736" name="lb_playback_controls_high_quality_disable">"បិទ​គុណភាព​ខ្ពស់"</string>
+    <string msgid="3057698527166674705" name="lb_playback_controls_high_quality_enable">"បើក​គុណភាព​ខ្ពស់"</string>
+    <string msgid="8730341244454469032" name="lb_playback_controls_more_actions">"សកម្មភាព​ច្រើន​ទៀត"</string>
+    <string msgid="917331776961802657" name="lb_playback_controls_pause">"ផ្អាក"</string>
+    <string msgid="5770668162543767702" name="lb_playback_controls_picture_in_picture">"បញ្ចូល​មុខងារ​រូបក្នុងរូប"</string>
+    <string msgid="7088090604803481121" name="lb_playback_controls_play">"ចាក់"</string>
+    <string msgid="8429099206716245199" name="lb_playback_controls_repeat_all">"ចាក់​ឡើងវិញ​ទាំងអស់"</string>
+    <string msgid="1614290959784265209" name="lb_playback_controls_repeat_none">"មិន​ចាក់​ឡើង​វិញ​"</string>
+    <string msgid="676658705837320560" name="lb_playback_controls_repeat_one">"ចាក់​ឡើងវិញ​មួយ"</string>
+    <string msgid="2866333981131020771" name="lb_playback_controls_rewind">"ខា​ថយ​ក្រោយ"</string>
+    <string msgid="6038956370475252734" name="lb_playback_controls_rewind_multiplier">"ខា​ថយ​ក្រោយ %1$dX"</string>
+    <string msgid="8690223891515602822" name="lb_playback_controls_shown">"ការ​គ្រប់គ្រង​មេឌៀ​ត្រូវ​បាន​បង្ហាញ"</string>
+    <string msgid="6793109999253893369" name="lb_playback_controls_shuffle_disable">"បិទ​ការ​ច្របល់"</string>
+    <string msgid="5151681938752704485" name="lb_playback_controls_shuffle_enable">"បើក​ការ​​ច្របល់"</string>
+    <string msgid="8117512422682146745" name="lb_playback_controls_skip_next">"រំលងទៅ​បន្ទាប់"</string>
+    <string msgid="3481218248309447059" name="lb_playback_controls_skip_previous">"រំលង​ទៅពី​មុន"</string>
+    <string msgid="3544533410444618518" name="lb_playback_controls_thumb_down">"ឈប់​ជ្រើស​រើស​ការឲ្យ​មេដៃ​ចុះ"</string>
+    <string msgid="8475278766138652105" name="lb_playback_controls_thumb_down_outline">"ជ្រើស​រើស​ការឲ្យ​មេ​ដៃ​ចុះ"</string>
+    <string msgid="3458671378107738666" name="lb_playback_controls_thumb_up">"ឈប់​ជ្រើស​រើស​ការ​លើក​មេដៃ"</string>
+    <string msgid="1385865732502550659" name="lb_playback_controls_thumb_up_outline">"ជ្រើសរើស​ការ​លើកមេ​ដៃ"</string>
+    <string msgid="1471121602610716654" name="lb_playback_time_separator">"/"</string>
+    <string msgid="5700349211583074131" name="lb_search_bar_hint">"ស្វែងរក"</string>
+    <string msgid="5926531297066387462" name="lb_search_bar_hint_speech">"និយាយ​​ដើម្បី​ស្វែងរក"</string>
+    <string msgid="4826526877249029043" name="lb_search_bar_hint_with_title">"ស្វែងរក <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
+    <string msgid="6032250334706920550" name="lb_search_bar_hint_with_title_speech">"និយាយ​ដើម្បី​ស្វែងរក <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
+    <string name="m3_loading_indicator_content_description">កំពុងផ្ទុក</string>
     <string name="material_clock_toggle_content_description">ជ្រើសរើស AM ឬ PM</string>
     <string name="material_hour_24h_suffix">%1$s ម៉ោង</string>
     <string name="material_hour_selection">ជ្រើសរើសម៉ោង</string>
     <string name="material_hour_suffix">ម៉ោង %1$s</string>
     <string name="material_minute_selection">ជ្រើស​នាទី</string>
     <string name="material_minute_suffix">%1$s នាទី</string>
+    <string name="material_slider_range_end">ចំណុចបញ្ចប់</string>
+    <string name="material_slider_range_start">ចំណុចចាប់ផ្ដើម</string>
+    <string name="material_slider_value">តម្លៃ</string>
     <string name="material_timepicker_am">ព្រឹក</string>
     <string name="material_timepicker_clock_mode_description">ប្តូរ​ទៅ​មុខងារ​នាឡិកា​សម្រាប់​ការ​បញ្ចូល​ម៉ោង។</string>
     <string name="material_timepicker_hour">ម៉ោង</string>
@@ -123,6 +192,12 @@
     <string name="material_timepicker_pm">ល្ងាច</string>
     <string name="material_timepicker_select_time">ជ្រើស​ម៉ោង</string>
     <string name="material_timepicker_text_input_mode_description">ប្តូរ​ទៅ​មុខងារ​បញ្ចូល​អក្សរ​សម្រាប់​ការ​បញ្ចូល​ម៉ោង។</string>
+    <string name="media3_controls_pause_description">ផ្អាក</string>
+    <string name="media3_controls_play_description">ចាក់</string>
+    <string name="media3_controls_seek_back_description">ថយក្រោយ</string>
+    <string name="media3_controls_seek_forward_description">រំលង​​ទៅ​មុខ</string>
+    <string name="media3_controls_seek_to_next_description">ទៅកាន់ធាតុបន្ទាប់</string>
+    <string name="media3_controls_seek_to_previous_description">ទៅកាន់ធាតុមុន</string>
     <string name="mtrl_badge_numberless_content_description">ការជូនដំណឹងថ្មី</string>
     <string name="mtrl_checkbox_state_description_checked">បាន​ធីក</string>
     <string name="mtrl_checkbox_state_description_indeterminate">បានធីកខ្លះ</string>
@@ -163,11 +238,14 @@
     <string name="mtrl_picker_text_input_year_abbr">ឆ</string>
     <string name="mtrl_picker_today_description">ថ្ងៃនេះ %1$s</string>
     <string name="mtrl_picker_toggle_to_calendar_input_mode">ប្ដូរទៅ​របៀប​បញ្ចូល​ប្រតិទិន</string>
-    <string name="mtrl_picker_toggle_to_day_selection">ចុច ដើម្បីប្ដូរទៅទិដ្ឋភាពប្រតិទិន</string>
+    <string name="mtrl_picker_toggle_to_day_selection">ប្ដូរទៅទិដ្ឋភាពប្រតិទិន</string>
     <string name="mtrl_picker_toggle_to_text_input_mode">ប្ដូរទៅ​របៀប​បញ្ចូល​អក្សរ</string>
-    <string name="mtrl_picker_toggle_to_year_selection">ចុច ដើម្បីប្ដូរទៅទិដ្ឋភាពឆ្នាំ</string>
+    <string name="mtrl_picker_toggle_to_year_selection">ប្ដូរទៅទិដ្ឋភាពឆ្នាំ</string>
+    <string name="mtrl_picker_toggled_to_day_selection">បានប្ដូរទៅទិដ្ឋភាពប្រតិទិន</string>
+    <string name="mtrl_picker_toggled_to_year_selection">បានប្ដូរទៅទិដ្ឋភាពឆ្នាំ</string>
     <string name="mtrl_timepicker_cancel">បោះបង់</string>
     <string name="mtrl_timepicker_confirm">យល់ព្រម</string>
+    <string msgid="1301877238242752863" name="orb_search_action">"​ស្វែងរក​សកម្មភាព"</string>
     <string name="password_toggle_content_description">បង្ហាញពាក្យសម្ងាត់</string>
     <string msgid="6264217191555673260" name="search_menu_title">"ស្វែងរក"</string>
     <string name="searchview_clear_text_content_description">សម្អាតអក្សរ</string>

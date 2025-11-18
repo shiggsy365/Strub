@@ -51,7 +51,6 @@
     <string name="bottomsheet_action_collapse">පහළම පත්‍රය හකුළන්න</string>
     <string name="bottomsheet_action_expand">පහළම පත්‍රය දිග හරින්න</string>
     <string name="bottomsheet_action_expand_halfway">අඩක් දිග හරින්න</string>
-    <string name="bottomsheet_drag_handle_clicked">ඇදීම් හැඬලය දෙවරක් තට්ටු කර ඇත</string>
     <string name="bottomsheet_drag_handle_content_description">හැඬලය අදින්න</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"පිළිතුරු දෙ."</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"වීඩියෝ"</string>
@@ -63,8 +62,26 @@
     <string name="character_counter_content_description">අනුලකුණු %2$dන් %1$dක් ඇතුළු කෙරිණි</string>
     <string name="character_counter_overflowed_content_description">අනුලකුණු සීමාව %2$dකින් %1$d ඉක්ම විය</string>
     <string name="clear_text_end_icon_content_description">පෙළ හිස් කරන්න</string>
+    <string name="default_notification_channel_name">Now playing</string>
     <string name="error_a11y_label">දෝෂය: වලංගු නැත</string>
     <string name="error_icon_content_description">දෝෂය</string>
+    <string name="error_message_authentication_expired">මෙම යෙදුම භාවිත කිරීමට පුරන්න</string>
+    <string name="error_message_bad_value">වැරදි ආදාන දත්ත</string>
+    <string name="error_message_concurrent_stream_limit">ඕනෑවට වඩා උපාංග මත සවන් දීම</string>
+    <string name="error_message_content_already_playing">දැනටමත් එම අන්තර්ගතය වාදනය කරයි</string>
+    <string name="error_message_disconnected">මාධ්‍ය යෙදුමෙන් විසන්ධි විය</string>
+    <string name="error_message_end_of_playlist">වෙන කිසිවක් පෝලිමේ නැත</string>
+    <string name="error_message_fallback">යම් දෙයක් වැරදියි. පසුව උත්සාහ කරන්න.</string>
+    <string name="error_message_info_cancelled">අවසන් කිරීමට නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
+    <string name="error_message_invalid_state">මේ දැන් එය කළ නොහැක</string>
+    <string name="error_message_io">ආදාන/ප්‍රතිදාන දෝෂයකි</string>
+    <string name="error_message_not_available_in_region">එම අන්තර්ගතය මෙතැනින් ලබා ගත නොහැක</string>
+    <string name="error_message_not_supported">මෙම යෙදුමට එය කළ නොහැක</string>
+    <string name="error_message_parental_control_restricted">එම අන්තර්ගතය අවහිර කර ඇත</string>
+    <string name="error_message_permission_denied">ප්‍රවේශය ප්‍රතික්ෂේප වුනි</string>
+    <string name="error_message_premium_account_required">පාරිතෝෂික ප්‍රවේශය අවශ්‍යයි</string>
+    <string name="error_message_setup_required">පිහිටුවීම අවශ්‍යයි</string>
+    <string name="error_message_skip_limit_reached">තවත් ගීත මඟ හැරිය නොහැක</string>
     <string name="exo_controls_cc_disabled_description">උපසිරැසි සබල කරන්න</string>
     <string name="exo_controls_cc_enabled_description">උපසිරැසි අබල කරන්න</string>
     <string name="exo_controls_fastforward_description">වේගයෙන් ඉදිරියට</string>
@@ -89,6 +106,15 @@
     <string name="exo_controls_shuffle_on_description">කළවම් ප්‍රකාරය අබල කරන්න</string>
     <string name="exo_controls_stop_description">නවත්වන්න</string>
     <string name="exo_controls_vr_description">VR ප්‍රකාරය</string>
+    <string name="exo_download_completed">බාගැනීම සම්පූර්ණ කරන ලදී</string>
+    <string name="exo_download_description">බාගන්න</string>
+    <string name="exo_download_downloading">බාගනිමින්</string>
+    <string name="exo_download_failed">බාගැනීම අසමත් විය</string>
+    <string name="exo_download_notification_channel_name">බාගැනීම්</string>
+    <string name="exo_download_paused">බාගැනීම් විරාම කර ඇත</string>
+    <string name="exo_download_paused_for_network">ජාලය සඳහා බාගැනීම් රැඳී සිටී</string>
+    <string name="exo_download_paused_for_wifi">WiFi සඳහා බාගැනීම් රැඳී සිටී</string>
+    <string name="exo_download_removing">බාගැනීම් ඉවත් කිරීම</string>
     <string name="exo_item_list">%1$s, %2$s</string>
     <string name="exo_track_bitrate">%1$.2f Mbps</string>
     <string name="exo_track_mono">ඒකල</string>
@@ -107,15 +133,58 @@
     <string name="exo_track_surround_5_point_1">5.1 අවට ශබ්දය</string>
     <string name="exo_track_surround_7_point_1">7.1 අවට ශබ්දය</string>
     <string name="exo_track_unknown">නොදනී</string>
+    <string name="exo_track_unknown_name">නොදන්නා (%1$s)</string>
     <string name="exposed_dropdown_menu_content_description">පතන මෙනුව පෙන්වන්න</string>
     <string name="icon_content_description">සංවාද නිරූපකය</string>
     <string name="item_view_role_description">ටැබය</string>
+    <string msgid="4657191930956702614" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
+    <string msgid="4597148235912710942" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
+    <string msgid="893619591225519922" name="lb_guidedaction_continue_title">"ඉදිරියට යන්න"</string>
+    <string msgid="3330958750346333890" name="lb_guidedaction_finish_title">"අවසන් කරන්න"</string>
+    <string msgid="3228326776757666747" name="lb_media_player_error">"MediaPlayer දෝෂ කේතය %1$d අමතර %2$d"</string>
+    <string msgid="8084428500709675515" name="lb_navigation_menu_contentDescription">"සංචාලන මෙනුව"</string>
+    <string msgid="2394451791544864917" name="lb_onboarding_accessibility_next">"ඊළඟ"</string>
+    <string msgid="5549711907371161292" name="lb_onboarding_get_started">"පටන් ගන්න"</string>
+    <string msgid="8691966842977635128" name="lb_playback_controls_closed_captioning_disable">"වැසුණු ශිර්ෂ කිරීම අබල කරන ලදි"</string>
+    <string msgid="2346334170216706076" name="lb_playback_controls_closed_captioning_enable">"වැසුණු ශිර්ෂ කිරීම සබල කරන ලදි"</string>
+    <string msgid="740570111678243493" name="lb_playback_controls_fast_forward">"වේගයෙන් ඉදිරියට යන"</string>
+    <string msgid="5734614175721471329" name="lb_playback_controls_fast_forward_multiplier">"%1$dX වේගයෙන් ඉදිරියට යවන්න"</string>
+    <string msgid="5859666950961624736" name="lb_playback_controls_hidden">"මාධ්‍ය පාලක සඟවා ඇත, පෙන්වීමට ඩී-පෑඩ් ඔබන්න"</string>
+    <string msgid="1209119371486219736" name="lb_playback_controls_high_quality_disable">"උපරිම ගුණත්වය අබල කරන්න"</string>
+    <string msgid="3057698527166674705" name="lb_playback_controls_high_quality_enable">"උපරිම ගුණත්වය සබල කරන්න"</string>
+    <string msgid="8730341244454469032" name="lb_playback_controls_more_actions">"තව ක්‍රියාකාරකම්"</string>
+    <string msgid="917331776961802657" name="lb_playback_controls_pause">"විරාම කරන්න"</string>
+    <string msgid="5770668162543767702" name="lb_playback_controls_picture_in_picture">"පින්තූරය-තුළ-පින්තූරය ප්‍රකාරයට ඇතුළු වන්න"</string>
+    <string msgid="7088090604803481121" name="lb_playback_controls_play">"වාදනය"</string>
+    <string msgid="8429099206716245199" name="lb_playback_controls_repeat_all">"සියල්ල නැවත කරන්න"</string>
+    <string msgid="1614290959784265209" name="lb_playback_controls_repeat_none">"නැවත කරන්න කිසිවක් නැත"</string>
+    <string msgid="676658705837320560" name="lb_playback_controls_repeat_one">"එකක් නැවත කරන්න"</string>
+    <string msgid="2866333981131020771" name="lb_playback_controls_rewind">"ආපස්සට යවන්න"</string>
+    <string msgid="6038956370475252734" name="lb_playback_controls_rewind_multiplier">"%1$dX ආපස්සට යවන්න"</string>
+    <string msgid="8690223891515602822" name="lb_playback_controls_shown">"මාධ්‍ය පාලක පෙන්වා ඇත"</string>
+    <string msgid="6793109999253893369" name="lb_playback_controls_shuffle_disable">"ඇනීම අබල කරන්න"</string>
+    <string msgid="5151681938752704485" name="lb_playback_controls_shuffle_enable">"ඇනීම සබල කරන්න"</string>
+    <string msgid="8117512422682146745" name="lb_playback_controls_skip_next">"ඊළඟ එක මග අරින්න"</string>
+    <string msgid="3481218248309447059" name="lb_playback_controls_skip_previous">"කළින් එක මග අරින්න"</string>
+    <string msgid="3544533410444618518" name="lb_playback_controls_thumb_down">"මහපටැඟිල්ල පහළට තිබීම තේරීම නොකරන්න"</string>
+    <string msgid="8475278766138652105" name="lb_playback_controls_thumb_down_outline">"මහපටැඟිල්ල පහළට තිබීම තේරීම කරන්න"</string>
+    <string msgid="3458671378107738666" name="lb_playback_controls_thumb_up">"මහපටැඟිල්ල ඉහළට තිබීම තේරීම නොකරන්න"</string>
+    <string msgid="1385865732502550659" name="lb_playback_controls_thumb_up_outline">"මහපටැඟිල්ල ඉහළට තිබීම තේරීම කරන්න"</string>
+    <string msgid="1471121602610716654" name="lb_playback_time_separator">"/"</string>
+    <string msgid="5700349211583074131" name="lb_search_bar_hint">"සෙවීම"</string>
+    <string msgid="5926531297066387462" name="lb_search_bar_hint_speech">"සෙවීමට කථා කරන්න"</string>
+    <string msgid="4826526877249029043" name="lb_search_bar_hint_with_title">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> සොයන්න"</string>
+    <string msgid="6032250334706920550" name="lb_search_bar_hint_with_title_speech">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> සොයන්න කථා කරන්න"</string>
+    <string name="m3_loading_indicator_content_description">පූරණය වේ</string>
     <string name="material_clock_toggle_content_description">පෙරවරු හෝ පස්වරු තෝරන්න</string>
     <string name="material_hour_24h_suffix">පැය %1$sක්</string>
     <string name="material_hour_selection">පැය තෝරන්න</string>
     <string name="material_hour_suffix">%1$sයි</string>
     <string name="material_minute_selection">මිනිත්තු තෝරන්න</string>
     <string name="material_minute_suffix">මිනිත්තු %1$sයි</string>
+    <string name="material_slider_range_end">පරාස නිමාව</string>
+    <string name="material_slider_range_start">පරාස ආරම්භය</string>
+    <string name="material_slider_value">අගය</string>
     <string name="material_timepicker_am">පෙව</string>
     <string name="material_timepicker_clock_mode_description">වේලා ආදානය සඳහා ඔරලෝසු ප්‍රකාරය වෙත මාරු වෙන්න.</string>
     <string name="material_timepicker_hour">පැය</string>
@@ -123,6 +192,12 @@
     <string name="material_timepicker_pm">පව</string>
     <string name="material_timepicker_select_time">වේලාව තෝරන්න</string>
     <string name="material_timepicker_text_input_mode_description">වේලා ආදානය සඳහා ආදාන ප්‍රකාරය වෙත මාරු වෙන්න.</string>
+    <string name="media3_controls_pause_description">විරාම ගන්වන්න</string>
+    <string name="media3_controls_play_description">වාදනය කරන්න</string>
+    <string name="media3_controls_seek_back_description">ආපස්සට අන්වේෂණය</string>
+    <string name="media3_controls_seek_forward_description">ඉදිරියට අන්වේෂණය</string>
+    <string name="media3_controls_seek_to_next_description">ඊළඟ අයිතමය වෙත අන්වේෂණය</string>
+    <string name="media3_controls_seek_to_previous_description">පෙර අයිතමය වෙත අන්වේෂණය</string>
     <string name="mtrl_badge_numberless_content_description">නව දැනුම්දීම</string>
     <string name="mtrl_checkbox_state_description_checked">සලකුණු කරන ලදි</string>
     <string name="mtrl_checkbox_state_description_indeterminate">අඩ වශයෙන් ලකුණු කළ</string>
@@ -163,11 +238,14 @@
     <string name="mtrl_picker_text_input_year_abbr">ව</string>
     <string name="mtrl_picker_today_description">අද %1$s</string>
     <string name="mtrl_picker_toggle_to_calendar_input_mode">දින දර්ශන ආදාන ප්‍රකාරයට මාරු වන්න</string>
-    <string name="mtrl_picker_toggle_to_day_selection">දින දර්ශන දසුන වෙත මාරු වීමට තට්ටු කරන්න</string>
+    <string name="mtrl_picker_toggle_to_day_selection">දින දර්ශන දසුනට මාරු වන්න</string>
     <string name="mtrl_picker_toggle_to_text_input_mode">පෙළ ආදාන ප්‍රකාරයට මාරු වන්න</string>
-    <string name="mtrl_picker_toggle_to_year_selection">වසරේ දසුන වෙත මාරු වීමට තට්ටු කරන්න</string>
+    <string name="mtrl_picker_toggle_to_year_selection">වසර දසුනට මාරු වන්න</string>
+    <string name="mtrl_picker_toggled_to_day_selection">දින දර්ශන දසුන වෙත මාරු විය</string>
+    <string name="mtrl_picker_toggled_to_year_selection">වසර දසුන වෙත මාරු විය</string>
     <string name="mtrl_timepicker_cancel">අවලංගු කරන්න</string>
     <string name="mtrl_timepicker_confirm">හරි</string>
+    <string msgid="1301877238242752863" name="orb_search_action">"සෙවීමේ ක්‍රියාව"</string>
     <string name="password_toggle_content_description">මුරපදය පෙන්වන්න</string>
     <string msgid="6264217191555673260" name="search_menu_title">"සෙවීම"</string>
     <string name="searchview_clear_text_content_description">පෙළ හිස් කරන්න</string>

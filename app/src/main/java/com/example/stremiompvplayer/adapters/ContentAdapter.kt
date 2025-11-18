@@ -6,13 +6,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.databinding.ItemContentBinding
-// FIX: Use the stub model
-import com.example.stremiompvplayer.models.MetaPreview
+// FIX: Use MetaItem, not MetaPreview
+import com.example.stremiompvplayer.models.MetaItem
 
 class ContentAdapter(
-    // FIX: Use the stub model
-    private var items: List<MetaPreview>,
-    private val onClick: (MetaPreview) -> Unit
+    // FIX: Use MetaItem
+    private var items: List<MetaItem>,
+    private val onClick: (MetaItem) -> Unit
 ) : RecyclerView.Adapter<ContentAdapter.ViewHolder>() {
 
     class ViewHolder(val binding: ItemContentBinding) : RecyclerView.ViewHolder(binding.root)
@@ -41,7 +41,7 @@ class ContentAdapter(
         }
     }
 
-    fun updateData(newItems: List<MetaPreview>) {
+    fun updateData(newItems: List<MetaItem>) {
         this.items = newItems
         notifyDataSetChanged()
     }

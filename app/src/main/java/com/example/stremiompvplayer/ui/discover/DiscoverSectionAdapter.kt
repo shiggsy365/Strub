@@ -1,64 +1,57 @@
 package com.example.stremiompvplayer.ui.discover
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.adapters.PosterAdapter
-import com.example.stremiompvplayer.models.MetaPreview
+import com.example.stremiompvplayer.databinding.ItemContentSectionBinding
+import com.example.stremiompvplayer.models.FeedList
+// FIX: Use MetaItem, not MetaPreview
+import com.example.stremiompvplayer.models.MetaItem
 
 class DiscoverSectionAdapter(
-    private val onItemClick: (MetaPreview) -> Unit
-) : RecyclerView.Adapter<DiscoverSectionAdapter.ViewHolder>() {
+    // FIX: Use MetaItem
+    private val onClick: (MetaItem) -> Unit
+) : ListAdapter<FeedList, DiscoverSectionAdapter.ViewHolder>(DiffCallback) {
 
-    private val sections = mutableListOf<DiscoverSection>()
-
-    fun setSections(newSections: List<DiscoverSection>) {
-        sections.clear()
-        sections.addAll(newSections)
-        notifyDataSetChanged()
-    }
+    class ViewHolder(val binding: ItemContentSectionBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_content_section, parent, false)
-        return ViewHolder(view)
+        val binding = ItemContentSectionBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(sections[position])
+        val feedList = getItem(position)
+
+        holder.binding.sectionTitle.text = feedList.name
+
+        // FIX: PosterAdapter now takes List<MetaItem> and (MetaItem) -> Unit
+        val posterAdapter = PosterAdapter(feedList.content) {
+            onClick(it) // 'it' is now MetaItem
+        }
+        holder.binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(holder.itemView.context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = posterAdapter
+        }
     }
 
-    override fun getItemCount(): Int = sections.size
+    companion object DiffCallback : DiffUtil.ItemCallback<FeedList>() {
+        override fun areItemsTheSame(oldItem: FeedList, newItem: FeedList): Boolean {
+            // Check if the unique ID and catalog ID are the same
+            return oldItem.id == newItem.id && oldItem.catalogId == newItem.catalogId
+        }
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val sectionTitle: TextView = itemView.findViewById(R.id.sectionTitle)
-        private val sectionRecycler: RecyclerView = itemView.findViewById(R.id.sectionRecycler)
-
-        fun bind(section: DiscoverSection) {
-            sectionTitle.text = section.title
-
-            val adapter = PosterAdapter(onItemClick)
-            adapter.setItems(section.items)
-
-            sectionRecycler.layoutManager = LinearLayoutManager(
-                itemView.context,
-                LinearLayoutManager.HORIZONTAL,
-                false
-            )
-            sectionRecycler.adapter = adapter
+        override fun areContentsTheSame(oldItem: FeedList, newItem: FeedList): Boolean {
+            // Check if the full content of the object is the same
+            return oldItem == newItem
         }
     }
 }
-
-// DiscoverSection data class - shared across Discover, Movies, and Series fragments
-data class DiscoverSection(
-    val title: String,
-    val items: List<MetaPreview>,
-    val addonUrl: String,
-    val catalogId: String,
-    val type: String
-)

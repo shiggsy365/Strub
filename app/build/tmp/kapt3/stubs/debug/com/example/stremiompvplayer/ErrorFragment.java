@@ -3,8 +3,8 @@ package com.example.stremiompvplayer;
 /**
  * This class demonstrates how to extend [ErrorSupportFragment].
  */
-@kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u0000\u001a\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0002\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0004\u0018\u0000 \t2\u00020\u0001:\u0001\tB\u0005\u00a2\u0006\u0002\u0010\u0002J\u0012\u0010\u0003\u001a\u00020\u00042\b\u0010\u0005\u001a\u0004\u0018\u00010\u0006H\u0016J\r\u0010\u0007\u001a\u00020\u0004H\u0000\u00a2\u0006\u0002\b\b\u00a8\u0006\n"}, d2 = {"Lcom/example/stremiompvplayer/ErrorFragment;", "", "()V", "onCreate", "", "savedInstanceState", "Landroid/os/Bundle;", "setErrorContent", "setErrorContent$app_debug", "Companion", "app_debug"})
-public final class ErrorFragment {
+@kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u0000\u001a\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0004\u0018\u0000 \t2\u00020\u0001:\u0001\tB\u0005\u00a2\u0006\u0002\u0010\u0002J\u0012\u0010\u0003\u001a\u00020\u00042\b\u0010\u0005\u001a\u0004\u0018\u00010\u0006H\u0016J\r\u0010\u0007\u001a\u00020\u0004H\u0000\u00a2\u0006\u0002\b\b\u00a8\u0006\n"}, d2 = {"Lcom/example/stremiompvplayer/ErrorFragment;", "Landroidx/leanback/app/ErrorSupportFragment;", "()V", "onCreate", "", "savedInstanceState", "Landroid/os/Bundle;", "setErrorContent", "setErrorContent$app_debug", "Companion", "app_debug"})
+public final class ErrorFragment extends androidx.leanback.app.ErrorSupportFragment {
     private static final boolean TRANSLUCENT = true;
     @org.jetbrains.annotations.NotNull()
     public static final com.example.stremiompvplayer.ErrorFragment.Companion Companion = null;
@@ -13,6 +13,7 @@ public final class ErrorFragment {
         super();
     }
     
+    @java.lang.Override()
     public void onCreate(@org.jetbrains.annotations.Nullable()
     android.os.Bundle savedInstanceState) {
     }

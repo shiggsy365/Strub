@@ -38,16 +38,8 @@ data class LibraryItem(
     val poster: String?
 ) : Serializable
 
-data class MetaDetail(
-    val id: String,
-    val type: String,
-    val name: String,
-    val poster: String?,
-    val background: String?,
-    val description: String?,
-    val videos: List<Video>?
-) : Serializable
-
+// REMOVED: This stub is no longer needed. We will use MetaItem everywhere.
+/*
 // Used by adapters
 data class MetaPreview(
     val id: String,
@@ -55,10 +47,8 @@ data class MetaPreview(
     val name: String,
     val poster: String?
 ) : Serializable
+*/
 
-data class WatchProgress(
-    val id: String
-) : Serializable
 
 // NEW: Add @Entity and @PrimaryKey
 @Entity

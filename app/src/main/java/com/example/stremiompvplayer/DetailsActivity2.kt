@@ -64,13 +64,15 @@ class DetailsActivity2 : AppCompatActivity() {
     private fun setupObservers() {
         // Observe Meta details
         viewModel.meta.observe(this) { meta ->
-            if (meta?.id == metaId) { // Ensure this is the meta we requested
+            // Be explicit: check for null first!
+            if (meta != null && meta.id == metaId) {
+                // Now, inside this block, the compiler KNOWS 'meta' is not null
                 currentMeta = meta
-                updateUI(meta)
+                updateUI(meta) // <-- FIXED! 'meta' is now smart-cast to Meta
                 binding.progressBar.visibility = View.GONE
                 binding.contentGroup.visibility = View.VISIBLE
             } else if (meta == null && currentMeta != null) {
-                // Meta was cleared (e.g., user changed)
+                // ...
             }
         }
 
