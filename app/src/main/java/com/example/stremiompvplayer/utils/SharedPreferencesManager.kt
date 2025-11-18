@@ -20,6 +20,15 @@ class SharedPreferencesManager private constructor(context: Context) {
         }
     }
 
+    fun saveActiveManifestUrl(url: String) {
+        prefs.edit().putString("active_manifest_url", url).apply()
+    }
+
+    // 2. New function to retrieve the active manifest URL
+    fun getActiveManifestUrl(): String? {
+        return prefs.getString("active_manifest_url", null)
+    }
+
     fun saveString(key: String, value: String) {
         prefs.edit().putString(key, value).apply()
     }

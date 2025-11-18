@@ -17,12 +17,14 @@ import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.utils.User
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
+// IMPORT ADDED: Intent for UserSelectionActivity
+import com.example.stremiompvplayer.UserSelectionActivity
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    // CHANGED: Use SharedPreferencesManager instead of AppDatabase for users
+    // CHANGED: Use SharedPreferencesManager for users
     private lateinit var prefsManager: SharedPreferencesManager
     private var currentUserId: String? = null
 
@@ -35,6 +37,20 @@ class MainActivity : AppCompatActivity() {
         prefsManager = SharedPreferencesManager.getInstance(this)
         currentUserId = prefsManager.getCurrentUserId()
 
+        // --- START NEW LOGIN CHECK LOGIC ---
+        if (currentUserId.isNullOrEmpty()) {
+            // Redirect to UserSelectionActivity if no user is logged in
+            val intent = Intent(this, UserSelectionActivity::class.java)
+
+            // Use flags to clear the back stack, ensuring they can't hit back to get to the main screen
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+            return // Stop execution of MainActivity's setup
+        }
+        // --- END NEW LOGIN CHECK LOGIC ---
+
+
         setupUserAvatar()
         setupNavigation()
 
@@ -46,6 +62,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUserAvatar() {
+        // Since the user is guaranteed to be logged in (checked above), we can assert non-null
         currentUserId?.let { userId ->
             // CHANGED: Use prefsManager
             val user = prefsManager.getUser(userId)

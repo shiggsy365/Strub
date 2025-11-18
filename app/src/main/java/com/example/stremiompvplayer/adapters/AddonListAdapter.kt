@@ -9,8 +9,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.stremiompvplayer.R
 
 class AddonListAdapter(
-    private val addons: MutableList<String>,
-    private val onDeleteClick: (String) -> Unit
+    val addons: MutableList<String>,
+    val onDeleteClick: (String) -> Unit
 ) : RecyclerView.Adapter<AddonListAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -20,15 +20,23 @@ class AddonListAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(addons[position])
+        val addonUrl = addons[position]
+        holder.bind(addonUrl)
+
+        // FIX: Attach the click logic here, where 'onDeleteClick' is visible.
+        holder.deleteButton.setOnClickListener {
+            // This is the correct scope to access the outer class's lambda property
+            onDeleteClick(addonUrl)
+        } // <--- THIS IS THE CORRECT LOCATION
+
     }
 
     override fun getItemCount(): Int = addons.size
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val addonUrlText: TextView = itemView.findViewById(R.id.addonUrlText)
-        private val addonNameText: TextView = itemView.findViewById(R.id.addonNameText)
-        private val deleteButton: ImageButton = itemView.findViewById(R.id.deleteButton)
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val addonUrlText: TextView = itemView.findViewById(R.id.addonUrlText)
+        val addonNameText: TextView = itemView.findViewById(R.id.addonNameText)
+        val deleteButton: ImageButton = itemView.findViewById(R.id.deleteButton)
 
         fun bind(addonUrl: String) {
             // Extract a readable name from the URL
@@ -36,13 +44,14 @@ class AddonListAdapter(
             addonNameText.text = name
             addonUrlText.text = addonUrl
 
-            deleteButton.setOnClickListener {
+            // FIX: REMOVE THIS BLOCK! It is out of scope and redundant.
+            /* deleteButton.setOnClickListener {
                 onDeleteClick(addonUrl)
-            }
+            } */
         }
 
         private fun extractAddonName(url: String): String {
-            // Try to extract a meaningful name from the URL
+            // ... (extraction logic) ...
             return try {
                 val urlWithoutProtocol = url.replace("https://", "").replace("http://", "")
                 val parts = urlWithoutProtocol.split("/")

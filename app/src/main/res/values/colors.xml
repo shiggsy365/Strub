@@ -6,4 +6,9 @@
     <color name="selected_background">#ffaa3f</color>
     <color name="default_background">#3d3d3d</color>
     <color name="button_background">#333333</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="indigo_600">#4F46E5</color>
+    <color name="gray_800">#1F2937</color>
+    <color name="gray_700">#374151</color>
 </resources>

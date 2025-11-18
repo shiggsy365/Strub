@@ -1,6 +1,5 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Selected/Checked state -->
-    <item android:color="#E50914" android:state_checked="true"/>
-    <!-- Normal state -->
-    <item android:color="#333333"/>
+    <item android:color="@color/indigo_600" android:state_checked="true" />
+
+    <item android:color="@color/gray_700" />
 </selector>

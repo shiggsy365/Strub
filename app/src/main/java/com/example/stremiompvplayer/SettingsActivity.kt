@@ -3,6 +3,7 @@ package com.example.stremiompvplayer
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.EditText
@@ -213,50 +214,42 @@ class SettingsActivity : AppCompatActivity() {
     private fun showAddAddonDialog() {
         val input = EditText(this).apply {
             hint = "Addon URL (e.g., https://v3-cinemeta.strem.io/manifest.json)"
+            maxLines = 1
+            inputType = android.text.InputType.TYPE_CLASS_TEXT // Ensure correct input type
             setPadding(48, 32, 48, 32)
             textSize = 16f
             setTextColor(Color.WHITE)
             setHintTextColor(Color.GRAY)
+
+            // NEW: Pre-fill with the currently saved URL if it exists
+            setText(prefsManager.getActiveManifestUrl())
         }
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Add Stremio Addon")
+            .setTitle("Set Primary Stremio Addon")
             .setMessage("Enter the full URL of the Stremio addon manifest.json")
             .setView(input)
-            .setPositiveButton("Add") { dialog, _ ->
+            .setPositiveButton("Set & Save") { dialog, _ ->
                 val url = input.text.toString().trim()
-                Log.d("SettingsActivity", "Attempting to add addon: $url")
 
-                if (url.isEmpty()) {
-                    Toast.makeText(this, "Please enter a URL", Toast.LENGTH_SHORT).show()
+                // --- NEW VALIDATION ---
+                if (!url.startsWith("http") || !url.contains("manifest.json")) {
+                    Toast.makeText(this, "Please enter a valid manifest URL (must start with http/https and end with manifest.json)", Toast.LENGTH_LONG).show()
                     return@setPositiveButton
                 }
 
-                if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                    Toast.makeText(this, "URL must start with http:// or https://", Toast.LENGTH_LONG).show()
-                    return@setPositiveButton
+                // --- NEW SAVE LOGIC ---
+                // Save the URL as the active manifest URL
+                prefsManager.saveActiveManifestUrl(url)
+
+                // You can still add it to the user's list if you wish, but the main goal is achieved
+                currentUserId?.let {
+                    prefsManager.addAddonUrl(url)
                 }
 
-                if (!url.contains("manifest.json")) {
-                    Toast.makeText(this, "URL should contain manifest.json", Toast.LENGTH_LONG).show()
-                    return@setPositiveButton
-                }
-
-                currentUserId?.let { userId ->
-                    try {
-                        // FIXED: Call manager directly
-                        prefsManager.addAddonUrl(url)
-                        Log.d("SettingsActivity", "Addon added successfully: $url")
-                        Toast.makeText(this, "Addon added successfully!", Toast.LENGTH_LONG).show()
-                        setupAddonsList()
-
-                        dialog.dismiss()
-
-                    } catch (e: Exception) {
-                        Log.e("SettingsActivity", "Error adding addon", e)
-                        Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
-                    }
-                }
+                Toast.makeText(this, "Primary Addon URL Saved!", Toast.LENGTH_LONG).show()
+                setupAddonsList() // Refresh the displayed list
+                dialog.dismiss()
             }
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.cancel()

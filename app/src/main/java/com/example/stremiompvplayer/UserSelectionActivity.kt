@@ -2,6 +2,7 @@ package com.example.stremiompvplayer
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -70,6 +71,8 @@ class UserSelectionActivity : AppCompatActivity() {
     private fun showAddUserDialog(isFirstUser: Boolean = false) {
         val input = TextInputEditText(this).apply {
             hint = "Profile Name"
+            maxLines = 1
+            inputType = InputType.TYPE_CLASS_TEXT // Or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
             setPadding(48, 32, 48, 32)
         }
 

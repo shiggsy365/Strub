@@ -106,5 +106,4 @@ class LibraryFragment : Fragment() {
         recyclerView.visibility = View.GONE
         emptyText.visibility = View.VISIBLE
         emptyText.text = message
-    }
-}
+    }}
