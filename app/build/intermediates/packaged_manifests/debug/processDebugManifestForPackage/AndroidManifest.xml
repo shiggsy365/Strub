@@ -59,24 +59,29 @@
             android:name="com.example.stremiompvplayer.BrowseErrorActivity"
             android:exported="false" />
 
-        <!-- Test Activity - TEMPORARY Entry Point -->
+        <!--
+        Test Activity - TEMPORARY Entry Point
         <activity
-            android:name="com.example.stremiompvplayer.TestActivity"
-            android:exported="true"
+            android:name=".TestActivity"
+            android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/Theme.StremioMPVPlayer" >
+            android:theme="@style/Theme.StremioMPVPlayer">
+        </activity>  Main Activity
+        -->
+        <activity
+            android:name="com.example.stremiompvplayer.MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="Strub"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.StremioMPVPlayer" > <!-- User Selection Activity -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-        </activity> <!-- Main Activity -->
-        <activity
-            android:name="com.example.stremiompvplayer.MainActivity"
-            android:exported="false"
-            android:screenOrientation="landscape"
-            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- User Selection Activity -->
+        </activity>
         <activity
             android:name="com.example.stremiompvplayer.UserSelectionActivity"
             android:exported="false"

@@ -1,5 +1,14 @@
 package com.example.stremiompvplayer;
 
+import android.graphics.drawable.Drawable;
+import androidx.leanback.widget.ImageCardView;
+import androidx.leanback.widget.Presenter;
+import androidx.core.content.ContextCompat;
+import android.util.Log;
+import android.view.ViewGroup;
+import com.bumptech.glide.Glide;
+import kotlin.properties.Delegates;
+
 /**
  * A CardPresenter is used to generate Views and bind Objects to them on demand.
  * It contains an ImageCardView.

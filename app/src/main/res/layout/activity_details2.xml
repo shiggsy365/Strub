@@ -1,199 +1,228 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#000000">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="0dp">
+    <data>
+    </data>
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
-            app:navigationIconTint="@android:color/white"
-            android:background="@android:color/transparent" />
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/contentLayout"
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:background="#000000">
 
-        <LinearLayout
+        <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:background="@android:color/transparent"
+            app:elevation="0dp">
 
-            <!-- Background Image with Gradient -->
-            <FrameLayout
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="400dp">
+                android:layout_height="?attr/actionBarSize"
+                app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
+                app:navigationIconTint="@android:color/white"
+                android:background="@android:color/transparent" />
 
-                <ImageView
-                    android:id="@+id/backgroundImage"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="Background" />
+        </com.google.android.material.appbar.AppBarLayout>
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/gradient_overlay" />
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/contentGroup"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-            </FrameLayout>
-
-            <!-- Content Details -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="24dp"
-                android:layout_marginTop="-100dp">
+                android:orientation="vertical">
 
-                <!-- Poster -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="150dp"
-                    android:layout_height="225dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="8dp">
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="400dp">
 
                     <ImageView
-                        android:id="@+id/posterImage"
+                        android:id="@+id/backgroundImage"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="centerCrop"
-                        android:contentDescription="Poster" />
+                        android:contentDescription="Background" />
 
-                </com.google.android.material.card.MaterialCardView>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/gradient_overlay" />
+                </FrameLayout>
 
-                <!-- Info -->
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="24dp">
+                    android:orientation="horizontal"
+                    android:padding="24dp"
+                    android:layout_marginTop="-100dp">
 
-                    <TextView
-                        android:id="@+id/titleText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@android:color/white"
-                        android:textSize="32sp"
-                        android:textStyle="bold"
-                        android:text="Title" />
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="150dp"
+                        android:layout_height="225dp"
+                        app:cardCornerRadius="8dp"
+                        app:cardElevation="8dp">
 
-                    <TextView
-                        android:id="@+id/releaseInfoText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#BBBBBB"
-                        android:textSize="16sp"
-                        android:layout_marginTop="8dp"
-                        android:text="2024 • 2h 30m" />
+                        <ImageView
+                            android:id="@+id/poster"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:contentDescription="Poster" />
 
-                    <TextView
-                        android:id="@+id/ratingText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#FFD700"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp"
-                        android:visibility="gone"
-                        android:text="★ 8.5" />
+                    </com.google.android.material.card.MaterialCardView>
 
-                    <TextView
-                        android:id="@+id/genresText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#BBBBBB"
-                        android:textSize="14sp"
-                        android:layout_marginTop="8dp"
-                        android:visibility="gone"
-                        android:text="Action • Adventure • Sci-Fi" />
-
-                    <!-- Action Buttons -->
                     <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="24dp">
+
+                        <TextView
+                            android:id="@+id/title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@android:color/white"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:text="Title" />
+
+                        <TextView
+                            android:id="@+id/releaseInfoText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#BBBBBB"
+                            android:textSize="16sp"
+                            android:layout_marginTop="8dp"
+                            android:text="2024 • 2h 30m" />
+
+                        <TextView
+                            android:id="@+id/ratingText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="#FFD700"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="8dp"
+                            android:visibility="gone"
+                            android:text="★ 8.5" />
+
+                        <TextView
+                            android:id="@+id/genresText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#BBBBBB"
+                            android:textSize="14sp"
+                            android:layout_marginTop="8dp"
+                            android:visibility="gone"
+                            android:text="Action • Adventure • Sci-Fi" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="24dp">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/playButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Play"
+                                android:textSize="16sp"
+                                android:paddingStart="32dp"
+                                android:paddingEnd="32dp"
+                                app:icon="@android:drawable/ic_media_play"
+                                app:backgroundTint="#E50914"
+                                android:enabled="false" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/libraryButton"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Add to Library"
+                                android:textSize="16sp"
+                                android:textColor="@android:color/white"
+                                app:strokeColor="@android:color/white"
+                                android:layout_marginStart="16dp" />
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="24dp">
+                        android:text="Description"
+                        android:textColor="@android:color/white"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/playButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Play"
-                            android:textSize="16sp"
-                            android:paddingStart="32dp"
-                            android:paddingEnd="32dp"
-                            app:icon="@android:drawable/ic_media_play"
-                            app:backgroundTint="#E50914"
-                            android:enabled="false" />
+                    <TextView
+                        android:id="@+id/description"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#CCCCCC"
+                        android:textSize="16sp"
+                        android:lineSpacingExtra="4dp"
+                        android:text="Description goes here..." />
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/libraryButton"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Add to Library"
-                            android:textSize="16sp"
-                            android:textColor="@android:color/white"
-                            app:strokeColor="@android:color/white"
-                            android:layout_marginStart="16dp" />
+                </LinearLayout>
 
-                    </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
 
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Streams"
+                        android:textColor="@android:color/white"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/streamRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
+
+                    <TextView
+                        android:id="@+id/textNoStreams"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="No streams found"
+                        android:textColor="#888888"
+                        android:textSize="16sp"
+                        android:padding="16dp"
+                        android:visibility="gone" />
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Description -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="24dp">
+        </androidx.core.widget.NestedScrollView>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Description"
-                    android:textColor="@android:color/white"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
 
-                <TextView
-                    android:id="@+id/descriptionText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="#CCCCCC"
-                    android:textSize="16sp"
-                    android:lineSpacingExtra="4dp"
-                    android:text="Description goes here..." />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
-
-    <ProgressBar
-        android:id="@+id/loadingProgress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center" />
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</layout>

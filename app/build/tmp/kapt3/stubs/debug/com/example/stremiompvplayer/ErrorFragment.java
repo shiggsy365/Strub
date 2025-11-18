@@ -1,5 +1,10 @@
 package com.example.stremiompvplayer;
 
+import android.os.Bundle;
+import android.view.View;
+import androidx.core.content.ContextCompat;
+import androidx.leanback.app.ErrorSupportFragment;
+
 /**
  * This class demonstrates how to extend [ErrorSupportFragment].
  */

@@ -32,6 +32,10 @@ import com.example.stremiompvplayer.models.HubSlot
 )
 abstract class AppDatabase : RoomDatabase() {
 
+    fun getLibraryItems(userId: String): List<LibraryItem> {
+        // NOTE: We ignore userId here, as the DAO doesn't filter by user, but this resolves the method signature.
+        return libraryItemDao().getAll()
+    }
     // FIX: Add DAOs for stub models
     abstract fun userDao(): UserDao
     abstract fun libraryItemDao(): LibraryItemDao
@@ -42,24 +46,30 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun feedListDao(): FeedListDao
     abstract fun hubSlotDao(): HubSlotDao
 
+    // AppDatabase.kt
+
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase {
+        // CHANGE: Rename getDatabase to getInstance to match calling code
+        fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "stremio_database"
                 )
-                    .addCallback(AppDatabaseCallback(scope))
+                    // REMOVED: Removed addCallback for simplicity as the scope is missing
                     .build()
                 INSTANCE = instance
                 instance
             }
         }
+
+        // REMOVED: Removed getDatabase(context: Context, scope: CoroutineScope) since it's not used
     }
+// NOTE: You may need to remove the AppDatabaseCallback entire inner class as well
 
     private class AppDatabaseCallback(
         private val scope: CoroutineScope

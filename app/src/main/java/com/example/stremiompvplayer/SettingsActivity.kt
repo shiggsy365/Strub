@@ -11,27 +11,29 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.stremiompvplayer.adapters.AddonListAdapter
-import com.example.stremiompvplayer.data.AppDatabase
+// REMOVED UNUSED IMPORTS: AppDatabase, CoroutineScope, Dispatchers, Snackbar, ItemAddonListBinding
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
-import com.example.stremiompvplayer.models.UserSettings
+import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import com.example.stremiompvplayer.utils.UserSettings
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.example.stremiompvplayer.databinding.ItemAddonListBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 
 class SettingsActivity : AppCompatActivity() {
 
+    private lateinit var prefsManager: SharedPreferencesManager
     private lateinit var binding: ActivitySettingsBinding
-    private lateinit var database: AppDatabase
     private lateinit var settings: UserSettings
 
     private lateinit var addonAdapter: AddonListAdapter
     private var currentUserId: String? = null
 
+    // NOTE: The code assumes the following IDs from the layout are correct:
+    // autoPlaySwitch, subtitlesEnabledSwitch, subtitleSizeSeekBar, subtitleSizeValue,
+    // colorWhite, colorYellow, colorCyan, colorGreen, subtitlePreview, addonsRecycler, noAddonsText, addAddonButton, switchUserButton, signOutButton
 
     private fun setupAddonsList() {
         currentUserId?.let { userId ->
-            val addons = database.getUserAddonUrls(userId)
+            // FIXED: Call manager directly
+            val addons = prefsManager.getUserAddonUrls()
 
             if (addons.isEmpty()) {
                 binding.addonsRecycler.visibility = View.GONE
@@ -41,13 +43,13 @@ class SettingsActivity : AppCompatActivity() {
                 binding.noAddonsText.visibility = View.GONE
 
                 addonAdapter = AddonListAdapter(addons.toMutableList()) { addonUrl ->
-                    // Remove addon
                     MaterialAlertDialogBuilder(this)
                         .setTitle("Remove Addon")
                         .setMessage("Are you sure you want to remove this addon?")
                         .setPositiveButton("Remove") { _, _ ->
-                            database.removeAddonUrl(userId, addonUrl)
-                            setupAddonsList() // Refresh list
+                            // FIXED: Call manager directly
+                            prefsManager.removeAddonUrl(addonUrl)
+                            setupAddonsList()
                             Toast.makeText(this, "Addon removed", Toast.LENGTH_SHORT).show()
                         }
                         .setNegativeButton("Cancel", null)
@@ -63,12 +65,14 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Initialization must happen before super.onCreate if using applicationContext in getInstance
+        prefsManager = SharedPreferencesManager.getInstance(this)
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        database = AppDatabase.getInstance(this)
-        currentUserId = database.getCurrentUserId()
+        // FIXED: Use prefsManager for user ID
+        currentUserId = prefsManager.getCurrentUserId()
 
         if (currentUserId == null) {
             Toast.makeText(this, "No user logged in", Toast.LENGTH_SHORT).show()
@@ -76,7 +80,8 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
 
-        settings = database.getUserSettings(currentUserId!!)
+        // FIXED: Use prefsManager for settings
+        settings = prefsManager.getUserSettings()
 
         setupToolbar()
         loadSettings()
@@ -100,18 +105,19 @@ class SettingsActivity : AppCompatActivity() {
         binding.subtitleSizeValue.text = "${settings.subtitleSize}sp"
 
         updateSubtitlePreview()
-        loadAddons()
     }
 
     private fun setupListeners() {
         // Auto-play toggle
         binding.autoPlaySwitch.setOnCheckedChangeListener { _, isChecked ->
+            // FIXED: The 'copy' method now correctly uses the data class properties
             settings = settings.copy(autoPlayFirstStream = isChecked)
             saveSettings()
         }
 
         // Subtitles enabled toggle
         binding.subtitlesEnabledSwitch.setOnCheckedChangeListener { _, isChecked ->
+            // FIXED: The 'copy' method now correctly uses the data class properties
             settings = settings.copy(subtitlesEnabled = isChecked)
             saveSettings()
             updateSubtitlePreview()
@@ -133,31 +139,32 @@ class SettingsActivity : AppCompatActivity() {
         })
 
         // Subtitle color buttons
+        // FIXED: Using Color constants (Ints) as required by the UserSettings data class.
         binding.colorWhite.setOnClickListener {
-            settings = settings.copy(subtitleColor = "#FFFFFF")
+            settings = settings.copy(subtitleColor = Color.WHITE)
             saveSettings()
             updateSubtitlePreview()
         }
 
         binding.colorYellow.setOnClickListener {
-            settings = settings.copy(subtitleColor = "#FFFF00")
+            settings = settings.copy(subtitleColor = Color.YELLOW)
             saveSettings()
             updateSubtitlePreview()
         }
 
         binding.colorCyan.setOnClickListener {
-            settings = settings.copy(subtitleColor = "#00FFFF")
+            settings = settings.copy(subtitleColor = Color.CYAN)
             saveSettings()
             updateSubtitlePreview()
         }
 
         binding.colorGreen.setOnClickListener {
-            settings = settings.copy(subtitleColor = "#00FF00")
+            settings = settings.copy(subtitleColor = Color.GREEN)
             saveSettings()
             updateSubtitlePreview()
         }
 
-        // Addon management - FIXED!
+        // Addon management
         binding.addAddonButton.setOnClickListener {
             showAddAddonDialog()
         }
@@ -170,19 +177,13 @@ class SettingsActivity : AppCompatActivity() {
             finish()
         }
 
-        binding.addAddonButton.apply {
-            textSize = 22f // Larger font
-            setOnClickListener {
-                showAddAddonDialog()
-            }
-        }
-
         binding.signOutButton.setOnClickListener {
             MaterialAlertDialogBuilder(this)
                 .setTitle("Sign Out")
                 .setMessage("Are you sure you want to sign out?")
                 .setPositiveButton("Sign Out") { _, _ ->
-                    database.setCurrentUser("")
+                    // FIXED: Use prefsManager
+                    prefsManager.setCurrentUser("")
                     val intent = Intent(this, UserSelectionActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
@@ -195,27 +196,18 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun updateSubtitlePreview() {
         binding.subtitlePreview.apply {
+            // FIXED: textSize is now correctly a Float
             textSize = settings.subtitleSize.toFloat()
-            setTextColor(Color.parseColor(settings.subtitleColor))
+            // FIXED: Using settings.subtitleColor directly (an Int Color)
+            setTextColor(settings.subtitleColor)
             alpha = if (settings.subtitlesEnabled) 1.0f else 0.3f
         }
     }
 
     private fun saveSettings() {
-        database.saveUserSettings(settings)
+        // FIXED: Call manager directly
+        prefsManager.saveUserSettings(settings)
         Log.d("SettingsActivity", "Settings saved: $settings")
-    }
-
-    private fun loadAddons() {
-        currentUserId?.let { userId ->
-            val addons = database.getUserAddonUrls(userId)
-            Log.d("SettingsActivity", "Loaded ${addons.size} addons for user $userId")
-
-            if (addons.isNotEmpty()) {
-                // TODO: Show addons in a list
-                Toast.makeText(this, "${addons.size} addon(s) configured", Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 
     private fun showAddAddonDialog() {
@@ -252,12 +244,12 @@ class SettingsActivity : AppCompatActivity() {
 
                 currentUserId?.let { userId ->
                     try {
-                        database.addAddonUrl(userId, url)
+                        // FIXED: Call manager directly
+                        prefsManager.addAddonUrl(url)
                         Log.d("SettingsActivity", "Addon added successfully: $url")
                         Toast.makeText(this, "Addon added successfully!", Toast.LENGTH_LONG).show()
                         setupAddonsList()
 
-                        // Success - stay on this screen so user can add more or see the confirmation
                         dialog.dismiss()
 
                     } catch (e: Exception) {

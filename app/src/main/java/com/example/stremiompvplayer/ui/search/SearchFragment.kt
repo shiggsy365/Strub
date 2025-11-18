@@ -18,7 +18,7 @@ import com.example.stremiompvplayer.models.MetaItem // NEW: Use MetaItemimport c
 // FIX: Remove MetaPreview
 // import com.example.stremiompvplayer.models.MetaPreview
 import com.example.stremiompvplayer.network.StremioClient
-import com.example.stremiompvplayer.ui.details.DetailsActivity2
+import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.viewmodels.MainViewModel // NEW: Use ViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

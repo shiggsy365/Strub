@@ -1,5 +1,8 @@
 package com.example.stremiompvplayer;
 
+import android.os.Bundle;
+import androidx.appcompat.app.AppCompatActivity;
+
 /**
  * This activity shows an error condition in the browse screens.
  * FIX: Extends AppCompatActivity to get supportFragmentManager

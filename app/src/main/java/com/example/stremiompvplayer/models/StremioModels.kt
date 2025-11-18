@@ -3,6 +3,8 @@ package com.example.stremiompvplayer.models
 import com.squareup.moshi.Json
 import java.io.Serializable
 
+// --- API RESPONSE MODELS ---
+
 data class StreamResponse(
     val streams: List<Stream>
 )
@@ -25,6 +27,7 @@ data class BehaviorHints(
     val notWebReady: Boolean? = false
 ) : Serializable
 
+// --- GENERAL META MODELS ---
 
 data class MetaResponse(
     val meta: Meta
@@ -49,6 +52,8 @@ data class Video(
     val season: Int? // Season number
 ) : Serializable
 
+// --- CATALOG/APP MODELS ---
+
 data class MetaItem(
     val id: String,
     val type: String, // "movie", "series", "tv" etc.
@@ -58,7 +63,6 @@ data class MetaItem(
     val description: String?
 ) : Serializable
 
-// NEW: Added models to parse the add-on manifest.json
 data class Manifest(
     val id: String,
     val version: String,
@@ -80,7 +84,6 @@ data class Catalog(
     ) : Serializable
 }
 
-// NEW: Added a response model for catalog requests (e.g., /catalog/movie/top.json)
 data class CatalogResponse(
     val metas: List<MetaItem>
 ) : Serializable

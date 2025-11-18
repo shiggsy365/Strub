@@ -1,5 +1,7 @@
 package com.example.stremiompvplayer;
 
+import java.io.Serializable;
+
 /**
  * Movie class represents video entity with title, description, image thumbs and video url.
  */

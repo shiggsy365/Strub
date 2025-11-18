@@ -45,24 +45,26 @@
             android:name=".BrowseErrorActivity"
             android:exported="false" />
 
-        <!-- Test Activity - TEMPORARY Entry Point -->
+        <!-- Test Activity - TEMPORARY Entry Point
         <activity
             android:name=".TestActivity"
-            android:exported="true"
+            android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer">
+        </activity>  Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:label="Strub"
+            android:icon="@mipmap/ic_launcher"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.StremioMPVPlayer" ><!-- User Selection Activity -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-        </activity> <!-- Main Activity -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="false"
-            android:screenOrientation="landscape"
-            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- User Selection Activity -->
+        </activity>
         <activity
             android:name=".UserSelectionActivity"
             android:exported="false"

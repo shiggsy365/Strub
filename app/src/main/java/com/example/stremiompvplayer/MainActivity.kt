@@ -3,36 +3,27 @@ package com.example.stremiompvplayer
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.ImageView
-// FIX: Add missing import
-import androidx.activity.viewModels
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.example.stremiompvplayer.data.AppDatabase
+import androidx.fragment.app.Fragment
 import com.example.stremiompvplayer.databinding.ActivityMainBinding
-import com.example.stremiompvplayer.databinding.DialogUserMenuBinding
 import com.example.stremiompvplayer.ui.discover.DiscoverFragment
 import com.example.stremiompvplayer.ui.library.LibraryFragment
-// ... existing code ...
-import androidx.fragment.app.Fragment
 import com.example.stremiompvplayer.ui.movies.MoviesFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
 import com.example.stremiompvplayer.ui.series.SeriesFragment
+// IMPORTS FIXED: Point to the utils package where we defined User and SharedPreferencesManager
+import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import com.example.stremiompvplayer.utils.User
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
-import android.widget.TextView
-import android.util.Log
-import android.widget.Toast
-import androidx.activity.viewModels
-import com.example.stremiompvplayer.models.FeedList
-import com.example.stremiompvplayer.models.User
-import com.example.stremiompvplayer.viewmodels.MainViewModel
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import kotlinx.coroutines.CoroutineScope
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var database: AppDatabase
+
+    // CHANGED: Use SharedPreferencesManager instead of AppDatabase for users
+    private lateinit var prefsManager: SharedPreferencesManager
     private var currentUserId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,8 +31,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        database = AppDatabase.getInstance(this)
-        currentUserId = database.getCurrentUserId()
+        // CHANGED: Initialize the manager
+        prefsManager = SharedPreferencesManager.getInstance(this)
+        currentUserId = prefsManager.getCurrentUserId()
 
         setupUserAvatar()
         setupNavigation()
@@ -55,7 +47,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupUserAvatar() {
         currentUserId?.let { userId ->
-            val user = database.getUser(userId)
+            // CHANGED: Use prefsManager
+            val user = prefsManager.getUser(userId)
             user?.let {
                 // Set avatar color
                 binding.userAvatar.setBackgroundColor(it.avatarColor)
@@ -73,10 +66,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun showUserMenu() {
         val dialog = BottomSheetDialog(this)
+        // Ensure dialog_user_menu.xml exists or replace with a standard view construction
         val view = layoutInflater.inflate(R.layout.dialog_user_menu, null)
 
         currentUserId?.let { userId ->
-            val user = database.getUser(userId)
+            // CHANGED: Use prefsManager
+            val user = prefsManager.getUser(userId)
             user?.let {
                 view.findViewById<TextView>(R.id.userName).text = it.name
                 view.findViewById<View>(R.id.userAvatar).setBackgroundColor(it.avatarColor)
@@ -97,7 +92,8 @@ class MainActivity : AppCompatActivity() {
             textSize = 22f // Larger font
             setOnClickListener {
                 dialog.dismiss()
-                database.setCurrentUser("")
+                // CHANGED: Use prefsManager
+                prefsManager.setCurrentUser("")
                 val intent = Intent(this@MainActivity, UserSelectionActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)

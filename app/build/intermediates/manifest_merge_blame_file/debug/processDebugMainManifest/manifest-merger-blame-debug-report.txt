@@ -33,22 +33,22 @@
 21-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:15:22-65
 22
 23    <permission
-23-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/8.13/transforms/66a6f9025a35f69b2301735b401fb4a6/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+23-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/transforms-4/a310b155118595bfa58675b53a2e9300/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
 24        android:name="com.example.stremiompvplayer.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-24-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/8.13/transforms/66a6f9025a35f69b2301735b401fb4a6/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+24-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/transforms-4/a310b155118595bfa58675b53a2e9300/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
 25        android:protectionLevel="signature" />
-25-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/8.13/transforms/66a6f9025a35f69b2301735b401fb4a6/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+25-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/transforms-4/a310b155118595bfa58675b53a2e9300/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
 26
 27    <uses-permission android:name="com.example.stremiompvplayer.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-27-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/8.13/transforms/66a6f9025a35f69b2301735b401fb4a6/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
-27-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/8.13/transforms/66a6f9025a35f69b2301735b401fb4a6/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+27-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/transforms-4/a310b155118595bfa58675b53a2e9300/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+27-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/transforms-4/a310b155118595bfa58675b53a2e9300/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
 28
 29    <application
-29-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:17:5-87:19
+29-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:17:5-89:19
 30        android:allowBackup="true"
 30-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:18:9-35
 31        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-31-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/8.13/transforms/66a6f9025a35f69b2301735b401fb4a6/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
+31-->[androidx.core:core:1.13.1] /home/jon/.gradle/caches/transforms-4/a310b155118595bfa58675b53a2e9300/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
 32        android:banner="@mipmap/ic_launcher"
 32-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:19:9-45
 33        android:debuggable="true"
@@ -105,158 +105,160 @@
 60            android:exported="false" />
 60-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:46:13-37
 61
-62        <!-- Test Activity - TEMPORARY Entry Point -->
-63        <activity
-63-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:49:9-60:20
-64            android:name="com.example.stremiompvplayer.TestActivity"
-64-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:50:13-41
-65            android:exported="true"
-65-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:51:13-36
-66            android:screenOrientation="landscape"
-66-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:52:13-50
-67            android:theme="@style/Theme.StremioMPVPlayer" >
-67-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:53:13-58
-68            <intent-filter>
-68-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:54:13-59:29
-69                <action android:name="android.intent.action.MAIN" />
-69-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:36:17-69
-69-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:36:25-66
-70
-71                <category android:name="android.intent.category.LAUNCHER" />
-71-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:57:17-77
-71-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:57:27-74
-72                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-72-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:38:17-86
-72-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:38:27-83
-73            </intent-filter>
-74        </activity> <!-- Main Activity -->
-75        <activity
-75-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:61:9-65:61
-76            android:name="com.example.stremiompvplayer.MainActivity"
-76-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:62:13-41
-77            android:exported="false"
-77-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:63:13-37
-78            android:screenOrientation="landscape"
-78-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:64:13-50
-79            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- User Selection Activity -->
-79-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:65:13-58
-80        <activity
-80-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:66:9-70:61
-81            android:name="com.example.stremiompvplayer.UserSelectionActivity"
-81-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:67:13-50
-82            android:exported="false"
-82-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:68:13-37
-83            android:screenOrientation="landscape"
-83-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:69:13-50
-84            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- Settings Activity -->
-84-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:70:13-58
+62        <!--
+63        Test Activity - TEMPORARY Entry Point
+64        <activity
+65            android:name=".TestActivity"
+66            android:exported="false"
+67            android:screenOrientation="landscape"
+68            android:theme="@style/Theme.StremioMPVPlayer">
+69        </activity>  Main Activity
+70        -->
+71        <activity
+71-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:55:9-67:20
+72            android:name="com.example.stremiompvplayer.MainActivity"
+72-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:56:13-41
+73            android:exported="true"
+73-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:59:13-36
+74            android:icon="@mipmap/ic_launcher"
+74-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:58:13-47
+75            android:label="Strub"
+75-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:57:13-34
+76            android:screenOrientation="landscape"
+76-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:60:13-50
+77            android:theme="@style/Theme.StremioMPVPlayer" > <!-- User Selection Activity -->
+77-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:61:13-58
+78            <intent-filter>
+78-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:62:13-66:29
+79                <action android:name="android.intent.action.MAIN" />
+79-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:36:17-69
+79-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:36:25-66
+80
+81                <category android:name="android.intent.category.LAUNCHER" />
+81-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:64:17-77
+81-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:64:27-74
+82                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+82-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:38:17-86
+82-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:38:27-83
+83            </intent-filter>
+84        </activity>
 85        <activity
-85-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:71:9-75:61
-86            android:name="com.example.stremiompvplayer.SettingsActivity"
-86-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:72:13-45
+85-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:68:9-72:61
+86            android:name="com.example.stremiompvplayer.UserSelectionActivity"
+86-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:69:13-50
 87            android:exported="false"
-87-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:73:13-37
+87-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:70:13-37
 88            android:screenOrientation="landscape"
-88-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:74:13-50
-89            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- Player Activity -->
-89-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:75:13-58
+88-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:71:13-50
+89            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- Settings Activity -->
+89-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:72:13-58
 90        <activity
-90-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:76:9-81:72
-91            android:name="com.example.stremiompvplayer.PlayerActivity"
-91-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:77:13-43
-92            android:configChanges="orientation|screenSize|keyboardHidden"
-92-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:78:13-74
-93            android:exported="false"
-93-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:79:13-37
-94            android:screenOrientation="landscape"
-94-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:80:13-50
-95            android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
-95-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:81:13-69
-96        <activity
-96-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:82:9-86:61
-97            android:name="com.example.stremiompvplayer.ui.library.DetailsActivity2"
-97-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:83:13-56
+90-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:73:9-77:61
+91            android:name="com.example.stremiompvplayer.SettingsActivity"
+91-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:74:13-45
+92            android:exported="false"
+92-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:75:13-37
+93            android:screenOrientation="landscape"
+93-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:76:13-50
+94            android:theme="@style/Theme.StremioMPVPlayer" /> <!-- Player Activity -->
+94-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:77:13-58
+95        <activity
+95-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:78:9-83:72
+96            android:name="com.example.stremiompvplayer.PlayerActivity"
+96-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:79:13-43
+97            android:configChanges="orientation|screenSize|keyboardHidden"
+97-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:80:13-74
 98            android:exported="false"
-98-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:84:13-37
+98-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:81:13-37
 99            android:screenOrientation="landscape"
-99-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:85:13-50
-100            android:theme="@style/Theme.StremioMPVPlayer" />
-100-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:86:13-58
-101
-102        <provider
-102-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/8.13/transforms/4b6313fe56bc19408d66c7b07770bb84/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
-103            android:name="androidx.startup.InitializationProvider"
-103-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/8.13/transforms/4b6313fe56bc19408d66c7b07770bb84/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:25:13-67
-104            android:authorities="com.example.stremiompvplayer.androidx-startup"
-104-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/8.13/transforms/4b6313fe56bc19408d66c7b07770bb84/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:26:13-68
-105            android:exported="false" >
-105-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/8.13/transforms/4b6313fe56bc19408d66c7b07770bb84/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:27:13-37
-106            <meta-data
-106-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/8.13/transforms/4b6313fe56bc19408d66c7b07770bb84/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
-107                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-107-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/8.13/transforms/4b6313fe56bc19408d66c7b07770bb84/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:30:17-75
-108                android:value="androidx.startup" />
-108-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/8.13/transforms/4b6313fe56bc19408d66c7b07770bb84/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:31:17-49
-109            <meta-data
-109-->[androidx.lifecycle:lifecycle-process:2.8.1] /home/jon/.gradle/caches/8.13/transforms/a9c50433759b3626b47265d1661c3d6e/transformed/jetified-lifecycle-process-2.8.1/AndroidManifest.xml:29:13-31:52
-110                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-110-->[androidx.lifecycle:lifecycle-process:2.8.1] /home/jon/.gradle/caches/8.13/transforms/a9c50433759b3626b47265d1661c3d6e/transformed/jetified-lifecycle-process-2.8.1/AndroidManifest.xml:30:17-78
-111                android:value="androidx.startup" />
-111-->[androidx.lifecycle:lifecycle-process:2.8.1] /home/jon/.gradle/caches/8.13/transforms/a9c50433759b3626b47265d1661c3d6e/transformed/jetified-lifecycle-process-2.8.1/AndroidManifest.xml:31:17-49
-112            <meta-data
-112-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
-113                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-113-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
-114                android:value="androidx.startup" />
-114-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
-115        </provider>
-116
-117        <service
-117-->[androidx.room:room-runtime:2.6.1] /home/jon/.gradle/caches/8.13/transforms/81127fb2f08ef600d355b722db9bc5f1/transformed/room-runtime-2.6.1/AndroidManifest.xml:24:9-28:63
-118            android:name="androidx.room.MultiInstanceInvalidationService"
-118-->[androidx.room:room-runtime:2.6.1] /home/jon/.gradle/caches/8.13/transforms/81127fb2f08ef600d355b722db9bc5f1/transformed/room-runtime-2.6.1/AndroidManifest.xml:25:13-74
-119            android:directBootAware="true"
-119-->[androidx.room:room-runtime:2.6.1] /home/jon/.gradle/caches/8.13/transforms/81127fb2f08ef600d355b722db9bc5f1/transformed/room-runtime-2.6.1/AndroidManifest.xml:26:13-43
-120            android:exported="false" />
-120-->[androidx.room:room-runtime:2.6.1] /home/jon/.gradle/caches/8.13/transforms/81127fb2f08ef600d355b722db9bc5f1/transformed/room-runtime-2.6.1/AndroidManifest.xml:27:13-37
+99-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:82:13-50
+100            android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
+100-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:83:13-69
+101        <activity
+101-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:84:9-88:61
+102            android:name="com.example.stremiompvplayer.ui.library.DetailsActivity2"
+102-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:85:13-56
+103            android:exported="false"
+103-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:86:13-37
+104            android:screenOrientation="landscape"
+104-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:87:13-50
+105            android:theme="@style/Theme.StremioMPVPlayer" />
+105-->/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:88:13-58
+106
+107        <provider
+107-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/transforms-4/5e1ebca42057ff5458299ec878b7df0a/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+108            android:name="androidx.startup.InitializationProvider"
+108-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/transforms-4/5e1ebca42057ff5458299ec878b7df0a/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:25:13-67
+109            android:authorities="com.example.stremiompvplayer.androidx-startup"
+109-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/transforms-4/5e1ebca42057ff5458299ec878b7df0a/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:26:13-68
+110            android:exported="false" >
+110-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/transforms-4/5e1ebca42057ff5458299ec878b7df0a/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:27:13-37
+111            <meta-data
+111-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/transforms-4/5e1ebca42057ff5458299ec878b7df0a/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+112                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+112-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/transforms-4/5e1ebca42057ff5458299ec878b7df0a/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:30:17-75
+113                android:value="androidx.startup" />
+113-->[androidx.emoji2:emoji2:1.3.0] /home/jon/.gradle/caches/transforms-4/5e1ebca42057ff5458299ec878b7df0a/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:31:17-49
+114            <meta-data
+114-->[androidx.lifecycle:lifecycle-process:2.8.1] /home/jon/.gradle/caches/transforms-4/fece916cc200f15fc217d285fc8a44ed/transformed/jetified-lifecycle-process-2.8.1/AndroidManifest.xml:29:13-31:52
+115                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+115-->[androidx.lifecycle:lifecycle-process:2.8.1] /home/jon/.gradle/caches/transforms-4/fece916cc200f15fc217d285fc8a44ed/transformed/jetified-lifecycle-process-2.8.1/AndroidManifest.xml:30:17-78
+116                android:value="androidx.startup" />
+116-->[androidx.lifecycle:lifecycle-process:2.8.1] /home/jon/.gradle/caches/transforms-4/fece916cc200f15fc217d285fc8a44ed/transformed/jetified-lifecycle-process-2.8.1/AndroidManifest.xml:31:17-49
+117            <meta-data
+117-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+118                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+118-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+119                android:value="androidx.startup" />
+119-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+120        </provider>
 121
-122        <receiver
-122-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
-123            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-123-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
-124            android:directBootAware="false"
-124-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
-125            android:enabled="true"
-125-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
-126            android:exported="true"
-126-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
-127            android:permission="android.permission.DUMP" >
-127-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
-128            <intent-filter>
-128-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
-129                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-129-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
-129-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
-130            </intent-filter>
-131            <intent-filter>
-131-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
-132                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-132-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
-132-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
-133            </intent-filter>
-134            <intent-filter>
-134-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
-135                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-135-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
-135-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
-136            </intent-filter>
-137            <intent-filter>
-137-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
-138                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-138-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
-138-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/8.13/transforms/1edd3a2850360ffb1105a626ae7fe76c/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
-139            </intent-filter>
-140        </receiver>
-141    </application>
-142
-143</manifest>
+122        <service
+122-->[androidx.room:room-runtime:2.6.1] /home/jon/.gradle/caches/transforms-4/9354e8fed98869df69fb090465b98f5d/transformed/room-runtime-2.6.1/AndroidManifest.xml:24:9-28:63
+123            android:name="androidx.room.MultiInstanceInvalidationService"
+123-->[androidx.room:room-runtime:2.6.1] /home/jon/.gradle/caches/transforms-4/9354e8fed98869df69fb090465b98f5d/transformed/room-runtime-2.6.1/AndroidManifest.xml:25:13-74
+124            android:directBootAware="true"
+124-->[androidx.room:room-runtime:2.6.1] /home/jon/.gradle/caches/transforms-4/9354e8fed98869df69fb090465b98f5d/transformed/room-runtime-2.6.1/AndroidManifest.xml:26:13-43
+125            android:exported="false" />
+125-->[androidx.room:room-runtime:2.6.1] /home/jon/.gradle/caches/transforms-4/9354e8fed98869df69fb090465b98f5d/transformed/room-runtime-2.6.1/AndroidManifest.xml:27:13-37
+126
+127        <receiver
+127-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+128            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+128-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+129            android:directBootAware="false"
+129-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+130            android:enabled="true"
+130-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+131            android:exported="true"
+131-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+132            android:permission="android.permission.DUMP" >
+132-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+133            <intent-filter>
+133-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+134                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+134-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+134-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+135            </intent-filter>
+136            <intent-filter>
+136-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+137                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+137-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+137-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+138            </intent-filter>
+139            <intent-filter>
+139-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+140                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+140-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+140-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+141            </intent-filter>
+142            <intent-filter>
+142-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+143                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+143-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+143-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/jon/.gradle/caches/transforms-4/c01f1cf3227313f342d2fe38b45c2386/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+144            </intent-filter>
+145        </receiver>
+146    </application>
+147
+148</manifest>
