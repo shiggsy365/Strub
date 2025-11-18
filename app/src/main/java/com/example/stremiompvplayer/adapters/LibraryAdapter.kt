@@ -9,15 +9,12 @@ import com.example.stremiompvplayer.databinding.ItemPosterBinding
 import com.example.stremiompvplayer.models.LibraryItem
 
 class LibraryAdapter(
-    // CHANGED: Initialize with empty list, allowing the main data source to be mutable.
     private val onClick: (LibraryItem) -> Unit,
     private val onLongClick: (LibraryItem) -> Unit
 ) : RecyclerView.Adapter<LibraryAdapter.ViewHolder>() {
 
-    // NEW: The data list must be a mutable variable (var) to be updated.
     private var items: MutableList<LibraryItem> = mutableListOf()
 
-    // NEW: Public function required by LibraryFragment.kt
     fun setItems(newItems: List<LibraryItem>) {
         this.items.clear()
         this.items.addAll(newItems)
@@ -39,7 +36,8 @@ class LibraryAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-        holder.binding.title.text = item.name
+
+        // REMOVED: holder.binding.title.text = item.name (Title view no longer exists in item_poster.xml)
 
         Glide.with(holder.itemView.context)
             .load(item.poster)

@@ -122,25 +122,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
-        // Discover dropdown
-    //    binding.chipDiscover.setOnClickListener {
-    //        showDiscoverMenu()
-    //    }
+        // Discover dropdown - currently commented out in your code
+        // binding.chipDiscover.setOnClickListener {
+        //     showDiscoverMenu()
+        // }
 
         binding.chipMovies.setOnClickListener {
-        loadFragment(MoviesFragment())
+            loadFragment(MoviesFragment())
         }
 
-    //    binding.chipSeries.setOnClickListener {
-     //       loadFragment(SeriesFragment())
-     //   }
+        // Series dropdown - currently commented out in your code
+        // binding.chipSeries.setOnClickListener {
+        //     loadFragment(SeriesFragment())
+        // }
 
         // Library dropdown
         binding.chipLibrary.setOnClickListener {
-        //    showLibraryMenu()
+            // showLibraryMenu() // currently commented out
         }
 
-        // ... other chips
+        // Search button
+        binding.chipSearch.setOnClickListener {
+            loadFragment(SearchFragment())
+        }
+
+        // FIX: Add listener for the "..." (More) chip to open Settings
+        binding.chipMore.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
     }
 
  //   private fun showDiscoverMenu() {

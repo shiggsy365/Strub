@@ -31,6 +31,9 @@ class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() 
         fetchManifestAndDefaultCatalog()
     }
 
+    // ADD THIS: LiveData to expose available catalogs once manifest is loaded
+    private val _loadedCatalogs = MutableLiveData<List<Catalog>>()
+    val loadedCatalogs: LiveData<List<Catalog>> = _loadedCatalogs
     private fun fetchManifestAndDefaultCatalog() {
         Log.d("CatalogViewModel", "Fetching manifest...")
         viewModelScope.launch {
@@ -41,6 +44,8 @@ class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() 
                     // Filter out search catalogs and catalogs with no type
                     !(it.name ?: "").contains("search", ignoreCase = true) && it.type.isNotEmpty()
                 }
+
+                _loadedCatalogs.postValue(allManifestCatalogs)
 
                 Log.d("CatalogViewModel", "Found ${allManifestCatalogs.size} total catalogs")
 
@@ -72,7 +77,8 @@ class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() 
                 Log.d("CatalogViewModel", "Catalog fetched successfully: ${catalogResponse.metas.size} items")
                 _uiState.value = CatalogUiState.Success(
                     catalogs = getCatalogsByType(type),
-                    items = catalogResponse.metas
+                    // FIX: Limit items to 100
+                    items = catalogResponse.metas.take(100)
                 )
             }.onFailure { error ->
                 Log.e("CatalogViewModel", "Failed to load catalog '$id': ${error.message}")

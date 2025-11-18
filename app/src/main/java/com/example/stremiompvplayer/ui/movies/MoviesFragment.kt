@@ -12,10 +12,11 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
+// import androidx.recyclerview.widget.GridLayoutManager // No longer needed
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.stremiompvplayer.PlayerActivity
 import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.data.ServiceLocator
@@ -115,7 +116,8 @@ class MoviesFragment : Fragment() {
         )
 
         binding.moviesGridRecycler.apply {
-            layoutManager = GridLayoutManager(context, 7)
+            // Horizontal scrolling list
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             adapter = posterAdapter
         }
     }
@@ -128,7 +130,8 @@ class MoviesFragment : Fragment() {
             userCatalogs = catalogs
 
             if (catalogs.isEmpty()) {
-                showEmptyState()
+                // Try to populate defaults if empty
+                populateDefaultCatalogs(userId)
             } else {
                 hideEmptyState()
 
@@ -148,6 +151,39 @@ class MoviesFragment : Fragment() {
                         viewModel.fetchCatalog(firstCatalog.catalogType, firstCatalog.catalogId)
                     }
                 }
+            }
+        }
+    }
+
+    // FIX: Corrected UserCatalog instantiation parameters
+    private fun populateDefaultCatalogs(userId: String) {
+        viewModel.loadedCatalogs.observe(viewLifecycleOwner) { allCatalogs ->
+            val defaultMovieCatalogs = allCatalogs.filter { it.type == "movie" }
+
+            if (defaultMovieCatalogs.isNotEmpty()) {
+                lifecycleScope.launch {
+                    val currentCount = db.userCatalogDao().getMaxDisplayOrder(userId, "movies") ?: 0
+
+                    if (currentCount == 0) {
+                        defaultMovieCatalogs.forEachIndexed { index, catalog ->
+                            val userCatalog = UserCatalog(
+                                userId = userId,
+                                catalogId = catalog.id,
+                                catalogType = catalog.type,
+                                catalogName = catalog.name, // Corrected parameter
+                                customName = null,          // Explicit null
+                                pageType = "movies",
+                                addonUrl = "",              // Empty string for now
+                                manifestId = "default",
+                                displayOrder = index
+                            )
+                            db.userCatalogDao().insert(userCatalog)
+                        }
+                        Toast.makeText(context, "Default catalogs added", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                showEmptyState()
             }
         }
     }
@@ -187,7 +223,7 @@ class MoviesFragment : Fragment() {
         binding.catalogChipsRecycler.visibility = View.GONE
         Toast.makeText(
             context,
-            "No catalogs added. Go to Discover to add catalogs!",
+            "No catalogs found. Check your connection.",
             Toast.LENGTH_LONG
         ).show()
     }
@@ -196,6 +232,7 @@ class MoviesFragment : Fragment() {
         binding.catalogChipsRecycler.visibility = View.VISIBLE
     }
 
+    // ... (Dialog functions remain the same: showCatalogOptionsDialog, showMoveCatalogDialog, etc.) ...
     private fun showCatalogOptionsDialog(catalog: Catalog) {
         val userCatalog = userCatalogs.find {
             it.catalogId == catalog.id && it.catalogType == catalog.type
@@ -246,7 +283,6 @@ class MoviesFragment : Fragment() {
                 reorderedList.forEachIndexed { index, userCatalog ->
                     db.userCatalogDao().updateDisplayOrder(userCatalog.id, index)
                 }
-
                 Toast.makeText(context, "Catalog moved", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -260,7 +296,6 @@ class MoviesFragment : Fragment() {
             inputType = InputType.TYPE_CLASS_TEXT
             setPadding(48, 32, 48, 32)
         }
-
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Rename Catalog")
             .setView(input)
@@ -309,27 +344,21 @@ class MoviesFragment : Fragment() {
 
     private fun showCollectionDialog(metaItem: MetaItem) {
         val userId = currentUserId ?: return
-
         lifecycleScope.launch {
             val collectedId = "${userId}_${metaItem.id}"
             val isCollected = db.collectedItemDao().isCollected(collectedId) > 0
-
             if (isCollected) {
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Remove from Library")
                     .setMessage("Remove \"${metaItem.name}\" from your library?")
-                    .setPositiveButton("Remove") { _, _ ->
-                        uncollectItem(collectedId)
-                    }
+                    .setPositiveButton("Remove") { _, _ -> uncollectItem(collectedId) }
                     .setNegativeButton("Cancel", null)
                     .show()
             } else {
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Add to Library")
                     .setMessage("Add \"${metaItem.name}\" to your library?")
-                    .setPositiveButton("Collect") { _, _ ->
-                        collectItem(metaItem)
-                    }
+                    .setPositiveButton("Collect") { _, _ -> collectItem(metaItem) }
                     .setNegativeButton("Cancel", null)
                     .show()
             }
@@ -338,7 +367,6 @@ class MoviesFragment : Fragment() {
 
     private fun collectItem(metaItem: MetaItem) {
         val userId = currentUserId ?: return
-
         lifecycleScope.launch {
             try {
                 val collectedItem = CollectedItem.fromMetaItem(userId, metaItem)
@@ -364,10 +392,17 @@ class MoviesFragment : Fragment() {
     private fun displayMovieDetails(metaItem: MetaItem) {
         currentMetaItem = metaItem
 
+        // Load Poster (High quality)
         Glide.with(this)
             .load(metaItem.poster)
             .centerCrop()
             .into(binding.selectedPoster)
+
+        // NEW: Load Background Image
+        Glide.with(this)
+            .load(metaItem.background ?: metaItem.poster) // Fallback to poster if no background
+            .transition(DrawableTransitionOptions.withCrossFade())
+            .into(binding.backgroundImage)
 
         binding.movieTitle.text = metaItem.name
         binding.movieDescription.text = metaItem.description ?: "No description"
@@ -401,7 +436,6 @@ class MoviesFragment : Fragment() {
             Toast.makeText(context, "Invalid stream URL", Toast.LENGTH_SHORT).show()
             return
         }
-
         val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
             putExtra("stream", stream)
             putExtra("meta", currentMetaItem)

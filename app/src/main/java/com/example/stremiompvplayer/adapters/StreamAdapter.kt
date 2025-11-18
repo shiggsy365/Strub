@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.stremiompvplayer.databinding.ItemStreamBinding
 import com.example.stremiompvplayer.models.Stream
 
-class StreamAdapter(
+class   StreamAdapter(
     // FIX: Changed from List<Stream> to just the click listener
     private val onClick: (Stream) -> Unit
 ) : ListAdapter<Stream, StreamAdapter.ViewHolder>(DiffCallback) { // FIX: Extend ListAdapter
@@ -28,10 +28,9 @@ class StreamAdapter(
     // REMOVED: getItemCount() - ListAdapter handles this
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        // FIX: Get item from ListAdapter
         val stream = getItem(position)
         holder.binding.title.text = stream.title
-        holder.binding.subtitle.text = stream.subtitle
+        // REMOVED: holder.binding.subtitle.text = stream.subtitle
 
         holder.itemView.setOnClickListener {
             onClick(stream)

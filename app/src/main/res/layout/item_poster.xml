@@ -6,85 +6,32 @@
     </data>
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_margin="4dp"
         android:focusable="true"
         android:clickable="true"
-        app:cardCornerRadius="8dp"
+        app:cardCornerRadius="6dp"
         app:cardElevation="4dp"
         app:cardBackgroundColor="#1E1E1E"
-        android:foreground="?attr/selectableItemBackground">
+        android:foreground="@drawable/selector_focus_border">
 
-        <!-- ConstraintLayout to maintain 2:3 aspect ratio -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content">
 
-            <!-- Poster with 2:3 aspect ratio (standard movie poster) -->
             <ImageView
                 android:id="@+id/poster"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="172dp"
                 android:scaleType="centerCrop"
                 android:background="#2A2A2A"
                 android:contentDescription="Movie Poster"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toTopOf="@+id/titleOverlay"
-                app:layout_constraintDimensionRatio="2:3" />
-
-            <!-- Optional: Focus overlay for TV navigation -->
-            <View
-                android:id="@+id/focusOverlay"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:background="#80FFFFFF"
-                android:visibility="gone"
-                app:layout_constraintTop_toTopOf="@id/poster"
-                app:layout_constraintBottom_toBottomOf="@id/poster"
-                app:layout_constraintStart_toStartOf="@id/poster"
-                app:layout_constraintEnd_toEndOf="@id/poster" />
-
-            <!-- Optional: Collection indicator (star icon) -->
-            <ImageView
-                android:id="@+id/collectionIndicator"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_margin="8dp"
-                android:src="@android:drawable/btn_star_big_on"
-                android:visibility="gone"
-                android:contentDescription="In Collection"
-                app:tint="#FFD700"
-                app:layout_constraintTop_toTopOf="@id/poster"
-                app:layout_constraintEnd_toEndOf="@id/poster" />
-
-            <!-- Optional: Title overlay (hidden by default for cleaner look) -->
-            <LinearLayout
-                android:id="@+id/titleOverlay"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/gradient_overlay"
-                android:padding="8dp"
-                android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/poster"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
-
-                <TextView
-                    android:id="@+id/title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:maxLines="2"
-                    android:ellipsize="end" />
-
-            </LinearLayout>
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintDimensionRatio="58:86" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

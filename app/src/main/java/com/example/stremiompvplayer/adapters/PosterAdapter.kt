@@ -1,7 +1,6 @@
 package com.example.stremiompvplayer.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -37,10 +36,6 @@ class PosterAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-
-        // Set title (optional - can be hidden for cleaner look)
-        holder.binding.title.text = item.name
-        holder.binding.title.visibility = View.GONE // Hide by default for poster-only view
 
         // Load poster with Glide, maintaining aspect ratio
         Glide.with(holder.itemView.context)
