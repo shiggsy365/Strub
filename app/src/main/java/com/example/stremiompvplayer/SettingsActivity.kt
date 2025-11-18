@@ -15,7 +15,9 @@ import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
 import com.example.stremiompvplayer.models.UserSettings
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-
+import com.example.stremiompvplayer.databinding.ItemAddonListBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding

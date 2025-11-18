@@ -16,6 +16,15 @@ import com.example.stremiompvplayer.ui.series.SeriesFragment
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import android.widget.TextView
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.viewModels
+import com.example.stremiompvplayer.databinding.DialogUserMenuBinding
+import com.example.stremiompvplayer.models.FeedList
+import com.example.stremiompvplayer.models.User
+import com.example.stremiompvplayer.viewmodels.MainViewModel
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.CoroutineScope
 
 class MainActivity : AppCompatActivity() {
 

@@ -1,249 +1,125 @@
-package com.example.stremiompvplayer
+package com.example.stremiompvplayer.ui.details
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+// FIX: Use activity-ktx for viewModels
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import coil.load
+import com.bumptech.glide.Glide
+import com.example.stremiompvplayer.PlayerActivity
+import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.adapters.StreamAdapter
-import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.databinding.ActivityDetails2Binding
-import com.example.stremiompvplayer.models.LibraryItem
-import com.example.stremiompvplayer.models.MetaDetail
+// FIX: Use Meta from StremioModels, not the stub
+import com.example.stremiompvplayer.models.Meta
+// FIX: Use Stream from StremioModels
 import com.example.stremiompvplayer.models.Stream
-import com.example.stremiompvplayer.network.StremioClient
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import kotlinx.coroutines.launch
-import java.util.UUID
+import com.example.stremiompvplayer.viewmodels.MainViewModel
+import java.io.Serializable
 
+/**
+ * REFACTORED: This Activity no longer fetches its own data.
+ * It observes the MainViewModel, which ensures data is loaded
+ * using the correct user's authKey.
+ */
 class DetailsActivity2 : AppCompatActivity() {
 
     private lateinit var binding: ActivityDetails2Binding
-    private lateinit var database: AppDatabase
-    private lateinit var stremioClient: StremioClient
+    private lateinit var streamAdapter: StreamAdapter
+
+    // FIX: Get the ViewModel
+    private val viewModel: MainViewModel by viewModels()
 
     private var metaId: String? = null
     private var metaType: String? = null
-    private var currentMeta: MetaDetail? = null
-    private var availableStreams = listOf<Stream>()
+    private var currentMeta: Meta? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDetails2Binding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        database = AppDatabase.Companion.getInstance(this)
-        stremioClient = StremioClient()
+        metaId = intent.getStringExtra("id")
+        metaType = intent.getStringExtra("type")
 
-        metaId = intent.getStringExtra("META_ID")
-        metaType = intent.getStringExtra("META_TYPE")
-
-        setupToolbar()
-        loadDetails()
-    }
-
-    private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener {
-            finish()
-        }
-    }
-
-    private fun loadDetails() {
-        val id = metaId
-        val type = metaType
-        val userId = database.getCurrentUserId()
-
-        if (id == null || type == null || userId == null) {
-            Toast.makeText(this, "Invalid content", Toast.LENGTH_SHORT).show()
+        if (metaId == null || metaType == null) {
+            Log.e("DetailsActivity2", "No ID or Type provided")
             finish()
             return
         }
 
-        binding.loadingProgress.visibility = View.VISIBLE
-        binding.contentLayout.visibility = View.GONE
+        setupRecyclerView()
+        setupObservers()
 
-        lifecycleScope.launch {
-            try {
-                val addonUrls = database.getUserAddonUrls(userId)
-                var meta: MetaDetail? = null
-
-                // Try to load metadata from each addon
-                for (addonUrl in addonUrls) {
-                    try {
-                        val result = stremioClient.getMeta(addonUrl, type, id)
-                        if (result != null) {
-                            meta = result
-                            break
-                        }
-                    } catch (e: Exception) {
-                        Log.e("DetailsActivity2", "Error loading from $addonUrl", e)
-                    }
-                }
-
-                if (meta != null) {
-                    currentMeta = meta
-                    displayDetails(meta)
-                    loadStreams(id, type, addonUrls)
-                } else {
-                    Toast.makeText(this@DetailsActivity2, "Content not found", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-            } catch (e: Exception) {
-                Log.e("DetailsActivity2", "Error loading details", e)
-                Toast.makeText(this@DetailsActivity2, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-        }
+        // FIX: Tell the ViewModel to fetch the data
+        binding.progressBar.visibility = View.VISIBLE
+        viewModel.getMeta(metaType!!, metaId!!)
+        viewModel.getStreams(metaType!!, metaId!!)
     }
 
-    private fun displayDetails(meta: MetaDetail) {
-        binding.apply {
-            titleText.text = meta.name
-            descriptionText.text = meta.description ?: "No description available"
-            releaseInfoText.text = buildString {
-                meta.releaseInfo?.let { append(it) }
-                if (meta.runtime != null && meta.releaseInfo != null) append(" • ")
-                meta.runtime?.let { append(it) }
+    private fun setupObservers() {
+        // Observe Meta details
+        viewModel.meta.observe(this) { meta ->
+            if (meta?.id == metaId) { // Ensure this is the meta we requested
+                currentMeta = meta
+                updateUI(meta)
+                binding.progressBar.visibility = View.GONE
+                binding.contentGroup.visibility = View.VISIBLE
+            } else if (meta == null && currentMeta != null) {
+                // Meta was cleared (e.g., user changed)
             }
-
-            // Load poster
-            posterImage.load(meta.poster) {
-                crossfade(true)
-                placeholder(R.drawable.default_background)
-                error(R.drawable.default_background)
-            }
-
-            // Load background
-            backgroundImage.load(meta.background) {
-                crossfade(true)
-                error(R.drawable.default_background)
-            }
-
-            // Show genres
-            if (!meta.genres.isNullOrEmpty()) {
-                genresText.text = meta.genres.joinToString(" • ")
-                genresText.visibility = View.VISIBLE
-            }
-
-            // Show rating
-            if (meta.imdbRating != null) {
-                ratingText.text = "★ ${meta.imdbRating}"
-                ratingText.visibility = View.VISIBLE
-            }
-
-            // Check if in library
-            val userId = database.getCurrentUserId()
-            if (userId != null) {
-                val inLibrary = database.isInLibrary(userId, meta.id)
-                updateLibraryButton(inLibrary)
-
-                libraryButton.setOnClickListener {
-                    toggleLibrary(userId, meta, inLibrary)
-                }
-            }
-
-            loadingProgress.visibility = View.GONE
-            contentLayout.visibility = View.VISIBLE
         }
-    }
 
-    private fun loadStreams(id: String, type: String, addonUrls: List<String>) {
-        lifecycleScope.launch {
-            val streams = mutableListOf<Stream>()
-
-            for (addonUrl in addonUrls) {
-                try {
-                    val addonStreams = stremioClient.getStreams(addonUrl, type, id)
-                    streams.addAll(addonStreams)
-                } catch (e: Exception) {
-                    Log.e("DetailsActivity2", "Error loading streams from $addonUrl", e)
-                }
-            }
-
-            availableStreams = streams
-
+        // Observe Streams
+        viewModel.streams.observe(this) { streams ->
+            // We can check if meta is loaded, but streams might load separately
             if (streams.isNotEmpty()) {
-                binding.playButton.isEnabled = true
-                binding.playButton.setOnClickListener {
-                    if (streams.size == 1) {
-                        playStream(streams[0])
-                    } else {
-                        showStreamSelectionDialog(streams)
-                    }
-                }
-
-                // Auto-play if enabled
-                val userId = database.getCurrentUserId()
-                if (userId != null) {
-                    val settings = database.getUserSettings(userId)
-                    if (settings.autoPlayFirstStream) {
-                        playStream(streams[0])
-                    }
-                }
+                streamAdapter.submitList(streams)
+                binding.streamRecyclerView.visibility = View.VISIBLE
+                binding.textNoStreams.visibility = View.GONE
             } else {
-                binding.playButton.isEnabled = false
-                Toast.makeText(this@DetailsActivity2, "No streams available", Toast.LENGTH_SHORT).show()
+                streamAdapter.submitList(emptyList())
+                binding.streamRecyclerView.visibility = View.GONE
+                binding.textNoStreams.visibility = View.VISIBLE
             }
         }
     }
 
-    private fun showStreamSelectionDialog(streams: List<Stream>) {
-        val view = layoutInflater.inflate(R.layout.dialog_stream_selection, null)
-        val recyclerView = view.findViewById<RecyclerView>(R.id.streamsRecyclerView)
-
-        val adapter = StreamAdapter(streams) { stream ->
-            playStream(stream)
+    private fun setupRecyclerView() {
+        streamAdapter = StreamAdapter { stream ->
+            onStreamClick(stream)
         }
-
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = adapter
-
-        MaterialAlertDialogBuilder(this)
-            .setView(view)
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun playStream(stream: Stream) {
-        val url = stream.url ?: stream.externalUrl
-        if (url != null) {
-            val intent = Intent(this, PlayerActivity::class.java)
-            intent.putExtra("STREAM_URL", url)
-            intent.putExtra("STREAM_TITLE", currentMeta?.name ?: "Playing")
-            startActivity(intent)
-        } else {
-            Toast.makeText(this, "Invalid stream URL", Toast.LENGTH_SHORT).show()
+        binding.streamRecyclerView.apply {
+            layoutManager = LinearLayoutManager(this@DetailsActivity2)
+            adapter = streamAdapter
         }
     }
 
-    private fun toggleLibrary(userId: String, meta: MetaDetail, currentlyInLibrary: Boolean) {
-        if (currentlyInLibrary) {
-            database.removeFromLibrary(userId, meta.id)
-            updateLibraryButton(false)
-            Toast.makeText(this, "Removed from library", Toast.LENGTH_SHORT).show()
-        } else {
-            val libraryItem = LibraryItem(
-                id = UUID.randomUUID().toString(),
-                userId = userId,
-                metaId = meta.id,
-                type = meta.type,
-                name = meta.name,
-                poster = meta.poster,
-                background = meta.background,
-                genres = meta.genres
-            )
-            database.addToLibrary(userId, libraryItem)
-            updateLibraryButton(true)
-            Toast.makeText(this, "Added to library", Toast.LENGTH_SHORT).show()
-        }
+    private fun updateUI(meta: Meta) {
+        binding.title.text = meta.name
+        binding.description.text = meta.description
+        Glide.with(this)
+            .load(meta.poster)
+            .placeholder(R.drawable.movie)
+            .into(binding.poster)
     }
 
-    private fun updateLibraryButton(inLibrary: Boolean) {
-        binding.libraryButton.text = if (inLibrary) "Remove from Library" else "Add to Library"
+    private fun onStreamClick(stream: Stream) {
+        val intent = Intent(this, PlayerActivity::class.java).apply {
+            putExtra("stream", stream as Serializable)
+            // Pass meta for context
+            putExtra("meta", currentMeta as Serializable)
+        }
+        startActivity(intent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Tell the viewmodel to clear this data
+        viewModel.clearMetaAndStreams()
     }
 }

@@ -1,18 +1,4 @@
-pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
+// We are now using the root build.gradle for repositories,
+// so this file just needs to include the 'app' module.
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-rootProject.name = "StremioMPVPlayer"
 include ':app'

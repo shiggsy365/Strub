@@ -1,127 +1,75 @@
 package com.example.stremiompvplayer.network
 
-import com.example.stremiompvplayer.models.*
-import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.util.concurrent.TimeUnit
+import com.example.stremiompvplayer.models.CatalogResponse
+import com.example.stremiompvplayer.models.FeedList
+import com.example.stremiompvplayer.models.Manifest
+import com.example.stremiompvplayer.models.MetaResponse
+import com.example.stremiompvplayer.models.StreamResponse
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Path
+import retrofit2.http.Url
 
-class StremioClient {
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
+object StremioClient {
+
+    private const val BASE_URL = "https://api.strem.io"
+
+    private val moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
         .build()
-    
-    private val gson = Gson()
-    
-    suspend fun getManifest(addonUrl: String): AddonManifest? = withContext(Dispatchers.IO) {
-        try {
-            val url = normalizeAddonUrl(addonUrl) + "/manifest.json"
-            val request = Request.Builder()
-                .url(url)
-                .build()
-            
-            val response = client.newCall(request).execute()
-            if (response.isSuccessful) {
-                val json = response.body?.string()
-                gson.fromJson(json, AddonManifest::class.java)
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-    
-    suspend fun getCatalog(
-        addonUrl: String,
-        type: String,
-        catalogId: String,
-        extra: Map<String, String> = emptyMap()
-    ): CatalogResponse? = withContext(Dispatchers.IO) {
-        try {
-            val extraParams = if (extra.isEmpty()) "" else {
-                "/" + extra.entries.joinToString("/") { "${it.key}=${it.value}" }
-            }
-            val url = normalizeAddonUrl(addonUrl) + 
-                      "/catalog/$type/$catalogId$extraParams.json"
-            
-            val request = Request.Builder()
-                .url(url)
-                .build()
-            
-            val response = client.newCall(request).execute()
-            if (response.isSuccessful) {
-                val json = response.body?.string()
-                gson.fromJson(json, CatalogResponse::class.java)
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-    
-    suspend fun getMeta(
-        addonUrl: String,
-        type: String,
-        id: String
-    ): MetaDetail? = withContext(Dispatchers.IO) {
-        try {
-            val url = normalizeAddonUrl(addonUrl) + "/meta/$type/$id.json"
-            
-            val request = Request.Builder()
-                .url(url)
-                .build()
-            
-            val response = client.newCall(request).execute()
-            if (response.isSuccessful) {
-                val json = response.body?.string()
-                val metaResponse = gson.fromJson(json, Map::class.java)
-                gson.fromJson(gson.toJson(metaResponse["meta"]), MetaDetail::class.java)
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-    
-    suspend fun getStreams(
-        addonUrl: String,
-        type: String,
-        id: String
-    ): List<Stream> = withContext(Dispatchers.IO) {
-        try {
-            val url = normalizeAddonUrl(addonUrl) + "/stream/$type/$id.json"
-            
-            val request = Request.Builder()
-                .url(url)
-                .build()
-            
-            val response = client.newCall(request).execute()
-            if (response.isSuccessful) {
-                val json = response.body?.string()
-                val streamsResponse = gson.fromJson(json, StreamsResponse::class.java)
-                streamsResponse.streams.filter { stream ->
-                    // Filter for direct URL streams that MPV can play
-                    !stream.url.isNullOrEmpty() || !stream.externalUrl.isNullOrEmpty()
-                }
-            } else {
-                emptyList()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
-    }
-    
-    private fun normalizeAddonUrl(url: String): String {
-        return url.trimEnd('/')
+
+    private val retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
+        .build()
+
+    val api: StremioApi = retrofit.create(StremioApi::class.java)
+
+    interface StremioApi {
+
+        // Existing functions
+        @GET("/api/feed?authKey={authKey}")
+        suspend fun getFeed(@Path("authKey") authKey: String): List<FeedList>
+
+        @GET("/api/meta?authKey={authKey}&type={type}&id={id}")
+        suspend fun getMeta(
+            @Path("authKey") authKey: String,
+            @Path("type") type: String,
+            @Path("id") id: String
+        ): MetaResponse
+
+        @GET("/api/streams?authKey={authKey}&type={type}&id={id}")
+        suspend fun getStreams(
+            @Path("authKey") authKey: String,
+            @Path("type") type: String,
+            @Path("id") id: String
+        ): StreamResponse
+
+        @GET("/api/search?authKey={authKey}&query={query}")
+        suspend fun search(
+            @Path("authKey") authKey: String,
+            @Path("query") query: String
+        ): List<FeedList>
+
+
+        // --- NEW FUNCTIONS ---
+        // Based on the logic from index.html to fetch directly from an add-on URL
+
+        /**
+         * Fetches the manifest.json from a specific add-on.
+         * @param url The full URL to the add-on's manifest (e.g., "http://127.0.0.1:7878/manifest.json")
+         */
+        @GET
+        suspend fun getManifest(@Url url: String): Manifest
+
+        /**
+         * Fetches a specific catalog from an add-on.
+         * @param url The full URL to the catalog (e.g., "http://127.0.0.1:7878/catalog/movie/top.json")
+         */
+        @GET
+        suspend fun getCatalog(@Url url: String): CatalogResponse
     }
 }

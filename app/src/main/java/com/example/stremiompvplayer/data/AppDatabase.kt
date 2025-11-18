@@ -1,226 +1,129 @@
 package com.example.stremiompvplayer.data
 
 import android.content.Context
-import android.content.SharedPreferences
-import com.example.stremiompvplayer.models.*
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import java.util.UUID
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
+// FIX: Import stub models
+import com.example.stremiompvplayer.models.LibraryItem
+import com.example.stremiompvplayer.models.NextUpItem
+import com.example.stremiompvplayer.models.User
+import com.example.stremiompvplayer.models.UserSettings
+import com.example.stremiompvplayer.models.WatchProgress
+// NEW: Add imports for FeedList and HubSlot
+import com.example.stremiompvplayer.models.FeedList
+import com.example.stremiompvplayer.models.HubSlot
+import kotlinx_coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-class AppDatabase private constructor(context: Context) {
-    
-    private val prefs: SharedPreferences = context.getSharedPreferences("stremio_mpv_db", Context.MODE_PRIVATE)
-    private val gson = Gson()
-    
+@Database(
+    entities = [
+        FeedList::class,
+        HubSlot::class,
+        // FIX: Use stub models
+        User::class,
+        LibraryItem::class,
+        WatchProgress::class,
+        NextUpItem::class,
+        UserSettings::class
+    ],
+    version = 1,
+    exportSchema = false
+)
+abstract class AppDatabase : RoomDatabase() {
+
+    // FIX: Add DAOs for stub models
+    abstract fun userDao(): UserDao
+    abstract fun libraryItemDao(): LibraryItemDao
+    abstract fun watchProgressDao(): WatchProgressDao
+    abstract fun nextUpItemDao(): NextUpItemDao
+    abstract fun userSettingsDao(): UserSettingsDao
+
+    abstract fun feedListDao(): FeedListDao
+    abstract fun hubSlotDao(): HubSlotDao
+
     companion object {
         @Volatile
-        private var instance: AppDatabase? = null
-        
-        fun getInstance(context: Context): AppDatabase {
-            return instance ?: synchronized(this) {
-                instance ?: AppDatabase(context.applicationContext).also { instance = it }
-            }
-        }
-    }
-    
-    // User Management
-    fun getAllUsers(): List<User> {
-        val json = prefs.getString("users", "[]") ?: "[]"
-        val type = object : TypeToken<List<User>>() {}.type
-        return gson.fromJson(json, type)
-    }
-    
-    fun getUser(userId: String): User? {
-        return getAllUsers().find { it.id == userId }
-    }
-    
-    fun createUser(name: String, avatarColor: Int): User {
-        val user = User(
-            id = UUID.randomUUID().toString(),
-            name = name,
-            avatarColor = avatarColor
-        )
-        val users = getAllUsers().toMutableList()
-        users.add(user)
-        saveUsers(users)
-        return user
-    }
-    
-    fun updateUser(user: User) {
-        val users = getAllUsers().toMutableList()
-        val index = users.indexOfFirst { it.id == user.id }
-        if (index != -1) {
-            users[index] = user
-            saveUsers(users)
-        }
-    }
-    
-    fun deleteUser(userId: String) {
-        val users = getAllUsers().toMutableList()
-        users.removeAll { it.id == userId }
-        saveUsers(users)
-        
-        // Clean up user data
-        deleteAllLibraryItems(userId)
-        deleteAllWatchProgress(userId)
-        deleteUserSettings(userId)
-    }
-    
-    private fun saveUsers(users: List<User>) {
-        prefs.edit().putString("users", gson.toJson(users)).apply()
-    }
-    
-    // Current User
-    fun getCurrentUserId(): String? {
-        return prefs.getString("current_user_id", null)
-    }
-    
-    fun setCurrentUser(userId: String) {
-        prefs.edit().putString("current_user_id", userId).apply()
-        
-        // Update last active
-        getUser(userId)?.let { user ->
-            updateUser(user.copy(lastActive = System.currentTimeMillis()))
-        }
-    }
-    
-    // Library Management
-    fun getLibraryItems(userId: String): List<LibraryItem> {
-        val json = prefs.getString("library_$userId", "[]") ?: "[]"
-        val type = object : TypeToken<List<LibraryItem>>() {}.type
-        return gson.fromJson(json, type)
-    }
-    
-    fun addToLibrary(userId: String, item: LibraryItem) {
-        val items = getLibraryItems(userId).toMutableList()
-        if (!items.any { it.metaId == item.metaId }) {
-            items.add(item)
-            saveLibraryItems(userId, items)
-        }
-    }
-    
-    fun removeFromLibrary(userId: String, metaId: String) {
-        val items = getLibraryItems(userId).toMutableList()
-        items.removeAll { it.metaId == metaId }
-        saveLibraryItems(userId, items)
-    }
-    
-    fun isInLibrary(userId: String, metaId: String): Boolean {
-        return getLibraryItems(userId).any { it.metaId == metaId }
-    }
-    
-    fun getLibraryItemsByType(userId: String, type: String): List<LibraryItem> {
-        return getLibraryItems(userId).filter { it.type == type }
-    }
-    
-    private fun saveLibraryItems(userId: String, items: List<LibraryItem>) {
-        prefs.edit().putString("library_$userId", gson.toJson(items)).apply()
-    }
-    
-    private fun deleteAllLibraryItems(userId: String) {
-        prefs.edit().remove("library_$userId").apply()
-    }
-    
-    // Watch Progress Management
-    fun getAllWatchProgress(userId: String): List<WatchProgress> {
-        val json = prefs.getString("watch_progress_$userId", "[]") ?: "[]"
-        val type = object : TypeToken<List<WatchProgress>>() {}.type
-        return gson.fromJson(json, type)
-    }
-    
-    fun getWatchProgress(userId: String, metaId: String, videoId: String? = null): WatchProgress? {
-        return getAllWatchProgress(userId).find { 
-            it.metaId == metaId && (videoId == null || it.videoId == videoId)
-        }
-    }
-    
-    fun saveWatchProgress(progress: WatchProgress) {
-        val allProgress = getAllWatchProgress(progress.userId).toMutableList()
-        val index = allProgress.indexOfFirst { 
-            it.metaId == progress.metaId && it.videoId == progress.videoId 
-        }
-        
-        if (index != -1) {
-            allProgress[index] = progress
-        } else {
-            allProgress.add(progress)
-        }
-        
-        saveAllWatchProgress(progress.userId, allProgress)
-    }
-    
-    fun getContinueWatchingItems(userId: String, limit: Int = 20): List<NextUpItem> {
-        val progress = getAllWatchProgress(userId)
-            .filter { !it.completed && it.position > 0 }
-            .sortedByDescending { it.lastWatched }
-            .take(limit)
-        
-        return progress.mapNotNull { wp ->
-            val libraryItem = getLibraryItems(userId).find { it.metaId == wp.metaId }
-            libraryItem?.let {
-                NextUpItem(
-                    metaId = wp.metaId,
-                    type = wp.type,
-                    name = it.name,
-                    poster = it.poster,
-                    background = it.background,
-                    videoId = wp.videoId,
-                    videoTitle = if (wp.episodeNumber != null) "S${wp.seasonNumber}E${wp.episodeNumber}" else null,
-                    seasonNumber = wp.seasonNumber,
-                    episodeNumber = wp.episodeNumber,
-                    progress = if (wp.duration > 0) wp.position.toFloat() / wp.duration else 0f,
-                    lastWatched = wp.lastWatched
+        private var INSTANCE: AppDatabase? = null
+
+        fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "stremio_database"
                 )
+                    .addCallback(AppDatabaseCallback(scope))
+                    .build()
+                INSTANCE = instance
+                instance
             }
         }
     }
-    
-    private fun saveAllWatchProgress(userId: String, progress: List<WatchProgress>) {
-        prefs.edit().putString("watch_progress_$userId", gson.toJson(progress)).apply()
-    }
-    
-    private fun deleteAllWatchProgress(userId: String) {
-        prefs.edit().remove("watch_progress_$userId").apply()
-    }
-    
-    // User Settings
-    fun getUserSettings(userId: String): UserSettings {
-        val json = prefs.getString("settings_$userId", null)
-        return if (json != null) {
-            gson.fromJson(json, UserSettings::class.java)
-        } else {
-            UserSettings(userId = userId)
-        }
-    }
-    
-    fun saveUserSettings(settings: UserSettings) {
-        prefs.edit().putString("settings_${settings.userId}", gson.toJson(settings)).apply()
-    }
-    
-    private fun deleteUserSettings(userId: String) {
-        prefs.edit().remove("settings_$userId").apply()
-    }
-    
-    // Addon URLs per user
-    fun getUserAddonUrls(userId: String): List<String> {
-        return getUser(userId)?.addonUrls ?: emptyList()
-    }
-    
-    fun addAddonUrl(userId: String, url: String) {
-        getUser(userId)?.let { user ->
-            val urls = user.addonUrls.toMutableList()
-            if (!urls.contains(url)) {
-                urls.add(url)
-                updateUser(user.copy(addonUrls = urls))
+
+    private class AppDatabaseCallback(
+        private val scope: CoroutineScope
+    ) : RoomDatabase.Callback() {
+        override fun onCreate(db: SupportSQLiteDatabase) {
+            super.onCreate(db)
+            INSTANCE?.let { database ->
+                scope.launch {
+                    populateDatabase(database)
+                }
             }
         }
-    }
-    
-    fun removeAddonUrl(userId: String, url: String) {
-        getUser(userId)?.let { user ->
-            val urls = user.addonUrls.toMutableList()
-            urls.remove(url)
-            updateUser(user.copy(addonUrls = urls))
+
+        suspend fun populateDatabase(database: AppDatabase) {
+            // You can add initial data here if needed
+            // e.g., database.userDao().insert(...)
         }
     }
+}
+
+// FIX: Define placeholder DAOs for stub models. You'll need to fill these
+// with your actual database logic.
+
+@androidx.room.Dao
+interface UserDao {
+    @androidx.room.Query("SELECT * FROM User")
+    fun getAll(): List<User>
+
+    @androidx.room.Insert
+    fun insert(user: User)
+}
+
+@androidx.room.Dao
+interface LibraryItemDao {
+    @androidx.room.Query("SELECT * FROM LibraryItem")
+    fun getAll(): List<LibraryItem>
+}
+
+@androidx.room.Dao
+interface WatchProgressDao {
+    @androidx.room.Query("SELECT * FROM WatchProgress")
+    fun getAll(): List<WatchProgress>
+}
+
+@androidx.room.Dao
+interface NextUpItemDao {
+    @androidx.room.Query("SELECT * FROM NextUpItem")
+    fun getAll(): List<NextUpItem>
+}
+
+@androidx.room.Dao
+interface UserSettingsDao {
+    @androidx.room.Query("SELECT * FROM UserSettings")
+    fun getAll(): List<UserSettings>
+}
+
+// These are DAOs from your original project that were inferred from other files
+@androidx.room.Dao
+interface FeedListDao {
+    // Add your FeedList queries here
+}
+
+@androidx.room.Dao
+interface HubSlotDao {
+    // Add your HubSlot queries here
 }

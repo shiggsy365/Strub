@@ -2,137 +2,90 @@ package com.example.stremiompvplayer.ui.discover
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.stremiompvplayer.R
-import com.example.stremiompvplayer.data.AppDatabase
-import com.example.stremiompvplayer.models.MetaPreview
-import com.example.stremiompvplayer.network.StremioClient
 import com.example.stremiompvplayer.DetailsActivity2
-import kotlinx.coroutines.launch
+import com.example.stremiompvplayer.databinding.FragmentDiscoverBinding
+import com.example.stremiompvplayer.models.MetaItem
+import com.example.stremiompvplayer.viewmodels.MainViewModel
 
 class DiscoverFragment : Fragment() {
 
-    private lateinit var database: AppDatabase
-    private lateinit var stremioClient: StremioClient
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var loadingProgress: ProgressBar
-    private lateinit var emptyText: TextView
-    private lateinit var adapter: DiscoverSectionAdapter
+    private var _binding: FragmentDiscoverBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: MainViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_discover, container, false)
-
-        database = AppDatabase.getInstance(requireContext())
-        stremioClient = StremioClient()
-
-        recyclerView = view.findViewById(R.id.discoverRecycler)
-        loadingProgress = view.findViewById(R.id.loadingProgress)
-        emptyText = view.findViewById(R.id.emptyText)
-
-        setupRecyclerView()
-        loadContent()
-
-        return view
+    ): View {
+        _binding = FragmentDiscoverBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    private fun setupRecyclerView() {
-        adapter = DiscoverSectionAdapter { meta ->
-            openDetails(meta)
-        }
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = adapter
-    }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-    private fun loadContent() {
-        val userId = database.getCurrentUserId()
-        if (userId == null) {
-            showEmpty("Please select a user")
-            return
+        val sectionAdapter = DiscoverSectionAdapter { metaItem ->
+            // Handle click on a poster
+            onPosterClick(metaItem)
         }
 
-        val addonUrls = database.getUserAddonUrls(userId)
-        if (addonUrls.isEmpty()) {
-            showEmpty("No addons configured. Add addons in Settings.")
-            return
+        binding.discoverRecyclerView.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = sectionAdapter
         }
 
-        loadingProgress.visibility = View.VISIBLE
-        recyclerView.visibility = View.GONE
-        emptyText.visibility = View.GONE
+        // REMOVED: viewModel.fetchCatalogs()
+        // This is now triggered by the Activity calling viewModel.setCurrentUser(authKey)
+        // which ensures we have a user before fetching their specific catalogs.
 
-        lifecycleScope.launch {
-            try {
-                val sections = mutableListOf<DiscoverSection>()
-
-                for (addonUrl in addonUrls) {
-                    try {
-                        val manifest = stremioClient.getManifest(addonUrl)
-                        if (manifest != null && manifest.catalogs != null) {
-                            for (catalog in manifest.catalogs) {
-                                // Load each catalog
-                                val catalogResponse = stremioClient.getCatalog(
-                                    addonUrl,
-                                    catalog.type,
-                                    catalog.id
-                                )
-
-                                if (catalogResponse != null && catalogResponse.metas.isNotEmpty()) {
-                                    sections.add(
-                                        DiscoverSection(
-                                            title = "${manifest.name} - ${catalog.name}",
-                                            items = catalogResponse.metas,
-                                            addonUrl = addonUrl,
-                                            catalogId = catalog.id,
-                                            type = catalog.type
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Log.e("DiscoverFragment", "Error loading addon: $addonUrl", e)
-                    }
-                }
-
-                if (sections.isEmpty()) {
-                    showEmpty("No content available from configured addons")
-                } else {
-                    adapter.setSections(sections)
-                    loadingProgress.visibility = View.GONE
-                    recyclerView.visibility = View.VISIBLE
-                }
-            } catch (e: Exception) {
-                Log.e("DiscoverFragment", "Error loading content", e)
-                showEmpty("Error loading content: ${e.message}")
+        // NEW: Observe the new LiveData
+        viewModel.discoverSections.observe(viewLifecycleOwner) { sections ->
+            if (sections.isNotEmpty()) {
+                binding.progressBar.visibility = View.GONE
+                binding.discoverRecyclerView.visibility = View.VISIBLE
+                sectionAdapter.submitList(sections)
+            } else {
+                // You could show an error message here
+                binding.progressBar.visibility = View.GONE
             }
         }
+
+        // OLD: Remove observation of the old feedList
+        /*
+        viewModel.feedList.observe(viewLifecycleOwner) { feedList ->
+            if (feedList.isNotEmpty()) {
+                binding.progressBar.visibility = View.GONE
+                binding.discoverRecyclerView.visibility = View.VISIBLE
+                sectionAdapter.submitList(feedList)
+            }
+        }
+        */
+
+        // OLD: Remove the call to getFeed()
+        // viewModel.getFeed()
     }
 
-    private fun showEmpty(message: String) {
-        loadingProgress.visibility = View.GONE
-        recyclerView.visibility = View.GONE
-        emptyText.visibility = View.VISIBLE
-        emptyText.text = message
-    }
-
-    private fun openDetails(meta: MetaPreview) {
-        val intent = Intent(requireContext(), DetailsActivity2::class.java)
-        intent.putExtra("META_ID", meta.id)
-        intent.putExtra("META_TYPE", meta.type)
-        intent.putExtra("META_NAME", meta.name)
+    private fun onPosterClick(metaItem: MetaItem) {
+        val intent = Intent(activity, DetailsActivity2::class.java).apply {
+            // Assuming DetailsActivity2 is the correct destination
+            // You will need to update DetailsActivity2 to fetch meta/streams
+            // using the add-on logic if it relies on the authKey
+            putExtra("id", metaItem.id)
+            putExtra("type", metaItem.type)
+        }
         startActivity(intent)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

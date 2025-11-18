@@ -1,6 +1,13 @@
 package com.example.stremiompvplayer
 
 import android.content.Intent
+import com.example.stremiompvplayer.data.AppDatabase
+import com.example.stremiompvplayer.databinding.ActivityUserSelectionBinding
+import com.example.stremiompvplayer.databinding.DialogUserMenuBinding
+import com.example.stremiompvplayer.databinding.ItemUserProfileBinding
+import com.example.stremiompvplayer.models.User
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,9 +16,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.stremiompvplayer.data.AppDatabase
-import com.example.stremiompvplayer.databinding.ActivityUserSelectionBinding
-import com.example.stremiompvplayer.models.User
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import kotlin.random.Random
