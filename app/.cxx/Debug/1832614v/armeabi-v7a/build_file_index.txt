@@ -1,1 +1,0 @@
-/home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/cpp/CMakeLists.txt
