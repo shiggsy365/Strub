@@ -1,20 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-52:/values-v22/values-v22.xml",
+            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-50:/values-v22/values-v22.xml",
             "map": [
                 {
-                    "source": "/home/jon/.gradle/caches/8.13/transforms/042c5734fdf0e91c9fdd16411d2b401d/transformed/leanback-1.2.0/res/values-v22/values-v22.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,107",
-                        "endColumns": "51,53",
-                        "endOffsets": "102,156"
-                    }
-                },
-                {
-                    "source": "/home/jon/.gradle/caches/8.13/transforms/3f6e8603519b3aae88b7372fa1e29271/transformed/appcompat-1.7.1/res/values-v22/values-v22.xml",
+                    "source": "/home/jon/.gradle/caches/8.13/transforms/077b2f8ffa8ac71f067899fcf2669857/transformed/appcompat-1.7.0/res/values-v22/values-v22.xml",
                     "from": {
                         "startLines": "2,3,4,9",
                         "startColumns": "4,4,4,4",
@@ -30,6 +20,16 @@
                         "endLines": "4,5,10,15",
                         "endColumns": "74,86,12,12",
                         "endOffsets": "231,318,588,870"
+                    }
+                },
+                {
+                    "source": "/home/jon/.gradle/caches/8.13/transforms/193729f4f92f7181f66c14aad4087f58/transformed/leanback-1.0.0/res/values-v22/values-v22.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,107",
+                        "endColumns": "51,53",
+                        "endOffsets": "102,156"
                     }
                 }
             ]

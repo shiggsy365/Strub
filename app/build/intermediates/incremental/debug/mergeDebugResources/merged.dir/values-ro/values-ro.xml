@@ -51,9 +51,11 @@
     <string msgid="8875138169939072951" name="abc_shareactionprovider_share_with">"Trimite la"</string>
     <string msgid="9055268688411532828" name="abc_shareactionprovider_share_with_application">"Trimite folosind <ns1:g id="APPLICATION_NAME">%s</ns1:g>"</string>
     <string msgid="1656852541809559762" name="abc_toolbar_collapse_description">"Restrânge"</string>
+    <string name="authentication_required">Autentificarea este obligatorie</string>
     <string name="bottomsheet_action_collapse">Restrângeți foaia din partea de jos</string>
     <string name="bottomsheet_action_expand">Extindeți foaia din partea de jos</string>
     <string name="bottomsheet_action_expand_halfway">Extinde pe ecran complet</string>
+    <string name="bottomsheet_drag_handle_clicked">Ghidaj de tragere atins de două ori</string>
     <string name="bottomsheet_drag_handle_content_description">Ghidaj de tragere</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"Răspunde"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"Video"</string>
@@ -68,23 +70,6 @@
     <string name="default_notification_channel_name">Se redă acum</string>
     <string name="error_a11y_label">Eroare: nevalidă</string>
     <string name="error_icon_content_description">Eroare</string>
-    <string name="error_message_authentication_expired">Conectează-te pentru a folosi aplicația</string>
-    <string name="error_message_bad_value">Date de intrare incorecte</string>
-    <string name="error_message_concurrent_stream_limit">Se ascultă pe prea multe dispozitive</string>
-    <string name="error_message_content_already_playing">Conținutul se redă deja</string>
-    <string name="error_message_disconnected">Deconectat de la aplicația media</string>
-    <string name="error_message_end_of_playlist">Nu mai există elemente în coadă</string>
-    <string name="error_message_fallback">A apărut o problemă. Încearcă mai târziu.</string>
-    <string name="error_message_info_cancelled">Nu s-a putut finaliza. Încearcă din nou.</string>
-    <string name="error_message_invalid_state">Acțiunea nu poate fi realizată momentan</string>
-    <string name="error_message_io">Eroare la intrare / ieșire</string>
-    <string name="error_message_not_available_in_region">Conținutul nu poate fi descărcat aici</string>
-    <string name="error_message_not_supported">Aplicația nu poate realiza această acțiune</string>
-    <string name="error_message_parental_control_restricted">Conținutul este blocat</string>
-    <string name="error_message_permission_denied">Acces refuzat</string>
-    <string name="error_message_premium_account_required">Este necesar accesul premium</string>
-    <string name="error_message_setup_required">Este necesară configurarea</string>
-    <string name="error_message_skip_limit_reached">Nu mai pot fi omise melodii</string>
     <string name="exo_controls_cc_disabled_description">Activează subtitrările</string>
     <string name="exo_controls_cc_enabled_description">Dezactivează subtitrările</string>
     <string name="exo_controls_fastforward_description">Derulează rapid înainte</string>
@@ -140,54 +125,50 @@
     <string name="exposed_dropdown_menu_content_description">Afișați meniul drop-down</string>
     <string name="icon_content_description">Pictogramă de dialog</string>
     <string name="item_view_role_description">Filă</string>
-    <string msgid="4657191930956702614" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
-    <string msgid="4597148235912710942" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
-    <string msgid="893619591225519922" name="lb_guidedaction_continue_title">"Continuă"</string>
-    <string msgid="3330958750346333890" name="lb_guidedaction_finish_title">"Finalizează"</string>
-    <string msgid="3228326776757666747" name="lb_media_player_error">"Cod de eroare MediaPlayer %1$d suplimentar %2$d"</string>
-    <string msgid="8084428500709675515" name="lb_navigation_menu_contentDescription">"Meniu de navigare"</string>
-    <string msgid="2394451791544864917" name="lb_onboarding_accessibility_next">"Înainte"</string>
-    <string msgid="5549711907371161292" name="lb_onboarding_get_started">"ÎNCEPE"</string>
-    <string msgid="8691966842977635128" name="lb_playback_controls_closed_captioning_disable">"Dezactivează subtitrările"</string>
-    <string msgid="2346334170216706076" name="lb_playback_controls_closed_captioning_enable">"Activează subtitrările"</string>
-    <string msgid="740570111678243493" name="lb_playback_controls_fast_forward">"Derulează rapid înainte"</string>
-    <string msgid="5734614175721471329" name="lb_playback_controls_fast_forward_multiplier">"Derulează rapid înainte cu %1$dX"</string>
-    <string msgid="5859666950961624736" name="lb_playback_controls_hidden">"Comenzile media sunt ascunse. Apasă pe butonul direcțional pentru a le afișa."</string>
-    <string msgid="1209119371486219736" name="lb_playback_controls_high_quality_disable">"Dezactivează calitatea înaltă"</string>
-    <string msgid="3057698527166674705" name="lb_playback_controls_high_quality_enable">"Activează calitatea înaltă"</string>
-    <string msgid="8730341244454469032" name="lb_playback_controls_more_actions">"Mai multe acțiuni"</string>
-    <string msgid="917331776961802657" name="lb_playback_controls_pause">"Întrerupe"</string>
-    <string msgid="5770668162543767702" name="lb_playback_controls_picture_in_picture">"Activează modul Picture-in-Picture"</string>
-    <string msgid="7088090604803481121" name="lb_playback_controls_play">"Redă"</string>
-    <string msgid="8429099206716245199" name="lb_playback_controls_repeat_all">"Repetă-le pe toate"</string>
-    <string msgid="1614290959784265209" name="lb_playback_controls_repeat_none">"Nu repeta"</string>
-    <string msgid="676658705837320560" name="lb_playback_controls_repeat_one">"Repetă unul"</string>
-    <string msgid="2866333981131020771" name="lb_playback_controls_rewind">"Derulează înapoi"</string>
-    <string msgid="6038956370475252734" name="lb_playback_controls_rewind_multiplier">"Derulează înapoi cu %1$dX"</string>
-    <string msgid="8690223891515602822" name="lb_playback_controls_shown">"Comenzile media sunt afișate"</string>
-    <string msgid="6793109999253893369" name="lb_playback_controls_shuffle_disable">"Dezactivează redarea aleatorie"</string>
-    <string msgid="5151681938752704485" name="lb_playback_controls_shuffle_enable">"Activează redarea aleatorie"</string>
-    <string msgid="8117512422682146745" name="lb_playback_controls_skip_next">"Ignoră articolul următor"</string>
-    <string msgid="3481218248309447059" name="lb_playback_controls_skip_previous">"Ignoră articolul anterior"</string>
-    <string msgid="3544533410444618518" name="lb_playback_controls_thumb_down">"Deselectează „Nu îmi place”"</string>
-    <string msgid="8475278766138652105" name="lb_playback_controls_thumb_down_outline">"Selectează „Nu îmi place”"</string>
-    <string msgid="3458671378107738666" name="lb_playback_controls_thumb_up">"Deselectează „Îmi place”"</string>
-    <string msgid="1385865732502550659" name="lb_playback_controls_thumb_up_outline">"Selectează „Îmi place”"</string>
-    <string msgid="1471121602610716654" name="lb_playback_time_separator">"/"</string>
-    <string msgid="5700349211583074131" name="lb_search_bar_hint">"Caută"</string>
-    <string msgid="5926531297066387462" name="lb_search_bar_hint_speech">"Rostește pentru a căuta"</string>
-    <string msgid="4826526877249029043" name="lb_search_bar_hint_with_title">"Caută <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
-    <string msgid="6032250334706920550" name="lb_search_bar_hint_with_title_speech">"Rostește pentru a căuta <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
-    <string name="m3_loading_indicator_content_description">Se încarcă</string>
+    <string msgid="2721825378927619928" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
+    <string msgid="6173753802428649303" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
+    <string msgid="1122271825827282965" name="lb_guidedaction_continue_title">"Continuați"</string>
+    <string msgid="7747913934287176843" name="lb_guidedaction_finish_title">"Finalizați"</string>
+    <string msgid="8748646000835486516" name="lb_media_player_error">"Cod de eroare MediaPlayer %1$d suplimentar %2$d"</string>
+    <string msgid="8126335323963415494" name="lb_navigation_menu_contentDescription">"Meniu de navigare"</string>
+    <string msgid="4213611627196077555" name="lb_onboarding_accessibility_next">"Înainte"</string>
+    <string msgid="7674487829030291492" name="lb_onboarding_get_started">"ÎNCEPEȚI"</string>
+    <string msgid="5508271941331836786" name="lb_playback_controls_closed_captioning_disable">"Dezactivați subtitrările"</string>
+    <string msgid="3934392140182327163" name="lb_playback_controls_closed_captioning_enable">"Activați subtitrările"</string>
+    <string msgid="8966769845721269304" name="lb_playback_controls_fast_forward">"Derulați rapid înainte"</string>
+    <string msgid="801276177839339511" name="lb_playback_controls_fast_forward_multiplier">"Derulați rapid înainte cu %1$dX"</string>
+    <string msgid="619396299825306757" name="lb_playback_controls_hidden">"Comenzile media sunt ascunse. Apăsați pe butonul direcțional pentru a le afișa."</string>
+    <string msgid="3000046054608531995" name="lb_playback_controls_high_quality_disable">"Dezactivați calitatea înaltă"</string>
+    <string msgid="1862669142355962638" name="lb_playback_controls_high_quality_enable">"Activați calitatea înaltă"</string>
+    <string msgid="2827883329510404797" name="lb_playback_controls_more_actions">"Mai multe acțiuni"</string>
+    <string msgid="1769131316742618433" name="lb_playback_controls_pause">"Întrerupeți"</string>
+    <string msgid="8800305194045609275" name="lb_playback_controls_picture_in_picture">"Activați modul Picture-in-Picture"</string>
+    <string msgid="1590369760862605402" name="lb_playback_controls_play">"Redați"</string>
+    <string msgid="5164826436271322261" name="lb_playback_controls_repeat_all">"Repetați toate"</string>
+    <string msgid="5812341701962930499" name="lb_playback_controls_repeat_none">"Nu repetați"</string>
+    <string msgid="7675097479246139440" name="lb_playback_controls_repeat_one">"Repetați unul"</string>
+    <string msgid="1412664391757869774" name="lb_playback_controls_rewind">"Derulați înapoi"</string>
+    <string msgid="8651612807713092781" name="lb_playback_controls_rewind_multiplier">"Derulați înapoi cu %1$dX"</string>
+    <string msgid="7794717158616536936" name="lb_playback_controls_shown">"Comenzile media sunt afișate"</string>
+    <string msgid="8182435535948303910" name="lb_playback_controls_shuffle_disable">"Dezactivați redarea în mod aleatoriu"</string>
+    <string msgid="7809089255981448519" name="lb_playback_controls_shuffle_enable">"Activați redarea în mod aleatoriu"</string>
+    <string msgid="4877009494447817003" name="lb_playback_controls_skip_next">"Ignorați articolul următor"</string>
+    <string msgid="3147124289285911980" name="lb_playback_controls_skip_previous">"Ignorați articolul anterior"</string>
+    <string msgid="5075744418630733006" name="lb_playback_controls_thumb_down">"Deselectați „Nu îmi place”"</string>
+    <string msgid="2847309435442474470" name="lb_playback_controls_thumb_down_outline">"Selectați „Nu îmi place”"</string>
+    <string msgid="8332816524260995892" name="lb_playback_controls_thumb_up">"Deselectați „Îmi place”"</string>
+    <string msgid="1038344559734334272" name="lb_playback_controls_thumb_up_outline">"Selectați „Îmi place”"</string>
+    <string msgid="6549544638083578695" name="lb_playback_time_separator">"/"</string>
+    <string msgid="4819380969103509861" name="lb_search_bar_hint">"Căutați"</string>
+    <string msgid="2795474673510974502" name="lb_search_bar_hint_speech">"Rostiți pentru a căuta"</string>
+    <string msgid="7453744869467668159" name="lb_search_bar_hint_with_title">"Căutați <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
+    <string msgid="5851694095153624617" name="lb_search_bar_hint_with_title_speech">"Rostiți pentru a căuta <ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g>"</string>
     <string name="material_clock_toggle_content_description">Selectați ora</string>
     <string name="material_hour_24h_suffix">%1$s ore</string>
     <string name="material_hour_selection">Selectați ora</string>
     <string name="material_hour_suffix">Ora %1$s</string>
     <string name="material_minute_selection">Selectați minutele</string>
     <string name="material_minute_suffix">%1$s minute</string>
-    <string name="material_slider_range_end">Sfârșit de interval</string>
-    <string name="material_slider_range_start">Început de interval</string>
-    <string name="material_slider_value">Valoare</string>
     <string name="material_timepicker_am">a.m.</string>
     <string name="material_timepicker_clock_mode_description">Pentru a introduce ora, comutați la modul ceas.</string>
     <string name="material_timepicker_hour">Ora</string>
@@ -209,7 +190,7 @@
     <string name="mtrl_exceed_max_badge_number_content_description" ns2:ignore="PluralsCandidate">Peste %1$d notificări noi</string>
     <string name="mtrl_picker_a11y_next_month">Treceți la luna următoare</string>
     <string name="mtrl_picker_a11y_prev_month">Treceți la luna anterioară</string>
-    <string name="mtrl_picker_announce_current_range_selection">Selectarea datei de începere: %1$s – Selectarea datei de încheiere: %2$s</string>
+    <string name="mtrl_picker_announce_current_range_selection">Selectarea datei de începere: %1$s – selectarea datei de încheiere: %2$s</string>
     <string name="mtrl_picker_announce_current_selection">Selecția actuală: %1$s</string>
     <string name="mtrl_picker_announce_current_selection_none">niciuna</string>
     <string name="mtrl_picker_cancel">Anulați</string>
@@ -227,10 +208,10 @@
     <string name="mtrl_picker_navigate_to_year_description">Navigați la anul %1$d</string>
     <string name="mtrl_picker_out_of_range">Fără acoperire: %1$s</string>
     <string name="mtrl_picker_range_header_only_end_selected">Data de începere – %1$s</string>
-    <string name="mtrl_picker_range_header_only_start_selected">%1$s – Data de încheiere</string>
+    <string name="mtrl_picker_range_header_only_start_selected">%1$s – data de încheiere</string>
     <string name="mtrl_picker_range_header_selected">%1$s – %2$s</string>
     <string name="mtrl_picker_range_header_title">Selectați intervalul</string>
-    <string name="mtrl_picker_range_header_unselected">Data de începere – Data de încheiere</string>
+    <string name="mtrl_picker_range_header_unselected">Data de începere – data de încheiere</string>
     <string name="mtrl_picker_save">Salvați</string>
     <string name="mtrl_picker_start_date_description">Data de începere: %1$s</string>
     <string name="mtrl_picker_text_input_date_hint">Dată</string>
@@ -241,14 +222,12 @@
     <string name="mtrl_picker_text_input_year_abbr">a</string>
     <string name="mtrl_picker_today_description">Astăzi, la %1$s</string>
     <string name="mtrl_picker_toggle_to_calendar_input_mode">Comutați la modul introducere în calendar</string>
-    <string name="mtrl_picker_toggle_to_day_selection">Treceți la afișarea Calendar</string>
+    <string name="mtrl_picker_toggle_to_day_selection">Atingeți pentru a comuta la afișarea Calendar</string>
     <string name="mtrl_picker_toggle_to_text_input_mode">Comutați la modul de introducere a textului</string>
-    <string name="mtrl_picker_toggle_to_year_selection">Treceți la afișarea pe ani</string>
-    <string name="mtrl_picker_toggled_to_day_selection">Ați trecut la afișarea Calendar</string>
-    <string name="mtrl_picker_toggled_to_year_selection">Ați trecut la afișarea pe ani</string>
+    <string name="mtrl_picker_toggle_to_year_selection">Atingeți pentru a comuta la afișarea An</string>
     <string name="mtrl_timepicker_cancel">Anulați</string>
     <string name="mtrl_timepicker_confirm">OK</string>
-    <string msgid="1301877238242752863" name="orb_search_action">"Acțiunea de căutare"</string>
+    <string msgid="7534843523462177008" name="orb_search_action">"Acțiunea de căutare"</string>
     <string name="password_toggle_content_description">Afișați parola</string>
     <string msgid="6264217191555673260" name="search_menu_title">"Caută"</string>
     <string name="searchview_clear_text_content_description">Ștergeți textul</string>

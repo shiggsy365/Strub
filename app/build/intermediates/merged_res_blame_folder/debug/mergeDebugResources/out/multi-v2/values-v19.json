@@ -1,17 +1,17 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-52:/values-v19/values-v19.xml",
+            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-50:/values-v19/values-v19.xml",
             "map": [
                 {
-                    "source": "/home/jon/.gradle/caches/8.13/transforms/042c5734fdf0e91c9fdd16411d2b401d/transformed/leanback-1.2.0/res/values-v19/values-v19.xml",
+                    "source": "/home/jon/.gradle/caches/8.13/transforms/193729f4f92f7181f66c14aad4087f58/transformed/leanback-1.0.0/res/values-v19/values-v19.xml",
                     "from": {
-                        "startLines": "2,17",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,972",
-                        "endLines": "16,25",
-                        "endColumns": "12,12",
-                        "endOffsets": "967,1576"
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "10",
+                        "endColumns": "12",
+                        "endOffsets": "659"
                     }
                 }
             ]

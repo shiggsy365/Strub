@@ -48,9 +48,11 @@
     <string msgid="8875138169939072951" name="abc_shareactionprovider_share_with">"နှင့် မျှဝေရန်"</string>
     <string msgid="9055268688411532828" name="abc_shareactionprovider_share_with_application">"<ns1:g id="APPLICATION_NAME">%s</ns1:g> ဖြင့် မျှဝေရန်"</string>
     <string msgid="1656852541809559762" name="abc_toolbar_collapse_description">"လျှော့ပြရန်"</string>
+    <string name="authentication_required">အထောက်အထားစိစစ်ခြင်း လိုအပ်သည်</string>
     <string name="bottomsheet_action_collapse">အောက်ခြေအပိုဆောင်း စာမျက်နှာကို ပိတ်နိုင်သည်</string>
     <string name="bottomsheet_action_expand">အောက်ခြေအပိုဆောင်း စာမျက်နှာကို ချဲ့နိုင်သည်</string>
     <string name="bottomsheet_action_expand_halfway">တစ်ဝက်ချဲ့ရန်</string>
+    <string name="bottomsheet_drag_handle_clicked">ဖိဆွဲအထိန်း နှစ်ချက်တို့ထားသည်</string>
     <string name="bottomsheet_drag_handle_content_description">ဖိဆွဲအထိန်း</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"ဖုန်းကိုင်ရန်"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"ဗီဒီယို"</string>
@@ -65,23 +67,6 @@
     <string name="default_notification_channel_name">ယခု ဖွင့်နေသည်</string>
     <string name="error_a11y_label">အမှား- မမှန်ကန်ပါ</string>
     <string name="error_icon_content_description">အမှား</string>
-    <string name="error_message_authentication_expired">ဤအက်ပ်သုံးရန် လက်မှတ်ထိုးဝင်ပါ</string>
-    <string name="error_message_bad_value">ထည့်သွင်းမှုဒေတာ မမှန်ကန်ပါ</string>
-    <string name="error_message_concurrent_stream_limit">စက်အများအပြားတွင် နားထောင်နေသည်</string>
-    <string name="error_message_content_already_playing">၎င်းအကြောင်းအရာကို ဖွင့်ထားပြီးဖြစ်သည်</string>
-    <string name="error_message_disconnected">မီဒီယာအက်ပ်မှ ချိတ်ဆက်မှုဖြုတ်ထားသည်</string>
-    <string name="error_message_end_of_playlist">အခြားစီထားသည်များ မရှိပါ</string>
-    <string name="error_message_fallback">တစ်ခုခုမှားနေသည်။ နောက်မှ စမ်းကြည့်ပါ။</string>
-    <string name="error_message_info_cancelled">အပြီးသတ်၍ မရလိုက်ပါ။ ထပ်စမ်းကြည့်ပါ။</string>
-    <string name="error_message_invalid_state">၎င်းကို ယခု ပြုလုပ်၍မရပါ</string>
-    <string name="error_message_io">ထည့်သွင်းမှု/ထုတ်လုပ်မှု အမှား</string>
-    <string name="error_message_not_available_in_region">၎င်းအကြောင်းအရာကို ဤနေရာတွင် မရနိုင်ပါ</string>
-    <string name="error_message_not_supported">ဤအက်ပ်က ၎င်းကို မပြုလုပ်နိုင်ပါ</string>
-    <string name="error_message_parental_control_restricted">၎င်းအကြောင်းအရာကို ပိတ်ထားသည်</string>
-    <string name="error_message_permission_denied">အသုံးပြုခွင့် မရပါ</string>
-    <string name="error_message_premium_account_required">ပရီမီယံ အသုံးပြုခွင့် လိုအပ်သည်</string>
-    <string name="error_message_setup_required">စနစ်ထည့်သွင်းရန် လိုအပ်သည်</string>
-    <string name="error_message_skip_limit_reached">နောက်ထပ်သီချင်းများ ကျော်၍မရပါ</string>
     <string name="exo_controls_cc_disabled_description">စာတန်းထိုး ဖွင့်ပါ</string>
     <string name="exo_controls_cc_enabled_description">စာတန်းထိုး ပိတ်ပါ</string>
     <string name="exo_controls_fastforward_description">ရှေ့သို့ အမြန်သွားရန်</string>
@@ -137,54 +122,50 @@
     <string name="exposed_dropdown_menu_content_description">ဆွဲချမီနူးကို ပြရန်</string>
     <string name="icon_content_description">ဒိုင်ယာလော့ခ် သင်္ကေတ</string>
     <string name="item_view_role_description">တဘ်</string>
-    <string msgid="4657191930956702614" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
-    <string msgid="4597148235912710942" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
-    <string msgid="893619591225519922" name="lb_guidedaction_continue_title">"ရှေ့ဆက်ရန်"</string>
-    <string msgid="3330958750346333890" name="lb_guidedaction_finish_title">"အပြီးသတ်ရန်"</string>
-    <string msgid="3228326776757666747" name="lb_media_player_error">"မီဒီယာပလေယာ မှားယွင်းမှုကုဒ် %1$d နှင့် အပို %2$d"</string>
-    <string msgid="8084428500709675515" name="lb_navigation_menu_contentDescription">"လမ်းညွှန် မီနူး"</string>
-    <string msgid="2394451791544864917" name="lb_onboarding_accessibility_next">"ရှေ့သို့"</string>
-    <string msgid="5549711907371161292" name="lb_onboarding_get_started">"စတင်ရန်"</string>
-    <string msgid="8691966842977635128" name="lb_playback_controls_closed_captioning_disable">"စာတမ်းများ ပိတ်ရန်"</string>
-    <string msgid="2346334170216706076" name="lb_playback_controls_closed_captioning_enable">"စာတမ်းများ ဖွင့်ရန်"</string>
-    <string msgid="740570111678243493" name="lb_playback_controls_fast_forward">"ရှေ့သို့ အမြန်သွားရန်"</string>
-    <string msgid="5734614175721471329" name="lb_playback_controls_fast_forward_multiplier">"ရှေ့သို့ အမြန်သွားရန် %1$dX"</string>
-    <string msgid="5859666950961624736" name="lb_playback_controls_hidden">"မီဒီယာခလုတ်များကို ဖျောက်ထားပါသည်။ ပြရန် d ခလုတ်ခုံကို နှိပ်ပါ"</string>
-    <string msgid="1209119371486219736" name="lb_playback_controls_high_quality_disable">"\'အရည်အသွေးမြင့်\' ပိတ်ထားရန်"</string>
-    <string msgid="3057698527166674705" name="lb_playback_controls_high_quality_enable">"\'အရည်အသွေးမြင့်\' ဖွင့်ရန်"</string>
-    <string msgid="8730341244454469032" name="lb_playback_controls_more_actions">"နောက်ထပ် လုပ်ဆောင်ချက်များ"</string>
-    <string msgid="917331776961802657" name="lb_playback_controls_pause">"ခဏရပ်ရန်"</string>
-    <string msgid="5770668162543767702" name="lb_playback_controls_picture_in_picture">"\'နှစ်ခုထပ်၍ကြည့်ခြင်းမုဒ်\' ကို ထည့်ရန်"</string>
-    <string msgid="7088090604803481121" name="lb_playback_controls_play">"ဖွင့်ရန်"</string>
-    <string msgid="8429099206716245199" name="lb_playback_controls_repeat_all">"အားလုံး ပြန်ကျော့ရန်"</string>
-    <string msgid="1614290959784265209" name="lb_playback_controls_repeat_none">"မည်သည်ကိုမျှ ပြန်မကျော့ရန်"</string>
-    <string msgid="676658705837320560" name="lb_playback_controls_repeat_one">"တစ်ခုကို ပြန်ကျော့ရန်"</string>
-    <string msgid="2866333981131020771" name="lb_playback_controls_rewind">"နောက်သို့ ရစ်ရန်"</string>
-    <string msgid="6038956370475252734" name="lb_playback_controls_rewind_multiplier">"နောက်သို့ ရစ်ရန် %1$dX"</string>
-    <string msgid="8690223891515602822" name="lb_playback_controls_shown">"မီဒီယာ ခလုတ်များကို ပြထားပါသည်"</string>
-    <string msgid="6793109999253893369" name="lb_playback_controls_shuffle_disable">"ရောသမမွှေခြင်း မပြုရန်"</string>
-    <string msgid="5151681938752704485" name="lb_playback_controls_shuffle_enable">"ရောသမမွှေခြင်း ပြုရန်"</string>
-    <string msgid="8117512422682146745" name="lb_playback_controls_skip_next">"နောက်တစ်ပုဒ်သို့ ကျော်ရန်"</string>
-    <string msgid="3481218248309447059" name="lb_playback_controls_skip_previous">"ယခင်တစ်ပုဒ်သို့ သွားရန်"</string>
-    <string msgid="3544533410444618518" name="lb_playback_controls_thumb_down">"လက်မအောက်စိုက် သင်္ကေတအား မရွေးရန်"</string>
-    <string msgid="8475278766138652105" name="lb_playback_controls_thumb_down_outline">"လက်မအောက်စိုက် သင်္ကေတအား ရွေးရန်"</string>
-    <string msgid="3458671378107738666" name="lb_playback_controls_thumb_up">"လက်မထောင် သင်္ကေတအား မရွေးရန်"</string>
-    <string msgid="1385865732502550659" name="lb_playback_controls_thumb_up_outline">"လက်မထောင် သင်္ကေတအား ရွေးရန်"</string>
-    <string msgid="1471121602610716654" name="lb_playback_time_separator">"/"</string>
-    <string msgid="5700349211583074131" name="lb_search_bar_hint">"ရှာဖွေရန်"</string>
-    <string msgid="5926531297066387462" name="lb_search_bar_hint_speech">"ရှာဖွေရန် ပြောပါ"</string>
-    <string msgid="4826526877249029043" name="lb_search_bar_hint_with_title">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> ကို ရှာဖွေရန်"</string>
-    <string msgid="6032250334706920550" name="lb_search_bar_hint_with_title_speech">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> ကို ရှာဖွေရန် ပြောပါ"</string>
-    <string name="m3_loading_indicator_content_description">ဖွင့်နေသည်</string>
+    <string msgid="2721825378927619928" name="lb_control_display_fast_forward_multiplier">"%1$dX"</string>
+    <string msgid="6173753802428649303" name="lb_control_display_rewind_multiplier">"%1$dX"</string>
+    <string msgid="1122271825827282965" name="lb_guidedaction_continue_title">"ရှေ့ဆက်ရန်"</string>
+    <string msgid="7747913934287176843" name="lb_guidedaction_finish_title">"အပြီးသတ်ရန်"</string>
+    <string msgid="8748646000835486516" name="lb_media_player_error">"မီဒီယာပလေယာ မှားယွင်းမှုကုဒ် %1$d နှင့် အပို %2$d"</string>
+    <string msgid="8126335323963415494" name="lb_navigation_menu_contentDescription">"လမ်းညွှန် မီနူး"</string>
+    <string msgid="4213611627196077555" name="lb_onboarding_accessibility_next">"ရှေ့သို့"</string>
+    <string msgid="7674487829030291492" name="lb_onboarding_get_started">"စတင်ရန်"</string>
+    <string msgid="5508271941331836786" name="lb_playback_controls_closed_captioning_disable">"စာတမ်းများ ပိတ်ရန်"</string>
+    <string msgid="3934392140182327163" name="lb_playback_controls_closed_captioning_enable">"စာတမ်းများ ဖွင့်ရန်"</string>
+    <string msgid="8966769845721269304" name="lb_playback_controls_fast_forward">"ရှေ့သို့ အမြန်သွားရန်"</string>
+    <string msgid="801276177839339511" name="lb_playback_controls_fast_forward_multiplier">"ရှေ့သို့ အမြန်သွားရန် %1$dX"</string>
+    <string msgid="619396299825306757" name="lb_playback_controls_hidden">"မီဒီယာခလုတ်များကို ဖျောက်ထားပါသည်။ ပြရန် d ခလုတ်ခုံကို နှိပ်ပါ"</string>
+    <string msgid="3000046054608531995" name="lb_playback_controls_high_quality_disable">"\'အရည်အသွေးမြင့်\' ပိတ်ထားရန်"</string>
+    <string msgid="1862669142355962638" name="lb_playback_controls_high_quality_enable">"\'အရည်အသွေးမြင့်\' ဖွင့်ရန်"</string>
+    <string msgid="2827883329510404797" name="lb_playback_controls_more_actions">"နောက်ထပ် လုပ်ဆောင်ချက်များ"</string>
+    <string msgid="1769131316742618433" name="lb_playback_controls_pause">"ခဏရပ်ရန်"</string>
+    <string msgid="8800305194045609275" name="lb_playback_controls_picture_in_picture">"\'တစ်ခုပေါ်တစ်ခုထပ်၍ ဖွင့်ခြင်းမုဒ်\' ကို ထည့်ရန်"</string>
+    <string msgid="1590369760862605402" name="lb_playback_controls_play">"ဖွင့်ရန်"</string>
+    <string msgid="5164826436271322261" name="lb_playback_controls_repeat_all">"အားလုံး ပြန်ကျော့ရန်"</string>
+    <string msgid="5812341701962930499" name="lb_playback_controls_repeat_none">"မည်သည်ကိုမျှ ပြန်မကျော့ရန်"</string>
+    <string msgid="7675097479246139440" name="lb_playback_controls_repeat_one">"တစ်ခုကို ပြန်ကျော့ရန်"</string>
+    <string msgid="1412664391757869774" name="lb_playback_controls_rewind">"နောက်သို့ ရစ်ရန်"</string>
+    <string msgid="8651612807713092781" name="lb_playback_controls_rewind_multiplier">"နောက်သို့ ရစ်ရန် %1$dX"</string>
+    <string msgid="7794717158616536936" name="lb_playback_controls_shown">"မီဒီယာ ခလုတ်များကို ပြထားပါသည်"</string>
+    <string msgid="8182435535948303910" name="lb_playback_controls_shuffle_disable">"ရောသမမွှေခြင်း မပြုရန်"</string>
+    <string msgid="7809089255981448519" name="lb_playback_controls_shuffle_enable">"ရောသမမွှေခြင်း ပြုရန်"</string>
+    <string msgid="4877009494447817003" name="lb_playback_controls_skip_next">"နောက်တစ်ပုဒ်သို့ ကျော်ရန်"</string>
+    <string msgid="3147124289285911980" name="lb_playback_controls_skip_previous">"ယခင်တစ်ပုဒ်သို့ သွားရန်"</string>
+    <string msgid="5075744418630733006" name="lb_playback_controls_thumb_down">"လက်မအောက်စိုက် သင်္ကေတအား မရွေးရန်"</string>
+    <string msgid="2847309435442474470" name="lb_playback_controls_thumb_down_outline">"လက်မအောက်စိုက် သင်္ကေတအား ရွေးရန်"</string>
+    <string msgid="8332816524260995892" name="lb_playback_controls_thumb_up">"လက်မထောင် သင်္ကေတအား မရွေးရန်"</string>
+    <string msgid="1038344559734334272" name="lb_playback_controls_thumb_up_outline">"လက်မထောင် သင်္ကေတအား ရွေးရန်"</string>
+    <string msgid="6549544638083578695" name="lb_playback_time_separator">"/"</string>
+    <string msgid="4819380969103509861" name="lb_search_bar_hint">"ရှာဖွေရန်"</string>
+    <string msgid="2795474673510974502" name="lb_search_bar_hint_speech">"ရှာဖွေရန် ပြောပါ"</string>
+    <string msgid="7453744869467668159" name="lb_search_bar_hint_with_title">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> ကို ရှာဖွေရန်"</string>
+    <string msgid="5851694095153624617" name="lb_search_bar_hint_with_title_speech">"<ns1:g id="SEARCH_CONTEXT">%1$s</ns1:g> ကို ရှာဖွေရန် ပြောပါ"</string>
     <string name="material_clock_toggle_content_description">AM (သို့) PM ရွေးရန်</string>
     <string name="material_hour_24h_suffix">%1$s နာရီ</string>
     <string name="material_hour_selection">နာရီ ရွေးရန်</string>
     <string name="material_hour_suffix">%1$s နာရီ</string>
     <string name="material_minute_selection">မိနစ်များ ရွေးပါ</string>
     <string name="material_minute_suffix">%1$s မိနစ်</string>
-    <string name="material_slider_range_end">အပိုင်းအခြား အဆုံး</string>
-    <string name="material_slider_range_start">အပိုင်းအခြား အစ</string>
-    <string name="material_slider_value">တန်ဖိုး</string>
     <string name="material_timepicker_am">နံနက်</string>
     <string name="material_timepicker_clock_mode_description">အချိန်ထည့်သွင်းမှုအတွက် နာရီမုဒ်သို့ ပြောင်းပါ။</string>
     <string name="material_timepicker_hour">နာရီ</string>
@@ -238,14 +219,12 @@
     <string name="mtrl_picker_text_input_year_abbr">y</string>
     <string name="mtrl_picker_today_description">ယနေ့ %1$s</string>
     <string name="mtrl_picker_toggle_to_calendar_input_mode">ပြက္ခဒိန် ထည့်သွင်းမှုမုဒ်သို့ ပြောင်းရန်</string>
-    <string name="mtrl_picker_toggle_to_day_selection">‘ပြက္ခဒိန်’ မြင်ကွင်းသို့ ပြောင်းရန်</string>
+    <string name="mtrl_picker_toggle_to_day_selection">ပြက္ခဒိန်မြင်ကွင်းသို့ ပြောင်းရန် တို့နိုင်သည်</string>
     <string name="mtrl_picker_toggle_to_text_input_mode">စာသား ထည့်သွင်းမှုမုဒ်သို့ ပြောင်းရန်</string>
-    <string name="mtrl_picker_toggle_to_year_selection">‘နှစ်’ မြင်ကွင်းသို့ ပြောင်းရန်</string>
-    <string name="mtrl_picker_toggled_to_day_selection">ပြက္ခဒိန်မြင်ကွင်းသို့ ပြောင်းလိုက်သည်</string>
-    <string name="mtrl_picker_toggled_to_year_selection">နှစ်မြင်ကွင်းသို့ ပြောင်းလိုက်သည်</string>
+    <string name="mtrl_picker_toggle_to_year_selection">နှစ်အလိုက်မြင်ကွင်းသို့ ပြောင်းရန် တို့နိုင်သည်</string>
     <string name="mtrl_timepicker_cancel">မလုပ်တော့</string>
     <string name="mtrl_timepicker_confirm">OK</string>
-    <string msgid="1301877238242752863" name="orb_search_action">"ရှာဖွေရန် လုပ်ဆောင်ချက်"</string>
+    <string msgid="7534843523462177008" name="orb_search_action">"ရှာဖွေရန် လုပ်ဆောင်ချက်"</string>
     <string name="password_toggle_content_description">စကားဝှက်ကို ပြရန်</string>
     <string msgid="6264217191555673260" name="search_menu_title">"ရှာဖွေမှု"</string>
     <string name="searchview_clear_text_content_description">စာသား ဖယ်ရှားရန်</string>

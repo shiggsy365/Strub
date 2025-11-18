@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-52:/values-v24/values-v24.xml",
+            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-50:/values-v24/values-v24.xml",
             "map": [
                 {
-                    "source": "/home/jon/.gradle/caches/8.13/transforms/80be73aee61bf1e8c51d773b93885169/transformed/material-1.13.0/res/values-v24/values-v24.xml",
+                    "source": "/home/jon/.gradle/caches/8.13/transforms/09ca84157d0951d88b61eb7ab5cdc9f9/transformed/material-1.12.0/res/values-v24/values-v24.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,9,12,15",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -23,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "/home/jon/.gradle/caches/8.13/transforms/022e0a17555f3aa61e6eb6a913bc6deb/transformed/jetified-media3-session-1.8.0/res/values-v24/values-v24.xml",
+                    "source": "/home/jon/.gradle/caches/8.13/transforms/fe6a655d96c76bfe47f017545555fed6/transformed/media-1.7.0/res/values-v24/values-v24.xml",
                     "from": {
                         "startLines": "2,3,4,5",
                         "startColumns": "4,4,4,4",
@@ -40,7 +40,7 @@
                     }
                 },
                 {
-                    "source": "/home/jon/.gradle/caches/8.13/transforms/3f6e8603519b3aae88b7372fa1e29271/transformed/appcompat-1.7.1/res/values-v24/values-v24.xml",
+                    "source": "/home/jon/.gradle/caches/8.13/transforms/077b2f8ffa8ac71f067899fcf2669857/transformed/appcompat-1.7.0/res/values-v24/values-v24.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",

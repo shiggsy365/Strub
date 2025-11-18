@@ -1,27 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-52:/values-ldrtl-v17/values-ldrtl-v17.xml",
+            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-50:/values-ldrtl-v17/values-ldrtl-v17.xml",
             "map": [
                 {
-                    "source": "/home/jon/.gradle/caches/8.13/transforms/80be73aee61bf1e8c51d773b93885169/transformed/material-1.13.0/res/values-ldrtl-v17/values-ldrtl-v17.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,191",
-                        "endColumns": "135,140",
-                        "endOffsets": "186,327"
-                    },
-                    "to": {
-                        "startLines": "3,4",
-                        "startColumns": "4,4",
-                        "startOffsets": "133,269",
-                        "endColumns": "135,140",
-                        "endOffsets": "264,405"
-                    }
-                },
-                {
-                    "source": "/home/jon/.gradle/caches/8.13/transforms/042c5734fdf0e91c9fdd16411d2b401d/transformed/leanback-1.2.0/res/values-ldrtl-v17/values-ldrtl-v17.xml",
+                    "source": "/home/jon/.gradle/caches/8.13/transforms/193729f4f92f7181f66c14aad4087f58/transformed/leanback-1.0.0/res/values-ldrtl-v17/values-ldrtl-v17.xml",
                     "from": {
                         "startLines": "2,3,4",
                         "startColumns": "4,4,4",
@@ -35,6 +18,23 @@
                         "startOffsets": "55,410,455",
                         "endColumns": "77,44,46",
                         "endOffsets": "128,450,497"
+                    }
+                },
+                {
+                    "source": "/home/jon/.gradle/caches/8.13/transforms/09ca84157d0951d88b61eb7ab5cdc9f9/transformed/material-1.12.0/res/values-ldrtl-v17/values-ldrtl-v17.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,191",
+                        "endColumns": "135,140",
+                        "endOffsets": "186,327"
+                    },
+                    "to": {
+                        "startLines": "3,4",
+                        "startColumns": "4,4",
+                        "startOffsets": "133,269",
+                        "endColumns": "135,140",
+                        "endOffsets": "264,405"
                     }
                 }
             ]

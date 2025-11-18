@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-52:/values-w360dp-port-v13/values-w360dp-port-v13.xml",
+            "outputFile": "com.example.stremiompvplayer.app-mergeDebugResources-50:/values-w360dp-port-v13/values-w360dp-port-v13.xml",
             "map": [
                 {
-                    "source": "/home/jon/.gradle/caches/8.13/transforms/80be73aee61bf1e8c51d773b93885169/transformed/material-1.13.0/res/values-w360dp-port-v13/values-w360dp-port-v13.xml",
+                    "source": "/home/jon/.gradle/caches/8.13/transforms/09ca84157d0951d88b61eb7ab5cdc9f9/transformed/material-1.12.0/res/values-w360dp-port-v13/values-w360dp-port-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
