@@ -95,3 +95,48 @@ data class TMDBSeason(
     @Json(name = "poster_path") val posterPath: String?,
     @Json(name = "season_number") val seasonNumber: Int
 ) : Serializable
+
+// TMDB Multi Search Response (searches both movies and TV)
+data class TMDBMultiSearchResponse(
+    val page: Int,
+    val results: List<TMDBMultiSearchResult>,
+    @Json(name = "total_pages") val totalPages: Int,
+    @Json(name = "total_results") val totalResults: Int
+) : Serializable
+
+data class TMDBMultiSearchResult(
+    val id: Int,
+    @Json(name = "media_type") val mediaType: String, // "movie" or "tv"
+    @Json(name = "poster_path") val posterPath: String?,
+    @Json(name = "backdrop_path") val backdropPath: String?,
+    val overview: String,
+    val popularity: Double,
+    @Json(name = "vote_average") val voteAverage: Double,
+    @Json(name = "vote_count") val voteCount: Int,
+    
+    // Movie-specific fields
+    val title: String?,
+    @Json(name = "original_title") val originalTitle: String?,
+    @Json(name = "release_date") val releaseDate: String?,
+    
+    // TV-specific fields
+    val name: String?,
+    @Json(name = "original_name") val originalName: String?,
+    @Json(name = "first_air_date") val firstAirDate: String?
+) : Serializable {
+    // Convert to MetaItem for compatibility with existing code
+    fun toMetaItem(): MetaItem {
+        return MetaItem(
+            id = "tmdb:$id",
+            type = when(mediaType) {
+                "movie" -> "movie"
+                "tv" -> "series"
+                else -> mediaType
+            },
+            name = title ?: name ?: "Unknown",
+            poster = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+            background = backdropPath?.let { "https://image.tmdb.org/t/p/original$it" },
+            description = overview
+        )
+    }
+}
