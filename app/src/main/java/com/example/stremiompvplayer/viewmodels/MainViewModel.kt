@@ -54,6 +54,13 @@ class MainViewModel(
     private val _trendingSeries = MutableLiveData<List<MetaItem>>()
     val trendingSeries: LiveData<List<MetaItem>> = _trendingSeries
 
+    // Search results
+    private val _searchResults = MutableLiveData<List<MetaItem>>()
+    val searchResults: LiveData<List<MetaItem>> = _searchResults
+
+    private val _isSearching = MutableLiveData<Boolean>()
+    val isSearching: LiveData<Boolean> = _isSearching
+
     /**
      * Load all standard movie lists (Popular, Latest, Trending)
      * Fetches 100 items per list (5 pages of 20 results)
@@ -282,6 +289,156 @@ class MainViewModel(
 
     fun clearStreams() {
         _streams.value = emptyList()
+    }
+
+    /**
+     * Search TMDB for movies and TV shows
+     * Uses multi-search to get both types
+     */
+    fun searchTMDB(query: String) {
+        if (query.isBlank()) {
+            _searchResults.value = emptyList()
+            return
+        }
+
+        val token = prefsManager.getTMDBAccessToken()
+        if (token.isNullOrEmpty()) {
+            _error.value = "TMDB Access Token not configured. Please add it in Settings."
+            return
+        }
+
+        viewModelScope.launch {
+            _isSearching.value = true
+            _isLoading.value = true
+            try {
+                val bearerToken = TMDBClient.getBearerToken(token)
+                val allResults = mutableListOf<TMDBMultiSearchResult>()
+                
+                // Fetch up to 3 pages for search (60 results)
+                for (page in 1..3) {
+                    try {
+                        val response = TMDBClient.api.searchMulti(bearerToken, query, page = page)
+                        allResults.addAll(response.results)
+                        
+                        // Stop if we've reached the last page
+                        if (page >= response.totalPages) break
+                    } catch (e: Exception) {
+                        Log.e("MainViewModel", "Error fetching search page $page", e)
+                        break
+                    }
+                }
+                
+                // Convert to MetaItem and filter out non-movie/tv results
+                val metaItems = allResults
+                    .filter { it.mediaType == "movie" || it.mediaType == "tv" }
+                    .map { it.toMetaItem() }
+                
+                _searchResults.value = metaItems
+
+            } catch (e: Exception) {
+                _error.value = "Search failed: ${e.message}"
+                Log.e("MainViewModel", "Error searching TMDB", e)
+                _searchResults.value = emptyList()
+            } finally {
+                _isSearching.value = false
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Search only movies
+     */
+    fun searchMovies(query: String) {
+        if (query.isBlank()) {
+            _searchResults.value = emptyList()
+            return
+        }
+
+        val token = prefsManager.getTMDBAccessToken()
+        if (token.isNullOrEmpty()) {
+            _error.value = "TMDB Access Token not configured."
+            return
+        }
+
+        viewModelScope.launch {
+            _isSearching.value = true
+            _isLoading.value = true
+            try {
+                val bearerToken = TMDBClient.getBearerToken(token)
+                val allMovies = mutableListOf<TMDBMovie>()
+                
+                for (page in 1..3) {
+                    try {
+                        val response = TMDBClient.api.searchMovies(bearerToken, query, page = page)
+                        allMovies.addAll(response.results)
+                        if (page >= response.totalPages) break
+                    } catch (e: Exception) {
+                        break
+                    }
+                }
+                
+                _searchResults.value = allMovies.map { it.toMetaItem() }
+
+            } catch (e: Exception) {
+                _error.value = "Movie search failed: ${e.message}"
+                _searchResults.value = emptyList()
+            } finally {
+                _isSearching.value = false
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Search only TV series
+     */
+    fun searchSeries(query: String) {
+        if (query.isBlank()) {
+            _searchResults.value = emptyList()
+            return
+        }
+
+        val token = prefsManager.getTMDBAccessToken()
+        if (token.isNullOrEmpty()) {
+            _error.value = "TMDB Access Token not configured."
+            return
+        }
+
+        viewModelScope.launch {
+            _isSearching.value = true
+            _isLoading.value = true
+            try {
+                val bearerToken = TMDBClient.getBearerToken(token)
+                val allSeries = mutableListOf<TMDBSeries>()
+                
+                for (page in 1..3) {
+                    try {
+                        val response = TMDBClient.api.searchSeries(bearerToken, query, page = page)
+                        allSeries.addAll(response.results)
+                        if (page >= response.totalPages) break
+                    } catch (e: Exception) {
+                        break
+                    }
+                }
+                
+                _searchResults.value = allSeries.map { it.toMetaItem() }
+
+            } catch (e: Exception) {
+                _error.value = "Series search failed: ${e.message}"
+                _searchResults.value = emptyList()
+            } finally {
+                _isSearching.value = false
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Clear search results
+     */
+    fun clearSearchResults() {
+        _searchResults.value = emptyList()
     }
 
     // Legacy catalog functions for compatibility
