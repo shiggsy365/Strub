@@ -140,3 +140,17 @@ data class TMDBMultiSearchResult(
         )
     }
 }
+
+// TMDB External IDs Response (for getting IMDB ID)
+data class TMDBExternalIdsResponse(
+    val id: Int,
+    @Json(name = "imdb_id") val imdbId: String?,
+    @Json(name = "freebase_mid") val freebaseMid: String?,
+    @Json(name = "freebase_id") val freebaseId: String?,
+    @Json(name = "tvdb_id") val tvdbId: Int?,
+    @Json(name = "tvrage_id") val tvrageId: Int?,
+    @Json(name = "wikidata_id") val wikidataId: String?,
+    @Json(name = "facebook_id") val facebookId: String?,
+    @Json(name = "instagram_id") val instagramId: String?,
+    @Json(name = "twitter_id") val twitterId: String?
+) : Serializable
