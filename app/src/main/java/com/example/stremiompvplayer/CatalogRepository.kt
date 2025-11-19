@@ -1,102 +1,44 @@
-package com.example.stremiompvplayer.data
+package com.example.stremiompvplayer
 
-import android.content.Context
-import android.util.Log
-import com.example.stremiompvplayer.models.Manifest
-import com.example.stremiompvplayer.models.CatalogResponse
-import com.example.stremiompvplayer.models.StreamResponse
-import com.example.stremiompvplayer.network.StremioApiService
-import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import androidx.lifecycle.LiveData
+import com.example.stremiompvplayer.data.UserCatalogDao
+import com.example.stremiompvplayer.models.UserCatalog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class CatalogRepository(
-    private val apiService: StremioApiService,
-    private val context: Context
-) {
-    private val prefsManager = SharedPreferencesManager.getInstance(context)
+class CatalogRepository(private val userCatalogDao: UserCatalogDao) {
 
-    // Get the Manifest URL from preferences
-    private fun getManifestUrl(): String {
-        return prefsManager.getActiveManifestUrl()
-            ?: throw IllegalStateException("No active manifest URL configured in settings.")
-    }
+    val allCatalogs: LiveData<List<UserCatalog>> = userCatalogDao.getAllCatalogs()
 
-    // Derive the base URL from the manifest URL
-    private fun getAddonBaseUrl(manifestUrl: String): String {
-        return manifestUrl.substring(0, manifestUrl.lastIndexOf('/'))
-    }
-
-    suspend fun fetchManifest(): Result<Manifest> {
-        return try {
-            val manifestUrl = getManifestUrl()
-            Log.d("CatalogRepository", "Fetching manifest from: $manifestUrl")
-
-            val response = apiService.getManifest(manifestUrl)
-            if (response.isSuccessful && response.body() != null) {
-                Log.d("CatalogRepository", "Manifest fetched successfully")
-                Result.success(response.body()!!)
-            } else {
-                Log.e("CatalogRepository", "Manifest fetch failed: ${response.code()}")
-                Result.failure(RuntimeException("Manifest fetch failed: ${response.code()}"))
+    suspend fun initializeDefaultsIfNeeded() {
+        withContext(Dispatchers.IO) {
+            if (userCatalogDao.getCount() == 0) {
+                val defaults = listOf(
+                    UserCatalog(0, "com.linvo.cinemeta", "top", "movie", "Popular Movies", true, true, 0),
+                    UserCatalog(0, "com.linvo.cinemeta", "top", "series", "Popular Series", true, true, 1),
+                    UserCatalog(0, "com.linvo.cinemeta", "imdbRating", "movie", "Top Rated Movies", true, true, 2),
+                    UserCatalog(0, "com.linvo.cinemeta", "imdbRating", "series", "Top Rated Series", true, true, 3)
+                )
+                userCatalogDao.insertAll(defaults)
             }
-        } catch (e: Exception) {
-            Log.e("CatalogRepository", "Exception fetching manifest", e)
-            Result.failure(e)
         }
     }
 
-    // UPDATED: Added skip parameter to support pagination
-    suspend fun fetchCatalogItems(type: String, id: String, skip: Int = 0): Result<CatalogResponse> {
-        return try {
-            val manifestUrl = getManifestUrl()
-            val addonBaseUrl = getAddonBaseUrl(manifestUrl)
-
-            // Construct catalog URL following Stremio protocol
-            // Handles the skip parameter for pagination
-            val catalogURL = if (skip > 0) {
-                "$addonBaseUrl/catalog/$type/$id/skip=$skip.json"
-            } else {
-                "$addonBaseUrl/catalog/$type/$id.json"
-            }
-
-            Log.d("CatalogRepository", "Fetching catalog from: $catalogURL")
-
-            val response = apiService.getCatalogItems(catalogURL)
-            if (response.isSuccessful && response.body() != null) {
-                val body = response.body()!!
-                Log.d("CatalogRepository", "Catalog fetched successfully: ${body.metas.size} items")
-                Result.success(body)
-            } else {
-                Log.e("CatalogRepository", "Catalog fetch failed: ${response.code()}")
-                Result.failure(RuntimeException("Catalog fetch failed: ${response.code()}"))
-            }
-        } catch (e: Exception) {
-            Log.e("CatalogRepository", "Exception fetching catalog", e)
-            Result.failure(e)
+    suspend fun getCatalogsForUser(type: String): List<UserCatalog> {
+        return withContext(Dispatchers.IO) {
+            userCatalogDao.getEnabledUserCatalogs(type)
         }
     }
 
-    suspend fun fetchStreams(type: String, id: String): Result<StreamResponse> {
-        return try {
-            val manifestUrl = getManifestUrl()
-            val addonBaseUrl = getAddonBaseUrl(manifestUrl)
+    suspend fun updateCatalog(catalog: UserCatalog) {
+        withContext(Dispatchers.IO) {
+            userCatalogDao.update(catalog)
+        }
+    }
 
-            // Construct stream URL following Stremio protocol
-            // Pattern: {addonBaseUrl}/stream/{type}/{id}.json
-            val streamURL = "$addonBaseUrl/stream/$type/$id.json"
-            Log.d("CatalogRepository", "Fetching streams from: $streamURL")
-
-            val response = apiService.getStreams(streamURL)
-            if (response.isSuccessful && response.body() != null) {
-                val body = response.body()!!
-                Log.d("CatalogRepository", "Streams fetched successfully: ${body.streams.size} streams")
-                Result.success(body)
-            } else {
-                Log.e("CatalogRepository", "Streams fetch failed: ${response.code()}")
-                Result.failure(RuntimeException("Streams fetch failed: ${response.code()}"))
-            }
-        } catch (e: Exception) {
-            Log.e("CatalogRepository", "Exception fetching streams", e)
-            Result.failure(e)
+    suspend fun swapOrder(item1: UserCatalog, item2: UserCatalog) {
+        withContext(Dispatchers.IO) {
+            userCatalogDao.swapSortOrder(item1.dbId, item1.sortOrder, item2.dbId, item2.sortOrder)
         }
     }
 }
