@@ -206,22 +206,118 @@ class MainViewModel(
     }
 
     /**
-     * Load streams from AIOStreams for a movie
-     * @param tmdbId The TMDB ID with 'tmdb:' prefix (e.g., 'tmdb:12345')
+     * Load streams from AIOStreams for a movie or series
+     * First fetches IMDB ID from TMDB, then uses it to get streams
+     * @param type "movie" or "series"
+     * @param tmdbId The TMDB ID with 'tmdb:' prefix (e.g., 'tmdb:550')
      */
     fun loadStreams(type: String, tmdbId: String) {
+        val token = prefsManager.getTMDBAccessToken()
+        if (token.isNullOrEmpty()) {
+            _error.value = "TMDB Access Token not configured."
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = if (type == "movie") {
-                    AIOStreamsClient.api.searchMovieStreams(id = tmdbId)
-                } else {
-                    AIOStreamsClient.api.searchSeriesStreams(id = tmdbId)
+                // Extract numeric ID from tmdb:12345 format
+                val numericId = tmdbId.removePrefix("tmdb:").toIntOrNull()
+                if (numericId == null) {
+                    _error.value = "Invalid TMDB ID format"
+                    _streams.value = emptyList()
+                    return@launch
                 }
+
+                val bearerToken = TMDBClient.getBearerToken(token)
+
+                // Fetch IMDB ID from TMDB
+                val externalIds = if (type == "movie") {
+                    TMDBClient.api.getMovieExternalIds(numericId, bearerToken)
+                } else {
+                    TMDBClient.api.getTVExternalIds(numericId, bearerToken)
+                }
+
+                val imdbId = externalIds.imdbId
+                if (imdbId.isNullOrEmpty()) {
+                    _error.value = "No IMDB ID found for this content"
+                    _streams.value = emptyList()
+                    return@launch
+                }
+
+                Log.d("MainViewModel", "Fetched IMDB ID: $imdbId for TMDB ID: $numericId")
+
+                // Now fetch streams using IMDB ID
+                val response = if (type == "movie") {
+                    AIOStreamsClient.api.searchMovieStreams(id = imdbId)
+                } else {
+                    AIOStreamsClient.api.searchSeriesStreams(id = imdbId)
+                }
+                
                 _streams.value = response.streams
+                Log.d("MainViewModel", "Loaded ${response.streams.size} streams for IMDB ID: $imdbId")
+
             } catch (e: Exception) {
                 _error.value = "Failed to load streams: ${e.message}"
                 Log.e("MainViewModel", "Error loading streams", e)
+                _streams.value = emptyList()
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Load streams for a specific episode
+     * @param tmdbId The TMDB series ID (e.g., "tmdb:1396")
+     * @param season Season number
+     * @param episode Episode number
+     */
+    fun loadEpisodeStreams(tmdbId: String, season: Int, episode: Int) {
+        val token = prefsManager.getTMDBAccessToken()
+        if (token.isNullOrEmpty()) {
+            _error.value = "TMDB Access Token not configured."
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                // Extract numeric ID from tmdb:12345 format
+                val numericId = tmdbId.removePrefix("tmdb:").toIntOrNull()
+                if (numericId == null) {
+                    _error.value = "Invalid TMDB ID format"
+                    _streams.value = emptyList()
+                    return@launch
+                }
+
+                val bearerToken = TMDBClient.getBearerToken(token)
+
+                // Fetch IMDB ID from TMDB
+                val externalIds = TMDBClient.api.getTVExternalIds(numericId, bearerToken)
+
+                val imdbId = externalIds.imdbId
+                if (imdbId.isNullOrEmpty()) {
+                    _error.value = "No IMDB ID found for this series"
+                    _streams.value = emptyList()
+                    return@launch
+                }
+
+                Log.d("MainViewModel", "Fetched IMDB ID: $imdbId for series TMDB ID: $numericId")
+
+                // Format: tt1234567:1:2 (imdbId:season:episode)
+                val episodeId = "$imdbId:$season:$episode"
+                Log.d("MainViewModel", "Loading streams for episode: $episodeId")
+
+                // Fetch streams using IMDB ID with season and episode
+                val response = AIOStreamsClient.api.searchSeriesStreams(id = episodeId)
+                
+                _streams.value = response.streams
+                Log.d("MainViewModel", "Loaded ${response.streams.size} streams for episode: $episodeId")
+
+            } catch (e: Exception) {
+                _error.value = "Failed to load episode streams: ${e.message}"
+                Log.e("MainViewModel", "Error loading episode streams", e)
                 _streams.value = emptyList()
             } finally {
                 _isLoading.value = false
