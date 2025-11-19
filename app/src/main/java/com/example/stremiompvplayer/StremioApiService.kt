@@ -1,35 +1,26 @@
-package com.example.stremiompvplayer.network
+package com.example.stremiompvplayer
 
-import com.example.stremiompvplayer.models.CatalogResponse
-import com.example.stremiompvplayer.models.Manifest
-import com.example.stremiompvplayer.models.StreamResponse
-import retrofit2.Response
+import com.example.stremiompvplayer.models.*
 import retrofit2.http.GET
-import retrofit2.http.Url
+import retrofit2.http.Path
 
 interface StremioApiService {
+    @GET("catalog/{type}/{id}.json")
+    suspend fun getCatalog(
+        @Path("type") type: String,
+        @Path("id") id: String
+    ): CatalogResponse
 
-    /**
-     * Fetches the primary manifest (to get catalog IDs and types)
-     * Example URL: http://127.0.0.1:7878/manifest.json
-     */
-    @GET
-    suspend fun getManifest(@Url manifestUrl: String): Response<Manifest>
+    @GET("stream/{type}/{id}.json")
+    suspend fun getStreams(
+        @Path("type") type: String,
+        @Path("id") id: String
+    ): StreamResponse
 
-    /**
-     * Fetches the catalog content (the list of posters)
-     * Example URL: http://127.0.0.1:7878/catalog/movie/top.json
-     */
-    @GET
-    suspend fun getCatalogItems(@Url catalogUrl: String): Response<CatalogResponse>
-
-    /**
-     * Fetches available streams for a specific content item
-     * Example URL: http://127.0.0.1:7878/stream/movie/tt1234567.json
-     *
-     * @param streamUrl The full URL to the stream endpoint
-     * @return Response containing StreamResponse with list of available streams
-     */
-    @GET
-    suspend fun getStreams(@Url streamUrl: String): Response<StreamResponse>
+    // Added to support fetching Series Details (Seasons/Episodes)
+    @GET("meta/{type}/{id}.json")
+    suspend fun getMeta(
+        @Path("type") type: String,
+        @Path("id") id: String
+    ): MetaResponse
 }
