@@ -21,6 +21,33 @@
             android:textSize="24sp"
             android:textStyle="bold" />
 
+        <!-- TMDB Configuration Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TMDB Configuration"
+            android:textColor="@color/colorAccent"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvTMDBStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/background_content_box"
+            android:padding="12dp"
+            android:textColor="#CCCCCC"
+            tools:text="TMDB Access Token: Not configured" />
+
+        <Button
+            android:id="@+id/btnConfigureTMDB"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="Configure TMDB Token" />
+
         <!-- User Lists Header -->
         <TextView
             android:layout_width="match_parent"
