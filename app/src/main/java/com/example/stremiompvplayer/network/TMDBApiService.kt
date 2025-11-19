@@ -85,4 +85,34 @@ interface TMDBApiService {
         @Header("Authorization") authorization: String,
         @Query("language") language: String = "en-US"
     ): TMDBSeriesDetailResponse
+
+    // Search Movies
+    @GET("search/movie")
+    suspend fun searchMovies(
+        @Header("Authorization") authorization: String,
+        @Query("query") query: String,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1
+    ): TMDBMovieListResponse
+
+    // Search TV Series
+    @GET("search/tv")
+    suspend fun searchSeries(
+        @Header("Authorization") authorization: String,
+        @Query("query") query: String,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1
+    ): TMDBSeriesListResponse
+
+    // Multi Search (searches both movies and TV shows)
+    @GET("search/multi")
+    suspend fun searchMulti(
+        @Header("Authorization") authorization: String,
+        @Query("query") query: String,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1
+    ): TMDBMultiSearchResponse
 }
