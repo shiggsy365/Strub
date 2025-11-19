@@ -1,0 +1,97 @@
+package com.example.stremiompvplayer.models
+
+import com.squareup.moshi.Json
+import java.io.Serializable
+
+// TMDB Movie Response Models
+data class TMDBMovieListResponse(
+    val page: Int,
+    val results: List<TMDBMovie>,
+    @Json(name = "total_pages") val totalPages: Int,
+    @Json(name = "total_results") val totalResults: Int
+) : Serializable
+
+data class TMDBMovie(
+    val adult: Boolean,
+    @Json(name = "backdrop_path") val backdropPath: String?,
+    @Json(name = "genre_ids") val genreIds: List<Int>,
+    val id: Int,
+    @Json(name = "original_language") val originalLanguage: String,
+    @Json(name = "original_title") val originalTitle: String,
+    val overview: String,
+    val popularity: Double,
+    @Json(name = "poster_path") val posterPath: String?,
+    @Json(name = "release_date") val releaseDate: String,
+    val title: String,
+    val video: Boolean,
+    @Json(name = "vote_average") val voteAverage: Double,
+    @Json(name = "vote_count") val voteCount: Int
+) : Serializable {
+    // Convert to MetaItem for compatibility with existing code
+    fun toMetaItem(): MetaItem {
+        return MetaItem(
+            id = "tmdb:$id",
+            type = "movie",
+            name = title,
+            poster = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+            background = backdropPath?.let { "https://image.tmdb.org/t/p/original$it" },
+            description = overview
+        )
+    }
+}
+
+// TMDB Series Response Models
+data class TMDBSeriesListResponse(
+    val page: Int,
+    val results: List<TMDBSeries>,
+    @Json(name = "total_pages") val totalPages: Int,
+    @Json(name = "total_results") val totalResults: Int
+) : Serializable
+
+data class TMDBSeries(
+    @Json(name = "backdrop_path") val backdropPath: String?,
+    @Json(name = "first_air_date") val firstAirDate: String?,
+    @Json(name = "genre_ids") val genreIds: List<Int>,
+    val id: Int,
+    val name: String,
+    @Json(name = "origin_country") val originCountry: List<String>,
+    @Json(name = "original_language") val originalLanguage: String,
+    @Json(name = "original_name") val originalName: String,
+    val overview: String,
+    val popularity: Double,
+    @Json(name = "poster_path") val posterPath: String?,
+    @Json(name = "vote_average") val voteAverage: Double,
+    @Json(name = "vote_count") val voteCount: Int
+) : Serializable {
+    // Convert to MetaItem for compatibility with existing code
+    fun toMetaItem(): MetaItem {
+        return MetaItem(
+            id = "tmdb:$id",
+            type = "series",
+            name = name,
+            poster = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+            background = backdropPath?.let { "https://image.tmdb.org/t/p/original$it" },
+            description = overview
+        )
+    }
+}
+
+// TMDB Series Detail Response (includes seasons/episodes)
+data class TMDBSeriesDetailResponse(
+    val id: Int,
+    val name: String,
+    val overview: String,
+    @Json(name = "poster_path") val posterPath: String?,
+    @Json(name = "backdrop_path") val backdropPath: String?,
+    val seasons: List<TMDBSeason>
+) : Serializable
+
+data class TMDBSeason(
+    @Json(name = "air_date") val airDate: String?,
+    @Json(name = "episode_count") val episodeCount: Int,
+    val id: Int,
+    val name: String,
+    val overview: String,
+    @Json(name = "poster_path") val posterPath: String?,
+    @Json(name = "season_number") val seasonNumber: Int
+) : Serializable
