@@ -11,121 +11,62 @@ import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.models.Stream
 import kotlinx.coroutines.launch
 
-sealed class CatalogUiState {
-    data object Loading : CatalogUiState()
-    data class Success(val catalogs: List<Catalog>, val items: List<MetaItem>) : CatalogUiState()
-    data class Error(val message: String) : CatalogUiState()
-}
-
+/**
+ * Legacy CatalogViewModel - kept for compatibility
+ * New code should use MainViewModel instead
+ */
 class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() {
 
-    private val _uiState = MutableLiveData<CatalogUiState>(CatalogUiState.Loading)
-    val uiState: LiveData<CatalogUiState> = _uiState
+    private val _catalogs = MutableLiveData<List<Catalog>>()
+    val catalogs: LiveData<List<Catalog>> = _catalogs
+
+    private val _items = MutableLiveData<List<MetaItem>>()
+    val items: LiveData<List<MetaItem>> = _items
 
     private val _streams = MutableLiveData<List<Stream>>()
     val streams: LiveData<List<Stream>> = _streams
 
-    private var allManifestCatalogs: List<Catalog> = emptyList()
+    private val _error = MutableLiveData<String?>()
+    val error: LiveData<String?> = _error
 
-    // Expose loaded catalogs for the UI (needed for MoviesFragment auto-population)
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
+
+    // Expose loaded catalogs for the UI
     private val _loadedCatalogs = MutableLiveData<List<Catalog>>()
     val loadedCatalogs: LiveData<List<Catalog>> = _loadedCatalogs
 
     init {
-        fetchManifestAndDefaultCatalog()
+        // Initialize with default TMDB catalogs
+        loadDefaultCatalogs()
     }
 
-    private fun fetchManifestAndDefaultCatalog() {
-        Log.d("CatalogViewModel", "Fetching manifest...")
-        viewModelScope.launch {
-            repository.fetchManifest().onSuccess { manifest ->
-                Log.d("CatalogViewModel", "Manifest fetched: ${manifest.name}")
-
-                allManifestCatalogs = manifest.catalogs.filter {
-                    // Filter out search catalogs and catalogs with no type
-                    !(it.name ?: "").contains("search", ignoreCase = true) && it.type.isNotEmpty()
-                }
-
-                // Post catalogs to LiveData
-                _loadedCatalogs.postValue(allManifestCatalogs)
-                Log.d("CatalogViewModel", "Found ${allManifestCatalogs.size} total catalogs")
-
-                // Load the first available catalog by default
-                val firstCatalog = allManifestCatalogs.firstOrNull()
-                if (firstCatalog != null) {
-                    Log.d("CatalogViewModel", "Loading first catalog: ${firstCatalog.name} (${firstCatalog.type}/${firstCatalog.id})")
-                    fetchCatalog(firstCatalog.type, firstCatalog.id)
-                } else {
-                    _uiState.value = CatalogUiState.Error("No content catalogs found in manifest.")
-                }
-            }.onFailure { error ->
-                Log.e("CatalogViewModel", "Failed to load manifest: ${error.message}")
-                _uiState.value = CatalogUiState.Error("Failed to load manifest: ${error.message}")
-            }
-        }
+    private fun loadDefaultCatalogs() {
+        val defaultCatalogs = listOf(
+            Catalog(type = "movie", id = "popular", name = "Popular Movies", extraProps = null),
+            Catalog(type = "movie", id = "latest", name = "Latest Movies", extraProps = null),
+            Catalog(type = "movie", id = "trending", name = "Trending Movies", extraProps = null),
+            Catalog(type = "series", id = "popular", name = "Popular Series", extraProps = null),
+            Catalog(type = "series", id = "latest", name = "Latest Series", extraProps = null),
+            Catalog(type = "series", id = "trending", name = "Trending Series", extraProps = null)
+        )
+        _loadedCatalogs.postValue(defaultCatalogs)
+        _catalogs.postValue(defaultCatalogs)
     }
 
     fun getCatalogsByType(type: String): List<Catalog> {
-        return allManifestCatalogs.filter { it.type == type }
+        return _loadedCatalogs.value?.filter { it.type == type } ?: emptyList()
     }
 
     fun fetchCatalog(type: String, id: String) {
-        Log.d("CatalogViewModel", "Fetching catalog: $type/$id")
-        _uiState.value = CatalogUiState.Loading
-
-        viewModelScope.launch {
-            val allItems = mutableListOf<MetaItem>()
-            var skip = 0
-            val targetCount = 100
-            var stopLoading = false
-            var lastError: String? = null
-
-            // Loop to fetch pages until we have 100 items or run out of data
-            while (!stopLoading && allItems.size < targetCount) {
-                val result = repository.fetchCatalogItems(type, id, skip)
-
-                result.onSuccess { catalogResponse ->
-                    val newItems = catalogResponse.metas
-                    if (newItems.isNotEmpty()) {
-                        Log.d("CatalogViewModel", "Fetched ${newItems.size} items at skip $skip")
-                        allItems.addAll(newItems)
-                        // Prepare skip for next page
-                        skip += newItems.size
-                    } else {
-                        // No more items returned
-                        stopLoading = true
-                    }
-                }.onFailure { error ->
-                    Log.e("CatalogViewModel", "Failed to load page at skip $skip: ${error.message}")
-                    lastError = error.message
-                    stopLoading = true
-                }
-            }
-
-            if (allItems.isNotEmpty()) {
-                Log.d("CatalogViewModel", "Total items accumulated: ${allItems.size}")
-                _uiState.value = CatalogUiState.Success(
-                    catalogs = getCatalogsByType(type),
-                    // Ensure we exactly hit the limit or less
-                    items = allItems.take(targetCount)
-                )
-            } else {
-                _uiState.value = CatalogUiState.Error("Failed to load catalog '$id': ${lastError ?: "Unknown error"}")
-            }
-        }
+        Log.d("CatalogViewModel", "fetchCatalog called for $type/$id - This is a legacy method")
+        // Legacy method - does nothing now as we use MainViewModel for TMDB
+        _error.postValue("Please use MainViewModel for loading content")
     }
 
     fun fetchStreams(type: String, id: String) {
-        Log.d("CatalogViewModel", "Fetching streams for: $type/$id")
-        viewModelScope.launch {
-            repository.fetchStreams(type, id).onSuccess { streamResponse ->
-                Log.d("CatalogViewModel", "Streams fetched successfully: ${streamResponse.streams.size} streams")
-                _streams.postValue(streamResponse.streams)
-            }.onFailure { error ->
-                Log.e("CatalogViewModel", "Failed to fetch streams: ${error.message}")
-                // Post empty list on error
-                _streams.postValue(emptyList())
-            }
-        }
+        Log.d("CatalogViewModel", "fetchStreams called - This is a legacy method")
+        // Legacy method - does nothing now as we use MainViewModel for streams
+        _error.postValue("Please use MainViewModel for loading streams")
     }
 }

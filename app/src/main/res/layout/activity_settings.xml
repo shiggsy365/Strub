@@ -48,6 +48,36 @@
             android:layout_marginBottom="24dp"
             android:text="Configure TMDB Token" />
 
+        <!-- Add this section to activity_settings.xml after the TMDB section -->
+
+        <!-- AIOStreams Configuration Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AIOStreams Configuration"
+            android:textColor="@color/colorAccent"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvAIOStreamsStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/background_content_box"
+            android:padding="12dp"
+            android:textColor="#CCCCCC"
+            android:text="AIOStreams: Not configured" />
+
+        <Button
+            android:id="@+id/btnConfigureAIOStreams"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="Configure AIOStreams Credentials" />
+
         <!-- User Lists Header -->
         <TextView
             android:layout_width="match_parent"

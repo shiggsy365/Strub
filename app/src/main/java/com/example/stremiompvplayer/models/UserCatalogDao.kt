@@ -13,6 +13,14 @@ interface UserCatalogDao {
     @Query("SELECT * FROM user_catalogs WHERE userId = :userId AND pageType = :pageType ORDER BY displayOrder ASC")
     suspend fun getCatalogsForPageSync(userId: String, pageType: String): List<UserCatalog>
 
+    // Get all catalogs (for settings)
+    @Query("SELECT * FROM user_catalogs ORDER BY pageType, displayOrder ASC")
+    fun getAllCatalogs(): LiveData<List<UserCatalog>>
+
+    // Get count for initialization check
+    @Query("SELECT COUNT(*) FROM user_catalogs")
+    suspend fun getCount(): Int
+
     // Get all catalogs from a specific manifest (for cleanup when manifest changes)
     @Query("SELECT * FROM user_catalogs WHERE userId = :userId AND manifestId = :manifestId")
     suspend fun getCatalogsByManifest(userId: String, manifestId: String): List<UserCatalog>
@@ -23,6 +31,9 @@ interface UserCatalogDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(catalog: UserCatalog): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(catalogs: List<UserCatalog>)
 
     @Update
     suspend fun update(catalog: UserCatalog)
@@ -45,6 +56,17 @@ interface UserCatalogDao {
     // Delete catalogs from a specific manifest (cleanup when manifest is removed)
     @Query("DELETE FROM user_catalogs WHERE userId = :userId AND manifestId = :manifestId")
     suspend fun deleteCatalogsByManifest(userId: String, manifestId: String)
+
+    // Swap sort orders between two catalogs
+    @Transaction
+    suspend fun swapSortOrder(id1: Long, order1: Int, id2: Long, order2: Int) {
+        updateDisplayOrder(id1, order2)
+        updateDisplayOrder(id2, order1)
+    }
+
+    // Get enabled catalogs for user
+    @Query("SELECT * FROM user_catalogs WHERE userId = :userId AND pageType = :pageType ORDER BY displayOrder ASC")
+    suspend fun getEnabledUserCatalogs(pageType: String, userId: String = "default"): List<UserCatalog>
 }
 
 @Dao

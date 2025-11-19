@@ -19,6 +19,36 @@ class SharedPreferencesManager private constructor(context: Context) {
             }
         }
     }
+    // Add these methods to SharedPreferencesManager.kt
+
+    // AIOStreams Credentials Management
+    fun saveAIOStreamsUsername(username: String) {
+        prefs.edit().putString("aiostreams_username", username).apply()
+    }
+
+    fun getAIOStreamsUsername(): String? {
+        return prefs.getString("aiostreams_username", null)
+    }
+
+    fun saveAIOStreamsPassword(password: String) {
+        prefs.edit().putString("aiostreams_password", password).apply()
+    }
+
+    fun getAIOStreamsPassword(): String? {
+        return prefs.getString("aiostreams_password", null)
+    }
+
+    fun hasAIOStreamsCredentials(): Boolean {
+        return !getAIOStreamsUsername().isNullOrEmpty() &&
+                !getAIOStreamsPassword().isNullOrEmpty()
+    }
+
+    fun clearAIOStreamsCredentials() {
+        prefs.edit()
+            .remove("aiostreams_username")
+            .remove("aiostreams_password")
+            .apply()
+    }
 
     fun saveActiveManifestUrl(url: String) {
         prefs.edit().putString("active_manifest_url", url).apply()

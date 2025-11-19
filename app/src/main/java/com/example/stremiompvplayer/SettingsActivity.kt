@@ -7,7 +7,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.stremiompvplayer.adapters.CatalogConfigAdapter
-import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
@@ -15,12 +14,16 @@ import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import android.widget.LinearLayout
 
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
     private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(ServiceLocator.getInstance(applicationContext))
+        MainViewModelFactory(
+            ServiceLocator.getInstance(applicationContext),
+            SharedPreferencesManager.getInstance(this)
+        )
     }
     private lateinit var adapter: CatalogConfigAdapter
     private lateinit var prefsManager: SharedPreferencesManager
@@ -34,11 +37,11 @@ class SettingsActivity : AppCompatActivity() {
 
         setupUserSection()
         setupTMDBSection()
+        setupAIOStreamsSection()
         setupCatalogList()
     }
 
     private fun setupTMDBSection() {
-        // Display current TMDB token status
         updateTMDBTokenDisplay()
 
         binding.btnConfigureTMDB.setOnClickListener {
@@ -78,6 +81,71 @@ class SettingsActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    // NEW: AIOStreams Section
+    private fun setupAIOStreamsSection() {
+        updateAIOStreamsDisplay()
+
+        binding.btnConfigureAIOStreams.setOnClickListener {
+            showAIOStreamsDialog()
+        }
+    }
+
+    private fun updateAIOStreamsDisplay() {
+        val username = prefsManager.getAIOStreamsUsername()
+        val password = prefsManager.getAIOStreamsPassword()
+
+        if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
+            binding.tvAIOStreamsStatus.text = "AIOStreams: Not configured"
+            binding.tvAIOStreamsStatus.setTextColor(getColor(android.R.color.holo_red_light))
+        } else {
+            binding.tvAIOStreamsStatus.text = "AIOStreams: Configured (${username.take(8)}...)"
+            binding.tvAIOStreamsStatus.setTextColor(getColor(android.R.color.holo_green_light))
+        }
+    }
+
+    private fun showAIOStreamsDialog() {
+        // Create a container for both inputs
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 16, 48, 16)
+        }
+
+        val usernameInput = TextInputEditText(this).apply {
+            hint = "Username (UUID)"
+            inputType = InputType.TYPE_CLASS_TEXT
+            setText(prefsManager.getAIOStreamsUsername() ?: "")
+        }
+
+        val passwordInput = TextInputEditText(this).apply {
+            hint = "Password"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setText(prefsManager.getAIOStreamsPassword() ?: "")
+        }
+
+        container.addView(usernameInput)
+        container.addView(passwordInput)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Configure AIOStreams")
+            .setMessage("Enter your AIOStreams credentials\n(Get them from aiostreams.shiggsy.co.uk)")
+            .setView(container)
+            .setPositiveButton("Save") { _, _ ->
+                val username = usernameInput.text.toString().trim()
+                val password = passwordInput.text.toString().trim()
+                if (username.isNotEmpty() && password.isNotEmpty()) {
+                    prefsManager.saveAIOStreamsUsername(username)
+                    prefsManager.saveAIOStreamsPassword(password)
+                    updateAIOStreamsDisplay()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .setNeutralButton("Clear") { _, _ ->
+                prefsManager.clearAIOStreamsCredentials()
+                updateAIOStreamsDisplay()
+            }
             .show()
     }
 

@@ -13,20 +13,98 @@ class CatalogRepository(private val userCatalogDao: UserCatalogDao) {
     suspend fun initializeDefaultsIfNeeded() {
         withContext(Dispatchers.IO) {
             if (userCatalogDao.getCount() == 0) {
+                // Create default catalogs for TMDB
                 val defaults = listOf(
-                    UserCatalog(0, "com.linvo.cinemeta", "top", "movie", "Popular Movies", true, true, 0),
-                    UserCatalog(0, "com.linvo.cinemeta", "top", "series", "Popular Series", true, true, 1),
-                    UserCatalog(0, "com.linvo.cinemeta", "imdbRating", "movie", "Top Rated Movies", true, true, 2),
-                    UserCatalog(0, "com.linvo.cinemeta", "imdbRating", "series", "Top Rated Series", true, true, 3)
+                    UserCatalog(
+                        id = 0,
+                        userId = "default",
+                        catalogId = "popular",
+                        catalogType = "movie",
+                        catalogName = "Popular Movies",
+                        customName = null,
+                        displayOrder = 0,
+                        pageType = "movies",
+                        addonUrl = "tmdb",
+                        manifestId = "tmdb",
+                        dateAdded = System.currentTimeMillis()
+                    ),
+                    UserCatalog(
+                        id = 0,
+                        userId = "default",
+                        catalogId = "latest",
+                        catalogType = "movie",
+                        catalogName = "Latest Movies",
+                        customName = null,
+                        displayOrder = 1,
+                        pageType = "movies",
+                        addonUrl = "tmdb",
+                        manifestId = "tmdb",
+                        dateAdded = System.currentTimeMillis()
+                    ),
+                    UserCatalog(
+                        id = 0,
+                        userId = "default",
+                        catalogId = "trending",
+                        catalogType = "movie",
+                        catalogName = "Trending Movies",
+                        customName = null,
+                        displayOrder = 2,
+                        pageType = "movies",
+                        addonUrl = "tmdb",
+                        manifestId = "tmdb",
+                        dateAdded = System.currentTimeMillis()
+                    ),
+                    UserCatalog(
+                        id = 0,
+                        userId = "default",
+                        catalogId = "popular",
+                        catalogType = "series",
+                        catalogName = "Popular Series",
+                        customName = null,
+                        displayOrder = 0,
+                        pageType = "series",
+                        addonUrl = "tmdb",
+                        manifestId = "tmdb",
+                        dateAdded = System.currentTimeMillis()
+                    ),
+                    UserCatalog(
+                        id = 0,
+                        userId = "default",
+                        catalogId = "latest",
+                        catalogType = "series",
+                        catalogName = "Latest Series",
+                        customName = null,
+                        displayOrder = 1,
+                        pageType = "series",
+                        addonUrl = "tmdb",
+                        manifestId = "tmdb",
+                        dateAdded = System.currentTimeMillis()
+                    ),
+                    UserCatalog(
+                        id = 0,
+                        userId = "default",
+                        catalogId = "trending",
+                        catalogType = "series",
+                        catalogName = "Trending Series",
+                        customName = null,
+                        displayOrder = 2,
+                        pageType = "series",
+                        addonUrl = "tmdb",
+                        manifestId = "tmdb",
+                        dateAdded = System.currentTimeMillis()
+                    )
                 )
-                userCatalogDao.insertAll(defaults)
+
+                defaults.forEach { catalog ->
+                    userCatalogDao.insert(catalog)
+                }
             }
         }
     }
 
-    suspend fun getCatalogsForUser(type: String): List<UserCatalog> {
+    suspend fun getCatalogsForUser(pageType: String, userId: String = "default"): List<UserCatalog> {
         return withContext(Dispatchers.IO) {
-            userCatalogDao.getEnabledUserCatalogs(type)
+            userCatalogDao.getCatalogsForPageSync(userId, pageType)
         }
     }
 
@@ -38,7 +116,10 @@ class CatalogRepository(private val userCatalogDao: UserCatalogDao) {
 
     suspend fun swapOrder(item1: UserCatalog, item2: UserCatalog) {
         withContext(Dispatchers.IO) {
-            userCatalogDao.swapSortOrder(item1.dbId, item1.sortOrder, item2.dbId, item2.sortOrder)
+            // Swap display orders
+            val tempOrder = item1.displayOrder
+            userCatalogDao.updateDisplayOrder(item1.id, item2.displayOrder)
+            userCatalogDao.updateDisplayOrder(item2.id, tempOrder)
         }
     }
 }

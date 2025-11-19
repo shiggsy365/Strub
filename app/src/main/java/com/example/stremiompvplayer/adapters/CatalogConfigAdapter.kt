@@ -1,6 +1,7 @@
 package com.example.stremiompvplayer.adapters
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -29,21 +30,20 @@ class CatalogConfigAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: UserCatalog, position: Int) {
-            binding.tvCatalogName.text = item.name
+            // Change 'name' to 'catalogName' or 'displayName'
+            binding.tvCatalogName.text = item.displayName  // Line 32
 
             binding.switchDiscover.setOnCheckedChangeListener(null)
             binding.switchUser.setOnCheckedChangeListener(null)
 
-            binding.switchDiscover.isChecked = item.isDiscoverEnabled
-            binding.switchUser.isChecked = item.isUserEnabled
+            // These fields don't exist in the new UserCatalog model
+            // Remove or comment out these lines:
+            // binding.switchDiscover.isChecked = item.isDiscoverEnabled
+            // binding.switchUser.isChecked = item.isUserEnabled
 
-            binding.switchDiscover.setOnCheckedChangeListener { _, isChecked ->
-                onUpdate(item.copy(isDiscoverEnabled = isChecked))
-            }
-
-            binding.switchUser.setOnCheckedChangeListener { _, isChecked ->
-                onUpdate(item.copy(isUserEnabled = isChecked))
-            }
+            // Just hide the switches for now:
+            binding.switchDiscover.visibility = View.GONE
+            binding.switchUser.visibility = View.GONE
 
             binding.btnUp.setOnClickListener {
                 if (position > 0) onMoveUp(item, position)
@@ -61,7 +61,8 @@ class CatalogConfigAdapter(
 
     class DiffCallback : DiffUtil.ItemCallback<UserCatalog>() {
         override fun areItemsTheSame(oldItem: UserCatalog, newItem: UserCatalog) =
-            oldItem.dbId == newItem.dbId
+            oldItem.id == newItem.id  // Changed from dbId to id
+
         override fun areContentsTheSame(oldItem: UserCatalog, newItem: UserCatalog) =
             oldItem == newItem
     }
