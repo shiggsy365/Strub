@@ -24,9 +24,21 @@ class SharedPreferencesManager private constructor(context: Context) {
         prefs.edit().putString("active_manifest_url", url).apply()
     }
 
-    // 2. New function to retrieve the active manifest URL
     fun getActiveManifestUrl(): String? {
         return prefs.getString("active_manifest_url", null)
+    }
+
+    // TMDB Access Token Management
+    fun saveTMDBAccessToken(token: String) {
+        prefs.edit().putString("tmdb_access_token", token).apply()
+    }
+
+    fun getTMDBAccessToken(): String? {
+        return prefs.getString("tmdb_access_token", null)
+    }
+
+    fun hasTMDBAccessToken(): Boolean {
+        return !getTMDBAccessToken().isNullOrEmpty()
     }
 
     fun saveString(key: String, value: String) {
