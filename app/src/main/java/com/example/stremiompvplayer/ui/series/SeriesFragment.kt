@@ -11,13 +11,16 @@ import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.R
+import com.example.stremiompvplayer.adapters.CatalogChipAdapter
 import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.adapters.StreamAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentSeriesBinding
+import com.example.stremiompvplayer.models.Catalog
 import com.example.stremiompvplayer.models.Meta
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.PlayerActivity
+import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 
@@ -27,9 +30,13 @@ class SeriesFragment : Fragment() {
     private val binding get() = _binding!!
     
     private val viewModel: MainViewModel by activityViewModels {
-        MainViewModelFactory(ServiceLocator.getInstance(requireContext()))
+        MainViewModelFactory(
+            ServiceLocator.getInstance(requireContext()),
+            SharedPreferencesManager.getInstance(requireContext())
+        )
     }
 
+    private lateinit var catalogChipAdapter: CatalogChipAdapter
     private lateinit var posterAdapter: PosterAdapter
     private lateinit var streamAdapter: StreamAdapter
 
@@ -41,6 +48,13 @@ class SeriesFragment : Fragment() {
     private var selectedShow: MetaItem? = null
     private var currentSeriesMeta: Meta? = null
     private val BACK_ITEM_ID = "ACTION_BACK"
+
+    // Standard TMDB list catalogs
+    private val standardCatalogs = listOf(
+        Catalog(type = "series", id = "popular", name = "Most Popular", extraProps = null),
+        Catalog(type = "series", id = "latest", name = "Latest Releases", extraProps = null),
+        Catalog(type = "series", id = "trending", name = "Trending", extraProps = null)
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -57,17 +71,33 @@ class SeriesFragment : Fragment() {
         setupObservers()
         
         if (currentLevel == Level.CATALOG) {
-            viewModel.loadUserEnabledCatalogs("series")
+            viewModel.loadSeriesLists()
         }
     }
 
     private fun setupRecyclerViews() {
-        posterAdapter = PosterAdapter { item -> onPosterItemClicked(item) }
+        // Setup Catalog Chips
+        catalogChipAdapter = CatalogChipAdapter(
+            onClick = { catalog -> onCatalogSelected(catalog) },
+            onLongClick = null
+        )
+        binding.catalogChipsRecycler.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = catalogChipAdapter
+        }
+        catalogChipAdapter.setCatalogs(standardCatalogs)
+
+        // Setup Posters
+        posterAdapter = PosterAdapter(
+            items = emptyList(),
+            onClick = { item -> onPosterItemClicked(item) }
+        )
         binding.rvPosters.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             adapter = posterAdapter
         }
 
+        // Setup Streams
         streamAdapter = StreamAdapter { stream ->
             val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
                 putExtra("streamUrl", stream.url)
@@ -82,12 +112,15 @@ class SeriesFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        viewModel.catalogs.observe(viewLifecycleOwner) { items ->
+        // Observe Popular Series (default)
+        viewModel.popularSeries.observe(viewLifecycleOwner) { items ->
             if (currentLevel == Level.CATALOG) {
-                posterAdapter.submitList(items)
-                updateUIForCatalogLevel()
+                posterAdapter.updateData(items)
             }
         }
+
+        viewModel.latestSeries.observe(viewLifecycleOwner) { }
+        viewModel.trendingSeries.observe(viewLifecycleOwner) { }
 
         viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
             if (meta != null && currentLevel == Level.CATALOG) {
@@ -114,6 +147,26 @@ class SeriesFragment : Fragment() {
             }
         }
     }
+
+    private fun onCatalogSelected(catalog: Catalog) {
+        if (currentLevel != Level.CATALOG) return
+        
+        when (catalog.id) {
+            "popular" -> {
+                viewModel.popularSeries.value?.let { posterAdapter.updateData(it) }
+            }
+            "latest" -> {
+                viewModel.latestSeries.value?.let { posterAdapter.updateData(it) }
+            }
+            "trending" -> {
+                viewModel.trendingSeries.value?.let { posterAdapter.updateData(it) }
+            }
+        }
+        selectedShow = null
+        currentSeriesMeta = null
+        viewModel.clearStreams()
+        updateHeaderUI("Select a Series", "Choose a series to explore", null, null)
+    }
     
     private fun onPosterItemClicked(item: MetaItem) {
         if (item.id == BACK_ITEM_ID) {
@@ -124,7 +177,7 @@ class SeriesFragment : Fragment() {
         when (currentLevel) {
             Level.CATALOG -> {
                 selectedShow = item
-                viewModel.loadMeta("series", item.id)
+                viewModel.loadSeriesMeta(item.id)
                 updateHeaderUI(item.name, item.description ?: "", item.poster, null)
             }
             Level.SEASONS -> {
@@ -135,10 +188,10 @@ class SeriesFragment : Fragment() {
             }
             Level.EPISODES -> {
                 val video = currentSeriesMeta?.videos?.find { it.id == item.id }
-                val episodeTitle = video?.name ?: item.name
-                val episodeDesc = video?.overview ?: "No description available."
+                val episodeTitle = video?.title ?: item.name
+                val episodeDesc = item.description ?: "No description available."
                 val season = video?.season ?: 0
-                val episode = video?.episode ?: 0
+                val episode = video?.number ?: 0
                 val subHeader = "S$season:E$episode - $episodeTitle"
 
                 updateHeaderUI(selectedShow?.name ?: "", episodeDesc, currentSeriesMeta?.poster, subHeader)
@@ -153,11 +206,18 @@ class SeriesFragment : Fragment() {
         val seasonItems = ArrayList<MetaItem>()
         seasonItems.add(createBackItem())
         seasons.forEach { seasonNum ->
-            if (seasonNum > 0) {
-                seasonItems.add(MetaItem(id = seasonNum.toString(), name = "Season $seasonNum", poster = meta.poster, type = "season", description = ""))
+            if (seasonNum != null && seasonNum > 0) {
+                seasonItems.add(MetaItem(
+                    id = seasonNum.toString(),
+                    name = "Season $seasonNum",
+                    poster = meta.poster,
+                    type = "season",
+                    description = "",
+                    background = null
+                ))
             }
         }
-        posterAdapter.submitList(seasonItems)
+        posterAdapter.updateData(seasonItems)
         viewModel.clearStreams()
         binding.tvTitle.text = meta.name
         binding.tvDescription.text = "Select a Season"
@@ -166,14 +226,21 @@ class SeriesFragment : Fragment() {
 
     private fun displayEpisodes(season: Int) {
         currentLevel = Level.EPISODES
-        val episodes = currentSeriesMeta?.videos?.filter { it.season == season }?.sortedBy { it.episode } ?: emptyList()
+        val episodes = currentSeriesMeta?.videos?.filter { it.season == season }?.sortedBy { it.number } ?: emptyList()
         val episodeItems = ArrayList<MetaItem>()
         episodeItems.add(createBackItem())
         episodes.forEach { vid ->
-            val image = if (!vid.thumbnail.isNullOrEmpty()) vid.thumbnail else currentSeriesMeta?.poster
-            episodeItems.add(MetaItem(id = vid.id, name = "Ep ${vid.episode}: ${vid.name ?: "Episode ${vid.episode}"}", poster = image, type = "episode", description = vid.overview))
+            val image = vid.thumbnail ?: currentSeriesMeta?.poster
+            episodeItems.add(MetaItem(
+                id = vid.id,
+                name = "Ep ${vid.number}: ${vid.title ?: "Episode ${vid.number}"}",
+                poster = image,
+                type = "episode",
+                description = null,
+                background = null
+            ))
         }
-        posterAdapter.submitList(episodeItems)
+        posterAdapter.updateData(episodeItems)
         viewModel.clearStreams()
         binding.tvDescription.text = "Select an Episode"
         binding.tvSubHeader.text = "Season $season"
@@ -187,7 +254,8 @@ class SeriesFragment : Fragment() {
                 currentLevel = Level.CATALOG
                 selectedShow = null
                 currentSeriesMeta = null
-                viewModel.loadUserEnabledCatalogs("series") 
+                viewModel.loadSeriesLists()
+                viewModel.popularSeries.value?.let { posterAdapter.updateData(it) }
                 updateUIForCatalogLevel()
                 viewModel.clearStreams()
             }
@@ -197,7 +265,14 @@ class SeriesFragment : Fragment() {
 
     private fun createBackItem(): MetaItem {
         val uri = "android.resource://${requireContext().packageName}/${R.drawable.ic_arrow_back_white_24dp}"
-        return MetaItem(id = BACK_ITEM_ID, name = "Back", poster = uri, type = "navigation", description = "Go Back")
+        return MetaItem(
+            id = BACK_ITEM_ID,
+            name = "Back",
+            poster = uri,
+            type = "navigation",
+            description = "Go Back",
+            background = null
+        )
     }
 
     private fun updateUIForCatalogLevel() {
