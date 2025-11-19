@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.chip.Chip xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginEnd="8dp"
-    android:focusable="true"
-    android:clickable="true"
-    android:foreground="@drawable/selector_focus_border">
-
-    <TextView
-        android:id="@+id/chipText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/selector_catalog_background"
-        android:textColor="@android:color/white"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
-        android:textSize="14sp"
-        android:textStyle="bold" />
-</FrameLayout>
+    android:minHeight="24dp"
+    android:minWidth="70dp"
+    android:gravity="center"
+    android:checkable="true"
+    android:textAlignment="center"
+    android:textSize="12sp"
+    android:textColor="@color/chip_text_color"
+    style="@style/Widget.MaterialComponents.Chip.Choice"
+    app:chipBackgroundColor="@color/chip_background_selector"
+    app:chipCornerRadius="12dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp" />

@@ -27,13 +27,14 @@ class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() 
 
     private var allManifestCatalogs: List<Catalog> = emptyList()
 
+    // Expose loaded catalogs for the UI (needed for MoviesFragment auto-population)
+    private val _loadedCatalogs = MutableLiveData<List<Catalog>>()
+    val loadedCatalogs: LiveData<List<Catalog>> = _loadedCatalogs
+
     init {
         fetchManifestAndDefaultCatalog()
     }
 
-    // ADD THIS: LiveData to expose available catalogs once manifest is loaded
-    private val _loadedCatalogs = MutableLiveData<List<Catalog>>()
-    val loadedCatalogs: LiveData<List<Catalog>> = _loadedCatalogs
     private fun fetchManifestAndDefaultCatalog() {
         Log.d("CatalogViewModel", "Fetching manifest...")
         viewModelScope.launch {
@@ -45,8 +46,8 @@ class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() 
                     !(it.name ?: "").contains("search", ignoreCase = true) && it.type.isNotEmpty()
                 }
 
+                // Post catalogs to LiveData
                 _loadedCatalogs.postValue(allManifestCatalogs)
-
                 Log.d("CatalogViewModel", "Found ${allManifestCatalogs.size} total catalogs")
 
                 // Load the first available catalog by default
@@ -73,16 +74,43 @@ class CatalogViewModel(private val repository: CatalogRepository) : ViewModel() 
         _uiState.value = CatalogUiState.Loading
 
         viewModelScope.launch {
-            repository.fetchCatalogItems(type, id).onSuccess { catalogResponse ->
-                Log.d("CatalogViewModel", "Catalog fetched successfully: ${catalogResponse.metas.size} items")
+            val allItems = mutableListOf<MetaItem>()
+            var skip = 0
+            val targetCount = 100
+            var stopLoading = false
+            var lastError: String? = null
+
+            // Loop to fetch pages until we have 100 items or run out of data
+            while (!stopLoading && allItems.size < targetCount) {
+                val result = repository.fetchCatalogItems(type, id, skip)
+
+                result.onSuccess { catalogResponse ->
+                    val newItems = catalogResponse.metas
+                    if (newItems.isNotEmpty()) {
+                        Log.d("CatalogViewModel", "Fetched ${newItems.size} items at skip $skip")
+                        allItems.addAll(newItems)
+                        // Prepare skip for next page
+                        skip += newItems.size
+                    } else {
+                        // No more items returned
+                        stopLoading = true
+                    }
+                }.onFailure { error ->
+                    Log.e("CatalogViewModel", "Failed to load page at skip $skip: ${error.message}")
+                    lastError = error.message
+                    stopLoading = true
+                }
+            }
+
+            if (allItems.isNotEmpty()) {
+                Log.d("CatalogViewModel", "Total items accumulated: ${allItems.size}")
                 _uiState.value = CatalogUiState.Success(
                     catalogs = getCatalogsByType(type),
-                    // FIX: Limit items to 100
-                    items = catalogResponse.metas.take(100)
+                    // Ensure we exactly hit the limit or less
+                    items = allItems.take(targetCount)
                 )
-            }.onFailure { error ->
-                Log.e("CatalogViewModel", "Failed to load catalog '$id': ${error.message}")
-                _uiState.value = CatalogUiState.Error("Failed to load catalog '$id': ${error.message}")
+            } else {
+                _uiState.value = CatalogUiState.Error("Failed to load catalog '$id': ${lastError ?: "Unknown error"}")
             }
         }
     }

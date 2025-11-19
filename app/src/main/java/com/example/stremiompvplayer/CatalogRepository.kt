@@ -44,13 +44,20 @@ class CatalogRepository(
         }
     }
 
-    suspend fun fetchCatalogItems(type: String, id: String): Result<CatalogResponse> {
+    // UPDATED: Added skip parameter to support pagination
+    suspend fun fetchCatalogItems(type: String, id: String, skip: Int = 0): Result<CatalogResponse> {
         return try {
             val manifestUrl = getManifestUrl()
             val addonBaseUrl = getAddonBaseUrl(manifestUrl)
 
             // Construct catalog URL following Stremio protocol
-            val catalogURL = "$addonBaseUrl/catalog/$type/$id.json"
+            // Handles the skip parameter for pagination
+            val catalogURL = if (skip > 0) {
+                "$addonBaseUrl/catalog/$type/$id/skip=$skip.json"
+            } else {
+                "$addonBaseUrl/catalog/$type/$id.json"
+            }
+
             Log.d("CatalogRepository", "Fetching catalog from: $catalogURL")
 
             val response = apiService.getCatalogItems(catalogURL)
