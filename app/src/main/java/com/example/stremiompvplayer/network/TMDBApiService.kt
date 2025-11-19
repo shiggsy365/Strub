@@ -115,4 +115,20 @@ interface TMDBApiService {
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1
     ): TMDBMultiSearchResponse
+
+    // Get External IDs for Movie (includes IMDB ID)
+    @GET("movie/{movie_id}/external_ids")
+    suspend fun getMovieExternalIds(
+        @Path("movie_id") movieId: Int,
+        @Header("Authorization") authorization: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBExternalIdsResponse
+
+    // Get External IDs for TV Show (includes IMDB ID)
+    @GET("tv/{tv_id}/external_ids")
+    suspend fun getTVExternalIds(
+        @Path("tv_id") tvId: Int,
+        @Header("Authorization") authorization: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBExternalIdsResponse
 }
