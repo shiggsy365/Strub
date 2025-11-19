@@ -28,7 +28,7 @@ class SeriesFragment : Fragment() {
 
     private var _binding: FragmentSeriesBinding? = null
     private val binding get() = _binding!!
-    
+
     private val viewModel: MainViewModel by activityViewModels {
         MainViewModelFactory(
             ServiceLocator.getInstance(requireContext()),
@@ -69,7 +69,7 @@ class SeriesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerViews()
         setupObservers()
-        
+
         if (currentLevel == Level.CATALOG) {
             viewModel.loadSeriesLists()
         }
@@ -150,7 +150,7 @@ class SeriesFragment : Fragment() {
 
     private fun onCatalogSelected(catalog: Catalog) {
         if (currentLevel != Level.CATALOG) return
-        
+
         when (catalog.id) {
             "popular" -> {
                 viewModel.popularSeries.value?.let { posterAdapter.updateData(it) }
@@ -167,7 +167,7 @@ class SeriesFragment : Fragment() {
         viewModel.clearStreams()
         updateHeaderUI("Select a Series", "Choose a series to explore", null, null)
     }
-    
+
     private fun onPosterItemClicked(item: MetaItem) {
         if (item.id == BACK_ITEM_ID) {
             navigateBack()
@@ -195,7 +195,7 @@ class SeriesFragment : Fragment() {
                 val subHeader = "S$season:E$episode - $episodeTitle"
 
                 updateHeaderUI(selectedShow?.name ?: "", episodeDesc, currentSeriesMeta?.poster, subHeader)
-                
+
                 // Load streams using the new method with season and episode
                 if (season > 0 && episode > 0 && selectedShow != null) {
                     viewModel.loadEpisodeStreams(selectedShow!!.id, season, episode)
