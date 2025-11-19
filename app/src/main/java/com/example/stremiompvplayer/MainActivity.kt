@@ -2,217 +2,74 @@ package com.example.stremiompvplayer
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.widget.TextView
+import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.stremiompvplayer.databinding.ActivityMainBinding
 import com.example.stremiompvplayer.ui.library.LibraryFragment
 import com.example.stremiompvplayer.ui.movies.MoviesFragment
+import com.example.stremiompvplayer.ui.series.SeriesFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
-// IMPORTS FIXED: Point to the utils package where we defined User and SharedPreferencesManager
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
-import com.example.stremiompvplayer.utils.User
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.button.MaterialButton
-// IMPORT ADDED: Intent for UserSelectionActivity
-import com.example.stremiompvplayer.UserSelectionActivity
-import android.widget.PopupMenu
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    // CHANGED: Use SharedPreferencesManager for users
-    private lateinit var prefsManager: SharedPreferencesManager
-    private var currentUserId: String? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check if user is selected
+        val userId = SharedPreferencesManager.getUserId(this)
+        if (userId == null) {
+            startActivity(Intent(this, UserSelectionActivity::class.java))
+            finish()
+            return
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // CHANGED: Initialize the manager
-        prefsManager = SharedPreferencesManager.getInstance(this)
-        currentUserId = prefsManager.getCurrentUserId()
-
-        // --- START NEW LOGIN CHECK LOGIC ---
-        if (currentUserId.isNullOrEmpty()) {
-            // Redirect to UserSelectionActivity if no user is logged in
-            val intent = Intent(this, UserSelectionActivity::class.java)
-
-            // Use flags to clear the back stack, ensuring they can't hit back to get to the main screen
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
-            return // Stop execution of MainActivity's setup
-        }
-        // --- END NEW LOGIN CHECK LOGIC ---
-
-
-        setupUserAvatar()
-        setupNavigation()
-
-        // Load default tab
+        // Default fragment
         if (savedInstanceState == null) {
-        //    loadFragment(DiscoverFragment())
-            binding.chipDiscover.isChecked = true
-        }
-    }
-
-    private fun setupUserAvatar() {
-        // Since the user is guaranteed to be logged in (checked above), we can assert non-null
-        currentUserId?.let { userId ->
-            // CHANGED: Use prefsManager
-            val user = prefsManager.getUser(userId)
-            user?.let {
-                // Set avatar color
-                binding.userAvatar.setBackgroundColor(it.avatarColor)
-
-                // Set first initial
-                binding.userInitial.text = it.name.first().uppercase()
-
-                // Click listener for menu
-                binding.userAvatarContainer.setOnClickListener {
-                    showUserMenu()
-                }
-            }
-        }
-    }
-
-    private fun showUserMenu() {
-        val dialog = BottomSheetDialog(this)
-        // Ensure dialog_user_menu.xml exists or replace with a standard view construction
-        val view = layoutInflater.inflate(R.layout.dialog_user_menu, null)
-
-        currentUserId?.let { userId ->
-            // CHANGED: Use prefsManager
-            val user = prefsManager.getUser(userId)
-            user?.let {
-                view.findViewById<TextView>(R.id.userName).text = it.name
-                view.findViewById<View>(R.id.userAvatar).setBackgroundColor(it.avatarColor)
-                view.findViewById<TextView>(R.id.userInitial).text = it.name.first().uppercase()
-            }
-        }
-
-        view.findViewById<MaterialButton>(R.id.switchUserButton).apply {
-            textSize = 22f // Larger font
-            setOnClickListener {
-                dialog.dismiss()
-                startActivity(Intent(this@MainActivity, UserSelectionActivity::class.java))
-                finish()
-            }
-        }
-
-        view.findViewById<MaterialButton>(R.id.signOutButton).apply {
-            textSize = 22f // Larger font
-            setOnClickListener {
-                dialog.dismiss()
-                // CHANGED: Use prefsManager
-                prefsManager.setCurrentUser("")
-                val intent = Intent(this@MainActivity, UserSelectionActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
-            }
-        }
-
-        dialog.setContentView(view)
-        dialog.show()
-    }
-
-    private fun setupNavigation() {
-        // Discover dropdown - currently commented out in your code
-        // binding.chipDiscover.setOnClickListener {
-        //     showDiscoverMenu()
-        // }
-
-        binding.chipMovies.setOnClickListener {
             loadFragment(MoviesFragment())
         }
 
-        // Series dropdown - currently commented out in your code
-        // binding.chipSeries.setOnClickListener {
-        //     loadFragment(SeriesFragment())
-        // }
-
-        // Library dropdown
-        binding.chipLibrary.setOnClickListener {
-            // showLibraryMenu() // currently commented out
-        }
-
-        // Search button
-        binding.chipSearch.setOnClickListener {
-            loadFragment(SearchFragment())
-        }
-
-        // FIX: Add listener for the "..." (More) chip to open Settings
-        binding.chipMore.setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_movies -> {
+                    loadFragment(MoviesFragment())
+                    true
+                }
+                R.id.nav_series -> {
+                    loadFragment(SeriesFragment())
+                    true
+                }
+                R.id.nav_search -> {
+                    loadFragment(SearchFragment())
+                    true
+                }
+                R.id.nav_library -> {
+                    loadFragment(LibraryFragment())
+                    true
+                }
+                R.id.nav_settings -> {
+                     startActivity(Intent(this, SettingsActivity::class.java))
+                     false // Don't select the tab visually
+                }
+                else -> false
+            }
         }
     }
 
- //   private fun showDiscoverMenu() {
- //       val popup = PopupMenu(this, binding.chipDiscover)
- //       popup.menuInflater.inflate(R.menu.menu_discover, popup.menu)
- //       popup.setOnMenuItemClickListener { item ->
- //           when (item.itemId) {
- //               R.id.discover_movies -> {
- //                   val fragment = DiscoverFragment().apply {
- //                       arguments = Bundle().apply {
- //                           putString("filter_type", "movie")
- //                       }
- //                   }
- //                   loadFragment(fragment)
- //                   true
-  //              }
-   //             R.id.discover_series -> {
-    //                val fragment = DiscoverFragment().apply {
-     //                   arguments = Bundle().apply {
-      //                      putString("filter_type", "series")
-     //                   }
-     //                }
-    //                loadFragment(fragment)
-  //                  true
-//                }
-//                else -> false
-//            }
-//        }
-//        popup.show()
-//    }
-
-//    private fun showLibraryMenu() {
-//        val popup = PopupMenu(this, binding.chipLibrary)
-//        popup.menuInflater.inflate(R.menu.menu_library, popup.menu)
-//        popup.setOnMenuItemClickListener { item ->
-//            when (item.itemId) {
-//                R.id.library_movies -> {
-//                    val fragment = LibraryFragment().apply {
-//                        arguments = Bundle().apply {
-//                            putString("item_type", "movie")
-//                        }
-//                    }
-//                    loadFragment(fragment)
- //                   true
-  //              }
-   //             R.id.library_series -> {
-    //                val fragment = LibraryFragment().apply {
-     //                   arguments = Bundle().apply {
-    //                        putString("item_type", "series")
-    //                    }
-    //                }
-    //                loadFragment(fragment)
-     //               true
-     //           }
-     //           else -> false
-   //         }
-   //     }
-   //     popup.show()
-   // }
-
     private fun loadFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
+            .replace(R.id.fragment_container, fragment)
             .commit()
+    }
+
+    // Handle DPAD keys for TV navigation if necessary
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        return super.onKeyDown(keyCode, event)
     }
 }
