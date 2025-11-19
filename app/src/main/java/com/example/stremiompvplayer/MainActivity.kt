@@ -1,6 +1,7 @@
 package com.example.stremiompvplayer
 
 import android.content.Intent
+import atalogandroid.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
@@ -9,7 +10,6 @@ import com.example.stremiompvplayer.databinding.ActivityMainBinding
 import com.example.stremiompvplayer.ui.library.LibraryFragment
 import com.example.stremiompvplayer.ui.movies.MoviesFragment
 import com.example.stremiompvplayer.ui.series.SeriesFragment
-import com.example.stremiompvplayer.ui.search.SearchFragment
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 
 class MainActivity : AppCompatActivity() {
@@ -54,8 +54,8 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_settings -> {
-                     startActivity(Intent(this, SettingsActivity::class.java))
-                     false // Don't select the tab visually
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    false // Don't select the tab visually
                 }
                 else -> false
             }

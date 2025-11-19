@@ -84,22 +84,22 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupCatalogList() {
         adapter = CatalogConfigAdapter(
             onUpdate = { catalog -> viewModel.updateCatalogConfig(catalog) },
-            onMoveUp = { catalog, pos -> 
-                 val list = adapter.currentList
-                 if (pos > 0) {
-                     val prev = list[pos - 1]
-                     viewModel.swapCatalogOrder(catalog, prev)
-                 }
+            onMoveUp = { catalog, pos ->
+                val list = adapter.currentList
+                if (pos > 0) {
+                    val prev = list[pos - 1]
+                    viewModel.swapCatalogOrder(catalog, prev)
+                }
             },
             onMoveDown = { catalog, pos ->
-                 val list = adapter.currentList
-                 if (pos < list.size - 1) {
-                     val next = list[pos + 1]
-                     viewModel.swapCatalogOrder(catalog, next)
-                 }
+                val list = adapter.currentList
+                if (pos < list.size - 1) {
+                    val next = list[pos + 1]
+                    viewModel.swapCatalogOrder(catalog, next)
+                }
             }
         )
-        
+
         binding.rvCatalogConfigs.layoutManager = LinearLayoutManager(this)
         binding.rvCatalogConfigs.adapter = adapter
 

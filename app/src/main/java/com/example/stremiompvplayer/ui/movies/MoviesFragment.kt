@@ -160,7 +160,7 @@ class MoviesFragment : Fragment() {
 
     private fun onPosterItemClicked(item: MetaItem) {
         selectedMovie = item
-        
+
         // Update Header UI
         updateHeaderUI(item.name, item.description ?: "No description available.", item.poster)
 
@@ -171,12 +171,12 @@ class MoviesFragment : Fragment() {
     private fun updateHeaderUI(title: String, description: String, posterUrl: String?) {
         binding.movieTitle.text = title
         binding.movieDescription.text = description
-        
+
         if (!posterUrl.isNullOrEmpty()) {
             Glide.with(this)
                 .load(posterUrl)
                 .into(binding.selectedPoster)
-            
+
             Glide.with(this)
                 .load(posterUrl)
                 .into(binding.backgroundImage)

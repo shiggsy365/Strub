@@ -18,7 +18,7 @@ class MainViewModel(
     private val catalogRepository: CatalogRepository,
     private val prefsManager: SharedPreferencesManager
 ) : ViewModel() {
-    
+
     private val _catalogs = MutableLiveData<List<MetaItem>>()
     val catalogs: LiveData<List<MetaItem>> = _catalogs
 
@@ -82,21 +82,21 @@ class MainViewModel(
                 val popularDeferred = async { fetchMultiplePages { page ->
                     TMDBClient.api.getPopularMovies(bearerToken, page = page, releaseDate = todayDate)
                 }}
-                
+
                 val latestDeferred = async { fetchMultiplePages { page ->
                     TMDBClient.api.getLatestMovies(bearerToken, page = page, releaseDate = todayDate)
                 }}
-                
+
                 val trendingDeferred = async { fetchMultiplePages { page ->
                     TMDBClient.api.getTrendingMovies(bearerToken, page = page)
                 }}
 
                 val results = awaitAll(popularDeferred, latestDeferred, trendingDeferred)
-                
+
                 _popularMovies.value = results[0]
                 _latestMovies.value = results[1]
                 _trendingMovies.value = results[2]
-                
+
                 // Also update the main catalogs list with popular movies by default
                 _catalogs.value = results[0]
 
@@ -130,21 +130,21 @@ class MainViewModel(
                 val popularDeferred = async { fetchMultiplePagesTV { page ->
                     TMDBClient.api.getPopularSeries(bearerToken, page = page, airDate = todayDate)
                 }}
-                
+
                 val latestDeferred = async { fetchMultiplePagesTV { page ->
                     TMDBClient.api.getLatestSeries(bearerToken, page = page, airDate = todayDate)
                 }}
-                
+
                 val trendingDeferred = async { fetchMultiplePagesTV { page ->
                     TMDBClient.api.getTrendingSeries(bearerToken, page = page)
                 }}
 
                 val results = awaitAll(popularDeferred, latestDeferred, trendingDeferred)
-                
+
                 _popularSeries.value = results[0]
                 _latestSeries.value = results[1]
                 _trendingSeries.value = results[2]
-                
+
                 // Also update the main catalogs list with popular series by default
                 _catalogs.value = results[0]
 
@@ -164,12 +164,12 @@ class MainViewModel(
         fetcher: suspend (Int) -> TMDBMovieListResponse
     ): List<MetaItem> {
         val allMovies = mutableListOf<TMDBMovie>()
-        
+
         for (page in 1..5) {
             try {
                 val response = fetcher(page)
                 allMovies.addAll(response.results)
-                
+
                 // Stop if we've reached the last page
                 if (page >= response.totalPages) break
             } catch (e: Exception) {
@@ -177,7 +177,7 @@ class MainViewModel(
                 break
             }
         }
-        
+
         return allMovies.map { it.toMetaItem() }
     }
 
@@ -188,12 +188,12 @@ class MainViewModel(
         fetcher: suspend (Int) -> TMDBSeriesListResponse
     ): List<MetaItem> {
         val allSeries = mutableListOf<TMDBSeries>()
-        
+
         for (page in 1..5) {
             try {
                 val response = fetcher(page)
                 allSeries.addAll(response.results)
-                
+
                 // Stop if we've reached the last page
                 if (page >= response.totalPages) break
             } catch (e: Exception) {
@@ -201,7 +201,7 @@ class MainViewModel(
                 break
             }
         }
-        
+
         return allSeries.map { it.toMetaItem() }
     }
 
@@ -253,7 +253,7 @@ class MainViewModel(
                 } else {
                     AIOStreamsClient.api.searchSeriesStreams(id = imdbId)
                 }
-                
+
                 _streams.value = response.streams
                 Log.d("MainViewModel", "Loaded ${response.streams.size} streams for IMDB ID: $imdbId")
 
@@ -311,7 +311,7 @@ class MainViewModel(
 
                 // Fetch streams using IMDB ID with season and episode
                 val response = AIOStreamsClient.api.searchSeriesStreams(id = episodeId)
-                
+
                 _streams.value = response.streams
                 Log.d("MainViewModel", "Loaded ${response.streams.size} streams for episode: $episodeId")
 
@@ -347,7 +347,7 @@ class MainViewModel(
 
                 val bearerToken = TMDBClient.getBearerToken(token)
                 val response = TMDBClient.api.getSeriesDetail(numericId, bearerToken)
-                
+
                 // Convert TMDB response to Meta format
                 val videos = response.seasons.flatMap { season ->
                     (1..season.episodeCount).map { episodeNum ->
@@ -409,13 +409,13 @@ class MainViewModel(
             try {
                 val bearerToken = TMDBClient.getBearerToken(token)
                 val allResults = mutableListOf<TMDBMultiSearchResult>()
-                
+
                 // Fetch up to 3 pages for search (60 results)
                 for (page in 1..3) {
                     try {
                         val response = TMDBClient.api.searchMulti(bearerToken, query, page = page)
                         allResults.addAll(response.results)
-                        
+
                         // Stop if we've reached the last page
                         if (page >= response.totalPages) break
                     } catch (e: Exception) {
@@ -423,12 +423,12 @@ class MainViewModel(
                         break
                     }
                 }
-                
+
                 // Convert to MetaItem and filter out non-movie/tv results
                 val metaItems = allResults
                     .filter { it.mediaType == "movie" || it.mediaType == "tv" }
                     .map { it.toMetaItem() }
-                
+
                 _searchResults.value = metaItems
 
             } catch (e: Exception) {
@@ -463,7 +463,7 @@ class MainViewModel(
             try {
                 val bearerToken = TMDBClient.getBearerToken(token)
                 val allMovies = mutableListOf<TMDBMovie>()
-                
+
                 for (page in 1..3) {
                     try {
                         val response = TMDBClient.api.searchMovies(bearerToken, query, page = page)
@@ -473,7 +473,7 @@ class MainViewModel(
                         break
                     }
                 }
-                
+
                 _searchResults.value = allMovies.map { it.toMetaItem() }
 
             } catch (e: Exception) {
@@ -507,7 +507,7 @@ class MainViewModel(
             try {
                 val bearerToken = TMDBClient.getBearerToken(token)
                 val allSeries = mutableListOf<TMDBSeries>()
-                
+
                 for (page in 1..3) {
                     try {
                         val response = TMDBClient.api.searchSeries(bearerToken, query, page = page)
@@ -517,7 +517,7 @@ class MainViewModel(
                         break
                     }
                 }
-                
+
                 _searchResults.value = allSeries.map { it.toMetaItem() }
 
             } catch (e: Exception) {

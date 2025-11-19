@@ -6,19 +6,20 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.stremiompvplayer.models.*
+import com.example.stremiompvplayer.models.UserCatalogDao
 
 @Database(
     entities = [
-        LibraryItem::class, 
-        WatchProgress::class, 
-        User::class, 
-        UserSettings::class, 
-        HubSlot::class, 
-        FeedList::class, 
+        LibraryItem::class,
+        WatchProgress::class,
+        User::class,
+        UserSettings::class,
+        HubSlot::class,
+        FeedList::class,
         NextUpItem::class,
         UserCatalog::class // Added
-    ], 
-    version = 2, // Incremented version
+    ],
+    version = 2, // Incremented version for schema change
     exportSchema = false
 )
 @TypeConverters(com.example.stremiompvplayer.models.Converters::class)
@@ -43,8 +44,8 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "stremio_player_database"
                 )
-                .fallbackToDestructiveMigration() // Simplified for this update
-                .build()
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

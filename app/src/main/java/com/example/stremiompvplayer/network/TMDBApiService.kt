@@ -1,6 +1,8 @@
 package com.example.stremiompvplayer.network
 
+import com.example.stremiompvplayer.models.TMDBExternalIdsResponse
 import com.example.stremiompvplayer.models.TMDBMovieListResponse
+import com.example.stremiompvplayer.models.TMDBMultiSearchResponse
 import com.example.stremiompvplayer.models.TMDBSeriesListResponse
 import com.example.stremiompvplayer.models.TMDBSeriesDetailResponse
 import retrofit2.http.GET

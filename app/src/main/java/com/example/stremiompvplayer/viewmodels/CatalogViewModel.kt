@@ -5,7 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.stremiompvplayer.data.CatalogRepository
+import com.example.stremiompvplayer.CatalogRepository
 import com.example.stremiompvplayer.models.Catalog
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.models.Stream

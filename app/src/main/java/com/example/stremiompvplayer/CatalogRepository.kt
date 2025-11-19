@@ -1,7 +1,7 @@
 package com.example.stremiompvplayer
 
 import androidx.lifecycle.LiveData
-import com.example.stremiompvplayer.data.UserCatalogDao
+import com.example.stremiompvplayer.models.UserCatalogDao
 import com.example.stremiompvplayer.models.UserCatalog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

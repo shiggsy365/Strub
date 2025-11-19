@@ -7,35 +7,33 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.widget.SearchView // FIX: Use androidx.appcompat.widget.SearchView
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels // NEW: Use ViewModel
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.stremiompvplayer.adapters.ContentAdapter
-import com.example.stremiompvplayer.databinding.FragmentSearchBinding
-import com.example.stremiompvplayer.models.Manifest
-import com.example.stremiompvplayer.models.MetaItem // NEW: Use MetaItemimport com.example.stremiompvplayer.databinding.DialogUserMenuBinding
-// FIX: Remove MetaPreview
-// import com.example.stremiompvplayer.models.MetaPreview
-import com.example.stremiompvplayer.network.StremioClient
+import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.GridLayoutManager
 import com.example.stremiompvplayer.DetailsActivity2
-import com.example.stremiompvplayer.viewmodels.MainViewModel // NEW: Use ViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.example.stremiompvplayer.databinding.FragmentSearchBinding
+import com.example.stremiompvplayer.adapters.PosterAdapter
+import com.example.stremiompvplayer.data.ServiceLocator
+import com.example.stremiompvplayer.models.MetaItem
+import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import com.example.stremiompvplayer.viewmodels.MainViewModel
+import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 
 class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
 
-    // The adapter uses MetaPreview, but the new API gives MetaItem.
-    // We will convert MetaItem -> MetaPreview.
-    private lateinit var searchAdapter: ContentAdapter
+    private val viewModel: MainViewModel by activityViewModels {
+        MainViewModelFactory(
+            ServiceLocator.getInstance(requireContext()),
+            SharedPreferencesManager.getInstance(requireContext())
+        )
+    }
 
-    // NEW: Get the ViewModel
-    private val viewModel: MainViewModel by activityViewModels()
+    private lateinit var searchAdapter: PosterAdapter
+    private var currentSearchQuery: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,107 +48,144 @@ class SearchFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
+        setupSearchView()
+        setupObservers()
+        setupFilterChips()
+    }
 
+    private fun setupRecyclerView() {
+        searchAdapter = PosterAdapter(
+            items = emptyList(),
+            onClick = { item -> onItemClick(item) }
+        )
+
+        binding.searchRecyclerView.apply {
+            layoutManager = GridLayoutManager(context, 3) // 3 columns for posters
+            adapter = searchAdapter
+        }
+    }
+
+    private fun setupSearchView() {
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 query?.let {
-                    // TODO: The ViewModel should have a search function that does both
-                    // For now, this is still mixed logic, but it fixes the build errors
-                    searchStremio(it) // This is the old API search
-                    searchAddon(it)   // This is the new addon search
+                    if (it.isNotBlank()) {
+                        currentSearchQuery = it
+                        performSearch(it)
+                    }
                 }
+                // Hide keyboard
+                binding.searchView.clearFocus()
                 return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
+                // Optional: Implement real-time search with debouncing
+                if (newText.isNullOrBlank()) {
+                    showEmptyState()
+                }
                 return true
             }
         })
     }
 
-    private fun setupRecyclerView() {
-        // FIX: The adapter now expects MetaItem
-        searchAdapter = ContentAdapter(emptyList()) { item ->
-            onPosterClick(item)
-        }
-        binding.searchRecyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = searchAdapter
-        }
-    }
+    private fun setupFilterChips() {
+        // Set default selection to "All"
+        binding.chipAll.isChecked = true
 
-    // This function should be moved to the ViewModel
-    private fun searchStremio(query: String) {
-        // FIX: Call StremioClient.api, not StremioClient()
-        val stremioApi = StremioClient.api
-        // TODO: This should be in ViewModel
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                // This original search uses authKey and FeedList, which is different from MetaPreview
-                // We will need to adapt this or change the adapter
-                // For now, let's just log it
-                // We need to get the authKey from the ViewModel
-                // val results = stremioApi.search(authKey, query)
-                // Log.d("SearchFragment", "Stremio search results: ${results.size}")
-                Log.d("SearchFragment", "Stremio search (authKey) is not implemented in ViewModel yet.")
-            } catch (e: Exception) {
-                Log.e("SearchFragment", "Stremio search error", e)
+        binding.chipAll.setOnClickListener {
+            if (currentSearchQuery.isNotBlank()) {
+                performSearch(currentSearchQuery, SearchType.ALL)
+            }
+        }
+
+        binding.chipMovies.setOnClickListener {
+            if (currentSearchQuery.isNotBlank()) {
+                performSearch(currentSearchQuery, SearchType.MOVIES)
+            }
+        }
+
+        binding.chipSeries.setOnClickListener {
+            if (currentSearchQuery.isNotBlank()) {
+                performSearch(currentSearchQuery, SearchType.SERIES)
             }
         }
     }
 
-    // This function should also be moved to the ViewModel
-    // It's still making network calls, which is what the error log told us.
-    private fun searchAddon(query: String) {
-        val stremioApi = StremioClient.api
-        // TODO: Get manifest URLs from ViewModel (which gets from SharedPreferences)
-        // This is just a placeholder and will not work correctly.
-        // It needs to get the *list* of manifests from the ViewModel.
-        val manifestUrl =
-            "http://10.0.2.2:7878/manifest.json" // Placeholder: This is incorrect logic
-        val baseUrl = manifestUrl.substringBeforeLast("/")
+    private fun setupObservers() {
+        // Observe search results
+        viewModel.searchResults.observe(viewLifecycleOwner) { results ->
+            if (results.isEmpty()) {
+                showNoResults()
+            } else {
+                showResults(results)
+            }
+        }
 
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                // FIX: Removed Unresolved reference: getManifest
-                val manifest = withContext(Dispatchers.IO) {
-                    stremioApi.getManifest(manifestUrl)
-                }
+        // Observe loading state
+        viewModel.isSearching.observe(viewLifecycleOwner) { isSearching ->
+            binding.loadingProgress.visibility = if (isSearching) View.VISIBLE else View.GONE
+        }
 
-                // Find a search catalog if it exists
-                val searchCatalog = manifest.catalogs.find { it.id == "search" }
-                if (searchCatalog != null) {
-                    val searchUrl =
-                        "$baseUrl/catalog/${searchCatalog.type}/${searchCatalog.id}/search=$query.json"
-                    // FIX: Removed Unresolved reference: getCatalog
-                    val catalogResponse = withContext(Dispatchers.IO) {
-                        stremioApi.getCatalog(searchUrl)
-                    }
-                    // We need to convert MetaItem to MetaPreview
-                    // FIX: No conversion needed, adapter takes MetaItem
-                    // FIX: Use MetaPreview constructor
-                    /*
-                    val metaPreviews = catalogResponse.metas.map {
-                        MetaPreview(it.id, it.type, it.name, it.poster)
-                    }
-                    */
-                    searchAdapter.updateData(catalogResponse.metas)
-                } else {
-                    Toast.makeText(context, "This addon doesn't support search", Toast.LENGTH_SHORT)
-                        .show()
-                }
-
-            } catch (e: Exception) {
-                Log.e("SearchFragment", "Addon search error", e)
-                Toast.makeText(context, "Addon search failed", Toast.LENGTH_SHORT).show()
+        // Observe errors
+        viewModel.error.observe(viewLifecycleOwner) { error ->
+            if (error != null) {
+                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun onPosterClick(metaItem: MetaItem) {
-        val intent = Intent(activity, DetailsActivity2::class.java).apply {
-            putExtra("id", metaItem.id)
-            putExtra("type", metaItem.type)
+    private fun performSearch(query: String, type: SearchType = SearchType.ALL) {
+        Log.d("SearchFragment", "Searching for: $query (type: $type)")
+
+        when (type) {
+            SearchType.ALL -> viewModel.searchTMDB(query)
+            SearchType.MOVIES -> viewModel.searchMovies(query)
+            SearchType.SERIES -> viewModel.searchSeries(query)
+        }
+
+        // Hide empty state, show loading
+        binding.emptyText.visibility = View.GONE
+        binding.searchRecyclerView.visibility = View.GONE
+    }
+
+    private fun showResults(results: List<MetaItem>) {
+        Log.d("SearchFragment", "Showing ${results.size} results")
+
+        binding.emptyText.visibility = View.GONE
+        binding.searchRecyclerView.visibility = View.VISIBLE
+        searchAdapter.updateData(results)
+
+        // Update result count
+        binding.resultCount.visibility = View.VISIBLE
+        binding.resultCount.text = "${results.size} results found"
+    }
+
+    private fun showNoResults() {
+        binding.searchRecyclerView.visibility = View.GONE
+        binding.resultCount.visibility = View.GONE
+        binding.emptyText.visibility = View.VISIBLE
+        binding.emptyText.text = "No results found for \"$currentSearchQuery\""
+    }
+
+    private fun showEmptyState() {
+        binding.searchRecyclerView.visibility = View.GONE
+        binding.resultCount.visibility = View.GONE
+        binding.emptyText.visibility = View.VISIBLE
+        binding.emptyText.text = "Enter a search term to find content"
+        viewModel.clearSearchResults()
+    }
+
+    private fun onItemClick(item: MetaItem) {
+        Log.d("SearchFragment", "Clicked: ${item.name} (${item.type})")
+
+        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
+            putExtra("metaId", item.id)
+            putExtra("title", item.name)
+            putExtra("poster", item.poster)
+            putExtra("background", item.background)
+            putExtra("description", item.description)
+            putExtra("type", item.type)
         }
         startActivity(intent)
     }
@@ -158,5 +193,9 @@ class SearchFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private enum class SearchType {
+        ALL, MOVIES, SERIES
     }
 }

@@ -113,12 +113,12 @@ data class TMDBMultiSearchResult(
     val popularity: Double,
     @Json(name = "vote_average") val voteAverage: Double,
     @Json(name = "vote_count") val voteCount: Int,
-    
+
     // Movie-specific fields
     val title: String?,
     @Json(name = "original_title") val originalTitle: String?,
     @Json(name = "release_date") val releaseDate: String?,
-    
+
     // TV-specific fields
     val name: String?,
     @Json(name = "original_name") val originalName: String?,

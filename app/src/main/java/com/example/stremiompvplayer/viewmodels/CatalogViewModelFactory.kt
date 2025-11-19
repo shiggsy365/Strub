@@ -3,7 +3,7 @@ package com.example.stremiompvplayer.viewmodels
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.stremiompvplayer.data.CatalogRepository
+import com.example.stremiompvplayer.CatalogRepository
 
 // This factory class tells Android how to create the ViewModel with the repository dependency.
 class CatalogViewModelFactory(

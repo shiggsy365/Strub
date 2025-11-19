@@ -6,27 +6,27 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
 object TMDBClient {
-    
+
     private const val BASE_URL = "https://api.themoviedb.org/3/"
-    
+
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
-    
+
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
-    
+
     val api: TMDBApiService = retrofit.create(TMDBApiService::class.java)
-    
+
     /**
      * Helper function to format bearer token
      */
     fun getBearerToken(accessToken: String): String {
         return "Bearer $accessToken"
     }
-    
+
     /**
      * Helper function to get today's date in YYYY-MM-DD format
      */
