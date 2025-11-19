@@ -195,7 +195,14 @@ class SeriesFragment : Fragment() {
                 val subHeader = "S$season:E$episode - $episodeTitle"
 
                 updateHeaderUI(selectedShow?.name ?: "", episodeDesc, currentSeriesMeta?.poster, subHeader)
-                viewModel.loadStreams("series", item.id)
+                
+                // Load streams using the new method with season and episode
+                if (season > 0 && episode > 0 && selectedShow != null) {
+                    viewModel.loadEpisodeStreams(selectedShow!!.id, season, episode)
+                } else {
+                    Log.e("SeriesFragment", "Invalid season or episode: S$season:E$episode")
+                    Toast.makeText(context, "Invalid episode data", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
