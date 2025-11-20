@@ -5,21 +5,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import com.bumptech.glide.Glide
-import com.example.stremiompvplayer.PlayerActivity
+import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.R
-import com.example.stremiompvplayer.adapters.CatalogChipAdapter
-import com.example.stremiompvplayer.adapters.PosterAdapter
-import com.example.stremiompvplayer.adapters.StreamAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentMoviesBinding
-import com.example.stremiompvplayer.models.Catalog
 import com.example.stremiompvplayer.models.MetaItem
-import com.example.stremiompvplayer.models.UserCatalog
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
@@ -36,149 +30,76 @@ class MoviesFragment : Fragment() {
         )
     }
 
-    private lateinit var catalogChipAdapter: CatalogChipAdapter
-    private lateinit var posterAdapter: PosterAdapter
-    private lateinit var streamAdapter: StreamAdapter
-
-    private var selectedMovie: MetaItem? = null
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMoviesBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupRecyclerViews()
-        setupObservers()
 
-        // Initialize defaults if needed, though MainActivity usually handles this
-        viewModel.initDefaultCatalogs()
-    }
-
-    private fun setupRecyclerViews() {
-        catalogChipAdapter = CatalogChipAdapter(
-            onClick = { catalog -> onCatalogSelected(catalog) },
-            onLongClick = null
-        )
-        binding.catalogChipsRecycler.apply {
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            adapter = catalogChipAdapter
-        }
-
-        posterAdapter = PosterAdapter(
-            items = emptyList(),
-            onClick = { item -> onPosterItemClicked(item) }
-        )
-        binding.moviesGridRecycler.apply {
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            adapter = posterAdapter
-        }
-
-        streamAdapter = StreamAdapter { stream ->
-            val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
-                putExtra("stream", stream)
-                putExtra("meta", selectedMovie)
-            }
-            startActivity(intent)
-        }
-        binding.streamsRecycler.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = streamAdapter
-        }
-    }
-
-    private fun setupObservers() {
-        // UPDATED: Observe the dynamic list of enabled movie catalogs
-        viewModel.movieCatalogs.observe(viewLifecycleOwner) { userCatalogs ->
-            // Convert UserCatalog to generic Catalog model for adapter
-            val uiCatalogs = userCatalogs.map {
-                Catalog(type = "movie", id = it.catalogId, name = it.displayName, extraProps = null)
-            }
-            catalogChipAdapter.setCatalogs(uiCatalogs)
-
-            // Load the first catalog if nothing is loaded yet and list isn't empty
-            if (uiCatalogs.isNotEmpty() && posterAdapter.itemCount == 0) {
-                // Use the UserCatalog object for loading content as it has all necessary info
-                viewModel.loadContentForCatalog(userCatalogs[0])
-            }
-        }
-
-        // UPDATED: Observe the generic content list instead of specific ones like popularMovies
-        viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
-            posterAdapter.updateData(items)
-
-            // If list refreshed, select first item or show empty state
-            if (items.isNotEmpty()) {
-                val firstItem = items[0]
-                // Only auto-select if we don't have a user selection (optional logic)
-                if (selectedMovie == null) {
-                    updateHeaderUI(firstItem.name, firstItem.description ?: "No description available.", firstItem.poster)
+        val adapter = LibraryAdapter(
+            onClick = { item ->
+                val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
+                    putExtra("metaId", item.id)
+                    putExtra("title", item.name)
+                    putExtra("poster", item.poster)
+                    putExtra("background", item.background)
+                    putExtra("description", item.description)
+                    putExtra("type", "movie")
                 }
-            } else {
-                updateHeaderUI("No Movies", "Select a different catalog.", null)
-            }
-        }
+                startActivity(intent)
+            },
+            onFocus = { item -> updateDetails(item) }
+        )
 
-        viewModel.streams.observe(viewLifecycleOwner) { streams ->
-            if (streams.isNotEmpty()) {
-                binding.streamsRecycler.visibility = View.VISIBLE
-                binding.noStreamsText.visibility = View.GONE
-                streamAdapter.submitList(streams)
-            } else {
-                binding.streamsRecycler.visibility = View.GONE
-                binding.noStreamsText.visibility = View.VISIBLE
-            }
-        }
+        binding.rvContent.layoutManager = GridLayoutManager(context, 5)
+        binding.rvContent.adapter = adapter
 
-        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        }
-
-        viewModel.error.observe(viewLifecycleOwner) { error ->
-            if (error != null) {
-                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+        viewModel.libraryMovies.observe(viewLifecycleOwner) { items ->
+            adapter.submitList(items)
+            if (items.isNotEmpty()) {
+                updateDetails(items[0])
             }
         }
     }
 
-    private fun onCatalogSelected(catalog: Catalog) {
-        // Find the full UserCatalog object to pass to ViewModel
-        val userCatalog = viewModel.movieCatalogs.value?.find { it.catalogId == catalog.id }
-
-        if (userCatalog != null) {
-            viewModel.loadContentForCatalog(userCatalog)
-        }
-
-        selectedMovie = null
-        viewModel.clearStreams()
-    }
-
-    private fun onPosterItemClicked(item: MetaItem) {
-        selectedMovie = item
-        updateHeaderUI(item.name, item.description ?: "No description available.", item.poster)
-        viewModel.loadStreams("movie", item.id)
-    }
-
-    private fun updateHeaderUI(title: String, description: String, posterUrl: String?) {
-        binding.movieTitle.text = title
-        binding.movieDescription.text = description
-
-        if (!posterUrl.isNullOrEmpty()) {
-            Glide.with(this).load(posterUrl).into(binding.selectedPoster)
-            Glide.with(this).load(posterUrl).into(binding.backgroundImage)
-        } else {
-            binding.selectedPoster.setImageResource(R.drawable.movie)
-            binding.backgroundImage.setImageResource(R.drawable.movie)
-        }
+    private fun updateDetails(item: MetaItem) {
+        binding.detailTitle.text = item.name
+        binding.detailDescription.text = item.description ?: "No description available."
+        Glide.with(this).load(item.background ?: item.poster).into(binding.backgroundImage)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    inner class LibraryAdapter(
+        private val onClick: (MetaItem) -> Unit,
+        private val onFocus: (MetaItem) -> Unit
+    ) : androidx.recyclerview.widget.RecyclerView.Adapter<LibraryAdapter.ViewHolder>() {
+        private var items = listOf<MetaItem>()
+        inner class ViewHolder(val view: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+            val poster: android.widget.ImageView = view.findViewById(R.id.poster)
+        }
+        fun submitList(newItems: List<MetaItem>) {
+            items = newItems
+            notifyDataSetChanged()
+        }
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_poster, parent, false)
+            return ViewHolder(view)
+        }
+        override fun getItemCount() = items.size
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val item = items[position]
+            holder.poster.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+            Glide.with(holder.view).load(item.poster).placeholder(R.drawable.movie).into(holder.poster)
+            holder.view.setOnClickListener { onClick(item) }
+            holder.view.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) onFocus(item) }
+            holder.view.isFocusable = true
+            holder.view.isFocusableInTouchMode = true
+        }
     }
 }

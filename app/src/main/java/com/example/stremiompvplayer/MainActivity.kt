@@ -43,8 +43,10 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.checkTMDBAuthAndSync()
 
+        // Default to Discover Movies
         if (savedInstanceState == null) {
-            loadFragment(MoviesFragment())
+            binding.chipDiscoverMovies.isChecked = true
+            loadFragment(DiscoverFragment.newInstance("movie"))
         }
 
         handleIntent(intent)
@@ -53,13 +55,12 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, UserSelectionActivity::class.java))
         }
 
-        binding.chipMovies.isChecked = true
-
-        binding.chipDiscover.setOnClickListener { loadFragment(DiscoverFragment()) }
-        binding.chipMovies.setOnClickListener { loadFragment(MoviesFragment()) }
-        binding.chipSeries.setOnClickListener { loadFragment(SeriesFragment()) }
+        // NAVIGATION SETUP
+        binding.chipDiscoverMovies.setOnClickListener { loadFragment(DiscoverFragment.newInstance("movie")) }
+        binding.chipDiscoverSeries.setOnClickListener { loadFragment(DiscoverFragment.newInstance("series")) }
+        binding.chipMovies.setOnClickListener { loadFragment(MoviesFragment()) } // Library
+        binding.chipSeries.setOnClickListener { loadFragment(SeriesFragment()) } // Library
         binding.chipSearch.setOnClickListener { loadFragment(SearchFragment()) }
-        binding.chipLibrary.setOnClickListener { loadFragment(LibraryFragment()) }
         binding.chipMore.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
     }
 
@@ -89,7 +90,6 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // ... existing key handling ...
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
 
@@ -100,21 +100,21 @@ class MainActivity : AppCompatActivity() {
 
             val focus = currentFocus
             val isFocusOnMenu = focus == binding.appLogo ||
+                    focus == binding.chipDiscoverMovies ||
+                    focus == binding.chipDiscoverSeries ||
                     focus == binding.chipMovies ||
                     focus == binding.chipSeries ||
-                    focus == binding.chipLibrary ||
                     focus == binding.chipSearch ||
-                    focus == binding.chipDiscover ||
                     focus == binding.chipMore
 
             if (isFocusOnMenu) {
                 return true
             } else {
                 when {
-                    binding.chipDiscover.isChecked -> binding.chipDiscover.requestFocus()
+                    binding.chipDiscoverMovies.isChecked -> binding.chipDiscoverMovies.requestFocus()
+                    binding.chipDiscoverSeries.isChecked -> binding.chipDiscoverSeries.requestFocus()
                     binding.chipMovies.isChecked -> binding.chipMovies.requestFocus()
                     binding.chipSeries.isChecked -> binding.chipSeries.requestFocus()
-                    binding.chipLibrary.isChecked -> binding.chipLibrary.requestFocus()
                     binding.chipSearch.isChecked -> binding.chipSearch.requestFocus()
                     else -> binding.navigationScroll.requestFocus()
                 }

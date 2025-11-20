@@ -1,12 +1,17 @@
 package com.example.stremiompvplayer
 
 import androidx.lifecycle.LiveData
-import com.example.stremiompvplayer.models.UserCatalogDao
+import com.example.stremiompvplayer.models.CollectedItem
+import com.example.stremiompvplayer.models.CollectedItemDao
 import com.example.stremiompvplayer.models.UserCatalog
+import com.example.stremiompvplayer.models.UserCatalogDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class CatalogRepository(private val userCatalogDao: UserCatalogDao) {
+class CatalogRepository(
+    private val userCatalogDao: UserCatalogDao,
+    private val collectedItemDao: CollectedItemDao
+) {
 
     val allCatalogs: LiveData<List<UserCatalog>> = userCatalogDao.getAllCatalogs()
 
@@ -42,14 +47,12 @@ class CatalogRepository(private val userCatalogDao: UserCatalogDao) {
         }
     }
 
-    // NEW: Insert a catalog
     suspend fun insertCatalog(catalog: UserCatalog) {
         withContext(Dispatchers.IO) {
             userCatalogDao.insert(catalog)
         }
     }
 
-    // NEW: Check if catalog exists
     suspend fun isCatalogAdded(userId: String, catalogId: String, type: String, page: String): Boolean {
         return withContext(Dispatchers.IO) {
             userCatalogDao.isCatalogAdded(userId, catalogId, type, page) > 0
@@ -58,10 +61,36 @@ class CatalogRepository(private val userCatalogDao: UserCatalogDao) {
 
     suspend fun swapOrder(item1: UserCatalog, item2: UserCatalog) {
         withContext(Dispatchers.IO) {
-            // Swap display orders
             val tempOrder = item1.displayOrder
             userCatalogDao.updateDisplayOrder(item1.id, item2.displayOrder)
             userCatalogDao.updateDisplayOrder(item2.id, tempOrder)
+        }
+    }
+
+    // --- LIBRARY METHODS ---
+
+    fun getLibraryItems(userId: String, type: String): LiveData<List<CollectedItem>> {
+        return collectedItemDao.getCollectedItems(userId, type)
+    }
+
+    suspend fun addToLibrary(item: CollectedItem) {
+        withContext(Dispatchers.IO) {
+            collectedItemDao.insert(item)
+        }
+    }
+
+    suspend fun removeFromLibrary(itemId: String, userId: String) {
+        withContext(Dispatchers.IO) {
+            // Construct the composite ID used in CollectedItem
+            val compositeId = "${userId}_${itemId}"
+            collectedItemDao.deleteById(compositeId)
+        }
+    }
+
+    suspend fun isItemCollected(itemId: String, userId: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            val compositeId = "${userId}_${itemId}"
+            collectedItemDao.isCollected(compositeId) > 0
         }
     }
 }

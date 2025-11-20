@@ -19,7 +19,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Added padding to make focus border visible -->
+        <!-- App Logo -->
         <ImageButton
             android:id="@+id/appLogo"
             android:layout_width="64dp"
@@ -56,11 +56,22 @@
                 app:selectionRequired="true">
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipDiscover"
+                    android:id="@+id/chipDiscoverMovies"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Discover"
+                    android:text="Discover Movies"
+                    android:textColor="@android:color/white"
+                    app:chipBackgroundColor="@color/chip_background_selector"
+                    app:chipStrokeColor="@color/chip_stroke_selector"
+                    app:chipStrokeWidth="1dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDiscoverSeries"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Discover Series"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
                     app:chipStrokeColor="@color/chip_stroke_selector"
@@ -71,7 +82,7 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/movies"
+                    android:text="Movies"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
                     app:chipStrokeColor="@color/chip_stroke_selector"
@@ -82,18 +93,7 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/series"
-                    android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipLibrary"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/library"
+                    android:text="Series"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
                     app:chipStrokeColor="@color/chip_stroke_selector"

@@ -1,111 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-
-    <data>
-    </data>
-
+    <data></data>
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#000000">
 
-        <!-- Changed alpha to 0.4 for visibility -->
+        <!-- Background -->
         <ImageView
             android:id="@+id/pageBackground"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:alpha="0.4"
-            android:contentDescription="Background" />
-
+            android:alpha="0.4" />
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/gradient_overlay" />
-
-        <!-- Main Menu Bar -->
-        <LinearLayout
-            android:id="@+id/topNav"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="80dp"
-            android:layout_marginStart="32dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <com.google.android.material.chip.ChipGroup
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingVertical="12dp"
-                app:singleSelection="true"
-                app:selectionRequired="true"
-                app:chipSpacingHorizontal="4dp">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipMovies"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Movies"
-                    android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp"
-                    android:minWidth="80dp"
-                    android:textAlignment="center"
-                    android:nextFocusDown="@+id/rvContent"/>
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipSeries"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Series"
-                    android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp"
-                    android:minWidth="80dp"
-                    android:textAlignment="center"
-                    android:layout_marginStart="8dp"
-                    android:nextFocusDown="@+id/rvContent"/>
-
-            </com.google.android.material.chip.ChipGroup>
-
-        </LinearLayout>
 
         <!-- Sidebar List -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvSidebar"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginBottom="16dp"
             app:layout_constraintWidth_percent="0.25"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/topNav"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
-        <!--
-             Poster Grid (Content)
-             FIXED: Aligned top to bottom of topNav with 0dp margin for tight alignment.
-        -->
+        <!-- Content Grid -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvContent"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="0dp"
+            android:layout_marginTop="16dp"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:layout_marginBottom="16dp"
-            android:padding="0dp"
-            android:clipToPadding="false"
             app:layout_constraintWidth_percent="0.50"
             app:layout_constraintStart_toEndOf="@id/rvSidebar"
-            app:layout_constraintTop_toBottomOf="@id/topNav"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
         <!-- Details Pane -->
@@ -126,7 +64,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingTop="48dp">
-
                 <TextView
                     android:id="@+id/detailTitle"
                     android:layout_width="match_parent"
@@ -135,58 +72,22 @@
                     android:textSize="24sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="8dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="8dp">
-
-                    <TextView
-                        android:id="@+id/detailDate"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:textColor="#CCCCCC"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/detailRating"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#FFD700"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
                 <TextView
                     android:id="@+id/detailDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="#BBBBBB"
-                    android:textSize="14sp"
-                    android:layout_marginBottom="16dp"
-                    android:lineSpacingExtra="4dp" />
-
-                <LinearLayout
-                    android:id="@+id/castContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone"/>
-
+                    android:textSize="14sp" />
             </LinearLayout>
         </ScrollView>
-
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
+            app:layout_constraintTop_toTopOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
