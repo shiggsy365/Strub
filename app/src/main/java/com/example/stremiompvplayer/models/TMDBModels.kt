@@ -3,7 +3,7 @@ package com.example.stremiompvplayer.models
 import com.squareup.moshi.Json
 import java.io.Serializable
 
-// ... existing Movie/Series Models ...
+
 // --- MOVIE CREDITS (Standard) ---
 data class TMDBCreditsResponse(
     val cast: List<TMDBCast>,
@@ -51,12 +51,8 @@ data class TMDBJob(
     val job: String,
     val episode_count: Int
 )
-data class TMDBMovieListResponse(
-    val page: Int,
-    val results: List<TMDBMovie>,
-    @Json(name = "total_pages") val totalPages: Int,
-    @Json(name = "total_results") val totalResults: Int
-) : Serializable
+
+// --- SEARCH PERSON ---
 data class TMDBPersonListResponse(
     val page: Int,
     val results: List<TMDBPerson>,
@@ -64,14 +60,12 @@ data class TMDBPersonListResponse(
     val total_results: Int
 )
 
-// Add this class for Person Details
 data class TMDBPerson(
     val id: Int,
     val name: String,
     val profile_path: String?,
     val known_for_department: String?
 ) {
-    // Helper to convert to MetaItem for the UI
     fun toMetaItem(): MetaItem {
         return MetaItem(
             id = "tmdb:$id",
@@ -83,6 +77,49 @@ data class TMDBPerson(
         )
     }
 }
+
+// --- TV DETAILS ---
+data class TMDBTVDetails(
+    val id: Int,
+    val name: String,
+    val overview: String?,
+    val poster_path: String?,
+    val backdrop_path: String?,
+    val seasons: List<TMDBSeason>?
+)
+
+data class TMDBSeason(
+    val id: Int,
+    val name: String,
+    val season_number: Int,
+    val episode_count: Int,
+    val poster_path: String?
+)
+
+data class TMDBSeasonDetails(
+    val _id: String,
+    val air_date: String?,
+    val episodes: List<TMDBEpisode>
+)
+
+data class TMDBEpisode(
+    val id: Int,
+    val name: String,
+    val episode_number: Int,
+    val season_number: Int,
+    val still_path: String?,
+    val overview: String?
+)
+
+// --- TV CREDITS (Aggregate) ---
+
+data class TMDBMovieListResponse(
+    val page: Int,
+    val results: List<TMDBMovie>,
+    @Json(name = "total_pages") val totalPages: Int,
+    @Json(name = "total_results") val totalResults: Int
+) : Serializable
+
 data class TMDBMovie(
     val adult: Boolean,
     @Json(name = "backdrop_path") val backdropPath: String?,
@@ -155,18 +192,6 @@ data class TMDBSeriesDetailResponse(
     @Json(name = "backdrop_path") val backdropPath: String?,
     val seasons: List<TMDBSeason>
 ) : Serializable
-
-data class TMDBSeason(
-    @Json(name = "air_date") val airDate: String?,
-    @Json(name = "episode_count") val episodeCount: Int,
-    val id: Int,
-    val name: String,
-    val overview: String,
-    @Json(name = "poster_path") val posterPath: String?,
-    @Json(name = "season_number") val seasonNumber: Int
-) : Serializable
-
-// ... Search Models ...
 
 data class TMDBMultiSearchResponse(
     val page: Int,

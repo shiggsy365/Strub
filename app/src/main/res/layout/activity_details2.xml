@@ -75,7 +75,7 @@
                         android:backgroundTint="@color/color_primary"
                         android:textColor="@android:color/white"
                         android:focusable="true"
-                        android:layout_marginBottom="8dp"/>
+                        android:layout_marginBottom="0dp"/>
 
                     <Button
                         android:id="@+id/btnTrailer"
@@ -85,7 +85,7 @@
                         android:backgroundTint="#555555"
                         android:textColor="@android:color/white"
                         android:focusable="true"
-                        android:layout_marginBottom="8dp"/>
+                        android:layout_marginBottom="0dp"/>
 
                     <Button
                         android:id="@+id/btnLibrary"
@@ -95,7 +95,7 @@
                         android:backgroundTint="#555555"
                         android:textColor="@android:color/white"
                         android:focusable="true"
-                        android:layout_marginBottom="8dp"/>
+                        android:layout_marginBottom="0dp"/>
 
                     <Button
                         android:id="@+id/btnWatchlist"

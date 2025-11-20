@@ -146,7 +146,8 @@ data class Video(
     val released: String?,
     val thumbnail: String?,
     val number: Int?,
-    val season: Int?
+    val season: Int?,
+    val overview: String? = null
 ) : Serializable
 
 data class MetaItem(

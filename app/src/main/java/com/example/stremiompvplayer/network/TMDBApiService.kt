@@ -11,6 +11,7 @@ import com.example.stremiompvplayer.models.TMDBCreditsResponse
 import com.example.stremiompvplayer.models.TMDBAggregateCreditsResponse
 
 interface TMDBApiService {
+
     @GET("search/person")
     suspend fun searchPeople(
         @Query("api_key") apiKey: String,
@@ -19,7 +20,8 @@ interface TMDBApiService {
         @Query("include_adult") includeAdult: Boolean = false,
         @Query("language") language: String = "en-US"
     ): TMDBPersonListResponse
-    // For Movies: Standard Credits
+
+    // CREDITS
     @GET("movie/{id}/credits")
     suspend fun getMovieCredits(
         @Path("id") id: Int,
@@ -27,13 +29,30 @@ interface TMDBApiService {
         @Query("language") language: String = "en-US"
     ): TMDBCreditsResponse
 
-    // For TV Shows: Aggregate Credits (as per your curl command)
     @GET("tv/{id}/aggregate_credits")
     suspend fun getTVAggregateCredits(
         @Path("id") id: Int,
         @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US"
     ): TMDBAggregateCreditsResponse
+
+    // DETAILS
+    @GET("tv/{id}")
+    suspend fun getTVDetails(
+        @Path("id") id: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBTVDetails
+
+    @GET("tv/{id}/season/{season_number}")
+    suspend fun getTVSeasonDetails(
+        @Path("id") id: Int,
+        @Path("season_number") seasonNumber: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBSeasonDetails
+
+
     // --- AUTHENTICATION ---
     @GET("authentication/token/new")
     suspend fun createRequestToken(
