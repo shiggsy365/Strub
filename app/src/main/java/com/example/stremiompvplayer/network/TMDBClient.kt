@@ -7,8 +7,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 object TMDBClient {
 
-    // Expose the API Key publicly so ViewModels can access it
-    const val API_KEY = "a77304e2ead90e385dce678b4e530a40"
+    // Removed API_KEY - usage moved to MainViewModel
 
     private const val BASE_URL = "https://api.themoviedb.org/3/"
 

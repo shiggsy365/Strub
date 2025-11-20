@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.example.stremiompvplayer.PlayerActivity
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.adapters.CatalogChipAdapter
 import com.example.stremiompvplayer.adapters.PosterAdapter
@@ -18,7 +19,7 @@ import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentMoviesBinding
 import com.example.stremiompvplayer.models.Catalog
 import com.example.stremiompvplayer.models.MetaItem
-import com.example.stremiompvplayer.PlayerActivity
+import com.example.stremiompvplayer.models.UserCatalog
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
@@ -41,12 +42,6 @@ class MoviesFragment : Fragment() {
 
     private var selectedMovie: MetaItem? = null
 
-    private val standardCatalogs = listOf(
-        Catalog(type = "movie", id = "popular", name = "Most Popular", extraProps = null),
-        Catalog(type = "movie", id = "latest", name = "Latest Releases", extraProps = null),
-        Catalog(type = "movie", id = "trending", name = "Trending", extraProps = null)
-    )
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -61,7 +56,8 @@ class MoviesFragment : Fragment() {
         setupRecyclerViews()
         setupObservers()
 
-        viewModel.loadMovieLists()
+        // Initialize defaults if needed, though MainActivity usually handles this
+        viewModel.initDefaultCatalogs()
     }
 
     private fun setupRecyclerViews() {
@@ -73,7 +69,6 @@ class MoviesFragment : Fragment() {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             adapter = catalogChipAdapter
         }
-        catalogChipAdapter.setCatalogs(standardCatalogs)
 
         posterAdapter = PosterAdapter(
             items = emptyList(),
@@ -84,12 +79,9 @@ class MoviesFragment : Fragment() {
             adapter = posterAdapter
         }
 
-        // FIXED CLICK LISTENER
         streamAdapter = StreamAdapter { stream ->
             val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
-                // Passing Full Stream Object
                 putExtra("stream", stream)
-                // Passing MetaItem for context
                 putExtra("meta", selectedMovie)
             }
             startActivity(intent)
@@ -101,11 +93,34 @@ class MoviesFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        viewModel.popularMovies.observe(viewLifecycleOwner) { items ->
+        // UPDATED: Observe the dynamic list of enabled movie catalogs
+        viewModel.movieCatalogs.observe(viewLifecycleOwner) { userCatalogs ->
+            // Convert UserCatalog to generic Catalog model for adapter
+            val uiCatalogs = userCatalogs.map {
+                Catalog(type = "movie", id = it.catalogId, name = it.displayName, extraProps = null)
+            }
+            catalogChipAdapter.setCatalogs(uiCatalogs)
+
+            // Load the first catalog if nothing is loaded yet and list isn't empty
+            if (uiCatalogs.isNotEmpty() && posterAdapter.itemCount == 0) {
+                // Use the UserCatalog object for loading content as it has all necessary info
+                viewModel.loadContentForCatalog(userCatalogs[0])
+            }
+        }
+
+        // UPDATED: Observe the generic content list instead of specific ones like popularMovies
+        viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
             posterAdapter.updateData(items)
-            if (selectedMovie == null && items.isNotEmpty()) {
+
+            // If list refreshed, select first item or show empty state
+            if (items.isNotEmpty()) {
                 val firstItem = items[0]
-                updateHeaderUI(firstItem.name, firstItem.description ?: "No description available.", firstItem.poster)
+                // Only auto-select if we don't have a user selection (optional logic)
+                if (selectedMovie == null) {
+                    updateHeaderUI(firstItem.name, firstItem.description ?: "No description available.", firstItem.poster)
+                }
+            } else {
+                updateHeaderUI("No Movies", "Select a different catalog.", null)
             }
         }
 
@@ -132,28 +147,15 @@ class MoviesFragment : Fragment() {
     }
 
     private fun onCatalogSelected(catalog: Catalog) {
-        var itemsToSelect: List<MetaItem>? = null
+        // Find the full UserCatalog object to pass to ViewModel
+        val userCatalog = viewModel.movieCatalogs.value?.find { it.catalogId == catalog.id }
 
-        when (catalog.id) {
-            "popular" -> itemsToSelect = viewModel.popularMovies.value
-            "latest" -> itemsToSelect = viewModel.latestMovies.value
-            "trending" -> itemsToSelect = viewModel.trendingMovies.value
-        }
-
-        itemsToSelect?.let {
-            posterAdapter.updateData(it)
-            if (it.isNotEmpty()) {
-                val firstItem = it[0]
-                updateHeaderUI(firstItem.name, firstItem.description ?: "No description available.", firstItem.poster)
-            }
+        if (userCatalog != null) {
+            viewModel.loadContentForCatalog(userCatalog)
         }
 
         selectedMovie = null
         viewModel.clearStreams()
-
-        if (itemsToSelect.isNullOrEmpty()) {
-            updateHeaderUI("Select a Movie", "Choose a movie to see available streams", null)
-        }
     }
 
     private fun onPosterItemClicked(item: MetaItem) {

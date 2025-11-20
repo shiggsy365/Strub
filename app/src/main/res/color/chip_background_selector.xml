@@ -1,8 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="#E50914" android:state_checked="true" />
+    <!-- Selected State: Solid Red -->
     <item android:color="#E50914" android:state_selected="true" />
+    <item android:color="#E50914" android:state_checked="true" />
 
-    <item android:color="#1C0B0C" android:state_focused="true"/>
+    <!-- Focused State: Transparent (Border handled by stroke selector) -->
+    <!-- Actually, for background color, we might want a slight tint or keep it transparent/dark
+         The border is handled by chipStrokeColor.
+         Let's keep background dark/transparent when just focused but not selected. -->
+    <item android:color="#1A1A1A" android:state_focused="true"/>
 
-    <item android:color="#1C0B0C" />
+    <!-- Default: Dark -->
+    <item android:color="#1A1A1A" />
 </selector>

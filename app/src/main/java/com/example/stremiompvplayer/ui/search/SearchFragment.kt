@@ -2,7 +2,6 @@ package com.example.stremiompvplayer.ui.search
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -90,17 +89,20 @@ class SearchFragment : Fragment() {
     private fun setupFilterChips() {
         binding.chipAll.isChecked = true
 
-        binding.chipAll.setOnClickListener {
-            if (currentSearchQuery.isNotBlank()) performSearch(currentSearchQuery, SearchType.ALL)
+        val listener = View.OnClickListener {
+            if (currentSearchQuery.isNotBlank()) {
+                val type = when(it.id) {
+                    binding.chipMovies.id -> SearchType.MOVIES
+                    binding.chipSeries.id -> SearchType.SERIES
+                    else -> SearchType.ALL
+                }
+                performSearch(currentSearchQuery, type)
+            }
         }
 
-        binding.chipMovies.setOnClickListener {
-            if (currentSearchQuery.isNotBlank()) performSearch(currentSearchQuery, SearchType.MOVIES)
-        }
-
-        binding.chipSeries.setOnClickListener {
-            if (currentSearchQuery.isNotBlank()) performSearch(currentSearchQuery, SearchType.SERIES)
-        }
+        binding.chipAll.setOnClickListener(listener)
+        binding.chipMovies.setOnClickListener(listener)
+        binding.chipSeries.setOnClickListener(listener)
     }
 
     private fun setupObservers() {

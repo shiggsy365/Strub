@@ -24,76 +24,87 @@ data class Stream(
     val proxied: Boolean? = false,
     val library: Boolean? = false,
     val service: ServiceInfo?,
-    @Json(name = "type") val streamType: String?, // e.g. "debrid", "p2p"
+    @Json(name = "type") val streamType: String?,
     val resolution: String?,
     val size: Long?,
     val seeders: Int?,
-
-    // FIXED: Defined as String to match API response
     val addon: String?
 ) : Serializable {
 
-    // Fallback title if formatting fails or data is missing
     val title: String
         get() = name ?: "Unknown Stream"
 
-    // Custom Formatter based on your specific regex/template
+    // FIX: Re-implementing formattedTitle based on the provided regex-like syntax
     val formattedTitle: String
         get() {
             val parts = mutableListOf<String>()
+            val sbIconsAndType = StringBuilder()
 
-            // PART 1: Icons & Service Name
-            val part1 = StringBuilder()
-            if (proxied == true) part1.append("🔒")
-            if (library == true) part1.append("📚")
+            // Defaulting nullable booleans to false for checks
+            val isCached = service?.cached ?: false
+            val isProxied = proxied ?: false
+            val isLibrary = library ?: false
+            val seedCount = seeders ?: 0
+            val type = streamType ?: ""
 
-            // Cache Status
-            val isCached = service?.cached == true
-            if (isCached) part1.append("⚡") else part1.append("⏳")
+            // --- Part 1: Icons, Type, and Seeders ---
 
-            // Service Name / Type
-            when (streamType) {
-                "debrid", "usenet" -> part1.append(service?.shortName ?: "")
-                "p2p" -> part1.append("P2P")
-                "http" -> part1.append("Web")
-                "youtube" -> part1.append("YT")
-                "live" -> part1.append("Live")
+            // Icons
+            if (isProxied) sbIconsAndType.append("🔒")
+            if (isLibrary) sbIconsAndType.append("📚")
+
+            // Cached Status
+            if (isCached) sbIconsAndType.append("⚡") else sbIconsAndType.append("⏳")
+
+            // Service/Type String
+            val typeStr = when (type) {
+                "debrid" -> "DB"
+                "usenet" -> "UN"
+                "p2p" -> "P2P"
+                "http" -> "Web"
+                "youtube" -> "YT"
+                "live" -> "Live"
+                else -> ""
+            }
+            sbIconsAndType.append(typeStr)
+
+            // Seeders Conditional: (not cached OR type is p2p) AND seeders > 0
+            if ((!isCached || type == "p2p") && seedCount > 0) {
+                // Ensure a space separation only if preceding characters exist
+                if (sbIconsAndType.isNotEmpty()) {
+                    sbIconsAndType.append(" ")
+                }
+                sbIconsAndType.append("🌱$seedCount")
             }
 
-            // Seeders (if not cached OR p2p, and seeders > 0)
-            if ((!isCached || streamType == "p2p") && (seeders ?: 0) > 0) {
-                part1.append(" 🌱 $seeders")
+            if (sbIconsAndType.isNotBlank()) {
+                parts.add(sbIconsAndType.toString().trim())
             }
-            parts.add(part1.toString())
 
-            // PART 2: Resolution
-            val resString = when (resolution) {
-                "2160p" -> "4K Ultra HD"
-                "1440p" -> "2K Quad HD"
-                "1080p" -> "Full HD"
+            // --- Part 2: Resolution ---
+            val res = when (resolution) {
+                "2160p" -> "4K"
+                "1440p" -> "2K"
+                "1080p" -> "FHD"
                 "720p" -> "HD"
-                "576p" -> "SD (PAL)"
-                "480p" -> "SD (NTSC)"
-                "360p" -> "Camcorder"
-                "240p" -> "Webcam"
-                "144p" -> "Low Quality"
-                else -> resolution // Fallback to raw string (e.g. "Unknown")
+                "576p", "480p", "360p", "240p", "144p" -> "SD"
+                else -> resolution ?: ""
             }
-            if (!resString.isNullOrEmpty()) {
-                parts.add(resString)
-            }
+            if (res.isNotEmpty()) parts.add(res)
 
-            // PART 3: Size
+            // --- Part 3: Size ---
             if ((size ?: 0) > 0) {
                 parts.add(formatBytes(size!!))
             }
 
-            // PART 4: Addon Name (FIXED: Use string directly)
-            if (!addon.isNullOrEmpty()) {
-                parts.add(addon)
+            // --- Part 4: Addon Name ---
+            val addonName = addon ?: name?.substringBefore(" | ") ?: ""
+            if (addonName.isNotEmpty()) {
+                parts.add(addonName)
             }
 
-            // Join with Pipes
+
+            // Join parts using " | "
             return parts.filter { it.isNotEmpty() }.joinToString(" | ")
         }
 
@@ -101,7 +112,10 @@ data class Stream(
         if (bytes <= 0) return "0 B"
         val units = arrayOf("B", "KB", "MB", "GB", "TB")
         val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt()
-        return DecimalFormat("#,##0.#").format(bytes / 1024.0.pow(digitGroups.toDouble())) + " " + units[digitGroups]
+
+        val unitIndex = if (digitGroups < units.size) digitGroups else units.size - 1
+
+        return DecimalFormat("#,##0.#").format(bytes / 1024.0.pow(digitGroups.toDouble())) + " " + units[unitIndex]
     }
 }
 
@@ -116,7 +130,6 @@ data class BehaviorHints(
     val notWebReady: Boolean? = false
 ) : Serializable
 
-// --- META MODELS ---
 data class MetaResponse(val meta: Meta)
 data class Meta(
     val id: String,
@@ -136,7 +149,6 @@ data class Video(
     val season: Int?
 ) : Serializable
 
-// --- CATALOG MODELS ---
 data class MetaItem(
     val id: String,
     val type: String,

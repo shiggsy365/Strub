@@ -21,7 +21,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    // Initialize ViewModel
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(
             ServiceLocator.getInstance(applicationContext),
@@ -32,7 +31,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Check if user is selected
         val userId = SharedPreferencesManager.getInstance(this).getCurrentUserId()
         if (userId == null) {
             startActivity(Intent(this, UserSelectionActivity::class.java))
@@ -43,44 +41,45 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 1. Check TMDB Auth & Sync Watchlists on App Start
         viewModel.checkTMDBAuthAndSync()
 
-        // Default fragment
         if (savedInstanceState == null) {
             loadFragment(MoviesFragment())
         }
 
-        // CLICK LISTENER FOR LOGO -> USER SELECTION
+        handleIntent(intent)
+
         binding.appLogo.setOnClickListener {
             startActivity(Intent(this, UserSelectionActivity::class.java))
         }
 
-        // Setup navigation chips
         binding.chipMovies.isChecked = true
 
-        binding.chipDiscover.setOnClickListener {
-            loadFragment(DiscoverFragment())
-        }
+        binding.chipDiscover.setOnClickListener { loadFragment(DiscoverFragment()) }
+        binding.chipMovies.setOnClickListener { loadFragment(MoviesFragment()) }
+        binding.chipSeries.setOnClickListener { loadFragment(SeriesFragment()) }
+        binding.chipSearch.setOnClickListener { loadFragment(SearchFragment()) }
+        binding.chipLibrary.setOnClickListener { loadFragment(LibraryFragment()) }
+        binding.chipMore.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
+    }
 
-        binding.chipMovies.setOnClickListener {
-            loadFragment(MoviesFragment())
-        }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
 
-        binding.chipSeries.setOnClickListener {
-            loadFragment(SeriesFragment())
-        }
+    private fun handleIntent(intent: Intent?) {
+        val query = intent?.getStringExtra("SEARCH_QUERY")
+        if (!query.isNullOrEmpty()) {
+            // Switch to Search Fragment and search
+            binding.chipSearch.isChecked = true
+            val searchFragment = SearchFragment()
+            loadFragment(searchFragment)
 
-        binding.chipSearch.setOnClickListener {
-            loadFragment(SearchFragment())
-        }
-
-        binding.chipLibrary.setOnClickListener {
-            loadFragment(LibraryFragment())
-        }
-
-        binding.chipMore.setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
+            // Small delay to ensure fragment view created (cleaner ways exist but this is simple)
+            binding.root.postDelayed({
+                viewModel.searchTMDB(query)
+            }, 100)
         }
     }
 
@@ -90,25 +89,15 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // Handle DPAD keys for TV navigation
+    // ... existing key handling ...
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
 
             val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
 
-            if (currentFragment is SeriesFragment) {
-                if (currentFragment.handleBackPress()) {
-                    return true
-                }
-            }
+            if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
+            if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
 
-            if (currentFragment is DiscoverFragment) {
-                if (currentFragment.handleBackPress()) {
-                    return true
-                }
-            }
-
-            // 2. If Fragment didn't handle it, we are at the top level.
             val focus = currentFocus
             val isFocusOnMenu = focus == binding.appLogo ||
                     focus == binding.chipMovies ||
@@ -121,7 +110,6 @@ class MainActivity : AppCompatActivity() {
             if (isFocusOnMenu) {
                 return true
             } else {
-                // Move focus to the active Menu Chip
                 when {
                     binding.chipDiscover.isChecked -> binding.chipDiscover.requestFocus()
                     binding.chipMovies.isChecked -> binding.chipMovies.requestFocus()

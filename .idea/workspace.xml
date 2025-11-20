@@ -238,24 +238,27 @@
   <component name="ChangeListManager">
     <list default="true" id="2c02766e-19a3-4317-ae82-959ae60a24cb" name="Changes" comment="Update visual assets">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/CatalogRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/CatalogRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/DetailsActivity2.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/DetailsActivity2.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/SettingsActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/SettingsActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/UserSelectionActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/UserSelectionActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/data/AppDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/data/AppDatabase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/models/StremioModels.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/models/StremioModels.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/models/TMDBModels.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/models/TMDBModels.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/models/UserCatalogDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/models/UserCatalogDao.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/network/TMDBApiService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/network/TMDBApiService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/network/TMDBClient.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/network/TMDBClient.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/utils/SharedPreferencesManager.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/utils/SharedPreferencesManager.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/ui/discover/DiscoverFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/ui/discover/DiscoverFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/ui/movies/MoviesFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/ui/movies/MoviesFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/ui/search/SearchFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/ui/search/SearchFragment.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/viewmodels/MainViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/viewmodels/MainViewModel.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/res/color/chip_background_selector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/color/chip_background_selector.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/res/color/chip_stroke_selector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/color/chip_stroke_selector.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/background_content_box.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/background_content_box.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_settings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_user_selection.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_user_selection.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/color/chip_text_color.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/color/chip_text_color.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/button_background.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/button_background.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_details2.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_details2.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_discover.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_discover.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/themes.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/themes.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_discover_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_discover_new.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_search.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_search.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/item_cast_chip.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/item_cast_chip.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/item_catalog_chip.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/item_catalog_chip.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/item_poster.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/item_poster.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -265,7 +268,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=Default, isTemplate=false, identifier=serial=192.168.1.235:5555;connection=fae7df1a)]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=Default, isTemplate=false, identifier=serial=192.168.1.235:5555;connection=87a7902f)]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -295,9 +298,9 @@
         <option value="Class" />
         <option value="Kotlin File" />
         <option value="valueResourceFile" />
-        <option value="resourceFile" />
-        <option value="Kotlin Class" />
         <option value="layoutResourceFile" />
+        <option value="Kotlin Class" />
+        <option value="resourceFile" />
       </list>
     </option>
   </component>
@@ -453,22 +456,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1763370382391</updated>
-    </task>
-    <task id="LOCAL-00001" summary="error fixes">
-      <option name="closed" value="true" />
-      <created>1763386332517</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1763386332517</updated>
-    </task>
-    <task id="LOCAL-00002" summary="error fixes">
-      <option name="closed" value="true" />
-      <created>1763386357314</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1763386357314</updated>
     </task>
     <task id="LOCAL-00003" summary="error fixes">
       <option name="closed" value="true" />
@@ -846,7 +833,23 @@
       <option name="project" value="LOCAL" />
       <updated>1763605788880</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="Update visual assets">
+      <option name="closed" value="true" />
+      <created>1763643379483</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1763643379483</updated>
+    </task>
+    <task id="LOCAL-00051" summary="Update visual assets">
+      <option name="closed" value="true" />
+      <created>1763643383811</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1763643383811</updated>
+    </task>
+    <option name="localTasksCounter" value="52" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">

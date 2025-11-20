@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Focused: Red Border -->
     <item android:color="#E50914" android:state_focused="true" />
 
+    <!-- Selected: Red Border (matches background) -->
+    <item android:color="#E50914" android:state_selected="true" />
     <item android:color="#E50914" android:state_checked="true" />
 
-    <item android:color="#ffffff" />
+    <!-- Default: Transparent or Dark Grey -->
+    <item android:color="#33FFFFFF" />
 </selector>
