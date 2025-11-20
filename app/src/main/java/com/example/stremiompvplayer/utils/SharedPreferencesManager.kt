@@ -19,9 +19,39 @@ class SharedPreferencesManager private constructor(context: Context) {
             }
         }
     }
-    // Add these methods to SharedPreferencesManager.kt
 
-    // AIOStreams Credentials Management
+    fun saveTMDBAccountId(accountId: Int) {
+        prefs.edit().putInt("tmdb_account_id", accountId).apply()
+    }
+
+    fun getTMDBAccountId(): Int {
+        return prefs.getInt("tmdb_account_id", -1)
+    }
+
+    // --- TMDB API KEY (Option A) ---
+    fun saveTMDBApiKey(key: String) {
+        prefs.edit().putString("tmdb_api_key", key).apply()
+    }
+
+    fun getTMDBApiKey(): String? {
+        return prefs.getString("tmdb_api_key", null)
+    }
+
+    fun hasTMDBApiKey(): Boolean {
+        return !getTMDBApiKey().isNullOrEmpty()
+    }
+
+    // --- TMDB SESSION ---
+    fun saveTMDBSessionId(sessionId: String) {
+        prefs.edit().putString("tmdb_session_id", sessionId).apply()
+    }
+
+    fun getTMDBSessionId(): String? {
+        return prefs.getString("tmdb_session_id", null)
+    }
+
+    // ... (Keep existing AIOStreams, User, and Settings methods below) ...
+
     fun saveAIOStreamsUsername(username: String) {
         prefs.edit().putString("aiostreams_username", username).apply()
     }
@@ -38,11 +68,6 @@ class SharedPreferencesManager private constructor(context: Context) {
         return prefs.getString("aiostreams_password", null)
     }
 
-    fun hasAIOStreamsCredentials(): Boolean {
-        return !getAIOStreamsUsername().isNullOrEmpty() &&
-                !getAIOStreamsPassword().isNullOrEmpty()
-    }
-
     fun clearAIOStreamsCredentials() {
         prefs.edit()
             .remove("aiostreams_username")
@@ -50,36 +75,9 @@ class SharedPreferencesManager private constructor(context: Context) {
             .apply()
     }
 
-    fun saveActiveManifestUrl(url: String) {
-        prefs.edit().putString("active_manifest_url", url).apply()
-    }
+    fun getTMDBAccessToken(): String? { return prefs.getString("tmdb_access_token", null) }
+    fun saveTMDBAccessToken(token: String) { prefs.edit().putString("tmdb_access_token", token).apply() }
 
-    fun getActiveManifestUrl(): String? {
-        return prefs.getString("active_manifest_url", null)
-    }
-
-    // TMDB Access Token Management
-    fun saveTMDBAccessToken(token: String) {
-        prefs.edit().putString("tmdb_access_token", token).apply()
-    }
-
-    fun getTMDBAccessToken(): String? {
-        return prefs.getString("tmdb_access_token", null)
-    }
-
-    fun hasTMDBAccessToken(): Boolean {
-        return !getTMDBAccessToken().isNullOrEmpty()
-    }
-
-    fun saveString(key: String, value: String) {
-        prefs.edit().putString(key, value).apply()
-    }
-
-    fun getString(key: String, defaultValue: String?): String? {
-        return prefs.getString(key, defaultValue)
-    }
-
-    // User Management
     fun getAllUsers(): List<User> {
         val json = prefs.getString("users_list", "[]")
         val type = object : TypeToken<List<User>>() {}.type
@@ -98,30 +96,38 @@ class SharedPreferencesManager private constructor(context: Context) {
         return newUser
     }
 
+
     fun saveUsers(users: List<User>) {
         val json = gson.toJson(users)
         prefs.edit().putString("users_list", json).apply()
     }
 
-    fun getCurrentUserId(): String? {
-        return prefs.getString("current_user_id", null)
+    fun deleteUser(userId: String) {
+        val users = getAllUsers().toMutableList()
+        val iterator = users.iterator()
+        var removed = false
+        while (iterator.hasNext()) {
+            if (iterator.next().id == userId) {
+                iterator.remove()
+                removed = true
+            }
+        }
+        if (removed) {
+            saveUsers(users)
+            if (getCurrentUserId() == userId) {
+                prefs.edit().remove("current_user_id").apply()
+            }
+        }
     }
 
-    fun setCurrentUser(id: String) {
-        prefs.edit().putString("current_user_id", id).apply()
-    }
-
-    fun getUser(id: String): User? {
-        return getAllUsers().find { it.id == id }
-    }
-
-    // Addon Management
+    fun getCurrentUserId(): String? { return prefs.getString("current_user_id", null) }
+    fun setCurrentUser(id: String) { prefs.edit().putString("current_user_id", id).apply() }
+    fun getUser(id: String): User? { return getAllUsers().find { it.id == id } }
     fun getUserAddonUrls(): List<String> {
         val json = prefs.getString("addon_urls", "[]")
         val type = object : TypeToken<List<String>>() {}.type
         return gson.fromJson(json, type) ?: emptyList()
     }
-
     fun addAddonUrl(url: String) {
         val urls = getUserAddonUrls().toMutableList()
         if (!urls.contains(url)) {
@@ -130,40 +136,25 @@ class SharedPreferencesManager private constructor(context: Context) {
             prefs.edit().putString("addon_urls", json).apply()
         }
     }
-
     fun removeAddonUrl(url: String) {
         val urls = getUserAddonUrls().toMutableList()
         urls.remove(url)
         val json = gson.toJson(urls)
         prefs.edit().putString("addon_urls", json).apply()
     }
-
-    // Settings
     fun saveUserSettings(settings: UserSettings) {
         val json = gson.toJson(settings)
         prefs.edit().putString("user_settings", json).apply()
     }
-
     fun getUserSettings(): UserSettings {
         val json = prefs.getString("user_settings", null)
         return if (json != null) {
             gson.fromJson(json, UserSettings::class.java)
         } else {
-            UserSettings() // Return defaults
+            UserSettings()
         }
     }
 }
 
-// Data classes
-data class User(
-    val id: String,
-    val name: String,
-    val avatarColor: Int
-)
-
-data class UserSettings(
-    var autoPlayFirstStream: Boolean = false,
-    var subtitlesEnabled: Boolean = true,
-    var subtitleSize: Int = 20,
-    var subtitleColor: Int = android.graphics.Color.WHITE
-)
+data class User(val id: String, val name: String, val avatarColor: Int)
+data class UserSettings(var autoPlayFirstStream: Boolean = false, var subtitlesEnabled: Boolean = true, var subtitleSize: Int = 20, var subtitleColor: Int = android.graphics.Color.WHITE)

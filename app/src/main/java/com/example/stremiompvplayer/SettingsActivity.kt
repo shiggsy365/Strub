@@ -4,10 +4,17 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.adapters.CatalogConfigAdapter
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
 import com.example.stremiompvplayer.viewmodels.MainViewModel
@@ -40,51 +47,118 @@ class SettingsActivity : AppCompatActivity() {
         setupTMDBSection()
         setupAIOStreamsSection()
         setupCatalogList()
+        setupObservers()
     }
 
-    // ... (setupTMDBSection, updateTMDBTokenDisplay, showTMDBTokenDialog remain the same) ...
+    private fun setupObservers() {
+        viewModel.requestToken.observe(this) { token ->
+            if (token != null) {
+                showAuthDialog(token)
+            }
+        }
+
+        viewModel.sessionId.observe(this) { sessionId ->
+            if (sessionId != null) {
+                Toast.makeText(this, "TMDB Authorization Successful!", Toast.LENGTH_SHORT).show()
+                updateTMDBTokenDisplay()
+            }
+        }
+
+        viewModel.error.observe(this) { error ->
+            if (error != null && error.contains("Auth")) {
+                Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     private fun setupTMDBSection() {
         updateTMDBTokenDisplay()
 
         binding.btnConfigureTMDB.setOnClickListener {
-            showTMDBTokenDialog()
+            showApiKeyDialog()
+        }
+
+        binding.btnAuthoriseTMDB.setOnClickListener {
+            if (prefsManager.hasTMDBApiKey()) {
+                viewModel.fetchRequestToken()
+            } else {
+                Toast.makeText(this, "Please set API Key first", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     private fun updateTMDBTokenDisplay() {
-        val token = prefsManager.getTMDBAccessToken()
-        if (token.isNullOrEmpty()) {
-            binding.tvTMDBStatus.text = "TMDB Access Token: Not configured"
-            binding.tvTMDBStatus.setTextColor(getColor(android.R.color.holo_red_light))
-        } else {
-            val maskedToken = "••••${token.takeLast(4)}"
-            binding.tvTMDBStatus.text = "TMDB Access Token: $maskedToken"
+        val hasKey = prefsManager.hasTMDBApiKey()
+        val sessionId = prefsManager.getTMDBSessionId()
+
+        val status = StringBuilder()
+        if (hasKey) status.append("API Key: Set | ") else status.append("API Key: Missing | ")
+        if (!sessionId.isNullOrEmpty()) status.append("Session: Active") else status.append("Session: Inactive")
+
+        binding.tvTMDBStatus.text = status.toString()
+
+        if (hasKey && !sessionId.isNullOrEmpty()) {
             binding.tvTMDBStatus.setTextColor(getColor(android.R.color.holo_green_light))
+        } else if (hasKey) {
+            binding.tvTMDBStatus.setTextColor(getColor(android.R.color.holo_orange_light))
+        } else {
+            binding.tvTMDBStatus.setTextColor(getColor(android.R.color.holo_red_light))
         }
     }
 
-    private fun showTMDBTokenDialog() {
+    private fun showApiKeyDialog() {
         val input = TextInputEditText(this).apply {
-            hint = "TMDB Access Token"
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            setText(prefsManager.getTMDBAccessToken() ?: "")
+            hint = "TMDB API Key"
+            inputType = InputType.TYPE_CLASS_TEXT
+            setText(prefsManager.getTMDBApiKey() ?: "")
             setPadding(48, 32, 48, 32)
         }
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Configure TMDB Access Token")
-            .setMessage("Enter your TMDB Access Token")
+            .setTitle("Set TMDB API Key")
             .setView(input)
             .setPositiveButton("Save") { _, _ ->
-                val token = input.text.toString().trim()
-                if (token.isNotEmpty()) {
-                    prefsManager.saveTMDBAccessToken(token)
+                val key = input.text.toString().trim()
+                if (key.isNotEmpty()) {
+                    prefsManager.saveTMDBApiKey(key)
                     updateTMDBTokenDisplay()
                 }
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
+
+    private fun showAuthDialog(requestToken: String) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_tmdb_auth, null)
+        val qrImage = dialogView.findViewById<ImageView>(R.id.qrCodeImage)
+        val urlText = dialogView.findViewById<TextView>(R.id.authUrlText)
+        val logoImage = dialogView.findViewById<ImageView>(R.id.tmdbLogo)
+
+        // URLs
+        val authUrl = "https://www.themoviedb.org/authenticate/$requestToken"
+        val qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=$authUrl"
+        // NOTE: Standard Glide may have issues loading SVGs without the SVG library.
+        // If this image fails to load, ensure you have SVG support or use a PNG.
+        val logoUrl = "https://files.readme.io/29c6fee-blue_short.svg"
+
+        urlText.text = authUrl
+
+        // Load Images
+        Glide.with(this).load(qrApiUrl).into(qrImage)
+        Glide.with(this).load(logoUrl).into(logoImage)
+
+        MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .setPositiveButton("Connect") { _, _ ->
+                // User clicks this after approving on their device
+                viewModel.createSession(requestToken)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    // ... (AIOStreams, Catalog Config, User Section methods) ...
 
     private fun setupAIOStreamsSection() {
         updateAIOStreamsDisplay()
@@ -113,7 +187,6 @@ class SettingsActivity : AppCompatActivity() {
             setPadding(48, 16, 48, 16)
         }
 
-        // Input 2: Password
         val passwordInput = TextInputEditText(this).apply {
             id = 200
             hint = "Password"
@@ -123,7 +196,6 @@ class SettingsActivity : AppCompatActivity() {
             setSingleLine(true)
         }
 
-        // Input 1: Username (UUID)
         val usernameInput = TextInputEditText(this).apply {
             id = 100
             hint = "Username (UUID)"
@@ -133,7 +205,6 @@ class SettingsActivity : AppCompatActivity() {
             setSingleLine(true)
             nextFocusDownId = 200
 
-            // Force focus jump on "Next"
             setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_NEXT) {
                     passwordInput.requestFocus()

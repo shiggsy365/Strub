@@ -154,3 +154,77 @@ data class TMDBExternalIdsResponse(
     @Json(name = "instagram_id") val instagramId: String?,
     @Json(name = "twitter_id") val twitterId: String?
 ) : Serializable
+
+data class TMDBCreditsResponse(
+    val id: Int,
+    val cast: List<TMDBCast>
+) : Serializable
+
+data class TMDBCast(
+    val id: Int,
+    val name: String,
+    @Json(name = "profile_path") val profilePath: String?,
+    val character: String?,
+    val order: Int
+) : Serializable
+
+// NEW: Auth Models
+data class TMDBRequestTokenResponse(
+    @Json(name = "success") val success: Boolean,
+    @Json(name = "expires_at") val expiresAt: String,
+    @Json(name = "request_token") val requestToken: String
+) : Serializable
+
+data class TMDBSessionResponse(
+    @Json(name = "success") val success: Boolean,
+    @Json(name = "session_id") val sessionId: String
+) : Serializable
+
+// NEW: Account & Watchlist Models
+data class TMDBAccountDetails(
+    val id: Int,
+    val username: String,
+    @Json(name = "include_adult") val includeAdult: Boolean = false
+) : Serializable
+
+data class TMDBWatchlistBody(
+    @Json(name = "media_type") val mediaType: String, // "movie" or "tv"
+    @Json(name = "media_id") val mediaId: Int,
+    val watchlist: Boolean
+) : Serializable
+
+data class TMDBPostResponse(
+    @Json(name = "success") val success: Boolean,
+    @Json(name = "status_code") val statusCode: Int,
+    @Json(name = "status_message") val statusMessage: String?
+) : Serializable
+
+// NEW: Person Credits Response
+data class TMDBPersonCreditsResponse(
+    val cast: List<TMDBPersonCastItem>,
+    val id: Int
+) : Serializable
+
+data class TMDBPersonCastItem(
+    val id: Int,
+    @Json(name = "media_type") val mediaType: String, // "movie" or "tv"
+    val title: String?, // For movies
+    val name: String?, // For tv
+    @Json(name = "poster_path") val posterPath: String?,
+    @Json(name = "backdrop_path") val backdropPath: String?,
+    val overview: String?,
+    @Json(name = "vote_average") val voteAverage: Double?,
+    @Json(name = "release_date") val releaseDate: String?,
+    @Json(name = "first_air_date") val firstAirDate: String?
+) : Serializable {
+    fun toMetaItem(): MetaItem {
+        return MetaItem(
+            id = "tmdb:$id",
+            type = if (mediaType == "tv") "series" else "movie",
+            name = title ?: name ?: "Unknown",
+            poster = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+            background = backdropPath?.let { "https://image.tmdb.org/t/p/original$it" },
+            description = overview
+        )
+    }
+}

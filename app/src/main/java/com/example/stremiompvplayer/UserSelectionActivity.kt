@@ -8,15 +8,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.databinding.ActivityUserSelectionBinding
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.utils.User
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
-import kotlin.system.exitProcess // Added import for exitProcess
 
 class UserSelectionActivity : AppCompatActivity() {
 
@@ -37,25 +41,22 @@ class UserSelectionActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        adapter = UserAdapter { user ->
-            selectUser(user)
-        }
+        adapter = UserAdapter(
+            onUserClick = { user -> selectUser(user) },
+            onUserLongClick = { user -> showDeleteUserDialog(user) }
+        )
 
         binding.usersRecycler.apply {
-            layoutManager = GridLayoutManager(this@UserSelectionActivity, 2)
+            // Span count 3
+            layoutManager = GridLayoutManager(this@UserSelectionActivity, 3)
             adapter = this@UserSelectionActivity.adapter
         }
     }
 
     private fun setupListeners() {
-        binding.manageProfilesButton.setOnClickListener {
-            showAddUserDialog()
-        }
-
-        // NEW: Exit Button Listener
+        // Exit Button Listener
         binding.exitAppButton.setOnClickListener {
-            finishAffinity() // Closes all activities in the task
-            // System.exit(0) // Optional: Force kill process if needed, but finishAffinity is cleaner for Android
+            finishAffinity()
         }
     }
 
@@ -68,6 +69,32 @@ class UserSelectionActivity : AppCompatActivity() {
         // If no users exist, create a default one
         if (users.isEmpty()) {
             showAddUserDialog(isFirstUser = true)
+        }
+    }
+
+    private fun showDeleteUserDialog(user: User) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Delete Profile")
+            .setMessage("Are you sure you want to delete '${user.name}'?\n\nThis will permanently remove all watch history, favorites, and catalog customizations for this user.")
+            .setPositiveButton("Delete") { _, _ ->
+                deleteUserProfile(user)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteUserProfile(user: User) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            // 1. Clean up database data for this user
+            AppDatabase.getInstance(applicationContext).deleteUserData(user.id)
+
+            withContext(Dispatchers.Main) {
+                // 2. Remove from SharedPreferences list
+                prefsManager.deleteUser(user.id)
+
+                // 3. Refresh UI
+                loadUsers()
+            }
         }
     }
 
@@ -131,7 +158,8 @@ class UserSelectionActivity : AppCompatActivity() {
 
     // UserAdapter Class
     inner class UserAdapter(
-        private val onUserClick: (User) -> Unit
+        private val onUserClick: (User) -> Unit,
+        private val onUserLongClick: (User) -> Unit
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         private val users = mutableListOf<User>()
@@ -185,6 +213,12 @@ class UserSelectionActivity : AppCompatActivity() {
                 itemView.setOnClickListener {
                     onUserClick(user)
                 }
+
+                // NEW: Long Click Handler
+                itemView.setOnLongClickListener {
+                    onUserLongClick(user)
+                    true // Consume event
+                }
             }
         }
 
@@ -196,7 +230,7 @@ class UserSelectionActivity : AppCompatActivity() {
             fun bind() {
                 avatarContainer.setBackgroundColor(0xFF666666.toInt())
                 avatarInitial.text = "+"
-                userName.text = "Add Profile"
+                userName.text = "Create a Profile"
 
                 itemView.setOnClickListener {
                     showAddUserDialog()

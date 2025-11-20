@@ -39,16 +39,28 @@
             android:background="@drawable/background_content_box"
             android:padding="12dp"
             android:textColor="#CCCCCC"
-            tools:text="TMDB Access Token: Not configured" />
+            tools:text="TMDB: Not authorized" />
 
         <Button
             android:id="@+id/btnConfigureTMDB"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/button_background"
+            app:backgroundTint="@null"
+            android:text="Set API Key"
+            android:textColor="@android:color/white"
+            android:focusable="true"
+            android:clickable="true" />
+
+        <Button
+            android:id="@+id/btnAuthoriseTMDB"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             android:background="@drawable/button_background"
             app:backgroundTint="@null"
-            android:text="Configure TMDB Token"
+            android:text="Authorise TMDB"
             android:textColor="@android:color/white"
             android:focusable="true"
             android:clickable="true" />

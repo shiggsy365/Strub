@@ -41,6 +41,10 @@ interface UserCatalogDao {
     @Delete
     suspend fun delete(catalog: UserCatalog)
 
+    // NEW: Delete all catalogs for a user
+    @Query("DELETE FROM user_catalogs WHERE userId = :userId")
+    suspend fun deleteByUser(userId: String)
+
     // Update display order for a catalog
     @Query("UPDATE user_catalogs SET displayOrder = :newOrder WHERE id = :catalogId")
     suspend fun updateDisplayOrder(catalogId: Long, newOrder: Int)
@@ -97,6 +101,10 @@ interface CollectedItemDao {
     // Delete by composite ID
     @Query("DELETE FROM collected_items WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    // NEW: Delete by User ID
+    @Query("DELETE FROM collected_items WHERE userId = :userId")
+    suspend fun deleteByUser(userId: String)
 
     // Get single item
     @Query("SELECT * FROM collected_items WHERE id = :id")

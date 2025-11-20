@@ -15,84 +15,12 @@ class CatalogRepository(private val userCatalogDao: UserCatalogDao) {
             if (userCatalogDao.getCount() == 0) {
                 // Create default catalogs for TMDB
                 val defaults = listOf(
-                    UserCatalog(
-                        id = 0,
-                        userId = "default",
-                        catalogId = "popular",
-                        catalogType = "movie",
-                        catalogName = "Popular Movies",
-                        customName = null,
-                        displayOrder = 0,
-                        pageType = "movies",
-                        addonUrl = "tmdb",
-                        manifestId = "tmdb",
-                        dateAdded = System.currentTimeMillis()
-                    ),
-                    UserCatalog(
-                        id = 0,
-                        userId = "default",
-                        catalogId = "latest",
-                        catalogType = "movie",
-                        catalogName = "Latest Movies",
-                        customName = null,
-                        displayOrder = 1,
-                        pageType = "movies",
-                        addonUrl = "tmdb",
-                        manifestId = "tmdb",
-                        dateAdded = System.currentTimeMillis()
-                    ),
-                    UserCatalog(
-                        id = 0,
-                        userId = "default",
-                        catalogId = "trending",
-                        catalogType = "movie",
-                        catalogName = "Trending Movies",
-                        customName = null,
-                        displayOrder = 2,
-                        pageType = "movies",
-                        addonUrl = "tmdb",
-                        manifestId = "tmdb",
-                        dateAdded = System.currentTimeMillis()
-                    ),
-                    UserCatalog(
-                        id = 0,
-                        userId = "default",
-                        catalogId = "popular",
-                        catalogType = "series",
-                        catalogName = "Popular Series",
-                        customName = null,
-                        displayOrder = 0,
-                        pageType = "series",
-                        addonUrl = "tmdb",
-                        manifestId = "tmdb",
-                        dateAdded = System.currentTimeMillis()
-                    ),
-                    UserCatalog(
-                        id = 0,
-                        userId = "default",
-                        catalogId = "latest",
-                        catalogType = "series",
-                        catalogName = "Latest Series",
-                        customName = null,
-                        displayOrder = 1,
-                        pageType = "series",
-                        addonUrl = "tmdb",
-                        manifestId = "tmdb",
-                        dateAdded = System.currentTimeMillis()
-                    ),
-                    UserCatalog(
-                        id = 0,
-                        userId = "default",
-                        catalogId = "trending",
-                        catalogType = "series",
-                        catalogName = "Trending Series",
-                        customName = null,
-                        displayOrder = 2,
-                        pageType = "series",
-                        addonUrl = "tmdb",
-                        manifestId = "tmdb",
-                        dateAdded = System.currentTimeMillis()
-                    )
+                    UserCatalog(id = 0, userId = "default", catalogId = "popular", catalogType = "movie", catalogName = "Popular Movies", customName = null, displayOrder = 0, pageType = "movies", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = "default", catalogId = "latest", catalogType = "movie", catalogName = "Latest Movies", customName = null, displayOrder = 1, pageType = "movies", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = "default", catalogId = "trending", catalogType = "movie", catalogName = "Trending Movies", customName = null, displayOrder = 2, pageType = "movies", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = "default", catalogId = "popular", catalogType = "series", catalogName = "Popular Series", customName = null, displayOrder = 0, pageType = "series", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = "default", catalogId = "latest", catalogType = "series", catalogName = "Latest Series", customName = null, displayOrder = 1, pageType = "series", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = "default", catalogId = "trending", catalogType = "series", catalogName = "Trending Series", customName = null, displayOrder = 2, pageType = "series", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis())
                 )
 
                 defaults.forEach { catalog ->
@@ -111,6 +39,20 @@ class CatalogRepository(private val userCatalogDao: UserCatalogDao) {
     suspend fun updateCatalog(catalog: UserCatalog) {
         withContext(Dispatchers.IO) {
             userCatalogDao.update(catalog)
+        }
+    }
+
+    // NEW: Insert a catalog
+    suspend fun insertCatalog(catalog: UserCatalog) {
+        withContext(Dispatchers.IO) {
+            userCatalogDao.insert(catalog)
+        }
+    }
+
+    // NEW: Check if catalog exists
+    suspend fun isCatalogAdded(userId: String, catalogId: String, type: String, page: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            userCatalogDao.isCatalogAdded(userId, catalogId, type, page) > 0
         }
     }
 

@@ -1,21 +1,31 @@
 package com.example.stremiompvplayer.network
 
-import com.example.stremiompvplayer.models.TMDBExternalIdsResponse
-import com.example.stremiompvplayer.models.TMDBMovieListResponse
-import com.example.stremiompvplayer.models.TMDBMultiSearchResponse
-import com.example.stremiompvplayer.models.TMDBSeriesDetailResponse
-import com.example.stremiompvplayer.models.TMDBSeriesListResponse
+import com.example.stremiompvplayer.models.*
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TMDBApiService {
 
-    // --- EXISTING LISTS ---
+    // --- AUTHENTICATION ---
+    @GET("authentication/token/new")
+    suspend fun createRequestToken(
+        @Query("api_key") apiKey: String
+    ): TMDBRequestTokenResponse
+
+    @POST("authentication/session/new")
+    suspend fun createSession(
+        @Query("api_key") apiKey: String,
+        @Body body: Map<String, String> // {"request_token": "..."}
+    ): TMDBSessionResponse
+
+    // --- EXISTING LISTS (Updated to use api_key) ---
     @GET("movie/popular")
     suspend fun getPopularMovies(
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         @Query("primary_release_date.lte") releaseDate: String? = null
@@ -23,7 +33,7 @@ interface TMDBApiService {
 
     @GET("movie/now_playing")
     suspend fun getLatestMovies(
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         @Query("primary_release_date.lte") releaseDate: String? = null
@@ -31,15 +41,15 @@ interface TMDBApiService {
 
     @GET("trending/movie/week")
     suspend fun getTrendingMovies(
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1
     ): TMDBMovieListResponse
 
-    // --- TV SHOWS ---
+    // --- TV SHOWS (Updated to use api_key) ---
     @GET("tv/popular")
     suspend fun getPopularSeries(
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         @Query("first_air_date.lte") airDate: String? = null
@@ -47,7 +57,7 @@ interface TMDBApiService {
 
     @GET("tv/on_the_air")
     suspend fun getLatestSeries(
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         @Query("first_air_date.lte") airDate: String? = null
@@ -55,15 +65,15 @@ interface TMDBApiService {
 
     @GET("trending/tv/week")
     suspend fun getTrendingSeries(
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1
     ): TMDBSeriesListResponse
 
-    // --- SEARCH (Ensure these exist!) ---
+    // --- SEARCH (Updated to use api_key) ---
     @GET("search/multi")
     suspend fun searchMulti(
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("query") query: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
@@ -72,7 +82,7 @@ interface TMDBApiService {
 
     @GET("search/movie")
     suspend fun searchMovies(
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("query") query: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
@@ -81,18 +91,18 @@ interface TMDBApiService {
 
     @GET("search/tv")
     suspend fun searchSeries(
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("query") query: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         @Query("include_adult") includeAdult: Boolean = false
     ): TMDBSeriesListResponse
 
-    // --- DETAILS ---
+    // --- DETAILS (Updated to use api_key) ---
     @GET("tv/{series_id}")
     suspend fun getSeriesDetail(
         @Path("series_id") seriesId: Int,
-        @Header("Authorization") token: String,
+        @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US",
         @Query("append_to_response") appendToResponse: String = "external_ids"
     ): TMDBSeriesDetailResponse
@@ -100,12 +110,68 @@ interface TMDBApiService {
     @GET("movie/{movie_id}/external_ids")
     suspend fun getMovieExternalIds(
         @Path("movie_id") movieId: Int,
-        @Header("Authorization") token: String
+        @Query("api_key") apiKey: String
     ): TMDBExternalIdsResponse
 
     @GET("tv/{tv_id}/external_ids")
     suspend fun getTVExternalIds(
         @Path("tv_id") tvId: Int,
-        @Header("Authorization") token: String
+        @Query("api_key") apiKey: String
     ): TMDBExternalIdsResponse
+
+    // --- CREDITS (Updated to use api_key) ---
+    @GET("movie/{movie_id}/credits")
+    suspend fun getMovieCredits(
+        @Path("movie_id") movieId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBCreditsResponse
+
+    @GET("tv/{tv_id}/credits")
+    suspend fun getTVCredits(
+        @Path("tv_id") tvId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBCreditsResponse
+    @GET("account")
+    suspend fun getAccountDetails(
+        @Query("api_key") apiKey: String,
+        @Query("session_id") sessionId: String
+    ): TMDBAccountDetails
+
+    @GET("account/{account_id}/watchlist/movies")
+    suspend fun getMovieWatchlist(
+        @Path("account_id") accountId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("session_id") sessionId: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("sort_by") sortBy: String = "created_at.desc"
+    ): TMDBMovieListResponse
+
+    @GET("account/{account_id}/watchlist/tv")
+    suspend fun getTVWatchlist(
+        @Path("account_id") accountId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("session_id") sessionId: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("sort_by") sortBy: String = "created_at.desc"
+    ): TMDBSeriesListResponse
+
+    @POST("account/{account_id}/watchlist")
+    suspend fun addToWatchlist(
+        @Path("account_id") accountId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("session_id") sessionId: String,
+        @Body body: TMDBWatchlistBody
+    ): TMDBPostResponse
+
+    // --- PERSON ---
+    @GET("person/{person_id}/combined_credits")
+    suspend fun getPersonCombinedCredits(
+        @Path("person_id") personId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBPersonCreditsResponse
 }

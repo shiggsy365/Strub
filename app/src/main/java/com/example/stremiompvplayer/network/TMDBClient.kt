@@ -7,6 +7,9 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 object TMDBClient {
 
+    // Expose the API Key publicly so ViewModels can access it
+    const val API_KEY = "a77304e2ead90e385dce678b4e530a40"
+
     private const val BASE_URL = "https://api.themoviedb.org/3/"
 
     private val moshi = Moshi.Builder()
@@ -20,16 +23,10 @@ object TMDBClient {
 
     val api: TMDBApiService = retrofit.create(TMDBApiService::class.java)
 
-    /**
-     * Helper function to format bearer token
-     */
     fun getBearerToken(accessToken: String): String {
         return "Bearer $accessToken"
     }
 
-    /**
-     * Helper function to get today's date in YYYY-MM-DD format
-     */
     fun getTodaysDate(): String {
         val calendar = java.util.Calendar.getInstance()
         val year = calendar.get(java.util.Calendar.YEAR)
