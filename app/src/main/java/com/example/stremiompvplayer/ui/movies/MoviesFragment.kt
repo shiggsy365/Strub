@@ -106,17 +106,13 @@ class MoviesFragment : Fragment() {
         // Observe Popular Movies (default)
         viewModel.popularMovies.observe(viewLifecycleOwner) { items ->
             posterAdapter.updateData(items)
+            // Auto-select first movie [Fixed: Uncommented logic]
             if (selectedMovie == null && items.isNotEmpty()) {
-                // Optional: Auto-select first movie
-                // onPosterItemClicked(items[0])
+                onPosterItemClicked(items[0])
             }
         }
 
-        // Observe Latest Movies
-        viewModel.latestMovies.observe(viewLifecycleOwner) { }
-
-        // Observe Trending Movies
-        viewModel.trendingMovies.observe(viewLifecycleOwner) { }
+        // Fixed: Removed empty observers for latestMovies and trendingMovies to prevent crash
 
         viewModel.streams.observe(viewLifecycleOwner) { streams ->
             if (streams.isNotEmpty()) {
@@ -141,21 +137,34 @@ class MoviesFragment : Fragment() {
     }
 
     private fun onCatalogSelected(catalog: Catalog) {
+        var itemsToSelect: List<MetaItem>? = null
+
         when (catalog.id) {
             "popular" -> {
-                viewModel.popularMovies.value?.let { posterAdapter.updateData(it) }
+                itemsToSelect = viewModel.popularMovies.value
             }
             "latest" -> {
-                viewModel.latestMovies.value?.let { posterAdapter.updateData(it) }
+                itemsToSelect = viewModel.latestMovies.value
             }
             "trending" -> {
-                viewModel.trendingMovies.value?.let { posterAdapter.updateData(it) }
+                itemsToSelect = viewModel.trendingMovies.value
             }
         }
-        // Clear current selection and streams
-        selectedMovie = null
-        viewModel.clearStreams()
-        updateHeaderUI("Select a Movie", "Choose a movie to see available streams", null)
+
+        itemsToSelect?.let {
+            posterAdapter.updateData(it)
+            // Auto-select first item when switching catalogs
+            if (it.isNotEmpty()) {
+                onPosterItemClicked(it[0])
+            }
+        }
+
+        // Clear current selection if list is empty
+        if (itemsToSelect.isNullOrEmpty()) {
+            selectedMovie = null
+            viewModel.clearStreams()
+            updateHeaderUI("Select a Movie", "Choose a movie to see available streams", null)
+        }
     }
 
     private fun onPosterItemClicked(item: MetaItem) {

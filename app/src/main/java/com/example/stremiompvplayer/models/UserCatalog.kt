@@ -6,7 +6,6 @@ import java.io.Serializable
 
 /**
  * Represents a user's saved catalog configuration
- * Used for Movies and Series pages to remember which catalogs they've added
  */
 @Entity(tableName = "user_catalogs")
 data class UserCatalog(
@@ -27,13 +26,17 @@ data class UserCatalog(
     val addonUrl: String, // Which addon this catalog comes from
     val manifestId: String, // Manifest ID to track if catalog still exists
 
+    // NEW FIELDS for Toggle Switches
+    val showInDiscover: Boolean = true,
+    val showInUser: Boolean = true,
+
     val dateAdded: Long = System.currentTimeMillis()
 ) : Serializable {
     // Display name: use custom name if set, otherwise original name
     val displayName: String
         get() = customName ?: catalogName
 }
-
+// ... (CollectedItem and LibrarySortOption remain unchanged)
 /**
  * Represents a collected/saved item in user's library
  */

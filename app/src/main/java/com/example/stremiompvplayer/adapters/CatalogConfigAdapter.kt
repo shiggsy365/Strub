@@ -30,20 +30,27 @@ class CatalogConfigAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: UserCatalog, position: Int) {
-            // Change 'name' to 'catalogName' or 'displayName'
-            binding.tvCatalogName.text = item.displayName  // Line 32
+            binding.tvCatalogName.text = item.displayName
 
+            // IMPORTANT: Clear listeners before setting state
             binding.switchDiscover.setOnCheckedChangeListener(null)
             binding.switchUser.setOnCheckedChangeListener(null)
 
-            // These fields don't exist in the new UserCatalog model
-            // Remove or comment out these lines:
-            // binding.switchDiscover.isChecked = item.isDiscoverEnabled
-            // binding.switchUser.isChecked = item.isUserEnabled
+            // Bind values (Default to true if field missing in old DB)
+            binding.switchDiscover.isChecked = item.showInDiscover
+            binding.switchUser.isChecked = item.showInUser
 
-            // Just hide the switches for now:
-            binding.switchDiscover.visibility = View.GONE
-            binding.switchUser.visibility = View.GONE
+            // MAKE VISIBLE
+            binding.switchDiscover.visibility = View.VISIBLE
+            binding.switchUser.visibility = View.VISIBLE
+
+            // Update listeners
+            binding.switchDiscover.setOnCheckedChangeListener { _, isChecked ->
+                onUpdate(item.copy(showInDiscover = isChecked))
+            }
+            binding.switchUser.setOnCheckedChangeListener { _, isChecked ->
+                onUpdate(item.copy(showInUser = isChecked))
+            }
 
             binding.btnUp.setOnClickListener {
                 if (position > 0) onMoveUp(item, position)
@@ -61,7 +68,7 @@ class CatalogConfigAdapter(
 
     class DiffCallback : DiffUtil.ItemCallback<UserCatalog>() {
         override fun areItemsTheSame(oldItem: UserCatalog, newItem: UserCatalog) =
-            oldItem.id == newItem.id  // Changed from dbId to id
+            oldItem.id == newItem.id
 
         override fun areContentsTheSame(oldItem: UserCatalog, newItem: UserCatalog) =
             oldItem == newItem

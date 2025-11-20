@@ -97,12 +97,19 @@ class SeriesFragment : Fragment() {
         viewModel.popularSeries.observe(viewLifecycleOwner) { items ->
             if (currentLevel == Level.CATALOG) {
                 posterAdapter.updateData(items)
-                updateHeaderUI("TV Series", "Browse popular series", null, null)
+
+                // Auto-select first series if nothing selected
+                if (selectedShow == null && items.isNotEmpty()) {
+                    onPosterItemClicked(items[0])
+                } else if (selectedShow == null) {
+                    updateHeaderUI("TV Series", "Browse popular series", null, null)
+                }
             }
         }
 
-        viewModel.latestSeries.observe(viewLifecycleOwner) { }
-        viewModel.trendingSeries.observe(viewLifecycleOwner) { }
+        // Fixed: Removed empty observers to prevent crash
+        // viewModel.latestSeries.observe...
+        // viewModel.trendingSeries.observe...
 
         viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
             if (meta != null && currentLevel == Level.CATALOG) {
@@ -179,13 +186,13 @@ class SeriesFragment : Fragment() {
     private fun displaySeasons(meta: Meta) {
         currentLevel = Level.SEASONS
         val seasons = meta.videos
-            ?.mapNotNull { it.season }  // Use mapNotNull to filter nulls
+            ?.mapNotNull { it.season }
             ?.distinct()
             ?.sorted()
             ?: emptyList()
         val seasonItems = ArrayList<MetaItem>()
         seasonItems.add(createBackItem())
-        seasons.forEach { seasonNum: Int ->  // Add explicit type
+        seasons.forEach { seasonNum: Int ->
             if (seasonNum > 0) {
                 seasonItems.add(MetaItem(
                     id = seasonNum.toString(),

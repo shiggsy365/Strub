@@ -3,6 +3,7 @@ package com.example.stremiompvplayer
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
+import android.widget.LinearLayout
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,7 +15,6 @@ import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
-import android.widget.LinearLayout
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -84,7 +84,7 @@ class SettingsActivity : AppCompatActivity() {
             .show()
     }
 
-    // NEW: AIOStreams Section
+    // AIOStreams Section
     private fun setupAIOStreamsSection() {
         updateAIOStreamsDisplay()
 
@@ -107,7 +107,6 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun showAIOStreamsDialog() {
-        // Create a container for both inputs
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48, 16, 48, 16)
@@ -181,13 +180,5 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupUserSection() {
         val userId = prefsManager.getCurrentUserId()
         binding.tvCurrentUser.text = "Current User ID: $userId"
-
-        binding.btnSwitchUser.setOnClickListener {
-            startActivity(Intent(this, UserSelectionActivity::class.java))
-        }
-
-        binding.btnManageAddons.setOnClickListener {
-            // Placeholder for existing addon logic
-        }
     }
 }

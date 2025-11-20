@@ -8,7 +8,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#000000">
+        android:background="@color/app_background">
 
         <FrameLayout
             android:id="@+id/fragmentContainer"
@@ -19,41 +19,27 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/userAvatarContainer"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
+        <ImageButton
+            android:id="@+id/appLogo"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
             android:layout_margin="16dp"
-            android:clickable="true"
+            android:background="@drawable/selector_focus_border"
+            android:src="@mipmap/ic_launcher"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/app_name"
             android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="10dp"
+            android:clickable="true"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <View
-                android:id="@+id/userAvatar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/avatar_background" />
-
-            <TextView
-                android:id="@+id/userInitial"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:textColor="@android:color/white"
-                android:textSize="24sp"
-                android:textStyle="bold" />
-        </com.google.android.material.card.MaterialCardView>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <HorizontalScrollView
             android:id="@+id/navigationScroll"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:scrollbars="none"
-            android:paddingStart="80dp"
+            android:paddingStart="90dp"
             android:paddingEnd="16dp"
             android:elevation="10dp"
             app:layout_constraintTop_toTopOf="parent"
@@ -72,9 +58,11 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Discover ▼"
+                    android:text="Discover"
                     android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector" />
+                    app:chipBackgroundColor="@color/chip_background_selector"
+                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipMovies"
@@ -83,7 +71,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/movies"
                     android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector" />
+                    app:chipBackgroundColor="@color/chip_background_selector"
+                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipSeries"
@@ -92,7 +82,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/series"
                     android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector" />
+                    app:chipBackgroundColor="@color/chip_background_selector"
+                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipLibrary"
@@ -101,7 +93,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/library"
                     android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector" />
+                    app:chipBackgroundColor="@color/chip_background_selector"
+                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipSearch"
@@ -110,7 +104,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/search"
                     android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector" />
+                    app:chipBackgroundColor="@color/chip_background_selector"
+                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipMore"
@@ -119,7 +115,9 @@
                     android:layout_height="wrap_content"
                     android:text="..."
                     android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector" />
+                    app:chipBackgroundColor="@color/chip_background_selector"
+                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeWidth="1dp" />
 
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>

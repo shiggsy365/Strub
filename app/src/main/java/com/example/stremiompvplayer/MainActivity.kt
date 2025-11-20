@@ -35,6 +35,11 @@ class MainActivity : AppCompatActivity() {
             loadFragment(MoviesFragment())
         }
 
+        // CLICK LISTENER FOR LOGO -> USER SELECTION
+        binding.appLogo.setOnClickListener {
+            startActivity(Intent(this, UserSelectionActivity::class.java))
+        }
+
         // Setup navigation chips
         binding.chipMovies.isChecked = true
 
