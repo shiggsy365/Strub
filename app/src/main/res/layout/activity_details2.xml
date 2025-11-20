@@ -11,7 +11,6 @@
         android:layout_height="match_parent"
         android:background="@color/app_background">
 
-        <!-- Background Image -->
         <ImageView
             android:id="@+id/imgBackground"
             android:layout_width="0dp"
@@ -34,8 +33,12 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <ScrollView
-            android:layout_width="match_parent"
+            android:id="@+id/scrollDetailPane"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/rvNavigation"
+            app:layout_constraintWidth_percent="0.8"
             android:fillViewport="true">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -43,7 +46,6 @@
                 android:layout_height="wrap_content"
                 android:padding="32dp">
 
-                <!-- Poster -->
                 <ImageView
                     android:id="@+id/imgPoster"
                     android:layout_width="200dp"
@@ -55,7 +57,6 @@
                     app:layout_constraintTop_toTopOf="parent"
                     tools:src="@drawable/movie" />
 
-                <!-- Text Content -->
                 <LinearLayout
                     android:id="@+id/infoContainer"
                     android:layout_width="0dp"
@@ -94,7 +95,6 @@
                         android:lineSpacingExtra="4dp"
                         tools:text="Movie description goes here..." />
 
-                    <!-- Actions -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -108,7 +108,8 @@
                             android:text="Play"
                             android:backgroundTint="@color/color_primary"
                             android:textColor="@android:color/white"
-                            android:paddingHorizontal="32dp" />
+                            android:paddingHorizontal="32dp"
+                            android:focusable="true" />
 
                         <Button
                             android:id="@+id/btnTrailer"
@@ -117,9 +118,9 @@
                             android:text="Trailer"
                             android:backgroundTint="#555555"
                             android:textColor="@android:color/white"
-                            android:layout_marginStart="16dp" />
+                            android:layout_marginStart="16dp"
+                            android:focusable="true" />
 
-                        <!-- NEW BUTTONS -->
                         <Button
                             android:id="@+id/btnLibrary"
                             android:layout_width="wrap_content"
@@ -127,7 +128,8 @@
                             android:text="Add To Library"
                             android:backgroundTint="#555555"
                             android:textColor="@android:color/white"
-                            android:layout_marginStart="16dp" />
+                            android:layout_marginStart="16dp"
+                            android:focusable="true" />
 
                         <Button
                             android:id="@+id/btnWatchlist"
@@ -136,7 +138,8 @@
                             android:text="Add To Watchlist"
                             android:backgroundTint="#555555"
                             android:textColor="@android:color/white"
-                            android:layout_marginStart="16dp" />
+                            android:layout_marginStart="16dp"
+                            android:focusable="true" />
 
                     </LinearLayout>
 
@@ -149,29 +152,29 @@
 
                 </LinearLayout>
 
-                <!-- Seasons/Episodes for Series -->
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvSeasons"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
                     android:layout_marginTop="32dp"
                     app:layout_constraintTop_toBottomOf="@id/imgPoster"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent" />
-
-                <!-- Stream List -->
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvStreams"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    app:layout_constraintTop_toBottomOf="@id/rvSeasons"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"/>
+                    app:layout_constraintBottom_toBottomOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvNavigation"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:background="#11FFFFFF" android:paddingTop="32dp"
+            android:paddingHorizontal="16dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical"
+            app:layout_constraintStart_toEndOf="@+id/scrollDetailPane"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintWidth_percent="0.2"
+            tools:listitem="@layout/item_stream" />
+
 
         <ProgressBar
             android:id="@+id/progressBar"

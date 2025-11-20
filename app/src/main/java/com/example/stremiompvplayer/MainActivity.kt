@@ -72,14 +72,25 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent?) {
         val query = intent?.getStringExtra("SEARCH_QUERY")
         if (!query.isNullOrEmpty()) {
-            // Switch to Search Fragment and search
+            // 1. Focus the search chip immediately for visual feedback
+            binding.chipSearch.requestFocus()
+
+            // 2. Load the Search Fragment
             binding.chipSearch.isChecked = true
             val searchFragment = SearchFragment()
             loadFragment(searchFragment)
 
-            // Small delay to ensure fragment view created (cleaner ways exist but this is simple)
+            // 3. Trigger the search via a post-delayed action to ensure fragment view is ready
             binding.root.postDelayed({
-                viewModel.searchTMDB(query)
+                // Check if the loaded fragment is indeed SearchFragment before triggering search
+                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+                if (currentFragment is SearchFragment) {
+                    viewModel.searchTMDB(query)
+
+                    // OPTIONAL: Request focus for the actual Search View inside the fragment
+                    // This assumes SearchFragment exposes a function like requestSearchViewFocus()
+                    // For now, relying on the user's intent to switch to SearchFragment is enough.
+                }
             }, 100)
         }
     }
@@ -95,6 +106,7 @@ class MainActivity : AppCompatActivity() {
 
             val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
 
+            // Check if the fragment handles back press (e.g., dismissing nested views)
             if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
 
@@ -108,8 +120,12 @@ class MainActivity : AppCompatActivity() {
                     focus == binding.chipMore
 
             if (isFocusOnMenu) {
-                return true
+                // If focus is already on the menu, let the default Android back behaviour take over (i.e., exit the app)
+                // If you want the app to stay open when D-pad Back is pressed from the menu, change this to 'return true'
+                // For now, letting it exit:
+                return super.onKeyDown(keyCode, event)
             } else {
+                // If focus is elsewhere in the main fragment, move it back to the selected menu item.
                 when {
                     binding.chipDiscoverMovies.isChecked -> binding.chipDiscoverMovies.requestFocus()
                     binding.chipDiscoverSeries.isChecked -> binding.chipDiscoverSeries.requestFocus()
@@ -118,7 +134,7 @@ class MainActivity : AppCompatActivity() {
                     binding.chipSearch.isChecked -> binding.chipSearch.requestFocus()
                     else -> binding.navigationScroll.requestFocus()
                 }
-                return true
+                return true // Consume the back press to restore focus
             }
         }
         return super.onKeyDown(keyCode, event)
