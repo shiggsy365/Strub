@@ -60,7 +60,7 @@ class SearchFragment : Fragment() {
         )
 
         binding.searchRecyclerView.apply {
-            layoutManager = GridLayoutManager(context, 3) // 3 columns for posters
+            layoutManager = GridLayoutManager(context, 3)
             adapter = searchAdapter
         }
     }
@@ -74,13 +74,11 @@ class SearchFragment : Fragment() {
                         performSearch(it)
                     }
                 }
-                // Hide keyboard
                 binding.searchView.clearFocus()
                 return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                // Optional: Implement real-time search with debouncing
                 if (newText.isNullOrBlank()) {
                     showEmptyState()
                 }
@@ -90,73 +88,49 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupFilterChips() {
-        // Set default selection to "All"
         binding.chipAll.isChecked = true
 
         binding.chipAll.setOnClickListener {
-            if (currentSearchQuery.isNotBlank()) {
-                performSearch(currentSearchQuery, SearchType.ALL)
-            }
+            if (currentSearchQuery.isNotBlank()) performSearch(currentSearchQuery, SearchType.ALL)
         }
 
         binding.chipMovies.setOnClickListener {
-            if (currentSearchQuery.isNotBlank()) {
-                performSearch(currentSearchQuery, SearchType.MOVIES)
-            }
+            if (currentSearchQuery.isNotBlank()) performSearch(currentSearchQuery, SearchType.MOVIES)
         }
 
         binding.chipSeries.setOnClickListener {
-            if (currentSearchQuery.isNotBlank()) {
-                performSearch(currentSearchQuery, SearchType.SERIES)
-            }
+            if (currentSearchQuery.isNotBlank()) performSearch(currentSearchQuery, SearchType.SERIES)
         }
     }
 
     private fun setupObservers() {
-        // Observe search results
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            if (results.isEmpty()) {
-                showNoResults()
-            } else {
-                showResults(results)
-            }
+            if (results.isEmpty()) showNoResults() else showResults(results)
         }
 
-        // Observe loading state
         viewModel.isSearching.observe(viewLifecycleOwner) { isSearching ->
             binding.loadingProgress.visibility = if (isSearching) View.VISIBLE else View.GONE
         }
 
-        // Observe errors
         viewModel.error.observe(viewLifecycleOwner) { error ->
-            if (error != null) {
-                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-            }
+            if (error != null) Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun performSearch(query: String, type: SearchType = SearchType.ALL) {
-        Log.d("SearchFragment", "Searching for: $query (type: $type)")
-
         when (type) {
             SearchType.ALL -> viewModel.searchTMDB(query)
             SearchType.MOVIES -> viewModel.searchMovies(query)
             SearchType.SERIES -> viewModel.searchSeries(query)
         }
-
-        // Hide empty state, show loading
         binding.emptyText.visibility = View.GONE
         binding.searchRecyclerView.visibility = View.GONE
     }
 
     private fun showResults(results: List<MetaItem>) {
-        Log.d("SearchFragment", "Showing ${results.size} results")
-
         binding.emptyText.visibility = View.GONE
         binding.searchRecyclerView.visibility = View.VISIBLE
         searchAdapter.updateData(results)
-
-        // Update result count
         binding.resultCount.visibility = View.VISIBLE
         binding.resultCount.text = "${results.size} results found"
     }
@@ -177,8 +151,6 @@ class SearchFragment : Fragment() {
     }
 
     private fun onItemClick(item: MetaItem) {
-        Log.d("SearchFragment", "Clicked: ${item.name} (${item.type})")
-
         val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
             putExtra("metaId", item.id)
             putExtra("title", item.name)

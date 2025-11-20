@@ -32,19 +32,19 @@ class CatalogConfigAdapter(
         fun bind(item: UserCatalog, position: Int) {
             binding.tvCatalogName.text = item.displayName
 
-            // IMPORTANT: Clear listeners before setting state
+            // Clear listeners first
             binding.switchDiscover.setOnCheckedChangeListener(null)
             binding.switchUser.setOnCheckedChangeListener(null)
 
-            // Bind values (Default to true if field missing in old DB)
+            // Set values
             binding.switchDiscover.isChecked = item.showInDiscover
             binding.switchUser.isChecked = item.showInUser
 
-            // MAKE VISIBLE
+            // Set Visible
             binding.switchDiscover.visibility = View.VISIBLE
             binding.switchUser.visibility = View.VISIBLE
 
-            // Update listeners
+            // Re-attach listeners
             binding.switchDiscover.setOnCheckedChangeListener { _, isChecked ->
                 onUpdate(item.copy(showInDiscover = isChecked))
             }

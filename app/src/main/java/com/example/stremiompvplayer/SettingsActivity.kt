@@ -3,6 +3,7 @@ package com.example.stremiompvplayer
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
+import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -41,6 +42,7 @@ class SettingsActivity : AppCompatActivity() {
         setupCatalogList()
     }
 
+    // ... (setupTMDBSection, updateTMDBTokenDisplay, showTMDBTokenDialog remain the same) ...
     private fun setupTMDBSection() {
         updateTMDBTokenDisplay()
 
@@ -71,7 +73,7 @@ class SettingsActivity : AppCompatActivity() {
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Configure TMDB Access Token")
-            .setMessage("Enter your TMDB Access Token (Read Access Token from TMDB API settings)")
+            .setMessage("Enter your TMDB Access Token")
             .setView(input)
             .setPositiveButton("Save") { _, _ ->
                 val token = input.text.toString().trim()
@@ -84,7 +86,6 @@ class SettingsActivity : AppCompatActivity() {
             .show()
     }
 
-    // AIOStreams Section
     private fun setupAIOStreamsSection() {
         updateAIOStreamsDisplay()
 
@@ -112,16 +113,35 @@ class SettingsActivity : AppCompatActivity() {
             setPadding(48, 16, 48, 16)
         }
 
-        val usernameInput = TextInputEditText(this).apply {
-            hint = "Username (UUID)"
-            inputType = InputType.TYPE_CLASS_TEXT
-            setText(prefsManager.getAIOStreamsUsername() ?: "")
-        }
-
+        // Input 2: Password
         val passwordInput = TextInputEditText(this).apply {
+            id = 200
             hint = "Password"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             setText(prefsManager.getAIOStreamsPassword() ?: "")
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            setSingleLine(true)
+        }
+
+        // Input 1: Username (UUID)
+        val usernameInput = TextInputEditText(this).apply {
+            id = 100
+            hint = "Username (UUID)"
+            inputType = InputType.TYPE_CLASS_TEXT
+            setText(prefsManager.getAIOStreamsUsername() ?: "")
+            imeOptions = EditorInfo.IME_ACTION_NEXT
+            setSingleLine(true)
+            nextFocusDownId = 200
+
+            // Force focus jump on "Next"
+            setOnEditorActionListener { _, actionId, _ ->
+                if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                    passwordInput.requestFocus()
+                    true
+                } else {
+                    false
+                }
+            }
         }
 
         container.addView(usernameInput)
@@ -129,7 +149,7 @@ class SettingsActivity : AppCompatActivity() {
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Configure AIOStreams")
-            .setMessage("Enter your AIOStreams credentials\n(Get them from aiostreams.shiggsy.co.uk)")
+            .setMessage("Enter your AIOStreams credentials")
             .setView(container)
             .setPositiveButton("Save") { _, _ ->
                 val username = usernameInput.text.toString().trim()

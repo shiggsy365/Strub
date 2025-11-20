@@ -11,17 +11,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stremiompvplayer.databinding.ActivityUserSelectionBinding
-// FIXED IMPORTS: Use SharedPreferencesManager and its models
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.utils.User
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import kotlin.random.Random
+import kotlin.system.exitProcess // Added import for exitProcess
 
 class UserSelectionActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityUserSelectionBinding
-    // FIXED: Use SharedPreferencesManager instead of AppDatabase
     private lateinit var prefsManager: SharedPreferencesManager
     private lateinit var adapter: UserAdapter
 
@@ -30,7 +29,6 @@ class UserSelectionActivity : AppCompatActivity() {
         binding = ActivityUserSelectionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // FIXED: Initialize SharedPreferencesManager
         prefsManager = SharedPreferencesManager.getInstance(this)
 
         setupRecyclerView()
@@ -53,10 +51,15 @@ class UserSelectionActivity : AppCompatActivity() {
         binding.manageProfilesButton.setOnClickListener {
             showAddUserDialog()
         }
+
+        // NEW: Exit Button Listener
+        binding.exitAppButton.setOnClickListener {
+            finishAffinity() // Closes all activities in the task
+            // System.exit(0) // Optional: Force kill process if needed, but finishAffinity is cleaner for Android
+        }
     }
 
     private fun loadUsers() {
-        // FIXED: Use prefsManager methods
         val users = prefsManager.getAllUsers().toMutableList()
 
         // Add "Add User" button
@@ -72,7 +75,7 @@ class UserSelectionActivity : AppCompatActivity() {
         val input = TextInputEditText(this).apply {
             hint = "Profile Name"
             maxLines = 1
-            inputType = InputType.TYPE_CLASS_TEXT // Or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            inputType = InputType.TYPE_CLASS_TEXT
             setPadding(48, 32, 48, 32)
         }
 
@@ -96,18 +99,15 @@ class UserSelectionActivity : AppCompatActivity() {
 
     private fun createUser(name: String) {
         val avatarColor = generateAvatarColor()
-        // FIXED: Use prefsManager method
         val user = prefsManager.createUser(name, avatarColor)
         loadUsers()
 
-        // FIXED: Use prefsManager method
         if (prefsManager.getAllUsers().size == 1) {
             selectUser(user)
         }
     }
 
     private fun selectUser(user: User) {
-        // FIXED: Use prefsManager method
         prefsManager.setCurrentUser(user.id)
 
         val intent = Intent(this, MainActivity::class.java)
@@ -118,19 +118,18 @@ class UserSelectionActivity : AppCompatActivity() {
 
     private fun generateAvatarColor(): Int {
         val colors = listOf(
-            0xFFE50914.toInt(), // Netflix red
-            0xFF0080FF.toInt(), // Blue
-            0xFF00C853.toInt(), // Green
-            0xFFFFAB00.toInt(), // Orange
-            0xFF9C27B0.toInt(), // Purple
-            0xFFFF6D00.toInt(), // Deep orange
-            0xFF00BCD4.toInt()  // Cyan
+            0xFFE50914.toInt(),
+            0xFF0080FF.toInt(),
+            0xFF00C853.toInt(),
+            0xFFFFAB00.toInt(),
+            0xFF9C27B0.toInt(),
+            0xFFFF6D00.toInt(),
+            0xFF00BCD4.toInt()
         )
-        // FIXED: Using Kotlin's Random.nextInt correctly with bounds.
         return colors[Random.nextInt(0, colors.size)]
     }
 
-    // UserAdapter Class (No need for DataBinding generation here, as it uses view binding)
+    // UserAdapter Class
     inner class UserAdapter(
         private val onUserClick: (User) -> Unit
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -155,15 +154,12 @@ class UserSelectionActivity : AppCompatActivity() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            // NOTE: This uses the traditional item_user_profile view inflation
             val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.item_user_profile, parent, false)
 
             return if (viewType == TYPE_USER) {
-                // FIXED: Passing the view to the ViewHolder
                 UserViewHolder(view)
             } else {
-                // FIXED: Passing the view to the ViewHolder
                 AddUserViewHolder(view)
             }
         }
@@ -176,15 +172,12 @@ class UserSelectionActivity : AppCompatActivity() {
             }
         }
 
-        // This ViewHolder uses traditional findViewById (assuming item_user_profile.xml uses standard IDs)
         inner class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            // These IDs should match item_user_profile.xml
             private val avatarContainer: View = itemView.findViewById(R.id.avatarContainer)
             private val avatarInitial: TextView = itemView.findViewById(R.id.avatarInitial)
             private val userName: TextView = itemView.findViewById(R.id.userName)
 
             fun bind(user: User) {
-                // FIXED: References to user properties are now resolved
                 avatarContainer.setBackgroundColor(user.avatarColor)
                 avatarInitial.text = user.name.first().uppercase()
                 userName.text = user.name
@@ -196,7 +189,6 @@ class UserSelectionActivity : AppCompatActivity() {
         }
 
         inner class AddUserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            // These IDs should match item_user_profile.xml
             private val avatarContainer: View = itemView.findViewById(R.id.avatarContainer)
             private val avatarInitial: TextView = itemView.findViewById(R.id.avatarInitial)
             private val userName: TextView = itemView.findViewById(R.id.userName)

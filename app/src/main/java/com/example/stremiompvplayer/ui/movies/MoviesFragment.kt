@@ -41,7 +41,6 @@ class MoviesFragment : Fragment() {
 
     private var selectedMovie: MetaItem? = null
 
-    // Standard TMDB list catalogs
     private val standardCatalogs = listOf(
         Catalog(type = "movie", id = "popular", name = "Most Popular", extraProps = null),
         Catalog(type = "movie", id = "latest", name = "Latest Releases", extraProps = null),
@@ -62,12 +61,10 @@ class MoviesFragment : Fragment() {
         setupRecyclerViews()
         setupObservers()
 
-        // Load all movie lists on startup
         viewModel.loadMovieLists()
     }
 
     private fun setupRecyclerViews() {
-        // Setup Catalog Chips (Popular, Latest, Trending)
         catalogChipAdapter = CatalogChipAdapter(
             onClick = { catalog -> onCatalogSelected(catalog) },
             onLongClick = null
@@ -78,7 +75,6 @@ class MoviesFragment : Fragment() {
         }
         catalogChipAdapter.setCatalogs(standardCatalogs)
 
-        // Setup Posters (Horizontal grid at bottom)
         posterAdapter = PosterAdapter(
             items = emptyList(),
             onClick = { item -> onPosterItemClicked(item) }
@@ -88,11 +84,13 @@ class MoviesFragment : Fragment() {
             adapter = posterAdapter
         }
 
-        // Setup Streams (Vertical list in box)
+        // FIXED CLICK LISTENER
         streamAdapter = StreamAdapter { stream ->
             val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
-                putExtra("streamUrl", stream.url)
-                putExtra("streamTitle", stream.title ?: "Unknown Stream")
+                // Passing Full Stream Object
+                putExtra("stream", stream)
+                // Passing MetaItem for context
+                putExtra("meta", selectedMovie)
             }
             startActivity(intent)
         }
@@ -103,16 +101,13 @@ class MoviesFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        // Observe Popular Movies (default)
         viewModel.popularMovies.observe(viewLifecycleOwner) { items ->
             posterAdapter.updateData(items)
-            // Auto-select first movie [Fixed: Uncommented logic]
             if (selectedMovie == null && items.isNotEmpty()) {
-                onPosterItemClicked(items[0])
+                val firstItem = items[0]
+                updateHeaderUI(firstItem.name, firstItem.description ?: "No description available.", firstItem.poster)
             }
         }
-
-        // Fixed: Removed empty observers for latestMovies and trendingMovies to prevent crash
 
         viewModel.streams.observe(viewLifecycleOwner) { streams ->
             if (streams.isNotEmpty()) {
@@ -140,40 +135,30 @@ class MoviesFragment : Fragment() {
         var itemsToSelect: List<MetaItem>? = null
 
         when (catalog.id) {
-            "popular" -> {
-                itemsToSelect = viewModel.popularMovies.value
-            }
-            "latest" -> {
-                itemsToSelect = viewModel.latestMovies.value
-            }
-            "trending" -> {
-                itemsToSelect = viewModel.trendingMovies.value
-            }
+            "popular" -> itemsToSelect = viewModel.popularMovies.value
+            "latest" -> itemsToSelect = viewModel.latestMovies.value
+            "trending" -> itemsToSelect = viewModel.trendingMovies.value
         }
 
         itemsToSelect?.let {
             posterAdapter.updateData(it)
-            // Auto-select first item when switching catalogs
             if (it.isNotEmpty()) {
-                onPosterItemClicked(it[0])
+                val firstItem = it[0]
+                updateHeaderUI(firstItem.name, firstItem.description ?: "No description available.", firstItem.poster)
             }
         }
 
-        // Clear current selection if list is empty
+        selectedMovie = null
+        viewModel.clearStreams()
+
         if (itemsToSelect.isNullOrEmpty()) {
-            selectedMovie = null
-            viewModel.clearStreams()
             updateHeaderUI("Select a Movie", "Choose a movie to see available streams", null)
         }
     }
 
     private fun onPosterItemClicked(item: MetaItem) {
         selectedMovie = item
-
-        // Update Header UI
         updateHeaderUI(item.name, item.description ?: "No description available.", item.poster)
-
-        // Load streams for the selected movie
         viewModel.loadStreams("movie", item.id)
     }
 
@@ -182,13 +167,8 @@ class MoviesFragment : Fragment() {
         binding.movieDescription.text = description
 
         if (!posterUrl.isNullOrEmpty()) {
-            Glide.with(this)
-                .load(posterUrl)
-                .into(binding.selectedPoster)
-
-            Glide.with(this)
-                .load(posterUrl)
-                .into(binding.backgroundImage)
+            Glide.with(this).load(posterUrl).into(binding.selectedPoster)
+            Glide.with(this).load(posterUrl).into(binding.backgroundImage)
         } else {
             binding.selectedPoster.setImageResource(R.drawable.movie)
             binding.backgroundImage.setImageResource(R.drawable.movie)

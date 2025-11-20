@@ -38,7 +38,6 @@
 
         <Button
             android:id="@+id/manageProfilesButton"
-            style="@style/TVButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Manage Profiles"
@@ -46,7 +45,24 @@
             android:textSize="20sp"
             android:padding="16dp"
             android:layout_marginTop="32dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/button_background"
+            app:backgroundTint="@null"
+            app:layout_constraintBottom_toTopOf="@+id/exitAppButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <Button
+            android:id="@+id/exitAppButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Exit App"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:padding="16dp"
             android:layout_marginBottom="32dp"
+            android:background="@drawable/button_background"
+            app:backgroundTint="@null"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />

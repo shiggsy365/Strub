@@ -1,6 +1,9 @@
 package com.example.stremiompvplayer.network
 
-import com.example.stremiompvplayer.models.StreamResponse
+import com.example.stremiompvplayer.models.Stream
+import com.squareup.moshi.Json
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Credentials
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -8,40 +11,39 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import java.util.concurrent.TimeUnit
+
+// Response wrappers based on AIOStreams Wiki
+data class AIOStreamsResponse(
+    val success: Boolean,
+    val data: AIOStreamsData?
+)
+
+data class AIOStreamsData(
+    val results: List<Stream>
+)
 
 interface AIOStreamsApiService {
 
     @GET("api/v1/search")
-    suspend fun searchMovieStreams(
-        @Query("type") type: String = "movie",
+    suspend fun searchStreams(
+        @Query("type") type: String,
         @Query("id") id: String
-    ): StreamResponse
-
-    @GET("api/v1/search")
-    suspend fun searchSeriesStreams(
-        @Query("type") type: String = "series",
-        @Query("id") id: String
-    ): StreamResponse
+    ): AIOStreamsResponse
 }
 
 object AIOStreamsClient {
 
     private const val BASE_URL = "https://aiostreams.shiggsy.co.uk/"
 
-    // These will be set from SharedPreferences
-    private var currentUsername: String? = null
-    private var currentPassword: String? = null
-
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
 
-    // Create client dynamically based on current credentials
     private fun createClient(username: String, password: String): OkHttpClient {
         val authInterceptor = Interceptor { chain ->
             val original = chain.request()
+            // Wiki: "Authorization: Basic <base64(uuid:password)>"
             val credentials = Credentials.basic(username, password)
 
             val request = original.newBuilder()
@@ -53,6 +55,8 @@ object AIOStreamsClient {
 
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS) // Increased timeout for searches
+            .readTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 
@@ -64,20 +68,9 @@ object AIOStreamsClient {
             .build()
     }
 
-    // Get API instance with credentials
     fun getApi(username: String, password: String): AIOStreamsApiService {
         val client = createClient(username, password)
         val retrofit = createRetrofit(client)
         return retrofit.create(AIOStreamsApiService::class.java)
-    }
-
-    // Legacy support - uses hardcoded credentials
-    val api: AIOStreamsApiService by lazy {
-        val client = createClient(
-            "2024e3b8-2d4b-4316-8e99-8e80278e4ec8",
-            "L1ver9001"
-        )
-        val retrofit = createRetrofit(client)
-        retrofit.create(AIOStreamsApiService::class.java)
     }
 }

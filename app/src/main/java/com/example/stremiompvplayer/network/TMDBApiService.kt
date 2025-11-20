@@ -3,8 +3,8 @@ package com.example.stremiompvplayer.network
 import com.example.stremiompvplayer.models.TMDBExternalIdsResponse
 import com.example.stremiompvplayer.models.TMDBMovieListResponse
 import com.example.stremiompvplayer.models.TMDBMultiSearchResponse
-import com.example.stremiompvplayer.models.TMDBSeriesListResponse
 import com.example.stremiompvplayer.models.TMDBSeriesDetailResponse
+import com.example.stremiompvplayer.models.TMDBSeriesListResponse
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
@@ -12,125 +12,100 @@ import retrofit2.http.Query
 
 interface TMDBApiService {
 
-    // Most Popular Movies
-    @GET("discover/movie")
+    // --- EXISTING LISTS ---
+    @GET("movie/popular")
     suspend fun getPopularMovies(
-        @Header("Authorization") authorization: String,
-        @Query("include_adult") includeAdult: Boolean = false,
-        @Query("include_video") includeVideo: Boolean = false,
+        @Header("Authorization") token: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
-        @Query("release_date.lte") releaseDate: String,
-        @Query("vote_count.gte") voteCount: Int = 300,
-        @Query("sort_by") sortBy: String = "popularity.desc"
+        @Query("primary_release_date.lte") releaseDate: String? = null
     ): TMDBMovieListResponse
 
-    // Latest Release Movies
-    @GET("discover/movie")
+    @GET("movie/now_playing")
     suspend fun getLatestMovies(
-        @Header("Authorization") authorization: String,
-        @Query("include_adult") includeAdult: Boolean = false,
-        @Query("include_video") includeVideo: Boolean = false,
+        @Header("Authorization") token: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
-        @Query("release_date.lte") releaseDate: String,
-        @Query("vote_count.gte") voteCount: Int = 50,
-        @Query("sort_by") sortBy: String = "primary_release_date.desc"
+        @Query("primary_release_date.lte") releaseDate: String? = null
     ): TMDBMovieListResponse
 
-    // Trending Movies
     @GET("trending/movie/week")
     suspend fun getTrendingMovies(
-        @Header("Authorization") authorization: String,
+        @Header("Authorization") token: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1
     ): TMDBMovieListResponse
 
-    // Most Popular Series
-    @GET("discover/tv")
+    // --- TV SHOWS ---
+    @GET("tv/popular")
     suspend fun getPopularSeries(
-        @Header("Authorization") authorization: String,
-        @Query("include_adult") includeAdult: Boolean = false,
-        @Query("include_video") includeVideo: Boolean = false,
+        @Header("Authorization") token: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
-        @Query("air_date.lte") airDate: String,
-        @Query("vote_count.gte") voteCount: Int = 100,
-        @Query("sort_by") sortBy: String = "popularity.desc"
+        @Query("first_air_date.lte") airDate: String? = null
     ): TMDBSeriesListResponse
 
-    // Latest Release Series
-    @GET("discover/tv")
+    @GET("tv/on_the_air")
     suspend fun getLatestSeries(
-        @Header("Authorization") authorization: String,
-        @Query("include_adult") includeAdult: Boolean = false,
-        @Query("include_video") includeVideo: Boolean = false,
+        @Header("Authorization") token: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
-        @Query("air_date.lte") airDate: String,
-        @Query("vote_count.gte") voteCount: Int = 10,
-        @Query("sort_by") sortBy: String = "primary_release_date.desc"
+        @Query("first_air_date.lte") airDate: String? = null
     ): TMDBSeriesListResponse
 
-    // Trending Series
     @GET("trending/tv/week")
     suspend fun getTrendingSeries(
-        @Header("Authorization") authorization: String,
+        @Header("Authorization") token: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1
     ): TMDBSeriesListResponse
 
-    // Get Series Detail (for episodes)
+    // --- SEARCH (Ensure these exist!) ---
+    @GET("search/multi")
+    suspend fun searchMulti(
+        @Header("Authorization") token: String,
+        @Query("query") query: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("include_adult") includeAdult: Boolean = false
+    ): TMDBMultiSearchResponse
+
+    @GET("search/movie")
+    suspend fun searchMovies(
+        @Header("Authorization") token: String,
+        @Query("query") query: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("include_adult") includeAdult: Boolean = false
+    ): TMDBMovieListResponse
+
+    @GET("search/tv")
+    suspend fun searchSeries(
+        @Header("Authorization") token: String,
+        @Query("query") query: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("include_adult") includeAdult: Boolean = false
+    ): TMDBSeriesListResponse
+
+    // --- DETAILS ---
     @GET("tv/{series_id}")
     suspend fun getSeriesDetail(
         @Path("series_id") seriesId: Int,
-        @Header("Authorization") authorization: String,
-        @Query("language") language: String = "en-US"
+        @Header("Authorization") token: String,
+        @Query("language") language: String = "en-US",
+        @Query("append_to_response") appendToResponse: String = "external_ids"
     ): TMDBSeriesDetailResponse
 
-    // Search Movies
-    @GET("search/movie")
-    suspend fun searchMovies(
-        @Header("Authorization") authorization: String,
-        @Query("query") query: String,
-        @Query("include_adult") includeAdult: Boolean = false,
-        @Query("language") language: String = "en-US",
-        @Query("page") page: Int = 1
-    ): TMDBMovieListResponse
-
-    // Search TV Series
-    @GET("search/tv")
-    suspend fun searchSeries(
-        @Header("Authorization") authorization: String,
-        @Query("query") query: String,
-        @Query("include_adult") includeAdult: Boolean = false,
-        @Query("language") language: String = "en-US",
-        @Query("page") page: Int = 1
-    ): TMDBSeriesListResponse
-
-    // Multi Search (searches both movies and TV shows)
-    @GET("search/multi")
-    suspend fun searchMulti(
-        @Header("Authorization") authorization: String,
-        @Query("query") query: String,
-        @Query("include_adult") includeAdult: Boolean = false,
-        @Query("language") language: String = "en-US",
-        @Query("page") page: Int = 1
-    ): TMDBMultiSearchResponse
-
-    // Get External IDs for Movie (includes IMDB ID)
     @GET("movie/{movie_id}/external_ids")
     suspend fun getMovieExternalIds(
         @Path("movie_id") movieId: Int,
-        @Header("Authorization") authorization: String,
-        @Query("language") language: String = "en-US"
+        @Header("Authorization") token: String
     ): TMDBExternalIdsResponse
 
-    // Get External IDs for TV Show (includes IMDB ID)
     @GET("tv/{tv_id}/external_ids")
     suspend fun getTVExternalIds(
         @Path("tv_id") tvId: Int,
-        @Header("Authorization") authorization: String,
-        @Query("language") language: String = "en-US"
+        @Header("Authorization") token: String
     ): TMDBExternalIdsResponse
 }

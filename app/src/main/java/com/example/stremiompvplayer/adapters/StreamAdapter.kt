@@ -2,17 +2,15 @@ package com.example.stremiompvplayer.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-// FIX: Import ListAdapter and DiffUtil
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stremiompvplayer.databinding.ItemStreamBinding
 import com.example.stremiompvplayer.models.Stream
 
-class   StreamAdapter(
-    // FIX: Changed from List<Stream> to just the click listener
+class StreamAdapter(
     private val onClick: (Stream) -> Unit
-) : ListAdapter<Stream, StreamAdapter.ViewHolder>(DiffCallback) { // FIX: Extend ListAdapter
+) : ListAdapter<Stream, StreamAdapter.ViewHolder>(DiffCallback) {
 
     class ViewHolder(val binding: ItemStreamBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -25,21 +23,19 @@ class   StreamAdapter(
         return ViewHolder(binding)
     }
 
-    // REMOVED: getItemCount() - ListAdapter handles this
-
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val stream = getItem(position)
-        holder.binding.title.text = stream.title
-        // REMOVED: holder.binding.subtitle.text = stream.subtitle
+        // USE FORMATTED TITLE
+        holder.binding.title.text = stream.formattedTitle
+
+        // Optionally show raw description if needed, or hide subtitle
+        // holder.binding.subtitle.text = stream.description
 
         holder.itemView.setOnClickListener {
             onClick(stream)
         }
     }
 
-    // REMOVED: updateData() - ListAdapter uses submitList()
-
-    // FIX: Add DiffCallback for ListAdapter
     companion object DiffCallback : DiffUtil.ItemCallback<Stream>() {
         override fun areItemsTheSame(oldItem: Stream, newItem: Stream): Boolean {
             return oldItem.url == newItem.url && oldItem.infoHash == newItem.infoHash

@@ -11,18 +11,18 @@
         android:background="#000000"
         android:padding="16dp">
 
-        <!-- Search Bar -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/searchCard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="80dp"
+            android:layout_marginEnd="16dp"
             app:cardBackgroundColor="#1A1A1A"
             app:cardCornerRadius="8dp"
             app:cardElevation="0dp"
-            android:layout_marginBottom="16dp"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnSearch">
 
             <androidx.appcompat.widget.SearchView
                 android:id="@+id/searchView"
@@ -34,12 +34,22 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Filter Chips -->
+        <Button
+            android:id="@+id/btnSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="Search"
+            android:textColor="@android:color/white"
+            android:background="@drawable/button_background"
+            app:layout_constraintTop_toTopOf="@id/searchCard"
+            app:layout_constraintBottom_toBottomOf="@id/searchCard"
+            app:layout_constraintEnd_toEndOf="parent" />
+
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/filterChipGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"
             app:singleSelection="true"
             app:selectionRequired="true"
@@ -53,7 +63,9 @@
                 android:layout_height="wrap_content"
                 android:text="All"
                 android:textColor="@android:color/white"
-                app:chipBackgroundColor="@color/chip_background_selector" />
+                app:chipBackgroundColor="@color/chip_background_selector"
+                app:chipStrokeColor="@color/chip_text_color"
+                app:chipStrokeWidth="1dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipMovies"
@@ -62,7 +74,9 @@
                 android:layout_height="wrap_content"
                 android:text="Movies"
                 android:textColor="@android:color/white"
-                app:chipBackgroundColor="@color/chip_background_selector" />
+                app:chipBackgroundColor="@color/chip_background_selector"
+                app:chipStrokeColor="@color/chip_text_color"
+                app:chipStrokeWidth="1dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipSeries"
@@ -71,11 +85,12 @@
                 android:layout_height="wrap_content"
                 android:text="Series"
                 android:textColor="@android:color/white"
-                app:chipBackgroundColor="@color/chip_background_selector" />
+                app:chipBackgroundColor="@color/chip_background_selector"
+                app:chipStrokeColor="@color/chip_text_color"
+                app:chipStrokeWidth="1dp" />
 
         </com.google.android.material.chip.ChipGroup>
 
-        <!-- Result Count -->
         <TextView
             android:id="@+id/resultCount"
             android:layout_width="wrap_content"
@@ -88,7 +103,6 @@
             app:layout_constraintStart_toStartOf="parent"
             android:text="0 results found" />
 
-        <!-- Content Container -->
         <FrameLayout
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -98,7 +112,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <!-- Search Results RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/searchRecyclerView"
                 android:layout_width="match_parent"
@@ -106,7 +119,6 @@
                 android:clipToPadding="false"
                 android:visibility="gone" />
 
-            <!-- Loading Progress -->
             <ProgressBar
                 android:id="@+id/loadingProgress"
                 android:layout_width="wrap_content"
@@ -114,7 +126,6 @@
                 android:layout_gravity="center"
                 android:visibility="gone" />
 
-            <!-- Empty State / No Results -->
             <TextView
                 android:id="@+id/emptyText"
                 android:layout_width="wrap_content"

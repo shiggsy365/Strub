@@ -2,22 +2,21 @@ package com.example.stremiompvplayer.ui.series
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.PlayerActivity
 import com.example.stremiompvplayer.R
+import com.example.stremiompvplayer.adapters.CatalogChipAdapter
 import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.adapters.StreamAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentSeriesBinding
+import com.example.stremiompvplayer.models.Catalog
 import com.example.stremiompvplayer.models.Meta
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
@@ -36,6 +35,7 @@ class SeriesFragment : Fragment() {
         )
     }
 
+    private lateinit var catalogChipAdapter: CatalogChipAdapter
     private lateinit var posterAdapter: PosterAdapter
     private lateinit var streamAdapter: StreamAdapter
 
@@ -62,23 +62,36 @@ class SeriesFragment : Fragment() {
         setupRecyclerViews()
         setupObservers()
 
-        if (currentLevel == Level.CATALOG) {
-            viewModel.loadSeriesLists()
+        viewModel.initDefaultCatalogs()
+    }
+
+    fun handleBackPress(): Boolean {
+        if (currentLevel != Level.CATALOG) {
+            navigateBack()
+            return true
         }
+        return false
     }
 
     private fun setupRecyclerViews() {
-        // Setup Posters (showing series, seasons, or episodes)
+        catalogChipAdapter = CatalogChipAdapter(
+            onClick = { catalog -> onCatalogSelected(catalog) },
+            onLongClick = null
+        )
+        binding.catalogChipsRecycler.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = catalogChipAdapter
+        }
+
         posterAdapter = PosterAdapter(
             items = emptyList(),
             onClick = { item -> onPosterItemClicked(item) }
         )
         binding.rvPosters.apply {
-            layoutManager = GridLayoutManager(context, 6)
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             adapter = posterAdapter
         }
 
-        // Setup Streams
         streamAdapter = StreamAdapter { stream ->
             val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
                 putExtra("stream", stream)
@@ -93,23 +106,32 @@ class SeriesFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        // Observe Popular Series (default)
-        viewModel.popularSeries.observe(viewLifecycleOwner) { items ->
+        // 1. Observe Enabled Series Catalogs
+        viewModel.seriesCatalogs.observe(viewLifecycleOwner) { userCatalogs ->
+            val uiCatalogs = userCatalogs.map {
+                Catalog(type = "series", id = it.catalogId, name = it.displayName, extraProps = null)
+            }
+            catalogChipAdapter.setCatalogs(uiCatalogs)
+
+            if (uiCatalogs.isNotEmpty() && posterAdapter.itemCount == 0) {
+                viewModel.loadContentForCatalog(userCatalogs[0])
+            }
+        }
+
+        // 2. Observe Content (Shared with MoviesFragment logic, but works because fragments usually aren't visible simultaneously in this way or data is refreshed)
+        // NOTE: Since MainViewModel is shared, switching tabs refreshes data.
+        viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
             if (currentLevel == Level.CATALOG) {
                 posterAdapter.updateData(items)
-
-                // Auto-select first series if nothing selected
-                if (selectedShow == null && items.isNotEmpty()) {
-                    onPosterItemClicked(items[0])
-                } else if (selectedShow == null) {
+                if (items.isNotEmpty()) {
+                    val firstItem = items[0]
+                    updateHeaderUI(firstItem.name, firstItem.description ?: "", firstItem.poster, null)
+                    selectedShow = null
+                } else {
                     updateHeaderUI("TV Series", "Browse popular series", null, null)
                 }
             }
         }
-
-        // Fixed: Removed empty observers to prevent crash
-        // viewModel.latestSeries.observe...
-        // viewModel.trendingSeries.observe...
 
         viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
             if (meta != null && currentLevel == Level.CATALOG) {
@@ -123,25 +145,30 @@ class SeriesFragment : Fragment() {
                 if (streams.isNotEmpty()) {
                     streamAdapter.submitList(streams)
                     binding.rvStreams.visibility = View.VISIBLE
+                    binding.noStreamsText.visibility = View.GONE
                 } else {
                     binding.rvStreams.visibility = View.GONE
-                    Toast.makeText(context, "No streams found", Toast.LENGTH_SHORT).show()
+                    binding.noStreamsText.visibility = View.VISIBLE
                 }
             } else {
                 streamAdapter.submitList(emptyList())
                 binding.rvStreams.visibility = View.GONE
+                binding.noStreamsText.visibility = View.VISIBLE
             }
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
+    }
 
-        viewModel.error.observe(viewLifecycleOwner) { error ->
-            if (error != null) {
-                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-            }
-        }
+    private fun onCatalogSelected(catalog: Catalog) {
+        currentLevel = Level.CATALOG
+        binding.catalogChipsRecycler.visibility = View.VISIBLE
+
+        // Find the user catalog config to load
+        val userCatalog = viewModel.seriesCatalogs.value?.find { it.catalogId == catalog.id }
+        userCatalog?.let { viewModel.loadContentForCatalog(it) }
     }
 
     private fun onPosterItemClicked(item: MetaItem) {
@@ -172,12 +199,8 @@ class SeriesFragment : Fragment() {
 
                 updateHeaderUI(selectedShow?.name ?: "", episodeDesc, currentSeriesMeta?.poster, subHeader)
 
-                // Load streams using the new method with season and episode
                 if (season > 0 && episode > 0 && selectedShow != null) {
                     viewModel.loadEpisodeStreams(selectedShow!!.id, season, episode)
-                } else {
-                    Log.e("SeriesFragment", "Invalid season or episode: S$season:E$episode")
-                    Toast.makeText(context, "Invalid episode data", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -185,6 +208,8 @@ class SeriesFragment : Fragment() {
 
     private fun displaySeasons(meta: Meta) {
         currentLevel = Level.SEASONS
+        binding.catalogChipsRecycler.visibility = View.GONE
+
         val seasons = meta.videos
             ?.mapNotNull { it.season }
             ?.distinct()
@@ -235,11 +260,18 @@ class SeriesFragment : Fragment() {
             Level.EPISODES -> currentSeriesMeta?.let { displaySeasons(it) }
             Level.SEASONS -> {
                 currentLevel = Level.CATALOG
+                binding.catalogChipsRecycler.visibility = View.VISIBLE
                 selectedShow = null
                 currentSeriesMeta = null
-                viewModel.loadSeriesLists()
-                viewModel.popularSeries.value?.let { posterAdapter.updateData(it) }
-                updateHeaderUI("TV Series", "Browse popular series", null, null)
+
+                // Reload current catalog content if needed, or just use what's in viewmodel
+                viewModel.currentCatalogContent.value?.let {
+                    posterAdapter.updateData(it)
+                    if (it.isNotEmpty()) {
+                        val firstItem = it[0]
+                        updateHeaderUI(firstItem.name, firstItem.description ?: "", firstItem.poster, null)
+                    }
+                }
                 viewModel.clearStreams()
             }
             Level.CATALOG -> {}
@@ -267,10 +299,13 @@ class SeriesFragment : Fragment() {
         } else {
             binding.tvSubHeader.visibility = View.GONE
         }
+
         if (!posterUrl.isNullOrEmpty()) {
             Glide.with(this).load(posterUrl).into(binding.imgBackground)
+            Glide.with(this).load(posterUrl).into(binding.selectedPoster)
         } else {
             binding.imgBackground.setImageResource(R.drawable.movie)
+            binding.selectedPoster.setImageResource(R.drawable.movie)
         }
     }
 

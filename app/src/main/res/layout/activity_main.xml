@@ -23,10 +23,10 @@
             android:id="@+id/appLogo"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:layout_margin="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginStart="4dp"
             android:background="@drawable/selector_focus_border"
             android:src="@mipmap/ic_launcher"
-            android:padding="8dp"
             android:scaleType="fitCenter"
             android:contentDescription="@string/app_name"
             android:focusable="true"
@@ -61,7 +61,7 @@
                     android:text="Discover"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_selector"
                     app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
@@ -72,7 +72,7 @@
                     android:text="@string/movies"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_selector"
                     app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
@@ -83,7 +83,7 @@
                     android:text="@string/series"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_selector"
                     app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
@@ -94,7 +94,7 @@
                     android:text="@string/library"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_selector"
                     app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
@@ -105,7 +105,7 @@
                     android:text="@string/search"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_selector"
                     app:chipStrokeWidth="1dp" />
 
                 <com.google.android.material.chip.Chip
@@ -116,7 +116,7 @@
                     android:text="..."
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_text_color"
+                    app:chipStrokeColor="@color/chip_stroke_selector"
                     app:chipStrokeWidth="1dp" />
 
             </com.google.android.material.chip.ChipGroup>
