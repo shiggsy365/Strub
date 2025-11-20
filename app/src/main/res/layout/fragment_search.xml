@@ -50,7 +50,12 @@
                 android:paddingVertical="12dp"
                 android:imeOptions="actionSearch"
                 android:inputType="text"
-                android:importantForAutofill="no" />
+                android:importantForAutofill="no"
+
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:nextFocusDown="@id/chipGroupSearchType"
+                android:nextFocusRight="@id/searchButton" />
 
             <ImageButton
                 android:id="@+id/searchButton"

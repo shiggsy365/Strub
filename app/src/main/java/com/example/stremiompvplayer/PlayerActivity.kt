@@ -2,29 +2,25 @@ package com.example.stremiompvplayer
 
 import android.os.Bundle
 import android.util.Log
+import android.view.SurfaceHolder
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-// Removed androidx.annotation.OptIn and all androidx.media3 imports
 import com.example.stremiompvplayer.databinding.ActivityPlayerBinding
-// NOTE: Ensure your models package contains MetaItem and Stream classes
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.models.Stream
+// IMPORT the wrapper we created
+import `is`.xyz.mpv.MPVLib
 
-class PlayerActivity : AppCompatActivity() {
+class PlayerActivity : AppCompatActivity(), MPVLib.EventObserver, SurfaceHolder.Callback {
 
     private lateinit var binding: ActivityPlayerBinding
 
-    // VARIABLES: Ensured these are present and correctly typed (MetaItem and Stream).
+    // Data variables
     private var currentMeta: MetaItem? = null
-    private var currentStreamUrl: String? = null
-    private var nextEpisode: Stream? = null
-    private var prevEpisode: Stream? = null
-
-    // MPV Player State & Placeholder
-    private var mpvPlayer: Any? = null // Placeholder for the MPV controller object
-    private var isMpvInitialized: Boolean = false
     private var currentStream: Stream? = null
-    private var currentPosition: Long = 0
+
+    private var isMpvInitialized: Boolean = false
+    // We don't hold a direct object ref because MPVLib is a static singleton object in this pattern
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +28,6 @@ class PlayerActivity : AppCompatActivity() {
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // FIXED: Casting intent extras to the correct model types (Stream and MetaItem)
         currentStream = intent.getSerializableExtra("stream") as? Stream
         currentMeta = intent.getSerializableExtra("meta") as? MetaItem
 
@@ -42,97 +37,120 @@ class PlayerActivity : AppCompatActivity() {
             return
         }
 
-        // FIXED: Using binding.title/subtitle (TextViews in the custom overlay)
-        // NOTE: The second line overwrites the first, suggesting the intent is to show stream title.
-        binding.titleTextView.text = currentStream?.title
+        binding.titleTextView.text = currentStream?.title ?: "Unknown Stream"
 
-        // Hide ExoPlayer controls placeholder if not using a custom MPV control set
-        // binding.playerView.useController = false
+        // Initialize SurfaceView callback
+        binding.videoSurface.holder.addCallback(this)
     }
 
-    // New MPV Initialization function replacing initializePlayer()
     private fun initializeMpvPlayer() {
         if (isMpvInitialized) return
 
-        // --- MPV SETUP PLACEHOLDERS ---
-        // TODO: 1. Integrate the MPV Android binding library.
-        // TODO: 2. Initialize the MPV context (e.g., MpvController.create(this)).
-        // mpvPlayer = MpvController.create(this)
+        try {
+            // 1. Create and Init MPV
+            MPVLib.create(this)
+            MPVLib.setOptionString("vo", "gpu")
+            MPVLib.setOptionString("gpu-context", "android")
+            MPVLib.init()
 
-        // TODO: 3. Attach MPV to the surface view (binding.playerView.videoSurface).
-        // mpvPlayer?.setSurface(binding.playerView.videoSurface)
+            // 2. Attach Observer
+            MPVLib.addObserver(this)
+            MPVLib.observeProperty("time-pos", MPVLib.MPV_EVENT_NONE)
+            MPVLib.observeProperty("duration", MPVLib.MPV_EVENT_NONE)
 
-        // TODO: 4. Implement event listeners for loading/buffering/errors
-        // (Use MPV events to set binding.loadingProgress visibility).
+            // 3. Load File
+            val url = currentStream?.url ?: ""
+            if (url.isNotEmpty()) {
+                Log.d("PlayerActivity", "Loading URL: $url")
+                MPVLib.command(arrayOf("loadfile", url))
+            }
 
-        // TODO: 5. Load media item
-        val url = currentStream?.url ?: ""
-        // mpvPlayer?.command(arrayOf("loadfile", url))
+            isMpvInitialized = true
 
-        // Start playback (if not automatic)
-        // mpvPlayer?.play()
-
-        isMpvInitialized = true
-        Log.d("PlayerActivity", "MPV Player initialization placeholder executed.")
-        binding.loadingProgress.visibility = View.VISIBLE // Assume loading starts immediately
-        // binding.playerView.player = null // Ensure no lingering ExoPlayer reference
-        // --- END MPV SETUP PLACEHOLDERS ---
+        } catch (e: Exception) {
+            Log.e("PlayerActivity", "Failed to initialize MPV: ${e.message}")
+            binding.errorText.text = "Error initializing player: ${e.message}"
+            binding.errorText.visibility = View.VISIBLE
+        }
     }
 
-    // New MPV Release function replacing releasePlayer()
     private fun releaseMpvPlayer() {
         if (!isMpvInitialized) return
 
-        // --- MPV RELEASE PLACEHOLDERS ---
-        // TODO: 1. Save playback position (mpvPlayer?.getProperty("time-pos")?.toLong() * 1000)
-        // currentPosition = mpvPlayer?.timePosition ?: 0
-
-        // TODO: 2. Stop playback and release resources
-        // mpvPlayer?.command(arrayOf("stop"))
-        // mpvPlayer?.destroy()
-
+        MPVLib.removeObserver(this)
+        MPVLib.destroy()
         isMpvInitialized = false
-        Log.d("PlayerActivity", "Saving position: $currentPosition")
-        // --- END MPV RELEASE PLACEHOLDERS ---
     }
 
-
-    public override fun onStart() {
-        super.onStart()
-        // Use the new MPV initializer
-        initializeMpvPlayer()
+    // SurfaceHolder.Callback implementation
+    override fun surfaceCreated(holder: SurfaceHolder) {
+        Log.d("PlayerActivity", "Surface created")
+        if (!isMpvInitialized) initializeMpvPlayer()
+        // Attach the surface to MPV
+        MPVLib.attachSurface(holder.surface)
     }
 
-    public override fun onResume() {
-        super.onResume()
-        if (!isMpvInitialized) {
-            initializeMpvPlayer()
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        // MPV handles surface changes dynamically usually, but you can pass config here if needed
+    }
+
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
+        Log.d("PlayerActivity", "Surface destroyed")
+        MPVLib.detachSurface()
+    }
+
+    // MPVLib.EventObserver implementation
+    override fun event(eventId: Int) {
+        runOnUiThread {
+            when (eventId) {
+                MPVLib.MPV_EVENT_PLAYBACK_RESTART -> {
+                    // Video actually started playing
+                    binding.loadingProgress.visibility = View.GONE
+                }
+                MPVLib.MPV_EVENT_END_FILE -> {
+                    finish() // Close player when video ends
+                }
+            }
         }
-        // mpvPlayer?.play() // Resume playback if MPV is initialized
+    }
+    override fun eventProperty(property: String) {
+        // Optional: Handle properties with no value if needed
+    }
+    override fun eventProperty(property: String, value: Long) {
+        // Handle time/duration updates
+    }
+    override fun eventProperty(property: String, value: Double) {
+        // Optional: Handle double values (like precise time) here if needed
+    }
+    override fun eventProperty(property: String, value: Boolean) {}
+    override fun eventProperty(property: String, value: String) {}
+
+    override fun onResume() {
+        super.onResume()
+        // If initialized, MPV usually keeps playing or we can send "play" command
+        if (isMpvInitialized) {
+            MPVLib.setPropertyString("pause", "no")
+        }
     }
 
-    public override fun onPause() {
+    override fun onPause() {
         super.onPause()
-        // Save position and release resources
+        if (isMpvInitialized) {
+            MPVLib.setPropertyString("pause", "yes")
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         releaseMpvPlayer()
     }
 
-    public override fun onStop() {
-        super.onStop()
-        // Ensure resources are fully released
-        releaseMpvPlayer()
-    }
-
-    // The deprecated system UI hiding logic remains the same
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            hideSystemUi()
-        }
+        if (hasFocus) hideSystemUi()
     }
 
     private fun hideSystemUi() {
-        // This is a deprecated method, but keeping the original code structure.
         binding.root.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
                 or View.SYSTEM_UI_FLAG_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_LAYOUT_STABLE

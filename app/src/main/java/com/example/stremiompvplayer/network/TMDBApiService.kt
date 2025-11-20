@@ -7,14 +7,44 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import com.example.stremiompvplayer.models.TMDBCreditsResponse
+import com.example.stremiompvplayer.models.TMDBAggregateCreditsResponse
 
 interface TMDBApiService {
+    @GET("search/person")
+    suspend fun searchPeople(
+        @Query("api_key") apiKey: String,
+        @Query("query") query: String,
+        @Query("page") page: Int = 1,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("language") language: String = "en-US"
+    ): TMDBPersonListResponse
+    // For Movies: Standard Credits
+    @GET("movie/{id}/credits")
+    suspend fun getMovieCredits(
+        @Path("id") id: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBCreditsResponse
 
+    // For TV Shows: Aggregate Credits (as per your curl command)
+    @GET("tv/{id}/aggregate_credits")
+    suspend fun getTVAggregateCredits(
+        @Path("id") id: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBAggregateCreditsResponse
     // --- AUTHENTICATION ---
     @GET("authentication/token/new")
     suspend fun createRequestToken(
         @Query("api_key") apiKey: String
     ): TMDBRequestTokenResponse
+
+    @GET("tv/{id}/credits")
+    suspend fun getTVCredits(
+        @Path("id") id: Int,
+        @Query("api_key") apiKey: String
+    ): TMDBCreditsResponse
 
     @POST("authentication/session/new")
     suspend fun createSession(
@@ -120,12 +150,6 @@ interface TMDBApiService {
     ): TMDBExternalIdsResponse
 
     // --- CREDITS (Updated to use api_key) ---
-    @GET("movie/{movie_id}/credits")
-    suspend fun getMovieCredits(
-        @Path("movie_id") movieId: Int,
-        @Query("api_key") apiKey: String,
-        @Query("language") language: String = "en-US"
-    ): TMDBCreditsResponse
 
     @GET("tv/{tv_id}/credits")
     suspend fun getTVCredits(

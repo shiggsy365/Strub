@@ -4,14 +4,85 @@ import com.squareup.moshi.Json
 import java.io.Serializable
 
 // ... existing Movie/Series Models ...
+// --- MOVIE CREDITS (Standard) ---
+data class TMDBCreditsResponse(
+    val cast: List<TMDBCast>,
+    val crew: List<TMDBCrew>
+)
 
+data class TMDBCast(
+    val id: Int,
+    val name: String,
+    val character: String?,
+    val profile_path: String?
+)
+
+data class TMDBCrew(
+    val id: Int,
+    val name: String,
+    val job: String
+)
+
+// --- TV CREDITS (Aggregate) ---
+data class TMDBAggregateCreditsResponse(
+    val cast: List<TMDBAggregateCast>,
+    val crew: List<TMDBAggregateCrew>
+)
+
+data class TMDBAggregateCast(
+    val id: Int,
+    val name: String,
+    val profile_path: String?,
+    val roles: List<TMDBRole>?
+)
+
+data class TMDBRole(
+    val character: String,
+    val episode_count: Int
+)
+
+data class TMDBAggregateCrew(
+    val id: Int,
+    val name: String,
+    val jobs: List<TMDBJob>?
+)
+
+data class TMDBJob(
+    val job: String,
+    val episode_count: Int
+)
 data class TMDBMovieListResponse(
     val page: Int,
     val results: List<TMDBMovie>,
     @Json(name = "total_pages") val totalPages: Int,
     @Json(name = "total_results") val totalResults: Int
 ) : Serializable
+data class TMDBPersonListResponse(
+    val page: Int,
+    val results: List<TMDBPerson>,
+    val total_pages: Int,
+    val total_results: Int
+)
 
+// Add this class for Person Details
+data class TMDBPerson(
+    val id: Int,
+    val name: String,
+    val profile_path: String?,
+    val known_for_department: String?
+) {
+    // Helper to convert to MetaItem for the UI
+    fun toMetaItem(): MetaItem {
+        return MetaItem(
+            id = "tmdb:$id",
+            type = "person",
+            name = name,
+            poster = if (profile_path != null) "https://image.tmdb.org/t/p/w500$profile_path" else null,
+            background = null,
+            description = known_for_department ?: "Person"
+        )
+    }
+}
 data class TMDBMovie(
     val adult: Boolean,
     @Json(name = "backdrop_path") val backdropPath: String?,
@@ -150,26 +221,7 @@ data class TMDBExternalIdsResponse(
 ) : Serializable
 
 // UPDATED: Include Crew
-data class TMDBCreditsResponse(
-    val id: Int,
-    val cast: List<TMDBCast>,
-    val crew: List<TMDBCrew> = emptyList()
-) : Serializable
 
-data class TMDBCast(
-    val id: Int,
-    val name: String,
-    @Json(name = "profile_path") val profilePath: String?,
-    val character: String?,
-    val order: Int
-) : Serializable
-
-data class TMDBCrew(
-    val id: Int,
-    val name: String,
-    val job: String, // We look for "Director"
-    val department: String
-) : Serializable
 
 // ... Auth & Account Models ...
 data class TMDBRequestTokenResponse(

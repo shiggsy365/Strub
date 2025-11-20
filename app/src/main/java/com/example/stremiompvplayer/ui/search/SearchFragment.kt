@@ -60,6 +60,7 @@ class SearchFragment : Fragment() {
 
         // Default chip selection
         binding.chipMixed.isChecked = true
+        binding.searchEditText.requestFocus()
     }
 
     private fun setupRecyclerView() {

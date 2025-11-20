@@ -39,14 +39,14 @@ class MainViewModel(
     private val _streams = MutableLiveData<List<Stream>>()
     val streams: LiveData<List<Stream>> = _streams
 
+    private val _castList = MutableLiveData<List<TMDBCast>>()
+    val castList: LiveData<List<TMDBCast>> = _castList
+    private val _director = MutableLiveData<String?>()
+    val director: LiveData<String?> = _director
     private val _metaDetails = MutableLiveData<Meta?>()
     val metaDetails: LiveData<Meta?> = _metaDetails
 
-    private val _castList = MutableLiveData<List<TMDBCast>>()
-    val castList: LiveData<List<TMDBCast>> = _castList
 
-    private val _director = MutableLiveData<String?>()
-    val director: LiveData<String?> = _director
 
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
@@ -94,7 +94,62 @@ class MainViewModel(
     }
 
     // --- LIBRARY ACTIONS ---
+    fun fetchCast(tmdbId: String, type: String) {
+        val id = tmdbId.removePrefix("tmdb:").toIntOrNull() ?: return
+        val mediaType = if (type == "series") "tv" else "movie"
 
+        viewModelScope.launch {
+            try {
+                if (apiKey.isEmpty()) return@launch
+
+                if (mediaType == "movie") {
+                    // === MOVIE LOGIC (Standard /credits) ===
+                    val credits = TMDBClient.api.getMovieCredits(id, apiKey)
+
+                    // 1. Find Director
+                    val directorItem = credits.crew.find { it.job == "Director" }
+                    _director.postValue(directorItem?.name)
+
+                    // 2. Top 5 Cast
+                    _castList.postValue(credits.cast.take(5))
+
+                } else {
+                    // === TV LOGIC (Aggregate /aggregate_credits) ===
+                    val credits = TMDBClient.api.getTVAggregateCredits(id, apiKey)
+
+                    // 1. Find Director (or Executive Producer)
+                    // In aggregate_credits, 'jobs' is a list. We check inside that list.
+                    val directorItem = credits.crew.find { crewMember ->
+                        crewMember.jobs?.any { it.job == "Director" } == true
+                    } ?: credits.crew.find { crewMember ->
+                        crewMember.jobs?.any { it.job == "Executive Producer" } == true
+                    }
+                    _director.postValue(directorItem?.name)
+
+                    // 2. Top 5 Cast
+                    // We must map the complex 'AggregateCast' to the simpler 'TMDBCast' your UI expects
+                    val mappedCast = credits.cast.take(5).map { aggCast ->
+                        // Pick the role with the most episodes as the "main" character name
+                        val mainRole = aggCast.roles?.maxByOrNull { it.episode_count }?.character
+
+                        TMDBCast(
+                            id = aggCast.id,
+                            name = aggCast.name,
+                            character = mainRole,
+                            profile_path = aggCast.profile_path
+                        )
+                    }
+                    _castList.postValue(mappedCast)
+                }
+
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error fetching credits: ${e.message}")
+                // Optional: Clear values on error
+                _director.postValue(null)
+                _castList.postValue(emptyList())
+            }
+        }
+    }
     fun checkLibraryStatus(metaId: String) {
         val userId = prefsManager.getCurrentUserId() ?: return
         viewModelScope.launch {
@@ -332,6 +387,29 @@ class MainViewModel(
         }
     }
 
+    private suspend fun fetchAIOStreams(type: String, id: String): List<Stream> {
+        val username = prefsManager.getAIOStreamsUsername()
+        val password = prefsManager.getAIOStreamsPassword()
+
+        // Return empty if no credentials are saved
+        if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
+            return emptyList()
+        }
+
+        return try {
+            val api = AIOStreamsClient.getApi(username, password)
+            val response = api.searchStreams(type, id)
+            if (response.success && response.data != null) {
+                response.data.results
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "AIOStreams Error: ${e.message}")
+            emptyList()
+        }
+    }
+
     private suspend fun fetchMovies(fetcher: suspend (Int) -> TMDBMovieListResponse): List<MetaItem> {
         val list = mutableListOf<TMDBMovie>()
         for (i in 1..5) {
@@ -353,11 +431,69 @@ class MainViewModel(
     }
 
     fun loadStreams(type: String, tmdbId: String) {
-        // ... (Stream loading logic, kept same)
+        viewModelScope.launch {
+            _isLoading.value = true
+            _streams.value = emptyList() // Clear previous results
+
+            try {
+                // 1. Fetch AIOStreams (run asynchronously)
+                val aioStreamsDeferred = async { fetchAIOStreams(type, tmdbId) }
+
+                // 2. Fetch Stremio/Addon Streams (Placeholder for your existing logic)
+                // If you have other addons, wrap them in async like above
+                val otherStreamsDeferred = async {
+                    // TODO: specific Stremio/Addon logic here if needed
+                    // e.g. StremioClient.api.getStreams(...)
+                    emptyList<Stream>()
+                }
+
+                // 3. Wait for all results
+                val aioResults = aioStreamsDeferred.await()
+                val otherResults = otherStreamsDeferred.await()
+
+                // 4. Combine and Post Results
+                val combinedStreams = (aioResults + otherResults).distinctBy { it.url }
+                _streams.value = combinedStreams
+
+            } catch (e: Exception) {
+                _error.value = "Error loading streams: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun loadEpisodeStreams(tmdbId: String, season: Int, episode: Int) {
-        // ... (Episode loading logic, kept same)
+        viewModelScope.launch {
+            _isLoading.value = true
+            _streams.value = emptyList()
+
+            // Construct the ID format: e.g., "tmdb:12345:1:5"
+            val episodeId = "$tmdbId:$season:$episode"
+
+            try {
+                // 1. Fetch AIOStreams
+                val aioStreamsDeferred = async { fetchAIOStreams("series", episodeId) }
+
+                // 2. Fetch Other Streams (Placeholder)
+                val otherStreamsDeferred = async {
+                    // TODO: existing logic for other addons
+                    emptyList<Stream>()
+                }
+
+                // 3. Wait and Combine
+                val aioResults = aioStreamsDeferred.await()
+                val otherResults = otherStreamsDeferred.await()
+
+                val combinedStreams = (aioResults + otherResults).distinctBy { it.url }
+                _streams.value = combinedStreams
+
+            } catch (e: Exception) {
+                _error.value = "Error loading episode streams: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun loadSeriesMeta(tmdbId: String) {
@@ -365,10 +501,6 @@ class MainViewModel(
     }
 
     fun clearStreams() { _streams.value = emptyList() }
-
-    fun fetchCast(tmdbId: String, type: String) {
-        // ... (Cast logic, kept same)
-    }
 
     fun searchTMDB(query: String) {
         if (query.isBlank()) { _searchResults.value = emptyList(); return }
@@ -386,9 +518,12 @@ class MainViewModel(
                         allResults.addAll(response.results)
                     } catch (e: Exception) { break }
                 }
+
+                // CHANGED: Added "person" to the filter
                 _searchResults.value = allResults
-                    .filter { it.mediaType == "movie" || it.mediaType == "tv" }
+                    .filter { it.mediaType == "movie" || it.mediaType == "tv" || it.mediaType == "person" }
                     .map { it.toMetaItem() }
+
             } catch (e: Exception) {
                 _error.value = "Search failed: ${e.message}"
             } finally {
@@ -397,6 +532,31 @@ class MainViewModel(
         }
     }
 
+    // 2. Add the specific searchPeople function using your requested endpoint
+    fun searchPeople(query: String) {
+        if (query.isBlank()) { _searchResults.value = emptyList(); return }
+        viewModelScope.launch {
+            _isSearching.value = true
+            try {
+                if (apiKey.isEmpty()) return@launch
+
+                val allPeople = mutableListOf<TMDBPerson>()
+                for (page in 1..3) {
+                    try {
+                        val response = TMDBClient.api.searchPeople(apiKey, query, page = page)
+                        allPeople.addAll(response.results)
+                    } catch (e: Exception) { break }
+                }
+
+                _searchResults.value = allPeople.map { it.toMetaItem() }
+
+            } catch (e: Exception) {
+                _error.value = "Person search failed: ${e.message}"
+            } finally {
+                _isSearching.value = false
+            }
+        }
+    }
     fun searchMovies(query: String) {
         if (query.isBlank()) { _searchResults.value = emptyList(); return }
         viewModelScope.launch {
