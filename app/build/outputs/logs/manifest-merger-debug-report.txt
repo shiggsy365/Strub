@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-81:12
-INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-81:12
-INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-81:12
-INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-81:12
+ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-78:12
+INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-78:12
+INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-78:12
+INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:2:1-78:12
 MERGED from [androidx.databinding:databinding-adapters:8.2.1] /home/jon/.gradle/caches/transforms-4/2ba634bff15243f8e30cc15045752b01/transformed/databinding-adapters-8.2.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.databinding:databinding-ktx:8.2.1] /home/jon/.gradle/caches/transforms-4/17aa7599ed1a9d604e73254435d7359e/transformed/jetified-databinding-ktx-8.2.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.databinding:databinding-runtime:8.2.1] /home/jon/.gradle/caches/transforms-4/1f499c1ec74e784a0a50d164e23c825b/transformed/databinding-runtime-8.2.1/AndroidManifest.xml:2:1-7:12
@@ -107,8 +107,8 @@ ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/s
 	android:name
 		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:12:9-49
 application
-ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:15:5-79:19
-INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:15:5-79:19
+ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:15:5-76:19
+INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:15:5-76:19
 MERGED from [com.google.android.material:material:1.11.0] /home/jon/.gradle/caches/transforms-4/7fa3c820dae37d978f819bd033d61234/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] /home/jon/.gradle/caches/transforms-4/7fa3c820dae37d978f819bd033d61234/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/jon/.gradle/caches/transforms-4/04df6b9243414fbb18e5fbee0cd0aa05/transformed/constraintlayout-2.1.4/AndroidManifest.xml:9:5-20
@@ -195,60 +195,54 @@ ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/s
 		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:48:13-59
 	android:name
 		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:43:13-82
-activity#com.example.stremiompvplayer.PlaybackActivity
+activity#com.example.stremiompvplayer.BrowseErrorActivity
 ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:52:9-54:40
 	android:exported
 		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:54:13-37
 	android:name
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:53:13-45
-activity#com.example.stremiompvplayer.BrowseErrorActivity
-ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:55:9-57:40
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:53:13-48
+activity#com.example.stremiompvplayer.UserSelectionActivity
+ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:55:9-59:61
+	android:screenOrientation
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:58:13-50
 	android:exported
 		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:57:13-37
-	android:name
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:56:13-48
-activity#com.example.stremiompvplayer.UserSelectionActivity
-ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:58:9-62:61
-	android:screenOrientation
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:61:13-50
-	android:exported
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:60:13-37
 	android:theme
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:62:13-58
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:59:13-58
 	android:name
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:59:13-50
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:56:13-50
 activity#com.example.stremiompvplayer.SettingsActivity
-ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:63:9-67:61
+ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:60:9-64:61
 	android:screenOrientation
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:66:13-50
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:63:13-50
 	android:exported
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:65:13-37
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:62:13-37
 	android:theme
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:67:13-58
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:64:13-58
 	android:name
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:64:13-45
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:61:13-45
 activity#com.example.stremiompvplayer.PlayerActivity
-ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:68:9-73:72
+ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:65:9-70:72
 	android:screenOrientation
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:72:13-50
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:69:13-50
 	android:exported
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:71:13-37
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:68:13-37
 	android:configChanges
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:70:13-74
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:67:13-74
 	android:theme
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:73:13-69
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:70:13-69
 	android:name
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:69:13-43
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:66:13-43
 activity#com.example.stremiompvplayer.DetailsActivity2
-ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:74:9-78:61
+ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:71:9-75:61
 	android:screenOrientation
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:77:13-50
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:74:13-50
 	android:exported
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:76:13-37
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:73:13-37
 	android:theme
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:78:13-58
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:75:13-58
 	android:name
-		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:75:13-44
+		ADDED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml:72:13-44
 uses-sdk
 INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/jon/Downloads/StremioMPVPlayer_AndroidTV/StremioMPVPlayer/app/src/main/AndroidManifest.xml
