@@ -49,59 +49,44 @@
             app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.chip.ChipGroup
+                android:id="@+id/mainNavGroup"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingVertical="16dp"
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
+                <!-- CONSOLIDATED DISCOVER -->
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipDiscoverMovies"
+                    android:id="@+id/chipDiscover"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Discover Movies"
+                    android:text="Discover"
                     android:focusable="true"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
                     app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp" />
+                    app:chipStrokeWidth="1dp"
+                    app:closeIconVisible="true"
+                    app:closeIcon="@android:drawable/arrow_down_float"
+                    app:closeIconTint="@android:color/white"/>
 
+                <!-- CONSOLIDATED LIBRARY -->
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipDiscoverSeries"
+                    android:id="@+id/chipLibrary"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Discover Series"
+                    android:text="Library"
                     android:focusable="true"
                     android:textColor="@android:color/white"
                     app:chipBackgroundColor="@color/chip_background_selector"
                     app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipMovies"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Movies"
-                    android:focusable="true"
-                    android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipSeries"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Series"
-                    android:focusable="true"
-                    android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp" />
+                    app:chipStrokeWidth="1dp"
+                    app:closeIconVisible="true"
+                    app:closeIcon="@android:drawable/arrow_down_float"
+                    app:closeIconTint="@android:color/white"/>
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipSearch"

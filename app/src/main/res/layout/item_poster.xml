@@ -2,11 +2,10 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <data>
-    </data>
+    <data></data>
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="4dp"
         android:focusable="true"
@@ -19,20 +18,43 @@
         android:foreground="?attr/selectableItemBackground">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content">
 
             <ImageView
                 android:id="@+id/poster"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_width="0dp"
+                android:layout_height="160dp"
                 android:scaleType="centerCrop"
                 android:background="#2A2A2A"
                 android:contentDescription="Movie Poster"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintDimensionRatio="H,58:86" />
+                app:layout_constraintBottom_toTopOf="@+id/titleOverlay"
+                app:layout_constraintDimensionRatio="H, 86:58" />
+
+            <ImageView
+                android:id="@+id/iconWatched"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_check_circle"
+                app:tint="#4CAF50"
+                android:visibility="gone"
+                android:layout_margin="4dp"
+                app:layout_constraintBottom_toBottomOf="@id/poster"
+                app:layout_constraintEnd_toEndOf="@id/poster" />
+
+            <ImageView
+                android:id="@+id/iconInProgress"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_check_circle"
+                app:tint="#E50914"
+                android:visibility="gone"
+                android:layout_margin="4dp"
+                app:layout_constraintBottom_toBottomOf="@id/poster"
+                app:layout_constraintEnd_toEndOf="@id/poster" />
 
             <LinearLayout
                 android:id="@+id/titleOverlay"

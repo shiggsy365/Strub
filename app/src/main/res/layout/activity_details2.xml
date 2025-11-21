@@ -16,8 +16,7 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:scaleType="centerCrop"
-            android:alpha="0.1"
-            app:layout_constraintTop_toTopOf="parent"
+            android:alpha="0.1"  app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -62,7 +61,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="16dp"
                     app:layout_constraintTop_toBottomOf="@id/imgPoster"
                     app:layout_constraintStart_toStartOf="@id/imgPoster"
                     app:layout_constraintEnd_toEndOf="@id/imgPoster">
@@ -99,6 +98,7 @@
                         android:backgroundTint="#555555"
                         android:textColor="@android:color/white"
                         android:focusable="true"
+                        android:nextFocusRight="@+id/tvDescription"
                         app:strokeColor="@color/selector_focus_stroke"
                         app:strokeWidth="3dp"
                         android:layout_marginBottom="0dp"/>
@@ -112,8 +112,7 @@
                         android:textColor="@android:color/white"
                         android:focusable="true"
                         app:strokeColor="@color/selector_focus_stroke"
-                        app:strokeWidth="3dp"
-                        android:layout_marginBottom="16dp"/>
+                        app:strokeWidth="3dp" />
 
                 </LinearLayout>
 
@@ -123,96 +122,67 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_marginStart="32dp"
-                    android:gravity="center_horizontal"
                     app:layout_constraintStart_toEndOf="@id/imgPoster"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
 
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="120dp"
-                        android:layout_marginBottom="16dp">
-
-                        <ImageView
-                            android:id="@+id/logoImage"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:scaleType="fitCenter"
-                            android:visibility="gone"
-                            tools:src="@drawable/movie" />
-
-                        <TextView
-                            android:id="@+id/tvTitle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:gravity="center"
-                            android:textColor="@android:color/white"
-                            android:textSize="32sp"
-                            android:textStyle="bold"
-                            tools:text="Movie Title" />
-                    </FrameLayout>
-
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/tvTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="16dp">
+                        android:textColor="@android:color/white"
+                        android:textSize="32sp"
+                        android:textStyle="bold"
+                        tools:text="Movie Title" />
 
-                        <TextView
-                            android:id="@+id/tvMeta"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="#CCCCCC"
-                            android:textSize="16sp"
-                            android:layout_marginEnd="16dp"
-                            tools:text="2023 • 2h 15m" />
-
-                        <TextView
-                            android:id="@+id/tvRating"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="#FFD700"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            tools:text="★ 8.5" />
-                    </LinearLayout>
+                    <TextView
+                        android:id="@+id/tvMeta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#BBBBBB"
+                        android:textSize="16sp"
+                        android:layout_marginTop="8dp"
+                        tools:text="2023 • Action, Adventure • 2h 15m" />
 
                     <TextView
                         android:id="@+id/tvDescription"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="#DDDDDD"
-                        android:textSize="14sp"
-                        android:gravity="start"
-                        android:layout_marginBottom="12dp"
+                        android:textSize="16sp"
+                        android:layout_marginTop="16dp"
                         android:lineSpacingExtra="4dp"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:background="@drawable/selector_focus_border"
+                        android:padding="8dp"
+                        android:nextFocusLeft="@id/btnLibrary"
+                        android:nextFocusRight="@+id/rvNavigation"
                         tools:text="Movie description goes here..." />
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Director"
                         android:textColor="#999999"
                         android:textStyle="bold"
-                        android:gravity="start"
-                        android:textSize="12sp" />
+                        android:layout_marginTop="24dp"
+                        android:textSize="14sp" />
 
                     <com.google.android.material.chip.ChipGroup
                         android:id="@+id/directorChipGroup"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginTop="8dp" />
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Cast"
                         android:textColor="#999999"
                         android:textStyle="bold"
-                        android:gravity="start"
-                        android:textSize="12sp" />
+                        android:layout_marginTop="16dp"
+                        android:textSize="14sp" />
 
                     <com.google.android.material.chip.ChipGroup
                         android:id="@+id/castChipGroup"
@@ -241,6 +211,7 @@
             android:paddingHorizontal="16dp"
             android:clipToPadding="false"
             android:scrollbars="vertical"
+            android:nextFocusLeft="@id/tvDescription"
             app:layout_constraintStart_toEndOf="@+id/scrollDetailPane"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintWidth_percent="0.3"

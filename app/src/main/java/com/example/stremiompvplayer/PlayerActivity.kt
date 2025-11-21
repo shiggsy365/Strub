@@ -3,19 +3,32 @@ package com.example.stremiompvplayer
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.stremiompvplayer.databinding.ActivityPlayerBinding
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.models.Stream
+import androidx.activity.viewModels
+import com.example.stremiompvplayer.viewmodels.MainViewModel
+import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
+import com.example.stremiompvplayer.data.ServiceLocator
+import com.example.stremiompvplayer.utils.SharedPreferencesManager
 
 class PlayerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPlayerBinding
     private var player: ExoPlayer? = null
 
+    private val viewModel: MainViewModel by viewModels {
+        MainViewModelFactory(
+            ServiceLocator.getInstance(applicationContext),
+            SharedPreferencesManager.getInstance(this)
+        )
+    }
     private var currentStream: Stream? = null
     private var currentMeta: MetaItem? = null
 
@@ -56,21 +69,9 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    public override fun onPause() {
-        super.onPause()
-        if (android.os.Build.VERSION.SDK_INT <= 23) {
-            releasePlayer()
-        }
-    }
 
-    public override fun onStop() {
-        super.onStop()
-        if (android.os.Build.VERSION.SDK_INT > 23) {
-            releasePlayer()
-        }
-    }
 
-    private fun initializePlayer() {
+    @OptIn(UnstableApi::class) private fun initializePlayer() {
         // 1. Create the player
         player = ExoPlayer.Builder(this)
             .setSeekForwardIncrementMs(10000)
@@ -86,7 +87,14 @@ class PlayerActivity : AppCompatActivity() {
                 // 3. Set media and prepare
                 exoPlayer.setMediaItem(mediaItem)
                 exoPlayer.playWhenReady = playWhenReady
-                exoPlayer.seekTo(currentItem, playbackPosition)
+                if (playbackPosition > 0) {
+                    exoPlayer.seekTo(currentItem, playbackPosition)
+                } else if (currentMeta != null && currentMeta!!.progress > 0 && !currentMeta!!.isWatched) {
+                    // Resume from database history if not already watched
+                    // (Ideally pass specific progress via Intent to avoid DB call on main thread here,
+                    // or use the modified MetaItem which now has progress)
+                    exoPlayer.seekTo(currentItem, currentMeta!!.progress)
+                }
                 exoPlayer.prepare()
 
                 // 4. Add Listeners for buffering/errors
@@ -119,6 +127,32 @@ class PlayerActivity : AppCompatActivity() {
         player = null
     }
 
+    private fun saveProgress() {
+        player?.let { exoPlayer ->
+            val position = exoPlayer.currentPosition
+            val duration = exoPlayer.duration
+
+            if (currentMeta != null && duration > 0) {
+                viewModel.saveWatchProgress(currentMeta!!, position, duration)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveProgress() // Save whenever we pause or leave
+        if (android.os.Build.VERSION.SDK_INT <= 23) {
+            releasePlayer()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        saveProgress() // Save whenever we stop
+        if (android.os.Build.VERSION.SDK_INT > 23) {
+            releasePlayer()
+        }
+    }
     private fun hideSystemUi() {
         // Immersive mode
         binding.root.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE

@@ -154,7 +154,16 @@ class SearchFragment : Fragment() {
             // Optionally show error
         }
     }
+    fun setSearchText(text: String) {
+        binding.searchEditText.setText(text)
+    }
 
+    // NEW: Trigger Person ID search
+    fun searchByPersonId(id: Int) {
+        // Switch to Mixed or create a new logic, sticking to Mixed for general display
+        binding.chipMixed.isChecked = true
+        viewModel.loadPersonCredits(id)
+    }
     private fun hideKeyboard() {
         val inputMethodManager = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(binding.searchEditText.windowToken, 0)
@@ -164,5 +173,9 @@ class SearchFragment : Fragment() {
         super.onDestroyView()
         _binding = null
         viewModel.clearSearchResults()
+    }
+
+    fun focusSearch() {
+        binding.searchEditText.requestFocus()
     }
 }

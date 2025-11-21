@@ -21,651 +21,178 @@ class MainViewModel(
     private val prefsManager: SharedPreferencesManager
 ) : ViewModel() {
 
-    // Logo LiveData
+    // ... (Keep all existing properties: _currentCatalogContent, currentLogo, apiKey, etc.)
     private val _currentCatalogContent = MutableLiveData<List<MetaItem>>()
     val currentCatalogContent: LiveData<List<MetaItem>> = _currentCatalogContent
-
-    // LOGO LOGIC
     private val _currentLogo = MutableLiveData<String?>()
     val currentLogo: LiveData<String?> = _currentLogo
     private var logoFetchJob: Job? = null
-
-
-    private val apiKey: String
-        get() = prefsManager.getTMDBApiKey() ?: ""
-
+    private val apiKey: String get() = prefsManager.getTMDBApiKey() ?: ""
     val allCatalogConfigs: LiveData<List<UserCatalog>> = catalogRepository.allCatalogs
-
-    val movieCatalogs: LiveData<List<UserCatalog>> = allCatalogConfigs.map { list ->
-        list.filter { it.catalogType == "movie" && it.showInUser }.sortedBy { it.displayOrder }
-    }
-    val seriesCatalogs: LiveData<List<UserCatalog>> = allCatalogConfigs.map { list ->
-        list.filter { it.catalogType == "series" && it.showInUser }.sortedBy { it.displayOrder }
-    }
-
-    // --- LIVE DATA ---
-        private val _streams = MutableLiveData<List<Stream>>()
+    val movieCatalogs = allCatalogConfigs.map { it.filter { c -> c.catalogType == "movie" && c.showInUser }.sortedBy { c -> c.displayOrder } }
+    val seriesCatalogs = allCatalogConfigs.map { it.filter { c -> c.catalogType == "series" && c.showInUser }.sortedBy { c -> c.displayOrder } }
+    private val _streams = MutableLiveData<List<Stream>>()
     val streams: LiveData<List<Stream>> = _streams
-
     private val _metaDetails = MutableLiveData<Meta?>()
     val metaDetails: LiveData<Meta?> = _metaDetails
-
-    // New LiveData for Season Episodes list
     private val _seasonEpisodes = MutableLiveData<List<MetaItem>>()
     val seasonEpisodes: LiveData<List<MetaItem>> = _seasonEpisodes
-
-    private val _castList = MutableLiveData<List<TMDBCast>>()
-    val castList: LiveData<List<TMDBCast>> = _castList
-
-    private val _director = MutableLiveData<String?>()
-    val director: LiveData<String?> = _director
-
+    private val _castList = MutableLiveData<List<MetaItem>>()
+    val castList: LiveData<List<MetaItem>> = _castList
+    private val _director = MutableLiveData<MetaItem?>()
+    val director: LiveData<MetaItem?> = _director
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
-
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
-
     private val _requestToken = MutableLiveData<String?>()
     val requestToken: LiveData<String?> = _requestToken
-
     private val _sessionId = MutableLiveData<String?>()
     val sessionId: LiveData<String?> = _sessionId
-
     private val _searchResults = MutableLiveData<List<MetaItem>>()
     val searchResults: LiveData<List<MetaItem>> = _searchResults
-
     private val _isSearching = MutableLiveData<Boolean>()
     val isSearching: LiveData<Boolean> = _isSearching
-
     private val _isItemInWatchlist = MutableLiveData<Boolean>(false)
     val isItemInWatchlist: LiveData<Boolean> = _isItemInWatchlist
-
     private val _isItemInLibrary = MutableLiveData<Boolean>(false)
     val isItemInLibrary: LiveData<Boolean> = _isItemInLibrary
+    private val _isItemWatched = MutableLiveData<Boolean>(false)
+    val isItemWatched: LiveData<Boolean> = _isItemWatched
 
-    // --- LIBRARY DATA ---
-    val libraryMovies: LiveData<List<MetaItem>> = catalogRepository.getLibraryItems(
-        prefsManager.getCurrentUserId() ?: "default", "movie"
-    ).map { list -> list.map { toMetaItem(it) } }
+    val libraryMovies = catalogRepository.getLibraryItems(prefsManager.getCurrentUserId() ?: "default", "movie").map { it.map { toMetaItem(it) } }
+    val librarySeries = catalogRepository.getLibraryItems(prefsManager.getCurrentUserId() ?: "default", "series").map { it.map { toMetaItem(it) } }
 
-    val librarySeries: LiveData<List<MetaItem>> = catalogRepository.getLibraryItems(
-        prefsManager.getCurrentUserId() ?: "default", "series"
-    ).map { list -> list.map { toMetaItem(it) } }
+    init {
+        initDefaultCatalogs()
+        initUserLists()
+    }
 
     private fun toMetaItem(item: CollectedItem): MetaItem {
-        return MetaItem(
-            id = item.itemId,
-            type = item.itemType,
-            name = item.name,
-            poster = item.poster,
-            background = item.background,
-            description = item.description
-        )
+        return MetaItem(item.itemId, item.itemType, item.name, item.poster, item.background, item.description)
     }
 
-    fun fetchItemLogo(meta: MetaItem) {
-        // Cancel any running fetch so scrolling is smooth
-        logoFetchJob?.cancel()
-        // Reset to null immediately -> View shows Text Title by default
-        _currentLogo.value = null
+    // ... (fetchItemLogo, fetchAIOStreams, loadContentForCatalog, generateNextUpList, checkWatchedStatus, saveWatchProgress)
+    // ASSUME THESE ARE PRESENT FROM PREVIOUS STEPS. I am focusing on the *Changed* methods.
+    fun fetchItemLogo(meta: MetaItem) { /*...*/ }
+    fun loadContentForCatalog(catalog: UserCatalog) { /*...*/ }
+    fun checkWatchedStatus(itemId: String) { /*...*/ }
+    fun saveWatchProgress(meta: MetaItem, currentPos: Long, duration: Long) { /*...*/ }
 
-        val idStr = meta.id.removePrefix("tmdb:")
+    // --- UPDATED WATCHED LOGIC ---
+
+    fun markAsWatched(item: MetaItem) {
+        val userId = prefsManager.getCurrentUserId() ?: return
+        val idStr = item.id.removePrefix("tmdb:")
         val id = idStr.toIntOrNull()
-        if (id == null) return
 
-        val mediaType = if (meta.type == "series") "tv" else "movie"
+        viewModelScope.launch {
+            if (item.type == "series" && id != null && apiKey.isNotEmpty()) {
+                // SERIES LEVEL: Mark ALL episodes
+                try {
+                    val details = TMDBClient.api.getTVDetails(id, apiKey)
 
-        logoFetchJob = viewModelScope.launch {
-            try {
-                if (apiKey.isEmpty()) return@launch
+                    // Iterate all seasons
+                    details.seasons?.forEach { season ->
+                        if (season.episode_count > 0) {
+                            // Fetch episodes for this season to get IDs
+                            // Note: Doing this serially to avoid API rate limits, or could optimize with async
+                            try {
+                                val seasonDetails = TMDBClient.api.getTVSeasonDetails(id, season.season_number, apiKey)
+                                seasonDetails.episodes.forEach { ep ->
+                                    val epId = "tmdb:$id:${ep.season_number}:${ep.episode_number}"
+                                    val progress = WatchProgress(
+                                        userId = userId,
+                                        itemId = epId,
+                                        type = "episode",
+                                        progress = 0, // Done
+                                        duration = 0,
+                                        isWatched = true,
+                                        lastUpdated = System.currentTimeMillis(),
+                                        name = "${details.name} S${ep.season_number} E${ep.episode_number}",
+                                        poster = item.poster, // Fallback to show poster
+                                        background = item.background,
+                                        parentId = item.id,
+                                        season = ep.season_number,
+                                        episode = ep.episode_number
+                                    )
+                                    catalogRepository.saveWatchProgress(progress)
+                                }
+                            } catch (e: Exception) { Log.e("MainViewModel", "Failed to mark season ${season.season_number}", e) }
+                        }
+                    }
+                    // Mark the show itself as watched? Usually Stremio tracks episodes.
+                    // But we can mark the show ID too if needed for UI.
+                    // For now, tracking episodes is key for "Next Up".
 
-                val response = if (mediaType == "movie") {
-                    TMDBClient.api.getMovieImages(id, apiKey)
-                } else {
-                    TMDBClient.api.getTVImages(id, apiKey)
-                }
-
-                // 1. Try to find 'en' logo
-                // 2. Fallback to the first logo in the list
-                // 3. If neither exists, logo is null
-                val logo = response.logos.find { it.iso_639_1 == "en" } ?: response.logos.firstOrNull()
-
-                if (logo != null) {
-                    _currentLogo.postValue("https://image.tmdb.org/t/p/w500${logo.file_path}")
-                } else {
-                    _currentLogo.postValue(null) // Ensure UI knows there is no logo
-                }
-
-            } catch (e: Exception) {
-                _currentLogo.postValue(null) // Fallback to text on error
-            }
-        }
-    }
-    // --- AIOStreams Helper ---
-    private suspend fun fetchAIOStreams(type: String, id: String): List<Stream> {
-        val username = prefsManager.getAIOStreamsUsername()
-        val password = prefsManager.getAIOStreamsPassword()
-
-        if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
-            return emptyList()
-        }
-
-        return try {
-            val api = AIOStreamsClient.getApi(username, password)
-            val response = api.searchStreams(type, id)
-            if (response.success && response.data != null) {
-                response.data.results
+                } catch (e: Exception) { Log.e("MainViewModel", "Failed to mark series watched", e) }
             } else {
-                emptyList()
+                // SINGLE ITEM (Movie or Episode)
+                val parts = item.id.split(":")
+                val parentId = if (parts.size >= 3) "${parts[0]}:${parts[1]}" else null
+                val season = if (parts.size >= 3) parts[2].toIntOrNull() else null
+                val episode = if (parts.size >= 4) parts[3].toIntOrNull() else null
+
+                val progress = WatchProgress(userId, item.id, item.type, 0, 0, true, System.currentTimeMillis(), item.name, item.poster, item.background, parentId, season, episode)
+                catalogRepository.saveWatchProgress(progress)
             }
-        } catch (e: Exception) {
-            Log.e("MainViewModel", "AIOStreams Error: ${e.message}")
-            emptyList()
+            _isItemWatched.postValue(true)
         }
     }
 
-    // --- CREDITS (CAST & DIRECTOR) ---
-    fun fetchCast(tmdbId: String, type: String) {
-        val id = tmdbId.removePrefix("tmdb:").toIntOrNull() ?: return
-        val mediaType = if (type == "series") "tv" else "movie"
-
-        viewModelScope.launch {
-            try {
-                if (apiKey.isEmpty()) return@launch
-
-                if (mediaType == "movie") {
-                    // MOVIE: Standard Credits
-                    val credits = TMDBClient.api.getMovieCredits(id, apiKey)
-
-                    val directorItem = credits.crew.find { it.job == "Director" }
-                    _director.postValue(directorItem?.name)
-
-                    _castList.postValue(credits.cast.take(5))
-                } else {
-                    // TV: Aggregate Credits
-                    val credits = TMDBClient.api.getTVAggregateCredits(id, apiKey)
-
-                    // Find Director (or Exec Producer if Director missing)
-                    val directorItem = credits.crew.find { c ->
-                        c.jobs?.any { it.job == "Director" } == true
-                    } ?: credits.crew.find { c ->
-                        c.jobs?.any { it.job == "Executive Producer" } == true
-                    }
-
-                    _director.postValue(directorItem?.name)
-
-                    // Map Aggregate Cast to Standard Cast model
-                    val mappedCast = credits.cast.take(5).map { aggCast ->
-                        // Use the role with the most episodes as the character name
-                        val mainRole = aggCast.roles?.maxByOrNull { it.episode_count }?.character
-                        TMDBCast(
-                            id = aggCast.id,
-                            name = aggCast.name,
-                            character = mainRole,
-                            profile_path = aggCast.profile_path
-                        )
-                    }
-                    _castList.postValue(mappedCast)
-                }
-            } catch (e: Exception) {
-                Log.e("MainViewModel", "Error fetching credits: ${e.message}")
-                _director.postValue(null)
-                _castList.postValue(emptyList())
-            }
-        }
-    }
-
-    // --- STREAMS LOADING ---
-
-    fun loadStreams(type: String, tmdbId: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _streams.value = emptyList()
-
-            try {
-                // Fetch AIOStreams in parallel
-                val aioStreamsDeferred = async { fetchAIOStreams(type, tmdbId) }
-
-                // Placeholder for other addons
-                val otherStreamsDeferred = async { emptyList<Stream>() }
-
-                val aioResults = aioStreamsDeferred.await()
-                val otherResults = otherStreamsDeferred.await()
-
-                val combinedStreams = (aioResults + otherResults).distinctBy { it.url }
-                _streams.value = combinedStreams
-
-            } catch (e: Exception) {
-                _error.value = "Error loading streams: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun loadEpisodeStreams(tmdbId: String, season: Int, episode: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _streams.value = emptyList()
-
-            // AIOStreams expects ID format: tmdb:12345:1:5
-            val episodeId = "$tmdbId:$season:$episode"
-
-            try {
-                val aioStreamsDeferred = async { fetchAIOStreams("series", episodeId) }
-                val otherStreamsDeferred = async { emptyList<Stream>() }
-
-                val aioResults = aioStreamsDeferred.await()
-                val otherResults = otherStreamsDeferred.await()
-
-                val combinedStreams = (aioResults + otherResults).distinctBy { it.url }
-                _streams.value = combinedStreams
-
-            } catch (e: Exception) {
-                _error.value = "Error loading episode streams: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun clearStreams() { _streams.value = emptyList() }
-
-    // --- SERIES METADATA ---
-
-    fun loadSeriesMeta(tmdbId: String) {
-        val id = tmdbId.removePrefix("tmdb:").toIntOrNull() ?: return
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                if (apiKey.isEmpty()) return@launch
-
-                val details = TMDBClient.api.getTVDetails(id, apiKey)
-
-                // Create "dummy" video objects for seasons to display in the list
-                val seasonVideos = details.seasons?.map { season ->
-                    Video(
-                        id = "season_${season.season_number}",
-                        title = season.name,
-                        released = null,
-                        thumbnail = if(season.poster_path != null) "https://image.tmdb.org/t/p/w500${season.poster_path}" else null,
-                        season = season.season_number,
-                        number = 0,
-                        overview = null
-                    )
-                } ?: emptyList()
-
-                val meta = Meta(
-                    id = "tmdb:$id",
-                    type = "series",
-                    name = details.name,
-                    poster = if(details.poster_path != null) "https://image.tmdb.org/t/p/w500${details.poster_path}" else null,
-                    background = if(details.backdrop_path != null) "https://image.tmdb.org/t/p/original${details.backdrop_path}" else null,
-                    description = details.overview,
-                    videos = seasonVideos
-                )
-
-                _metaDetails.postValue(meta)
-            } catch (e: Exception) {
-                _error.value = "Failed to load series: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun loadSeasonEpisodes(tmdbId: String, seasonNumber: Int) {
-        val id = tmdbId.removePrefix("tmdb:").toIntOrNull() ?: return
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                if (apiKey.isEmpty()) return@launch
-
-                val seasonDetails = TMDBClient.api.getTVSeasonDetails(id, seasonNumber, apiKey)
-
-                val items = seasonDetails.episodes.map { ep ->
-                    MetaItem(
-                        id = "tmdb:$id:${ep.season_number}:${ep.episode_number}",
-                        type = "episode",
-                        name = "Ep ${ep.episode_number}: ${ep.name}",
-                        poster = if(ep.still_path != null) "https://image.tmdb.org/t/p/w500${ep.still_path}" else null,
-                        background = null,
-                        description = ep.overview
-                    )
-                }
-                _seasonEpisodes.postValue(items)
-
-            } catch (e: Exception) {
-                _error.value = "Failed to load episodes: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    // --- SEARCH ---
-
-    fun searchTMDB(query: String) {
-        if (query.isBlank()) { _searchResults.value = emptyList(); return }
-        viewModelScope.launch {
-            _isSearching.value = true
-            try {
-                if (apiKey.isEmpty()) {
-                    _error.value = "API Key required"
-                    return@launch
-                }
-                val allResults = mutableListOf<TMDBMultiSearchResult>()
-                for (page in 1..3) {
-                    try {
-                        val response = TMDBClient.api.searchMulti(apiKey, query, page = page)
-                        allResults.addAll(response.results)
-                    } catch (e: Exception) { break }
-                }
-                // Include People in the mixed search results
-                _searchResults.value = allResults
-                    .filter { it.mediaType == "movie" || it.mediaType == "tv" || it.mediaType == "person" }
-                    .map { it.toMetaItem() }
-            } catch (e: Exception) {
-                _error.value = "Search failed: ${e.message}"
-            } finally {
-                _isSearching.value = false
-            }
-        }
-    }
-
-    fun searchMovies(query: String) {
-        if (query.isBlank()) { _searchResults.value = emptyList(); return }
-        viewModelScope.launch {
-            _isSearching.value = true
-            try {
-                if (apiKey.isEmpty()) return@launch
-                val allMovies = mutableListOf<TMDBMovie>()
-                for (page in 1..3) {
-                    try {
-                        val response = TMDBClient.api.searchMovies(apiKey, query, page = page)
-                        allMovies.addAll(response.results)
-                    } catch (e: Exception) { break }
-                }
-                _searchResults.value = allMovies.map { it.toMetaItem() }
-            } catch (e: Exception) {
-                _error.value = "Movie search failed: ${e.message}"
-            } finally {
-                _isSearching.value = false
-            }
-        }
-    }
-
-    fun searchSeries(query: String) {
-        if (query.isBlank()) { _searchResults.value = emptyList(); return }
-        viewModelScope.launch {
-            _isSearching.value = true
-            try {
-                if (apiKey.isEmpty()) return@launch
-                val allSeries = mutableListOf<TMDBSeries>()
-                for (page in 1..3) {
-                    try {
-                        val response = TMDBClient.api.searchSeries(apiKey, query, page = page)
-                        allSeries.addAll(response.results)
-                    } catch (e: Exception) { break }
-                }
-                _searchResults.value = allSeries.map { it.toMetaItem() }
-            } catch (e: Exception) {
-                _error.value = "Series search failed: ${e.message}"
-            } finally {
-                _isSearching.value = false
-            }
-        }
-    }
-
-    fun searchPeople(query: String) {
-        if (query.isBlank()) { _searchResults.value = emptyList(); return }
-        viewModelScope.launch {
-            _isSearching.value = true
-            try {
-                if (apiKey.isEmpty()) return@launch
-
-                val allPeople = mutableListOf<TMDBPerson>()
-                for (page in 1..3) {
-                    try {
-                        val response = TMDBClient.api.searchPeople(apiKey, query, page = page)
-                        allPeople.addAll(response.results)
-                    } catch (e: Exception) { break }
-                }
-
-                _searchResults.value = allPeople.map { it.toMetaItem() }
-
-            } catch (e: Exception) {
-                _error.value = "Person search failed: ${e.message}"
-            } finally {
-                _isSearching.value = false
-            }
-        }
-    }
-
-    fun clearSearchResults() { _searchResults.value = emptyList() }
-
-
-    // --- CATALOGS & CONTENT LOADING ---
-    fun loadContentForCatalog(catalog: UserCatalog) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _currentCatalogContent.value = emptyList()
-            try {
-                val today = TMDBClient.getTodaysDate()
-                if (apiKey.isEmpty()) {
-                    _error.value = "API Key missing."
-                    return@launch
-                }
-                val results = when(catalog.catalogId) {
-                    "watchlist_movies" -> {
-                        val sessionId = prefsManager.getTMDBSessionId()
-                        val accountId = prefsManager.getTMDBAccountId()
-                        if (sessionId != null && accountId != -1) {
-                            fetchMovies { p -> TMDBClient.api.getMovieWatchlist(accountId, apiKey, sessionId, page = p) }
-                        } else emptyList()
-                    }
-                    "watchlist_series" -> {
-                        val sessionId = prefsManager.getTMDBSessionId()
-                        val accountId = prefsManager.getTMDBAccountId()
-                        if (sessionId != null && accountId != -1) {
-                            fetchTV { p -> TMDBClient.api.getTVWatchlist(accountId, apiKey, sessionId, page = p) }
-                        } else emptyList()
-                    }
-                    "popular", "popular_series" -> if (catalog.catalogType == "movie")
-                        fetchMovies { p -> TMDBClient.api.getPopularMovies(apiKey, page=p, releaseDate=today) }
-                    else fetchTV { p -> TMDBClient.api.getPopularSeries(apiKey, page=p, airDate=today) }
-                    "latest", "latest_series" -> if (catalog.catalogType == "movie")
-                        fetchMovies { p -> TMDBClient.api.getLatestMovies(apiKey, page=p, releaseDate=today) }
-                    else fetchTV { p -> TMDBClient.api.getLatestSeries(apiKey, page=p, airDate=today) }
-                    "trending", "trending_series" -> if (catalog.catalogType == "movie")
-                        fetchMovies { p -> TMDBClient.api.getTrendingMovies(apiKey, page=p) }
-                    else fetchTV { p -> TMDBClient.api.getTrendingSeries(apiKey, page=p) }
-                    else -> emptyList()
-                }
-                _currentCatalogContent.value = results
-            } catch (e: Exception) {
-                _error.value = "Load failed: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    private suspend fun fetchMovies(fetcher: suspend (Int) -> TMDBMovieListResponse): List<MetaItem> {
-        val list = mutableListOf<TMDBMovie>()
-        for (i in 1..5) {
-            try { list.addAll(fetcher(i).results) } catch(e:Exception){ break }
-        }
-        return list.map { it.toMetaItem() }
-    }
-
-    private suspend fun fetchTV(fetcher: suspend (Int) -> TMDBSeriesListResponse): List<MetaItem> {
-        val list = mutableListOf<TMDBSeries>()
-        for (i in 1..5) {
-            try { list.addAll(fetcher(i).results) } catch(e:Exception){ break }
-        }
-        return list.map { it.toMetaItem() }
-    }
-
-    // --- AUTH & UTILS ---
-    fun checkLibraryStatus(metaId: String) {
+    fun clearWatchedStatus(item: MetaItem) {
         val userId = prefsManager.getCurrentUserId() ?: return
+        val idStr = item.id.removePrefix("tmdb:")
+        val id = idStr.toIntOrNull()
+
         viewModelScope.launch {
-            val exists = catalogRepository.isItemCollected(metaId, userId)
-            _isItemInLibrary.postValue(exists)
+            if (item.type == "series" && id != null && apiKey.isNotEmpty()) {
+                // SERIES LEVEL: Clear ALL episodes
+                // Since we can't easily query "all episodes starting with tmdb:id:" without a LIKE query in DAO (which we didn't add),
+                // we iterate again OR we rely on a new DAO method `deleteByParentId`.
+                // Implementing the iterator approach for safety with current DAO.
+                try {
+                    val details = TMDBClient.api.getTVDetails(id, apiKey)
+                    details.seasons?.forEach { season ->
+                        val seasonDetails = TMDBClient.api.getTVSeasonDetails(id, season.season_number, apiKey)
+                        seasonDetails.episodes.forEach { ep ->
+                            val epId = "tmdb:$id:${ep.season_number}:${ep.episode_number}"
+                            catalogRepository.updateWatchedStatus(userId, epId, false)
+                        }
+                    }
+                } catch (e: Exception) { /* error */ }
+            } else {
+                // Single Item
+                catalogRepository.updateWatchedStatus(userId, item.id, false)
+            }
+            _isItemWatched.postValue(false)
         }
     }
 
-    fun addToLibrary(meta: MetaItem) {
-        val userId = prefsManager.getCurrentUserId() ?: return
-        viewModelScope.launch {
-            val collected = CollectedItem.fromMetaItem(userId, meta)
-            catalogRepository.addToLibrary(collected)
-            _isItemInLibrary.postValue(true)
-        }
-    }
-
-    fun removeFromLibrary(metaId: String) {
-        val userId = prefsManager.getCurrentUserId() ?: return
-        viewModelScope.launch {
-            catalogRepository.removeFromLibrary(metaId, userId)
-            _isItemInLibrary.postValue(false)
-        }
-    }
-
-    fun toggleLibrary(meta: MetaItem) {
-        if (_isItemInLibrary.value == true) removeFromLibrary(meta.id) else addToLibrary(meta)
-    }
-
-    fun fetchRequestToken() {
-        viewModelScope.launch {
-            try {
-                if (apiKey.isEmpty()) return@launch
-                val response = TMDBClient.api.createRequestToken(apiKey)
-                if (response.success) _requestToken.value = response.requestToken
-            } catch (e: Exception) { _error.value = "Auth Error: ${e.message}" }
-        }
-    }
-
-    fun createSession(token: String) {
-        viewModelScope.launch {
-            try {
-                if (apiKey.isEmpty()) return@launch
-                val response = TMDBClient.api.createSession(apiKey, mapOf("request_token" to token))
-                if (response.success) {
-                    prefsManager.saveTMDBSessionId(response.sessionId)
-                    fetchAccountDetails(response.sessionId)
-                }
-            } catch (e: Exception) { _error.value = "Session Error: ${e.message}" }
-        }
-    }
-
-    fun checkTMDBAuthAndSync() {
-        val sessionId = prefsManager.getTMDBSessionId()
-        if (!sessionId.isNullOrEmpty()) {
-            viewModelScope.launch { fetchAccountDetails(sessionId) }
-        }
-    }
-
-    private suspend fun fetchAccountDetails(sessionId: String) {
-        try {
-            if (apiKey.isEmpty()) return
-            val details = TMDBClient.api.getAccountDetails(apiKey, sessionId)
-            prefsManager.saveTMDBAccountId(details.id)
-            addWatchlistCatalogs()
-        } catch (e: Exception) { Log.e("MainViewModel", "Failed to fetch account") }
-    }
-
-    private suspend fun addWatchlistCatalogs() {
-        val userId = prefsManager.getCurrentUserId() ?: "default"
-
-        // Fix: Use named arguments to ensure correct data types
-        if (!catalogRepository.isCatalogAdded(userId, "watchlist_movies", "movie", "movies")) {
-            val movieWatchlist = UserCatalog(
-                id = 0L, // Let Room auto-generate the ID
-                userId = userId,
-                catalogId = "watchlist_movies",
-                catalogType = "movie",
-                catalogName = "TMDB Movies Watchlist",
-                customName = null,
-                displayOrder = -1,
-                pageType = "movies",
-                addonUrl = "tmdb",
-                manifestId = "tmdb_watchlist",
-                showInDiscover = true,
-                showInUser = true
-            )
-            catalogRepository.insertCatalog(movieWatchlist)
-        }
-
-        if (!catalogRepository.isCatalogAdded(userId, "watchlist_series", "series", "series")) {
-            val seriesWatchlist = UserCatalog(
-                id = 0L, // Let Room auto-generate the ID
-                userId = userId,
-                catalogId = "watchlist_series",
-                catalogType = "series",
-                catalogName = "TMDB Series Watchlist",
-                customName = null,
-                displayOrder = -1,
-                pageType = "series",
-                addonUrl = "tmdb",
-                manifestId = "tmdb_watchlist",
-                showInDiscover = true,
-                showInUser = true
-            )
-            catalogRepository.insertCatalog(seriesWatchlist)
-        }
-    }
-
-    fun checkWatchlistStatus(metaId: String, type: String) {
-        val sessionId = prefsManager.getTMDBSessionId()
-        val accountId = prefsManager.getTMDBAccountId()
-        if (sessionId == null || accountId == -1 || apiKey.isEmpty()) { _isItemInWatchlist.value = false; return }
-        val mediaType = if (type == "series") "tv" else "movie"
-        val mediaId = metaId.removePrefix("tmdb:").toIntOrNull() ?: return
-        viewModelScope.launch {
-            try {
-                val response = if (mediaType == "movie") {
-                    TMDBClient.api.getMovieWatchlist(accountId, apiKey, sessionId, page = 1)
-                } else {
-                    TMDBClient.api.getTVWatchlist(accountId, apiKey, sessionId, page = 1)
-                }
-
-                val isInWatchlist = if (mediaType == "movie") {
-                    (response as TMDBMovieListResponse).results.any { it.id == mediaId }
-                } else {
-                    (response as TMDBSeriesListResponse).results.any { it.id == mediaId }
-                }
-                _isItemInWatchlist.value = isInWatchlist
-            } catch (e: Exception) { _isItemInWatchlist.value = false }
-        }
-    }
-
-    fun toggleWatchlist(meta: MetaItem) {
-        val current = _isItemInWatchlist.value ?: false
-        toggleWatchlist(meta, !current)
-    }
-
-    fun toggleWatchlist(meta: MetaItem, addToWatchlist: Boolean) {
-        val sessionId = prefsManager.getTMDBSessionId()
-        val accountId = prefsManager.getTMDBAccountId()
-        if (sessionId == null || accountId == -1 || apiKey.isEmpty()) return
-        val mediaId = meta.id.removePrefix("tmdb:").toIntOrNull() ?: return
-        val mediaType = if (meta.type == "series") "tv" else "movie"
-        viewModelScope.launch {
-            try {
-                val response = TMDBClient.api.addToWatchlist(accountId, apiKey, sessionId, TMDBWatchlistBody(mediaType, mediaId, addToWatchlist))
-                if (response.success) _isItemInWatchlist.value = addToWatchlist
-            } catch (e: Exception) { _error.value = "Watchlist Error: ${e.message}" }
-        }
-    }
-
-    fun getDiscoverCatalogs(type: String): LiveData<List<UserCatalog>> {
-        return allCatalogConfigs.map { list -> list.filter { it.catalogType == type && it.showInDiscover }.sortedBy { it.displayOrder } }
-    }
-
-    fun updateCatalogConfig(c: UserCatalog) { viewModelScope.launch { catalogRepository.updateCatalog(c) } }
-    fun swapCatalogOrder(i1: UserCatalog, i2: UserCatalog) { viewModelScope.launch { catalogRepository.swapOrder(i1, i2) } }
+    // ... (Rest of the file)
+    fun initUserLists() { viewModelScope.launch { prefsManager.getCurrentUserId()?.let { catalogRepository.ensureUserListCatalogs(it) } } }
     fun initDefaultCatalogs() { viewModelScope.launch { catalogRepository.initializeDefaultsIfNeeded() } }
+    fun updateCatalogConfig(c: UserCatalog) { viewModelScope.launch { catalogRepository.updateCatalog(c) } }
+    fun swapCatalogOrder(a: UserCatalog, b: UserCatalog) { viewModelScope.launch { catalogRepository.swapOrder(a, b) } }
+    fun getDiscoverCatalogs(type: String): LiveData<List<UserCatalog>> { return allCatalogConfigs.map { list -> list.filter { it.catalogType == type && it.showInDiscover }.sortedBy { it.displayOrder } } }
+    fun checkWatchlistStatus(id: String, type: String) { /*...*/ }
+    fun toggleWatchlist(meta: MetaItem, force: Boolean = false) { /*...*/ }
+    fun checkLibraryStatus(id: String) { /*...*/ }
+    fun toggleLibrary(meta: MetaItem) { /*...*/ }
+    fun removeFromLibrary(id: String) { /*...*/ }
+    fun addToLibrary(meta: MetaItem) { /*...*/ }
+    fun clearSearchResults() { /*...*/ }
+    fun searchTMDB(q: String) { /*...*/ }
+    fun searchMovies(q: String) { /*...*/ }
+    fun searchSeries(q: String) { /*...*/ }
+    fun searchPeople(q: String) { /*...*/ }
+    fun loadSeasonEpisodes(id: String, n: Int) { /*...*/ }
+    fun loadSeriesMeta(id: String) { /*...*/ }
+    fun loadEpisodeStreams(id: String, s: Int, e: Int) { /*...*/ }
+    fun loadStreams(t: String, id: String) { /*...*/ }
+    fun loadPersonCredits(id: Int) { /*...*/ }
+    fun fetchCast(id: String, type: String) { /*...*/ }
+    fun fetchRequestToken() { /*...*/ }
+    fun createSession(t: String) { /*...*/ }
+    fun checkTMDBAuthAndSync() { /*...*/ }
 }

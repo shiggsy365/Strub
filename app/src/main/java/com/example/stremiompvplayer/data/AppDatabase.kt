@@ -20,9 +20,9 @@ import com.example.stremiompvplayer.models.*
         FeedList::class,
         NextUpItem::class,
         UserCatalog::class,
-        CollectedItem::class // Added this to ensure CollectedItemDao works if it wasn't registered
+        CollectedItem::class
     ],
-    version = 3, // Incremented version
+    version = 4, // Incremented version for schema change
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -46,34 +46,60 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "stremio_player_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration() // Handle schema changes simply for now
                     .build()
                 INSTANCE = instance
                 instance
             }
         }
 
-        // Legacy method for compatibility
         fun getDatabase(context: Context): AppDatabase = getInstance(context)
     }
 
-    // Helper method to get library items for a user
     suspend fun getLibraryItems(userId: String): List<LibraryItem> {
-        // Since we don't have a userId field in LibraryItem,
-        // we'll just return all items for now
-        // You can add userId field to LibraryItem entity if needed
         return libraryItemDao().getAllItems()
     }
 
-    // NEW: Helper to delete all data for a user
     suspend fun deleteUserData(userId: String) {
         hubSlotDao().deleteByUser(userId)
         feedListDao().deleteByUser(userId)
         userCatalogDao().deleteByUser(userId)
         collectedItemDao().deleteByUser(userId)
+        watchProgressDao().deleteByUser(userId)
     }
 }
 
+@Dao
+interface WatchProgressDao {
+    @Query("SELECT * FROM watch_progress WHERE userId = :userId")
+    fun getProgressForUser(userId: String): androidx.lifecycle.LiveData<List<WatchProgress>>
+
+    @Query("SELECT * FROM watch_progress WHERE userId = :userId AND itemId = :itemId")
+    suspend fun getItemProgress(userId: String, itemId: String): WatchProgress?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveProgress(progress: WatchProgress)
+
+    @Query("DELETE FROM watch_progress WHERE userId = :userId")
+    suspend fun deleteByUser(userId: String)
+
+    @Query("DELETE FROM watch_progress WHERE userId = :userId AND itemId = :itemId")
+    suspend fun deleteItemProgress(userId: String, itemId: String)
+
+    @Query("UPDATE watch_progress SET isWatched = :isWatched, progress = :progress WHERE userId = :userId AND itemId = :itemId")
+    suspend fun updateWatchedStatus(userId: String, itemId: String, isWatched: Boolean, progress: Long = 0)
+
+    // Continue Watching Lists
+    @Query("SELECT * FROM watch_progress WHERE userId = :userId AND type = 'movie' AND isWatched = 0 AND progress > 0 ORDER BY lastUpdated DESC")
+    suspend fun getContinueWatchingMovies(userId: String): List<WatchProgress>
+
+    @Query("SELECT * FROM watch_progress WHERE userId = :userId AND type = 'episode' AND isWatched = 0 AND progress > 0 ORDER BY lastUpdated DESC")
+    suspend fun getContinueWatchingEpisodes(userId: String): List<WatchProgress>
+
+    // For Next Up: Get all watched episodes to calculate next
+    @Query("SELECT * FROM watch_progress WHERE userId = :userId AND type = 'episode' AND isWatched = 1 ORDER BY lastUpdated DESC")
+    suspend fun getWatchedEpisodes(userId: String): List<WatchProgress>
+}
 // Add DAO interfaces that were missing
 @Dao
 interface LibraryItemDao {
@@ -85,12 +111,6 @@ interface LibraryItemDao {
 
     @Delete
     suspend fun delete(item: LibraryItem)
-}
-
-@Dao
-interface WatchProgressDao {
-    @Query("SELECT * FROM WatchProgress")
-    suspend fun getAllProgress(): List<WatchProgress>
 }
 
 @Dao

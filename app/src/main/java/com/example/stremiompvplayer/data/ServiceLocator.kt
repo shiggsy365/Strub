@@ -8,8 +8,11 @@ import com.example.stremiompvplayer.CatalogRepository
 class ServiceLocator(context: Context) {
 
     val database = AppDatabase.getDatabase(context)
-    // UPDATED: Pass collectedItemDao to repository
-    val catalogRepository = CatalogRepository(database.userCatalogDao(), database.collectedItemDao())
+    val catalogRepository = CatalogRepository(
+        database.userCatalogDao(),
+        database.collectedItemDao(),
+        database.watchProgressDao() // Pass the new DAO
+    )
 
     companion object {
         @Volatile

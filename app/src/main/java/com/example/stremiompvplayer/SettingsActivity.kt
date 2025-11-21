@@ -1,12 +1,8 @@
 package com.example.stremiompvplayer
 
-import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -16,11 +12,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.adapters.CatalogConfigAdapter
+import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
+import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
-import com.example.stremiompvplayer.data.ServiceLocator
-import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 
@@ -137,13 +133,10 @@ class SettingsActivity : AppCompatActivity() {
         // URLs
         val authUrl = "https://www.themoviedb.org/authenticate/$requestToken"
         val qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=$authUrl"
-        // NOTE: Standard Glide may have issues loading SVGs without the SVG library.
-        // If this image fails to load, ensure you have SVG support or use a PNG.
         val logoUrl = "https://files.readme.io/29c6fee-blue_short.svg"
 
         urlText.text = authUrl
 
-        // Load Images
         Glide.with(this).load(qrApiUrl).into(qrImage)
         Glide.with(this).load(logoUrl).into(logoImage)
 
@@ -151,14 +144,11 @@ class SettingsActivity : AppCompatActivity() {
             .setView(dialogView)
             .setCancelable(false)
             .setPositiveButton("Connect") { _, _ ->
-                // User clicks this after approving on their device
                 viewModel.createSession(requestToken)
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
-
-    // ... (AIOStreams, Catalog Config, User Section methods) ...
 
     private fun setupAIOStreamsSection() {
         updateAIOStreamsDisplay()
@@ -262,6 +252,8 @@ class SettingsActivity : AppCompatActivity() {
         binding.rvCatalogConfigs.adapter = adapter
 
         viewModel.initDefaultCatalogs()
+        // NEW: Ensure User Lists are created
+        viewModel.initUserLists()
 
         viewModel.allCatalogConfigs.observe(this) { list ->
             adapter.submitList(list)

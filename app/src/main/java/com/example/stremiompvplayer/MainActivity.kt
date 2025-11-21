@@ -2,7 +2,10 @@ package com.example.stremiompvplayer
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.ContextThemeWrapper
 import android.view.KeyEvent
+import android.view.View
+import android.widget.PopupMenu
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -16,6 +19,7 @@ import com.example.stremiompvplayer.ui.series.SeriesFragment
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
+import com.google.android.material.chip.Chip
 
 class MainActivity : AppCompatActivity() {
 
@@ -43,9 +47,10 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.checkTMDBAuthAndSync()
 
-        // Default to Discover Movies
         if (savedInstanceState == null) {
-            binding.chipDiscoverMovies.isChecked = true
+            // Default to Discover Movies
+            binding.chipDiscover.isChecked = true
+            binding.chipDiscover.text = "Discover: Movies"
             loadFragment(DiscoverFragment.newInstance("movie"))
         }
 
@@ -55,13 +60,56 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, UserSelectionActivity::class.java))
         }
 
-        // NAVIGATION SETUP
-        binding.chipDiscoverMovies.setOnClickListener { loadFragment(DiscoverFragment.newInstance("movie")) }
-        binding.chipDiscoverSeries.setOnClickListener { loadFragment(DiscoverFragment.newInstance("series")) }
-        binding.chipMovies.setOnClickListener { loadFragment(MoviesFragment()) } // Library
-        binding.chipSeries.setOnClickListener { loadFragment(SeriesFragment()) } // Library
+        setupNavigation()
+    }
+
+    private fun setupNavigation() {
+        // DISCOVER DROP DOWN
+        binding.chipDiscover.setOnClickListener { view ->
+            showMenu(view, listOf("Movies", "Series")) { selection ->
+                when (selection) {
+                    "Movies" -> {
+                        binding.chipDiscover.text = "Discover: Movies"
+                        loadFragment(DiscoverFragment.newInstance("movie"))
+                    }
+                    "Series" -> {
+                        binding.chipDiscover.text = "Discover: Series"
+                        loadFragment(DiscoverFragment.newInstance("series"))
+                    }
+                }
+            }
+        }
+
+        // LIBRARY DROP DOWN
+        binding.chipLibrary.setOnClickListener { view ->
+            showMenu(view, listOf("Movies", "Series")) { selection ->
+                when (selection) {
+                    "Movies" -> {
+                        binding.chipLibrary.text = "Library: Movies"
+                        loadFragment(MoviesFragment())
+                    }
+                    "Series" -> {
+                        binding.chipLibrary.text = "Library: Series"
+                        loadFragment(SeriesFragment())
+                    }
+                }
+            }
+        }
+
         binding.chipSearch.setOnClickListener { loadFragment(SearchFragment()) }
         binding.chipMore.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
+    }
+
+    private fun showMenu(view: View, items: List<String>, onSelect: (String) -> Unit) {
+        // Use ContextThemeWrapper for Black Text on Light Background popup
+        val wrapper = ContextThemeWrapper(this, android.R.style.Theme_DeviceDefault_Light_NoActionBar)
+        val popup = PopupMenu(wrapper, view)
+        items.forEach { popup.menu.add(it) }
+        popup.setOnMenuItemClickListener {
+            onSelect(it.title.toString())
+            true
+        }
+        popup.show()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -70,26 +118,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
+        val personId = intent?.getIntExtra("SEARCH_PERSON_ID", -1) ?: -1
         val query = intent?.getStringExtra("SEARCH_QUERY")
-        if (!query.isNullOrEmpty()) {
-            // 1. Focus the search chip immediately for visual feedback
-            binding.chipSearch.requestFocus()
 
-            // 2. Load the Search Fragment
+        if (personId != -1) {
+            binding.chipSearch.requestFocus()
+            binding.chipSearch.isChecked = true
+
+            val searchFragment = SearchFragment()
+            loadFragment(searchFragment)
+
+            binding.root.postDelayed({
+                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+                if (currentFragment is SearchFragment) {
+                    if (!query.isNullOrEmpty()) {
+                        currentFragment.setSearchText(query)
+                    }
+                    currentFragment.searchByPersonId(personId)
+                }
+            }, 100)
+
+        } else if (!query.isNullOrEmpty()) {
+            binding.chipSearch.requestFocus()
             binding.chipSearch.isChecked = true
             val searchFragment = SearchFragment()
             loadFragment(searchFragment)
 
-            // 3. Trigger the search via a post-delayed action to ensure fragment view is ready
             binding.root.postDelayed({
-                // Check if the loaded fragment is indeed SearchFragment before triggering search
                 val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
                 if (currentFragment is SearchFragment) {
+                    currentFragment.setSearchText(query)
                     viewModel.searchTMDB(query)
-
-                    // OPTIONAL: Request focus for the actual Search View inside the fragment
-                    // This assumes SearchFragment exposes a function like requestSearchViewFocus()
-                    // For now, relying on the user's intent to switch to SearchFragment is enough.
                 }
             }, 100)
         }
@@ -102,39 +161,49 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+
+        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event?.action == KeyEvent.ACTION_DOWN) {
+            val focus = currentFocus
+            val isFocusOnMenu = focus == binding.appLogo ||
+                    focus == binding.chipDiscover ||
+                    focus == binding.chipLibrary ||
+                    focus == binding.chipSearch ||
+                    focus == binding.chipMore
+
+            if (isFocusOnMenu) {
+                if (currentFragment is SearchFragment) {
+                    currentFragment.focusSearch()
+                    return true
+                }
+                if (currentFragment is DiscoverFragment) {
+                    currentFragment.focusSidebar()
+                    return true
+                }
+            }
+        }
+
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
-
-            val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-
-            // Check if the fragment handles back press (e.g., dismissing nested views)
             if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
 
             val focus = currentFocus
             val isFocusOnMenu = focus == binding.appLogo ||
-                    focus == binding.chipDiscoverMovies ||
-                    focus == binding.chipDiscoverSeries ||
-                    focus == binding.chipMovies ||
-                    focus == binding.chipSeries ||
+                    focus == binding.chipDiscover ||
+                    focus == binding.chipLibrary ||
                     focus == binding.chipSearch ||
                     focus == binding.chipMore
 
             if (isFocusOnMenu) {
-                // If focus is already on the menu, let the default Android back behaviour take over (i.e., exit the app)
-                // If you want the app to stay open when D-pad Back is pressed from the menu, change this to 'return true'
-                // For now, letting it exit:
                 return super.onKeyDown(keyCode, event)
             } else {
-                // If focus is elsewhere in the main fragment, move it back to the selected menu item.
                 when {
-                    binding.chipDiscoverMovies.isChecked -> binding.chipDiscoverMovies.requestFocus()
-                    binding.chipDiscoverSeries.isChecked -> binding.chipDiscoverSeries.requestFocus()
-                    binding.chipMovies.isChecked -> binding.chipMovies.requestFocus()
-                    binding.chipSeries.isChecked -> binding.chipSeries.requestFocus()
+                    binding.chipDiscover.isChecked -> binding.chipDiscover.requestFocus()
+                    binding.chipLibrary.isChecked -> binding.chipLibrary.requestFocus()
                     binding.chipSearch.isChecked -> binding.chipSearch.requestFocus()
                     else -> binding.navigationScroll.requestFocus()
                 }
-                return true // Consume the back press to restore focus
+                return true
             }
         }
         return super.onKeyDown(keyCode, event)

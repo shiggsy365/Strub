@@ -2,6 +2,10 @@ package com.example.stremiompvplayer.models
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import java.io.Serializable
+
 
 @Dao
 interface UserCatalogDao {

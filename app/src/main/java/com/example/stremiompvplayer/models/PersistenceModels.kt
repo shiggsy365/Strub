@@ -6,7 +6,26 @@ import com.example.stremiompvplayer.models.MetaItem // Ensure this is imported f
 import java.io.Serializable
 
 // All models in this file are used for Room persistence
+@Entity(tableName = "watch_progress", primaryKeys = ["userId", "itemId"])
+data class WatchProgress(
+    val userId: String,
+    val itemId: String, // tmdb:123 or tmdb:123:1:5
+    val type: String,   // movie or episode
+    val progress: Long, // current position in ms
+    val duration: Long, // total duration in ms
+    val isWatched: Boolean,
+    val lastUpdated: Long = System.currentTimeMillis(),
 
+    // Metadata cache for UI display
+    val name: String? = null,
+    val poster: String? = null,
+    val background: String? = null,
+
+    // For Series/Episode logic
+    val parentId: String? = null, // tmdb:123 (for grouping episodes)
+    val season: Int? = null,
+    val episode: Int? = null
+) : Serializable
 @Entity
 data class FeedList(
     @PrimaryKey
@@ -35,8 +54,6 @@ data class HubSlot(
     var feedListId: String? = null
 )
 
-// STUB MODELS FOR ROOM (These were likely in your old UserModels.kt)
-
 @Entity
 data class User(
     @PrimaryKey // Using authKey for primary key
@@ -59,12 +76,6 @@ data class LibraryItem(
     val type: String,
     val name: String,
     val poster: String?
-) : Serializable
-
-@Entity
-data class WatchProgress(
-    @PrimaryKey
-    val id: String
 ) : Serializable
 
 @Entity

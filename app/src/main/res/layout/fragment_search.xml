@@ -89,6 +89,7 @@
                 android:layout_height="wrap_content"
                 android:text="Mixed"
                 android:textColor="@android:color/white"
+                android:nextFocusUp="@id/searchEditText"
                 app:chipBackgroundColor="@color/chip_background_selector"
                 app:chipStrokeColor="@color/chip_stroke_selector"
                 app:chipStrokeWidth="1dp" />
@@ -100,6 +101,7 @@
                 android:layout_height="wrap_content"
                 android:text="Movies"
                 android:textColor="@android:color/white"
+                android:nextFocusUp="@id/searchEditText"
                 app:chipBackgroundColor="@color/chip_background_selector"
                 app:chipStrokeColor="@color/chip_stroke_selector"
                 app:chipStrokeWidth="1dp" />
@@ -111,6 +113,7 @@
                 android:layout_height="wrap_content"
                 android:text="Series"
                 android:textColor="@android:color/white"
+                android:nextFocusUp="@id/searchEditText"
                 app:chipBackgroundColor="@color/chip_background_selector"
                 app:chipStrokeColor="@color/chip_stroke_selector"
                 app:chipStrokeWidth="1dp" />

@@ -1,7 +1,9 @@
 package com.example.stremiompvplayer.adapters
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
@@ -9,12 +11,6 @@ import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.databinding.ItemPosterBinding
 import com.example.stremiompvplayer.models.MetaItem
 
-/**
- * Enhanced PosterAdapter with:
- * - Proper poster aspect ratio (2:3)
- * - Long-press support for collection
- * - Click and long-click callbacks
- */
 class PosterAdapter(
     private var items: List<MetaItem>,
     private val onClick: (MetaItem) -> Unit,
@@ -24,11 +20,7 @@ class PosterAdapter(
     class ViewHolder(val binding: ItemPosterBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemPosterBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
+        val binding = ItemPosterBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
     }
 
@@ -37,28 +29,38 @@ class PosterAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
 
-        // Load poster with Glide, maintaining aspect ratio
+        // --- ASPECT RATIO LOGIC ---
+        val params = holder.binding.poster.layoutParams as ConstraintLayout.LayoutParams
+        if (item.isLandscape) {
+            // Landscape: 4:3
+            params.dimensionRatio = "H,3:4"
+        } else {
+            // Portrait: 2:3
+            params.dimensionRatio = "H,86:58"
+        }
+        holder.binding.poster.layoutParams = params
+
+        // Load Image
         Glide.with(holder.itemView.context)
             .load(item.poster)
-            .placeholder(R.drawable.movie) // Your placeholder drawable
+            .placeholder(R.drawable.movie)
             .error(R.drawable.movie)
             .transition(DrawableTransitionOptions.withCrossFade())
             .into(holder.binding.poster)
 
-        // Regular click
-        holder.itemView.setOnClickListener {
-            onClick(item)
-        }
+        // Watched Ticks
+        holder.binding.iconWatched.visibility = if (item.isWatched) View.VISIBLE else View.GONE
+        holder.binding.iconInProgress.visibility = if (!item.isWatched && item.progress > 0) View.VISIBLE else View.GONE
 
-        // Long click (for collection)
+        holder.itemView.setOnClickListener { onClick(item) }
+
         if (onLongClick != null) {
             holder.itemView.setOnLongClickListener {
                 onLongClick.invoke(item)
-                true // Consume the event
+                true
             }
         }
 
-        // Focus handling for TV
         holder.itemView.isFocusable = true
         holder.itemView.isFocusableInTouchMode = true
     }
@@ -71,4 +73,6 @@ class PosterAdapter(
     fun getItem(position: Int): MetaItem? {
         return if (position in items.indices) items[position] else null
     }
+
+    fun getItemPosition(item: MetaItem): Int = items.indexOf(item)
 }
