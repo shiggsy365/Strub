@@ -1,4 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Material Design 3 spacing system -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    <dimen name="spacing_xxl">48dp</dimen>
+    <dimen name="spacing_xxxl">64dp</dimen>
+
+    <!-- Component spacing -->
+    <dimen name="margin_small">8dp</dimen>
+    <dimen name="margin_medium">16dp</dimen>
+    <dimen name="margin_large">24dp</dimen>
+    <dimen name="margin_xlarge">32dp</dimen>
+
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_large">24dp</dimen>
+    <dimen name="padding_xlarge">32dp</dimen>
+
+    <!-- Touch targets -->
+    <dimen name="touch_target_size">48dp</dimen>
+    <dimen name="touch_target_size_large">56dp</dimen>
+
+    <!-- Corner radius -->
+    <dimen name="corner_radius_small">4dp</dimen>
+    <dimen name="corner_radius_medium">8dp</dimen>
+    <dimen name="corner_radius_large">12dp</dimen>
+    <dimen name="corner_radius_xlarge">16dp</dimen>
+    <dimen name="corner_radius_xxlarge">24dp</dimen>
+
+    <!-- Elevation -->
+    <dimen name="elevation_small">2dp</dimen>
+    <dimen name="elevation_medium">4dp</dimen>
+    <dimen name="elevation_large">8dp</dimen>
+    <dimen name="elevation_xlarge">16dp</dimen>
+
+    <!-- Stroke widths -->
+    <dimen name="stroke_thin">1dp</dimen>
+    <dimen name="stroke_medium">2dp</dimen>
+    <dimen name="stroke_thick">3dp</dimen>
+    <dimen name="focus_stroke_width">3dp</dimen>
     <dimen name="chip_stroke_width">3dp</dimen>
+
+    <!-- Card dimensions -->
+    <dimen name="card_margin">@dimen/spacing_sm</dimen>
+    <dimen name="card_elevation">@dimen/elevation_medium</dimen>
+    <dimen name="card_corner_radius">@dimen/corner_radius_large</dimen>
+
+    <!-- Poster dimensions -->
+    <dimen name="poster_width">150dp</dimen>
+    <dimen name="poster_height_standard">225dp</dimen> <!-- 2:3 ratio -->
+    <dimen name="poster_height_landscape">84dp</dimen>  <!-- 16:9 ratio -->
+    <dimen name="poster_corner_radius">@dimen/corner_radius_medium</dimen>
+
+    <!-- Button dimensions -->
+    <dimen name="button_height">56dp</dimen>
+    <dimen name="button_height_small">48dp</dimen>
+    <dimen name="button_corner_radius">@dimen/corner_radius_large</dimen>
+    <dimen name="button_padding_horizontal">24dp</dimen>
+    <dimen name="button_padding_vertical">16dp</dimen>
+
+    <!-- Chip dimensions -->
+    <dimen name="chip_height">48dp</dimen>
+    <dimen name="chip_height_large">56dp</dimen>
+    <dimen name="chip_corner_radius">@dimen/corner_radius_large</dimen>
+    <dimen name="chip_padding_horizontal">16dp</dimen>
+
+    <!-- Navigation dimensions -->
+    <dimen name="navigation_height">72dp</dimen>
+    <dimen name="navigation_item_padding">@dimen/spacing_md</dimen>
+
+    <!-- List item dimensions -->
+    <dimen name="list_item_height">56dp</dimen>
+    <dimen name="list_item_height_large">72dp</dimen>
+    <dimen name="list_item_padding">@dimen/spacing_md</dimen>
+
+    <!-- Grid spacing -->
+    <dimen name="grid_spacing">@dimen/spacing_sm</dimen>
+    <dimen name="grid_margin">@dimen/spacing_md</dimen>
+
+    <!-- Text field dimensions -->
+    <dimen name="text_field_height">56dp</dimen>
+    <dimen name="text_field_corner_radius">@dimen/corner_radius_large</dimen>
+    <dimen name="text_field_padding_horizontal">16dp</dimen>
+
+    <!-- Icon dimensions -->
+    <dimen name="icon_size_small">16dp</dimen>
+    <dimen name="icon_size_medium">24dp</dimen>
+    <dimen name="icon_size_large">32dp</dimen>
+    <dimen name="icon_size_xlarge">48dp</dimen>
+
+    <!-- App specific dimensions -->
+    <dimen name="app_logo_size">64dp</dimen>
+    <dimen name="content_max_width">1200dp</dimen>
+    <dimen name="sidebar_width">320dp</dimen>
+    <dimen name="details_pane_width">400dp</dimen>
+
+    <!-- Animation durations (in integers for use in code) -->
+    <integer name="animation_duration_short">150</integer>
+    <integer name="animation_duration_medium">300</integer>
+    <integer name="animation_duration_long">500</integer>
+
+    <!-- Screen margins for different screen sizes -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="activity_horizontal_margin_large">24dp</dimen>
+    <dimen name="activity_vertical_margin_large">24dp</dimen>
+
+    <!-- Focus indicators -->
+    <dimen name="focus_glow_radius">8dp</dimen>
+    <dimen name="focus_border_width">@dimen/stroke_thick</dimen>
+
+    <!-- ============================================ -->
+    <!-- TEXT SIZES - Material Design 3 Type Scale    -->
+    <!-- ============================================ -->
+
+    <!-- Display text sizes (for large, impactful text) -->
+    <dimen name="text_size_display_large">57sp</dimen>
+    <dimen name="text_size_display_medium">45sp</dimen>
+    <dimen name="text_size_display_small">36sp</dimen>
+
+    <!-- Headline text sizes (for section headers) -->
+    <dimen name="text_size_headline_large">32sp</dimen>
+    <dimen name="text_size_headline_medium">28sp</dimen>
+    <dimen name="text_size_headline_small">24sp</dimen>
+
+    <!-- Title text sizes (for smaller headers) -->
+    <dimen name="text_size_title_large">22sp</dimen>
+    <dimen name="text_size_title_medium">16sp</dimen>
+    <dimen name="text_size_title_small">14sp</dimen>
+
+    <!-- Body text sizes (for main content) -->
+    <dimen name="text_size_body_large">16sp</dimen>
+    <dimen name="text_size_body_medium">14sp</dimen>
+    <dimen name="text_size_body_small">12sp</dimen>
+
+    <!-- Label text sizes (for buttons and small text) -->
+    <dimen name="text_size_label_large">14sp</dimen>
+    <dimen name="text_size_label_medium">12sp</dimen>
+    <dimen name="text_size_label_small">11sp</dimen>
+
+    <!-- TV-optimized text sizes (slightly larger for 10-foot viewing) -->
+    <dimen name="text_size_tv_display">48sp</dimen>
+    <dimen name="text_size_tv_headline">32sp</dimen>
+    <dimen name="text_size_tv_title">24sp</dimen>
+    <dimen name="text_size_tv_body">18sp</dimen>
+    <dimen name="text_size_tv_caption">14sp</dimen>
 </resources>

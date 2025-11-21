@@ -1,5 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ============================================ -->
+    <!-- BASE WIDGET STYLE                            -->
+    <!-- ============================================ -->
+
+    <!-- Base Widget.App style that all other Widget.App.* styles inherit from -->
+    <style name="Widget.App" parent=""/>
+
+    <!-- ============================================ -->
+    <!-- THEMES                                       -->
+    <!-- ============================================ -->
+
+    <!-- Base Modern Theme -->
+    <style name="Theme.StremioMPVPlayer.Modern" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary Colors -->
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorPrimaryVariant">@color/md_theme_primaryContainer</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+
+        <!-- Secondary Colors -->
+        <item name="colorSecondary">@color/md_theme_secondary</item>
+        <item name="colorSecondaryVariant">@color/md_theme_secondaryContainer</item>
+        <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
+
+        <!-- Background Colors -->
+        <item name="android:colorBackground">@color/md_theme_background</item>
+        <item name="colorSurface">@color/md_theme_surface</item>
+        <item name="colorOnBackground">@color/md_theme_onBackground</item>
+        <item name="colorOnSurface">@color/md_theme_onSurface</item>
+
+        <!-- Error Colors -->
+        <item name="colorError">@color/md_theme_error</item>
+        <item name="colorOnError">@color/md_theme_onError</item>
+
+        <!-- Text Colors -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorTertiary">@color/text_tertiary</item>
+
+        <!-- Window & Status Bar -->
+        <item name="android:windowBackground">@color/md_theme_background</item>
+        <item name="android:statusBarColor">@color/md_theme_background</item>
+        <item name="android:navigationBarColor">@color/md_theme_background</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+
+        <!-- Focus & Selection -->
+        <item name="android:colorFocusedHighlight">@color/md_theme_primary</item>
+        <item name="colorControlHighlight">@color/md_theme_primaryContainer</item>
+
+        <!-- Typography -->
+        <item name="textAppearanceHeadline1">@style/TextAppearance.App.Headline1</item>
+        <item name="textAppearanceHeadline2">@style/TextAppearance.App.Headline2</item>
+        <item name="textAppearanceHeadline3">@style/TextAppearance.App.Headline3</item>
+        <item name="textAppearanceHeadline4">@style/TextAppearance.App.Headline4</item>
+        <item name="textAppearanceHeadline5">@style/TextAppearance.App.Headline5</item>
+        <item name="textAppearanceHeadline6">@style/TextAppearance.App.Headline6</item>
+        <item name="textAppearanceBody1">@style/TextAppearance.App.Body1</item>
+        <item name="textAppearanceBody2">@style/TextAppearance.App.Body2</item>
+        <item name="textAppearanceButton">@style/TextAppearance.App.Button</item>
+        <item name="textAppearanceCaption">@style/TextAppearance.App.Caption</item>
+
+        <!-- Components -->
+        <item name="materialButtonStyle">@style/Widget.App.Button</item>
+        <item name="materialCardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip</item>
+        <item name="editTextStyle">@style/Widget.App.EditText</item>
+    </style>
+
+    <!-- Original Theme (Keep for compatibility) -->
     <style name="Theme.StremioMPVPlayer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">#E50914</item>
         <item name="colorPrimaryDark">#B20710</item>
@@ -7,10 +76,8 @@
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">#BBBBBB</item>
-
         <item name="android:colorFocusedHighlight">#FFE50914</item>
         <item name="android:focusedByDefault" tools:targetApi="26">true</item>
-
         <item name="editTextStyle">@style/BlackOnWhiteEditText</item>
     </style>
 
@@ -22,9 +89,224 @@
         <item name="android:colorFocusedHighlight">#FFE50914</item>
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowContentOverlay">@null</item>
-
         <item name="editTextStyle">@style/BlackOnWhiteEditText</item>
     </style>
+
+    <style name="Theme.StremioMPVPlayer.Fullscreen" parent="Theme.StremioMPVPlayer">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+    <!-- ============================================ -->
+    <!-- Typography Styles                            -->
+    <!-- ============================================ -->
+
+    <!-- Display Styles -->
+    <style name="TextAppearance.App.DisplayLarge" parent="TextAppearance.MaterialComponents.Headline1">
+        <item name="android:textSize">@dimen/text_size_display_large</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif-light</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+
+    <style name="TextAppearance.App.DisplayMedium" parent="TextAppearance.MaterialComponents.Headline2">
+        <item name="android:textSize">@dimen/text_size_display_medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif-light</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+
+    <style name="TextAppearance.App.DisplaySmall" parent="TextAppearance.MaterialComponents.Headline3">
+        <item name="android:textSize">@dimen/text_size_display_small</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Headline Styles -->
+    <style name="TextAppearance.App.HeadlineLarge" parent="TextAppearance.MaterialComponents.Headline4">
+        <item name="android:textSize">@dimen/text_size_headline_large</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.App.HeadlineMedium" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:textSize">@dimen/text_size_headline_medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.App.HeadlineSmall" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">@dimen/text_size_headline_small</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Title Styles -->
+    <style name="TextAppearance.App.TitleLarge" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">@dimen/text_size_title_large</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.App.TitleMedium" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:textSize">@dimen/text_size_title_medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.App.TitleSmall" parent="TextAppearance.MaterialComponents.Subtitle2">
+        <item name="android:textSize">@dimen/text_size_title_small</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Body Styles -->
+    <style name="TextAppearance.App.BodyLarge" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textSize">@dimen/text_size_body_large</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.App.BodyMedium" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:textSize">@dimen/text_size_body_medium</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.App.BodySmall" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">@dimen/text_size_body_small</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Label Styles -->
+    <style name="TextAppearance.App.LabelLarge" parent="TextAppearance.MaterialComponents.Button">
+        <item name="android:textSize">@dimen/text_size_label_large</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="TextAppearance.App.LabelMedium" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">@dimen/text_size_label_medium</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.App.LabelSmall" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">@dimen/text_size_label_small</item>
+        <item name="android:textColor">@color/text_tertiary</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Legacy Aliases (for backwards compatibility) -->
+    <style name="TextAppearance.App.Headline1" parent="TextAppearance.App.DisplayLarge"/>
+    <style name="TextAppearance.App.Headline2" parent="TextAppearance.App.DisplayMedium"/>
+    <style name="TextAppearance.App.Headline3" parent="TextAppearance.App.DisplaySmall"/>
+    <style name="TextAppearance.App.Headline4" parent="TextAppearance.App.HeadlineLarge"/>
+    <style name="TextAppearance.App.Headline5" parent="TextAppearance.App.HeadlineMedium"/>
+    <style name="TextAppearance.App.Headline6" parent="TextAppearance.App.HeadlineSmall"/>
+    <style name="TextAppearance.App.Body1" parent="TextAppearance.App.BodyLarge"/>
+    <style name="TextAppearance.App.Body2" parent="TextAppearance.App.BodyMedium"/>
+    <style name="TextAppearance.App.Button" parent="TextAppearance.App.LabelLarge"/>
+    <style name="TextAppearance.App.Caption" parent="TextAppearance.App.LabelSmall"/>
+
+    <!-- ============================================ -->
+    <!-- Component Styles                             -->
+    <!-- ============================================ -->
+
+    <!-- Button Styles -->
+    <style name="Widget.App.Button" parent="Widget.MaterialComponents.Button">
+        <item name="android:minHeight">@dimen/button_height</item>
+        <item name="android:paddingStart">@dimen/button_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/button_padding_horizontal</item>
+        <item name="cornerRadius">@dimen/corner_radius_medium</item>
+        <item name="backgroundTint">@color/md_theme_primary</item>
+        <item name="android:textColor">@color/md_theme_onPrimary</item>
+        <item name="rippleColor">@color/md_theme_primaryContainer</item>
+        <item name="android:stateListAnimator">@animator/button_elevation</item>
+    </style>
+
+    <style name="Widget.App.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:minHeight">@dimen/button_height</item>
+        <item name="cornerRadius">@dimen/corner_radius_medium</item>
+        <item name="strokeColor">@color/md_theme_primary</item>
+        <item name="strokeWidth">2dp</item>
+        <item name="android:textColor">@color/md_theme_primary</item>
+    </style>
+
+    <style name="Widget.App.Button.Text" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:minHeight">@dimen/button_height</item>
+        <item name="android:textColor">@color/md_theme_primary</item>
+    </style>
+
+    <!-- Card Styles -->
+    <style name="Widget.App.CardView" parent="Widget.MaterialComponents.CardView">
+        <item name="cardCornerRadius">@dimen/corner_radius_large</item>
+        <item name="cardElevation">@dimen/elevation_small</item>
+        <item name="cardBackgroundColor">@color/md_theme_surface</item>
+        <item name="contentPadding">@dimen/spacing_md</item>
+        <item name="android:stateListAnimator">@animator/card_elevation</item>
+    </style>
+
+    <!-- Chip Styles -->
+    <style name="Widget.App.Chip" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipBackgroundColor">@color/chip_background_selector</item>
+        <item name="chipStrokeColor">@color/chip_stroke_selector</item>
+        <item name="chipStrokeWidth">@dimen/chip_stroke_width</item>
+        <item name="android:textColor">@color/chip_text_selector</item>
+        <item name="chipCornerRadius">@dimen/corner_radius_medium</item>
+        <item name="chipMinHeight">@dimen/chip_height</item>
+    </style>
+
+    <!-- Navigation Chip Style -->
+    <style name="Widget.App.Chip.Navigation" parent="Widget.App.Chip">
+        <item name="chipMinHeight">@dimen/chip_height_large</item>
+        <item name="android:paddingStart">@dimen/chip_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/chip_padding_horizontal</item>
+    </style>
+
+    <!-- Poster Style -->
+    <style name="Widget.App.Poster">
+        <item name="cardCornerRadius">@dimen/poster_corner_radius</item>
+        <item name="cardElevation">@dimen/elevation_medium</item>
+        <item name="android:stateListAnimator">@animator/card_elevation</item>
+    </style>
+
+    <!-- EditText Style -->
+    <style name="Widget.App.EditText" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/md_theme_primary</item>
+        <item name="boxCornerRadiusTopStart">@dimen/corner_radius_medium</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/corner_radius_medium</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/corner_radius_medium</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/corner_radius_medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="hintTextColor">@color/text_tertiary</item>
+    </style>
+
+    <style name="BlackOnWhiteEditText" parent="Widget.AppCompat.EditText">
+        <item name="android:textColor">#000000</item>
+        <item name="android:textColorHint">#888888</item>
+        <item name="android:background">#FFFFFF</item>
+        <item name="android:padding">12dp</item>
+    </style>
+
+    <!-- ============================================ -->
+    <!-- TV-Specific Styles                           -->
+    <!-- ============================================ -->
 
     <style name="TVButton" parent="Widget.MaterialComponents.Button">
         <item name="android:textColor">@android:color/white</item>
@@ -39,15 +321,24 @@
         <item name="android:focusableInTouchMode">true</item>
     </style>
 
-    <style name="Theme.StremioMPVPlayer.Fullscreen" parent="Theme.StremioMPVPlayer">
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowContentOverlay">@null</item>
+    <!-- Focus Indicator for TV -->
+    <style name="Widget.App.FocusIndicator">
+        <item name="android:background">@drawable/focus_indicator_modern</item>
     </style>
 
-    <style name="BlackOnWhiteEditText" parent="Widget.AppCompat.EditText">
-        <item name="android:textColor">#000000</item>
-        <item name="android:textColorHint">#888888</item>
-        <item name="android:background">#FFFFFF</item>
-        <item name="android:padding">12dp</item>
+    <!-- ============================================ -->
+    <!-- Utility Styles                               -->
+    <!-- ============================================ -->
+
+    <style name="Divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">@color/md_theme_surfaceVariant</item>
     </style>
+
+    <style name="Divider.Vertical">
+        <item name="android:layout_width">1dp</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+
 </resources>

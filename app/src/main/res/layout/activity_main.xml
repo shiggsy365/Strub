@@ -8,112 +8,170 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/app_background">
+        android:background="@color/md_theme_background">
 
+        <!-- Main Content Container -->
         <FrameLayout
             android:id="@+id/fragmentContainer"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:layout_marginTop="80dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- App Logo -->
-        <ImageButton
-            android:id="@+id/appLogo"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginStart="4dp"
-            android:padding="4dp"
-            android:background="@drawable/selector_focus_border"
-            android:src="@mipmap/ic_launcher"
-            android:scaleType="fitCenter"
-            android:contentDescription="@string/app_name"
-            android:focusable="true"
-            android:clickable="true"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <HorizontalScrollView
-            android:id="@+id/navigationScroll"
+        <!-- Top Navigation Bar -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/navigationCard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:scrollbars="none"
-            android:paddingStart="90dp"
-            android:paddingEnd="16dp"
-            android:elevation="10dp"
+            app:cardCornerRadius="0dp"
+            app:cardElevation="8dp"
+            app:cardBackgroundColor="@color/md_theme_surface"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/mainNavGroup"
-                android:layout_width="wrap_content"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingVertical="16dp"
-                app:singleSelection="true"
-                app:selectionRequired="true">
+                android:padding="16dp">
 
-                <!-- CONSOLIDATED DISCOVER -->
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipDiscover"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
+                <!-- App Logo -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/logoCard"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="@color/md_theme_primaryContainer"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent">
+
+                    <ImageButton
+                        android:id="@+id/appLogo"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:src="@mipmap/ic_launcher"
+                        android:scaleType="fitCenter"
+                        android:contentDescription="@string/app_name"
+                        android:focusable="true"
+                        android:clickable="true" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Navigation Chip Group -->
+                <HorizontalScrollView
+                    android:id="@+id/navigationScroll"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Discover"
-                    android:focusable="true"
-                    android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp"
-                    app:closeIconVisible="true"
-                    app:closeIcon="@android:drawable/arrow_down_float"
-                    app:closeIconTint="@android:color/white"/>
+                    android:scrollbars="none"
+                    android:layout_marginStart="16dp"
+                    android:clipToPadding="false"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/logoCard"
+                    app:layout_constraintEnd_toEndOf="parent">
 
-                <!-- CONSOLIDATED LIBRARY -->
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipLibrary"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Library"
-                    android:focusable="true"
-                    android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp"
-                    app:closeIconVisible="true"
-                    app:closeIcon="@android:drawable/arrow_down_float"
-                    app:closeIconTint="@android:color/white"/>
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/mainNavGroup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingVertical="4dp"
+                        android:paddingHorizontal="8dp"
+                        app:singleSelection="true"
+                        app:selectionRequired="true"
+                        app:chipSpacing="8dp">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipSearch"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/search"
-                    android:focusable="true"
-                    android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp" />
+                        <!-- Discover Chip with Dropdown Indicator -->
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipDiscover"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Discover"
+                            android:focusable="true"
+                            android:textColor="@android:color/white"
+                            app:chipBackgroundColor="@color/chip_background_selector"
+                            app:chipStrokeColor="@color/chip_stroke_selector"
+                            app:chipStrokeWidth="1dp"
+                            app:chipCornerRadius="20dp"
+                            app:chipIconVisible="true"
+                            app:chipIcon="@drawable/ic_expand_more"
+                            app:chipIconTint="@android:color/white"
+                            app:chipIconSize="18dp" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipMore"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="..."
-                    android:focusable="true"
-                    android:textColor="@android:color/white"
-                    app:chipBackgroundColor="@color/chip_background_selector"
-                    app:chipStrokeColor="@color/chip_stroke_selector"
-                    app:chipStrokeWidth="1dp" />
+                        <!-- Library Chip with Dropdown Indicator -->
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipLibrary"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Library"
+                            android:focusable="true"
+                            android:textColor="@android:color/white"
+                            app:chipBackgroundColor="@color/chip_background_selector"
+                            app:chipStrokeColor="@color/chip_stroke_selector"
+                            app:chipStrokeWidth="1dp"
+                            app:chipCornerRadius="20dp"
+                            app:chipIconVisible="true"
+                            app:chipIcon="@drawable/ic_expand_more"
+                            app:chipIconTint="@android:color/white"
+                            app:chipIconSize="18dp" />
 
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
+                        <!-- Search Chip -->
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipSearch"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/search"
+                            android:focusable="true"
+                            android:textColor="@android:color/white"
+                            app:chipBackgroundColor="@color/chip_background_selector"
+                            app:chipStrokeColor="@color/chip_stroke_selector"
+                            app:chipStrokeWidth="1dp"
+                            app:chipCornerRadius="20dp" />
+
+                        <!-- More Options Chip -->
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMore"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Settings"
+                            android:focusable="true"
+                            android:textColor="@android:color/white"
+                            app:chipBackgroundColor="@color/chip_background_selector"
+                            app:chipStrokeColor="@color/chip_stroke_selector"
+                            app:chipStrokeWidth="1dp"
+                            app:chipCornerRadius="20dp"
+                            app:chipIconVisible="true"
+                            app:chipIcon="@drawable/ic_settings"
+                            app:chipIconTint="@android:color/white"
+                            app:chipIconSize="18dp" />
+
+                    </com.google.android.material.chip.ChipGroup>
+                </HorizontalScrollView>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Status Bar Overlay for Immersive Experience -->
+        <View
+            android:id="@+id/statusBarOverlay"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@color/md_theme_surface"
+            android:alpha="0.9"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/navigationCard" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

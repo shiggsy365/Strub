@@ -8,83 +8,157 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#000000"
+        android:background="@color/md_theme_background"
         android:padding="32dp">
 
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideline"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.75" />
+        <!-- Background Pattern/Decoration -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.05"
+            android:background="@drawable/modern_gradient_overlay" />
 
-        <LinearLayout
-            android:id="@+id/bannerContainer"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:layout_marginBottom="24dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
-            <ImageView
-                android:id="@+id/logoImage"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:src="@mipmap/ic_launcher"
-                android:contentDescription="@string/app_name"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:id="@+id/appTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Strub"
-                android:textColor="@android:color/white"
-                android:textSize="42sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.05"/>
-
-            <TextView
-                android:id="@+id/appSubtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Your all in one streaming hub"
-                android:textColor="#AAAAAA"
-                android:textSize="16sp"
-                android:layout_marginTop="4dp"
-                android:fontFamily="sans-serif-light"/>
-
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/usersRecycler"
+        <!-- Main Content Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/mainCard"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:clipToPadding="false"
-            android:padding="16dp"
-            app:layout_constraintTop_toBottomOf="@id/bannerContainer"
+            android:layout_margin="16dp"
+            app:cardCornerRadius="32dp"
+            app:cardElevation="24dp"
+            app:cardBackgroundColor="@color/md_theme_surface"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/guideline" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintWidth_percent="0.85"
+            app:layout_constraintHeight_percent="0.85">
 
-        <Button
-            android:id="@+id/exitAppButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Exit Strub"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:padding="16dp"
-            android:layout_marginStart="16dp"
-            android:background="@drawable/button_background"
-            app:backgroundTint="@null"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/guideline"
-            app:layout_constraintEnd_toEndOf="parent" />
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="48dp">
+
+                <!-- App Branding Section -->
+                <LinearLayout
+                    android:id="@+id/brandingSection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:layout_marginBottom="48dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <!-- App Icon -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:layout_marginBottom="24dp"
+                        app:cardCornerRadius="30dp"
+                        app:cardElevation="16dp"
+                        app:cardBackgroundColor="@color/md_theme_primaryContainer">
+
+                        <ImageView
+                            android:id="@+id/logoImage"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="24dp"
+                            android:src="@mipmap/ic_launcher"
+                            android:contentDescription="@string/app_name"
+                            android:scaleType="fitCenter" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- App Title -->
+                    <TextView
+                        android:id="@+id/appTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Strub"
+                        android:textAppearance="@style/TextAppearance.App.DisplayMedium"
+                        android:textColor="@color/text_primary"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.05"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- App Subtitle -->
+                    <TextView
+                        android:id="@+id/appSubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Your all-in-one streaming hub"
+                        android:textAppearance="@style/TextAppearance.App.BodyLarge"
+                        android:textColor="@color/text_secondary"
+                        android:fontFamily="sans-serif-light"
+                        android:gravity="center" />
+
+                </LinearLayout>
+
+                <!-- User Profiles Section -->
+                <LinearLayout
+                    android:id="@+id/profilesSection"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:orientation="vertical"
+                    app:layout_constraintTop_toBottomOf="@id/brandingSection"
+                    app:layout_constraintBottom_toTopOf="@id/actionSection"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Who's Watching?"
+                        android:textAppearance="@style/TextAppearance.App.HeadlineSmall"
+                        android:textColor="@color/text_primary"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="32dp" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/usersRecycler"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:clipToPadding="false"
+                        android:padding="16dp" />
+
+                </LinearLayout>
+
+                <!-- Action Section -->
+                <LinearLayout
+                    android:id="@+id/actionSection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="32dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/exitAppButton"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Exit App"
+                        android:textAppearance="@style/TextAppearance.App.LabelLarge"
+                        android:textColor="@color/text_secondary"
+                        android:paddingHorizontal="32dp"
+                        android:paddingVertical="16dp"
+                        app:strokeColor="@color/md_theme_outline"
+                        app:strokeWidth="1dp"
+                        app:cornerRadius="20dp"
+                        app:icon="@drawable/ic_exit_to_app"
+                        app:iconGravity="start"
+                        app:iconTint="@color/text_secondary" />
+
+                </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
