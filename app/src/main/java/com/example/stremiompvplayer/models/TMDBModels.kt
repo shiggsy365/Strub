@@ -113,79 +113,102 @@ data class TMDBEpisode(
 
 // --- TV CREDITS (Aggregate) ---
 
+
+data class TMDBImagesResponse(
+    val logos: List<TMDBImage>
+)
 data class TMDBMovieListResponse(
     val page: Int,
-    val results: List<TMDBMovie>,
-    @Json(name = "total_pages") val totalPages: Int,
-    @Json(name = "total_results") val totalResults: Int
-) : Serializable
+    val results: List<TMDBMovie>
+)
 
 data class TMDBMovie(
-    val adult: Boolean,
-    @Json(name = "backdrop_path") val backdropPath: String?,
-    @Json(name = "genre_ids") val genreIds: List<Int>,
     val id: Int,
-    @Json(name = "original_language") val originalLanguage: String,
-    @Json(name = "original_title") val originalTitle: String,
-    val overview: String,
-    val popularity: Double,
-    @Json(name = "poster_path") val posterPath: String?,
-    @Json(name = "release_date") val releaseDate: String?,
     val title: String,
-    val video: Boolean,
-    @Json(name = "vote_average") val voteAverage: Double,
-    @Json(name = "vote_count") val voteCount: Int
-) : Serializable {
+    val poster_path: String?,
+    val backdrop_path: String?,
+    val overview: String?,
+    val release_date: String?,
+    val vote_average: Double?
+) {
     fun toMetaItem(): MetaItem {
         return MetaItem(
             id = "tmdb:$id",
             type = "movie",
             name = title,
-            poster = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-            background = backdropPath?.let { "https://image.tmdb.org/t/p/original$it" },
-            description = overview
+            poster = if (poster_path != null) "https://image.tmdb.org/t/p/w500$poster_path" else null,
+            background = if (backdrop_path != null) "https://image.tmdb.org/t/p/original$backdrop_path" else null,
+            description = overview,
+            // MAP NEW FIELDS
+            releaseDate = release_date,
+            rating = vote_average?.let { String.format("%.1f", it) }
         )
     }
 }
 
 data class TMDBSeriesListResponse(
     val page: Int,
-    val results: List<TMDBSeries>,
-    @Json(name = "total_pages") val totalPages: Int,
-    @Json(name = "total_results") val totalResults: Int
-) : Serializable
+    val results: List<TMDBSeries>
+)
 
 data class TMDBSeries(
-    @Json(name = "backdrop_path") val backdropPath: String?,
-    @Json(name = "first_air_date") val firstAirDate: String?,
-    @Json(name = "genre_ids") val genreIds: List<Int>,
     val id: Int,
     val name: String,
-    @Json(name = "origin_country") val originCountry: List<String>,
-    @Json(name = "original_language") val originalLanguage: String,
-    @Json(name = "original_name") val originalName: String,
-    val overview: String,
-    val popularity: Double,
-    @Json(name = "poster_path") val posterPath: String?,
-    @Json(name = "vote_average") val voteAverage: Double,
-    @Json(name = "vote_count") val voteCount: Int
-) : Serializable {
+    val poster_path: String?,
+    val backdrop_path: String?,
+    val overview: String?,
+    val first_air_date: String?,
+    val vote_average: Double?
+) {
     fun toMetaItem(): MetaItem {
         return MetaItem(
             id = "tmdb:$id",
             type = "series",
             name = name,
-            poster = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-            background = backdropPath?.let { "https://image.tmdb.org/t/p/original$it" },
-            description = overview
+            poster = if (poster_path != null) "https://image.tmdb.org/t/p/w500$poster_path" else null,
+            background = if (backdrop_path != null) "https://image.tmdb.org/t/p/original$backdrop_path" else null,
+            description = overview,
+            // MAP NEW FIELDS
+            releaseDate = first_air_date,
+            rating = vote_average?.let { String.format("%.1f", it) }
         )
     }
 }
 
-data class TMDBImagesResponse(
-    val logos: List<TMDBImage>
+data class TMDBMultiSearchResponse(
+    val page: Int,
+    val results: List<TMDBMultiSearchResult>
 )
 
+data class TMDBMultiSearchResult(
+    val id: Int,
+    val media_type: String,
+    val name: String?,
+    val title: String?,
+    val poster_path: String?,
+    val backdrop_path: String?,
+    val overview: String?,
+    val release_date: String?,
+    val first_air_date: String?,
+    val vote_average: Double?
+) {
+    val mediaType: String get() = media_type
+
+    fun toMetaItem(): MetaItem {
+        val finalTitle = title ?: name ?: "Unknown"
+        val date = release_date ?: first_air_date
+        return MetaItem(
+            id = "tmdb:$id",
+            type = media_type,
+            name = finalTitle,
+            poster = if (poster_path != null) "https://image.tmdb.org/t/p/w500$poster_path" else null,
+            background = if (backdrop_path != null) "https://image.tmdb.org/t/p/original$backdrop_path" else null,
+            description = overview,
+            releaseDate = date,
+            rating = vote_average?.let { String.format("%.1f", it) }
+        )
+    }
+}
 data class TMDBImage(
     val file_path: String,
     val iso_639_1: String?
@@ -202,44 +225,7 @@ data class TMDBSeriesDetailResponse(
     val seasons: List<TMDBSeason>
 ) : Serializable
 
-data class TMDBMultiSearchResponse(
-    val page: Int,
-    val results: List<TMDBMultiSearchResult>,
-    @Json(name = "total_pages") val totalPages: Int,
-    @Json(name = "total_results") val totalResults: Int
-) : Serializable
 
-data class TMDBMultiSearchResult(
-    val id: Int,
-    @Json(name = "media_type") val mediaType: String,
-    @Json(name = "poster_path") val posterPath: String?,
-    @Json(name = "backdrop_path") val backdropPath: String?,
-    val overview: String?,
-    val popularity: Double,
-    @Json(name = "vote_average") val voteAverage: Double,
-    @Json(name = "vote_count") val voteCount: Int,
-    val title: String?,
-    @Json(name = "original_title") val originalTitle: String?,
-    @Json(name = "release_date") val releaseDate: String?,
-    val name: String?,
-    @Json(name = "original_name") val originalName: String?,
-    @Json(name = "first_air_date") val firstAirDate: String?
-) : Serializable {
-    fun toMetaItem(): MetaItem {
-        return MetaItem(
-            id = "tmdb:$id",
-            type = when(mediaType) {
-                "movie" -> "movie"
-                "tv" -> "series"
-                else -> mediaType
-            },
-            name = title ?: name ?: "Unknown",
-            poster = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-            background = backdropPath?.let { "https://image.tmdb.org/t/p/original$it" },
-            description = overview
-        )
-    }
-}
 
 data class TMDBExternalIdsResponse(
     val id: Int,

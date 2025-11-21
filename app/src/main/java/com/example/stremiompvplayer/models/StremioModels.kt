@@ -156,7 +156,10 @@ data class MetaItem(
     val name: String,
     val poster: String?,
     val background: String?,
-    val description: String?
+    val description: String?,
+    // NEW FIELDS
+    val releaseDate: String? = null,
+    val rating: String? = null
 ) : Serializable
 
 data class Manifest(

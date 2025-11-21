@@ -77,10 +77,73 @@ class DiscoverFragment : Fragment() {
             onLongClick = { view, item -> showItemMenu(view, item) },
             onFocus = { item -> updateDetailsPane(item) }
         )
-        // 6 columns wide as requested
-        binding.rvContent.layoutManager = GridLayoutManager(context, 6)
+
+        // CHANGED: 10 Columns Wide
+        binding.rvContent.layoutManager = GridLayoutManager(context, 10)
         binding.rvContent.adapter = contentAdapter
     }
+
+    private fun updateDetailsPane(item: MetaItem) {
+        Glide.with(this).load(item.background ?: item.poster).into(binding.pageBackground)
+
+        // BIND DATA: Release Date & Rating
+        binding.detailDate.text = item.releaseDate ?: ""
+        if (item.rating != null) {
+            binding.detailRating.text = "★ ${item.rating}"
+            binding.detailRating.visibility = View.VISIBLE
+        } else {
+            binding.detailRating.visibility = View.GONE
+        }
+
+        binding.detailDescription.text = item.description ?: "No description available."
+
+        binding.detailTitle.text = item.name
+        binding.detailTitle.visibility = View.VISIBLE
+        binding.detailLogo.visibility = View.GONE
+
+        viewModel.fetchItemLogo(item)
+    }
+
+    // ... (setupObservers, loadCatalogs, etc remain the same) ...
+
+    inner class DiscoverContentAdapter(
+        private var items: List<MetaItem>,
+        private val onClick: (MetaItem) -> Unit,
+        private val onLongClick: (View, MetaItem) -> Unit,
+        private val onFocus: (MetaItem) -> Unit
+    ) : RecyclerView.Adapter<DiscoverContentAdapter.ViewHolder>() {
+
+        inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+            val poster: android.widget.ImageView = view.findViewById(R.id.poster)
+        }
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_poster, parent, false)
+            return ViewHolder(view)
+        }
+        override fun getItemCount() = items.size
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val item = items[position]
+            holder.poster.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+            Glide.with(holder.view.context).load(item.poster).placeholder(R.drawable.movie).into(holder.poster)
+
+            holder.view.setOnClickListener { onClick(item) }
+            holder.view.setOnLongClickListener { onLongClick(holder.view, item); true }
+
+            holder.view.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    onFocus(item)
+                    // REMOVED SCALING ANIMATION as requested
+                }
+            }
+            holder.view.isFocusable = true
+            holder.view.isFocusableInTouchMode = true
+        }
+        fun updateData(newItems: List<MetaItem>) {
+            items = newItems
+            notifyDataSetChanged()
+        }
+    }
+
 
     private fun loadCatalogs() {
         viewModel.getDiscoverCatalogs(currentType).observe(viewLifecycleOwner) { catalogs ->
@@ -122,19 +185,7 @@ class DiscoverFragment : Fragment() {
         startActivity(intent)
     }
 
-    private fun updateDetailsPane(item: MetaItem) {
-        Glide.with(this).load(item.background ?: item.poster).into(binding.pageBackground)
 
-        // Text Fallback set to visible initially (will be hidden if logo loads)
-        binding.detailTitle.text = item.name
-        binding.detailTitle.visibility = View.VISIBLE
-        binding.detailLogo.visibility = View.GONE
-
-        binding.detailDescription.text = item.description ?: "No description available."
-
-        // Trigger logo fetch
-        viewModel.fetchItemLogo(item)
-    }
 
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
@@ -168,43 +219,7 @@ class DiscoverFragment : Fragment() {
 
     // ... Adapters (Keep existing SidebarAdapter and DiscoverContentAdapter) ...
     // (Included in previous response, just ensure they are present)
-    inner class DiscoverContentAdapter(
-        private var items: List<MetaItem>,
-        private val onClick: (MetaItem) -> Unit,
-        private val onLongClick: (View, MetaItem) -> Unit,
-        private val onFocus: (MetaItem) -> Unit
-    ) : RecyclerView.Adapter<DiscoverContentAdapter.ViewHolder>() {
 
-        inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
-            val poster: android.widget.ImageView = view.findViewById(R.id.poster)
-        }
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_poster, parent, false)
-            return ViewHolder(view)
-        }
-        override fun getItemCount() = items.size
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = items[position]
-            holder.poster.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
-            Glide.with(holder.view.context).load(item.poster).placeholder(R.drawable.movie).into(holder.poster)
-            holder.view.setOnClickListener { onClick(item) }
-            holder.view.setOnLongClickListener { onLongClick(holder.view, item); true }
-            holder.view.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    onFocus(item)
-                    holder.view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start()
-                } else {
-                    holder.view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
-                }
-            }
-            holder.view.isFocusable = true
-            holder.view.isFocusableInTouchMode = true
-        }
-        fun updateData(newItems: List<MetaItem>) {
-            items = newItems
-            notifyDataSetChanged()
-        }
-    }
 
     inner class SidebarAdapter(private val onClick: (UserCatalog) -> Unit) :
         androidx.recyclerview.widget.ListAdapter<UserCatalog, SidebarAdapter.ViewHolder>(com.example.stremiompvplayer.adapters.CatalogConfigAdapter.DiffCallback()) {
