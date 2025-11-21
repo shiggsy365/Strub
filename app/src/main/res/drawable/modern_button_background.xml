@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Focused State -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_theme_primary" />
+            <stroke android:width="3dp" android:color="@color/md_theme_onPrimary" />
+            <corners android:radius="24dp" />
+        </shape>
+    </item>
+    
+    <!-- Pressed State -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_theme_primaryContainer" />
+            <corners android:radius="24dp" />
+        </shape>
+    </item>
+    
+    <!-- Enabled State -->
+    <item android:state_enabled="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_theme_primary" />
+            <corners android:radius="24dp" />
+        </shape>
+    </item>
+    
+    <!-- Disabled State -->
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/text_disabled" />
+            <corners android:radius="24dp" />
+        </shape>
+    </item>
+    
+    <!-- Default State -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_theme_surfaceContainerHigh" />
+            <corners android:radius="24dp" />
+        </shape>
+    </item>
+</selector>

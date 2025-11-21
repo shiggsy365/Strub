@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modern gradient overlay with depth -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base gradient -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:startColor="#80000000"
+                android:centerColor="#A0000000"
+                android:endColor="#CC000000"
+                android:type="linear" />
+        </shape>
+    </item>
+    
+    <!-- Radial overlay for depth -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerX="0.5"
+                android:centerY="0.3"
+                android:startColor="#00000000"
+                android:centerColor="#19000000"
+                android:endColor="#4D000000"
+                android:type="radial"
+                android:gradientRadius="800dp" />
+        </shape>
+    </item>
+</layer-list>

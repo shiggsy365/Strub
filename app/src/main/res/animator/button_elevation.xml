@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Button elevation animator for press states -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <set>
+            <objectAnimator
+                android:propertyName="translationZ"
+                android:duration="@integer/animation_duration_short"
+                android:valueTo="2dp"
+                android:valueType="floatType" />
+        </set>
+    </item>
+    <item android:state_focused="true">
+        <set>
+            <objectAnimator
+                android:propertyName="translationZ"
+                android:duration="@integer/animation_duration_medium"
+                android:valueTo="6dp"
+                android:valueType="floatType" />
+        </set>
+    </item>
+    <item>
+        <set>
+            <objectAnimator
+                android:propertyName="translationZ"
+                android:duration="@integer/animation_duration_medium"
+                android:valueTo="4dp"
+                android:valueType="floatType" />
+        </set>
+    </item>
+</selector>

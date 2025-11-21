@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modern button style with Material Design 3 principles -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- Pressed State -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <!-- Background -->
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/md_theme_primaryContainer" />
+                    <corners android:radius="@dimen/corner_radius_large" />
+                </shape>
+            </item>
+            
+            <!-- Pressed indicator -->
+            <item android:top="2dp" android:bottom="2dp" android:left="2dp" android:right="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#1AE50914" />
+                    <corners android:radius="@dimen/corner_radius_medium" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    
+    <!-- Focused State -->
+    <item android:state_focused="true">
+        <layer-list>
+            <!-- Background -->
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/md_theme_primary" />
+                    <corners android:radius="@dimen/corner_radius_large" />
+                </shape>
+            </item>
+            
+            <!-- Focus ring -->
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#00000000" />
+                    <corners android:radius="@dimen/corner_radius_large" />
+                    <stroke android:width="@dimen/stroke_thick" android:color="@color/md_theme_onPrimary" />
+                </shape>
+            </item>
+            
+            <!-- Outer glow -->
+            <item android:insetTop="-2dp" android:insetBottom="-2dp" 
+                  android:insetLeft="-2dp" android:insetRight="-2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#00000000" />
+                    <corners android:radius="@dimen/corner_radius_xlarge" />
+                    <stroke android:width="1dp" android:color="#66E50914" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    
+    <!-- Disabled State -->
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_theme_surfaceDim" />
+            <corners android:radius="@dimen/corner_radius_large" />
+        </shape>
+    </item>
+    
+    <!-- Default State -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_theme_primary" />
+            <corners android:radius="@dimen/corner_radius_large" />
+        </shape>
+    </item>
+</selector>
