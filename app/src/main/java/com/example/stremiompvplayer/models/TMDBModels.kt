@@ -182,6 +182,15 @@ data class TMDBSeries(
     }
 }
 
+data class TMDBImagesResponse(
+    val logos: List<TMDBImage>
+)
+
+data class TMDBImage(
+    val file_path: String,
+    val iso_639_1: String?
+)
+
 // ... Series Details ...
 
 data class TMDBSeriesDetailResponse(

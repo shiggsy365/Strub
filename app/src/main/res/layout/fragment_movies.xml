@@ -16,8 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:alpha="0.3"
-            tools:src="@drawable/movie"
+            android:alpha="0.2" tools:src="@drawable/movie"
             android:contentDescription="Background" />
 
         <View

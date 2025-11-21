@@ -11,6 +11,7 @@ import com.example.stremiompvplayer.models.*
 import com.example.stremiompvplayer.network.AIOStreamsClient
 import com.example.stremiompvplayer.network.TMDBClient
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -19,6 +20,16 @@ class MainViewModel(
     private val catalogRepository: CatalogRepository,
     private val prefsManager: SharedPreferencesManager
 ) : ViewModel() {
+
+    // Logo LiveData
+    private val _currentCatalogContent = MutableLiveData<List<MetaItem>>()
+    val currentCatalogContent: LiveData<List<MetaItem>> = _currentCatalogContent
+
+    // LOGO LOGIC
+    private val _currentLogo = MutableLiveData<String?>()
+    val currentLogo: LiveData<String?> = _currentLogo
+    private var logoFetchJob: Job? = null
+
 
     private val apiKey: String
         get() = prefsManager.getTMDBApiKey() ?: ""
@@ -33,10 +44,7 @@ class MainViewModel(
     }
 
     // --- LIVE DATA ---
-    private val _currentCatalogContent = MutableLiveData<List<MetaItem>>()
-    val currentCatalogContent: LiveData<List<MetaItem>> = _currentCatalogContent
-
-    private val _streams = MutableLiveData<List<Stream>>()
+        private val _streams = MutableLiveData<List<Stream>>()
     val streams: LiveData<List<Stream>> = _streams
 
     private val _metaDetails = MutableLiveData<Meta?>()
@@ -96,6 +104,44 @@ class MainViewModel(
         )
     }
 
+    fun fetchItemLogo(meta: MetaItem) {
+        // Cancel any running fetch so scrolling is smooth
+        logoFetchJob?.cancel()
+        // Reset to null immediately -> View shows Text Title by default
+        _currentLogo.value = null
+
+        val idStr = meta.id.removePrefix("tmdb:")
+        val id = idStr.toIntOrNull()
+        if (id == null) return
+
+        val mediaType = if (meta.type == "series") "tv" else "movie"
+
+        logoFetchJob = viewModelScope.launch {
+            try {
+                if (apiKey.isEmpty()) return@launch
+
+                val response = if (mediaType == "movie") {
+                    TMDBClient.api.getMovieImages(id, apiKey)
+                } else {
+                    TMDBClient.api.getTVImages(id, apiKey)
+                }
+
+                // 1. Try to find 'en' logo
+                // 2. Fallback to the first logo in the list
+                // 3. If neither exists, logo is null
+                val logo = response.logos.find { it.iso_639_1 == "en" } ?: response.logos.firstOrNull()
+
+                if (logo != null) {
+                    _currentLogo.postValue("https://image.tmdb.org/t/p/w500${logo.file_path}")
+                } else {
+                    _currentLogo.postValue(null) // Ensure UI knows there is no logo
+                }
+
+            } catch (e: Exception) {
+                _currentLogo.postValue(null) // Fallback to text on error
+            }
+        }
+    }
     // --- AIOStreams Helper ---
     private suspend fun fetchAIOStreams(type: String, id: String): List<Stream> {
         val username = prefsManager.getAIOStreamsUsername()

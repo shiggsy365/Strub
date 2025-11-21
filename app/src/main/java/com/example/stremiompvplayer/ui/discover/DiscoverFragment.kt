@@ -24,6 +24,10 @@ import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 
 class DiscoverFragment : Fragment() {
 
+    fun handleBackPress(): Boolean {
+        // Return true if you handle the back press internally (e.g., closing a menu)
+        // Return false to let the Activity handle it (exit app)
+        return true}
     private var _binding: FragmentDiscoverBinding? = null
     private val binding get() = _binding!!
 
@@ -73,7 +77,8 @@ class DiscoverFragment : Fragment() {
             onLongClick = { view, item -> showItemMenu(view, item) },
             onFocus = { item -> updateDetailsPane(item) }
         )
-        binding.rvContent.layoutManager = GridLayoutManager(context, 4)
+        // 6 columns wide as requested
+        binding.rvContent.layoutManager = GridLayoutManager(context, 6)
         binding.rvContent.adapter = contentAdapter
     }
 
@@ -103,6 +108,8 @@ class DiscoverFragment : Fragment() {
         popup.show()
     }
 
+
+
     private fun onContentClicked(item: MetaItem) {
         val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
             putExtra("metaId", item.id)
@@ -117,8 +124,16 @@ class DiscoverFragment : Fragment() {
 
     private fun updateDetailsPane(item: MetaItem) {
         Glide.with(this).load(item.background ?: item.poster).into(binding.pageBackground)
+
+        // Text Fallback set to visible initially (will be hidden if logo loads)
         binding.detailTitle.text = item.name
-        binding.detailDescription.text = item.description ?: ""
+        binding.detailTitle.visibility = View.VISIBLE
+        binding.detailLogo.visibility = View.GONE
+
+        binding.detailDescription.text = item.description ?: "No description available."
+
+        // Trigger logo fetch
+        viewModel.fetchItemLogo(item)
     }
 
     private fun setupObservers() {
@@ -128,14 +143,31 @@ class DiscoverFragment : Fragment() {
                 updateDetailsPane(items[0])
             }
         }
+
+        // LOGO OBSERVER
+        viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
+            if (logoUrl != null) {
+                // Logo found: Hide text, show image
+                binding.detailTitle.visibility = View.GONE
+                binding.detailLogo.visibility = View.VISIBLE
+                Glide.with(this)
+                    .load(logoUrl)
+                    .fitCenter()
+                    .into(binding.detailLogo)
+            } else {
+                // No logo: Show text, hide image
+                binding.detailTitle.visibility = View.VISIBLE
+                binding.detailLogo.visibility = View.GONE
+            }
+        }
+
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
     }
 
-    fun handleBackPress(): Boolean = false
-
-    // --- ADAPTERS ---
+    // ... Adapters (Keep existing SidebarAdapter and DiscoverContentAdapter) ...
+    // (Included in previous response, just ensure they are present)
     inner class DiscoverContentAdapter(
         private var items: List<MetaItem>,
         private val onClick: (MetaItem) -> Unit,
@@ -157,7 +189,14 @@ class DiscoverFragment : Fragment() {
             Glide.with(holder.view.context).load(item.poster).placeholder(R.drawable.movie).into(holder.poster)
             holder.view.setOnClickListener { onClick(item) }
             holder.view.setOnLongClickListener { onLongClick(holder.view, item); true }
-            holder.view.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) onFocus(item) }
+            holder.view.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    onFocus(item)
+                    holder.view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start()
+                } else {
+                    holder.view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
+                }
+            }
             holder.view.isFocusable = true
             holder.view.isFocusableInTouchMode = true
         }

@@ -65,6 +65,18 @@ interface TMDBApiService {
         @Query("api_key") apiKey: String
     ): TMDBCreditsResponse
 
+    @GET("movie/{id}/images")
+    suspend fun getMovieImages(
+        @Path("id") id: Int,
+        @Query("api_key") apiKey: String
+    ): TMDBImagesResponse
+
+    @GET("tv/{id}/images")
+    suspend fun getTVImages(
+        @Path("id") id: Int,
+        @Query("api_key") apiKey: String
+    ): TMDBImagesResponse
+
     @POST("authentication/session/new")
     suspend fun createSession(
         @Query("api_key") apiKey: String,

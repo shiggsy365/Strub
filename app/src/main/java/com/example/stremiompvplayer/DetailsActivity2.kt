@@ -8,8 +8,9 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.adapters.StreamAdapter
+import com.example.stremiompvplayer.adapters.TextItem
+import com.example.stremiompvplayer.adapters.TextListAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivityDetails2Binding
 import com.example.stremiompvplayer.models.Meta
@@ -30,16 +31,17 @@ class DetailsActivity2 : AppCompatActivity() {
     }
 
     // Adapters
-    private lateinit var navigationAdapter: PosterAdapter // For Seasons / Episodes
+    private lateinit var textListAdapter: TextListAdapter // For Seasons / Episodes
     private lateinit var streamAdapter: StreamAdapter     // For Streams
 
     // State
     private var currentMetaItem: MetaItem? = null
-    private var currentSeriesMeta: Meta? = null
+    private var currentSeriesMeta: Meta? = null // Stores series info
     private var currentType = "movie"
     private var currentSeason: Int? = null
 
-    private val UP_NAVIGATION_ITEM = MetaItem("UP_NAV", "up", "[...]", null, null, "Go Back")
+    // Special TextItem for "Up" navigation
+    private val UP_NAV_TEXT_ITEM = TextItem("UP_NAV", "[..^..]", "up")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,9 +59,10 @@ class DetailsActivity2 : AppCompatActivity() {
             startActivity(intent)
         }
 
-        navigationAdapter = PosterAdapter(
+        textListAdapter = TextListAdapter(
             items = emptyList(),
-            onClick = { item -> onNavigationItemClicked(item) }
+            onClick = { item -> onTextItemClicked(item) },
+            onFocus = { /* Optional: Scroll logic if needed */ }
         )
 
         handleIntent()
@@ -83,12 +86,14 @@ class DetailsActivity2 : AppCompatActivity() {
 
         // 2. Load Content based on type
         if (currentType == "movie") {
+            updateButtonVisibility(isEpisodeLevel = true) // Movies act like "Episode Level" (ready to play)
             viewModel.loadStreams("movie", id)
             binding.rvNavigation.adapter = streamAdapter
         } else {
-            // Series: Load metadata which contains seasons
+            updateButtonVisibility(isEpisodeLevel = false) // Top level series
+            // Load Series Metadata (Seasons)
             viewModel.loadSeriesMeta(id)
-            binding.rvNavigation.adapter = navigationAdapter
+            binding.rvNavigation.adapter = textListAdapter
         }
 
         // 3. Check Status
@@ -96,19 +101,34 @@ class DetailsActivity2 : AppCompatActivity() {
         viewModel.checkWatchlistStatus(id, currentType)
     }
 
+    private fun updateButtonVisibility(isEpisodeLevel: Boolean) {
+        if (currentType == "movie") {
+            // Movies always show everything
+            binding.btnPlay.visibility = View.VISIBLE
+            binding.btnLibrary.visibility = View.VISIBLE
+            binding.btnWatchlist.visibility = View.VISIBLE
+        } else {
+            // Series Logic
+            if (isEpisodeLevel) {
+                // Deep level: Show Play, Hide Library/Watchlist
+                binding.btnPlay.visibility = View.VISIBLE
+                binding.btnLibrary.visibility = View.GONE
+                binding.btnWatchlist.visibility = View.GONE
+            } else {
+                // Top level: Hide Play, Show Library/Watchlist
+                binding.btnPlay.visibility = View.GONE
+                binding.btnLibrary.visibility = View.VISIBLE
+                binding.btnWatchlist.visibility = View.VISIBLE
+            }
+        }
+    }
+
     private fun setupObservers() {
         // Director Chip
         viewModel.director.observe(this) { name ->
             binding.directorChipGroup.removeAllViews()
             if (!name.isNullOrEmpty()) {
-                val chip = Chip(this).apply {
-                    text = name
-                    setChipBackgroundColorResource(R.color.chip_background_selector)
-                    setTextColor(getColor(R.color.chip_text_color))
-                    isClickable = true
-                    isFocusable = true
-                    setOnClickListener { performSearch(name) }
-                }
+                val chip = createStyledChip(name)
                 binding.directorChipGroup.addView(chip)
             }
         }
@@ -117,14 +137,7 @@ class DetailsActivity2 : AppCompatActivity() {
         viewModel.castList.observe(this) { cast ->
             binding.castChipGroup.removeAllViews()
             cast.forEach { c ->
-                val chip = Chip(this).apply {
-                    text = c.name
-                    setChipBackgroundColorResource(R.color.chip_background_selector)
-                    setTextColor(getColor(R.color.chip_text_color))
-                    isClickable = true
-                    isFocusable = true
-                    setOnClickListener { performSearch(c.name) }
-                }
+                val chip = createStyledChip(c.name)
                 binding.castChipGroup.addView(chip)
             }
         }
@@ -132,6 +145,9 @@ class DetailsActivity2 : AppCompatActivity() {
         // Streams
         viewModel.streams.observe(this) { streams ->
             if (binding.rvNavigation.adapter == streamAdapter) {
+                // Ensure [..^..] is NOT in StreamAdapter (StreamAdapter is usually purely streams)
+                // If you want [..^..] in streams, StreamAdapter needs modification.
+                // For now, standard StreamAdapter logic:
                 streamAdapter.submitList(streams)
             }
         }
@@ -148,51 +164,60 @@ class DetailsActivity2 : AppCompatActivity() {
             if (meta != null && currentType == "series" && currentSeason == null) {
                 currentSeriesMeta = meta
 
-                // Update background if better one found
                 if (!meta.background.isNullOrEmpty()) {
                     Glide.with(this).load(meta.background).into(binding.imgBackground)
                 }
 
-                // Map seasons to MetaItems
+                // Map seasons to TextItems
                 val seasons = meta.videos?.map { vid ->
-                    MetaItem(
+                    TextItem(
                         id = vid.season.toString(),
-                        type = "season",
-                        name = "Season ${vid.season}",
-                        poster = vid.thumbnail ?: meta.poster,
-                        background = null,
-                        description = null
+                        text = "Season ${vid.season}",
+                        type = "season"
                     )
                 } ?: emptyList()
 
-                navigationAdapter.updateData(seasons)
+                // At Top Level: No Back Button in list
+                textListAdapter.submitList(seasons)
             }
         }
 
         // 2. Season Details Loaded -> Show Episodes
         viewModel.seasonEpisodes.observe(this) { episodes ->
-            val listWithUp = mutableListOf(UP_NAVIGATION_ITEM)
-            listWithUp.addAll(episodes)
+            // Map episodes to TextItems
+            val episodeItems = episodes.map { ep ->
+                TextItem(
+                    id = ep.id, // tmdb:id:season:episode
+                    text = ep.name,
+                    type = "episode",
+                    data = ep.description // Stash description here
+                )
+            }.toMutableList()
 
-            binding.rvNavigation.adapter = navigationAdapter
-            navigationAdapter.updateData(listWithUp)
+            // Add UP NAVIGATION
+            episodeItems.add(0, UP_NAV_TEXT_ITEM)
+
+            binding.rvNavigation.adapter = textListAdapter
+            textListAdapter.submitList(episodeItems)
         }
 
-        // Library & Watchlist Status (Buttons)
-        viewModel.isItemInLibrary.observe(this) { inLib ->
-            binding.btnLibrary.text = if (inLib) "Remove From Library" else "Add To Library"
-            val color = if (inLib) Color.parseColor("#006400") else Color.parseColor("#555555")
-            binding.btnLibrary.background.setTint(color)
+            // Library & Watchlist Status
+            viewModel.isItemInLibrary.observe(this) { inLib ->
+                // CHANGED: Text to "Library -" / "Library +"
+                binding.btnLibrary.text = if (inLib) "Library -" else "Library +"
+                val color = if (inLib) Color.parseColor("#006400") else Color.parseColor("#555555")
+                binding.btnLibrary.background.setTint(color)
+            }
+
+            viewModel.isItemInWatchlist.observe(this) { inWatch ->
+                // CHANGED: Text to "TMDB Watchlist -" / "TMDB Watchlist +"
+                binding.btnWatchlist.text = if (inWatch) "TMDB Watchlist -" else "TMDB Watchlist +"
+                val color = if (inWatch) Color.parseColor("#006400") else Color.parseColor("#555555")
+                binding.btnWatchlist.background.setTint(color)
+            }
         }
 
-        viewModel.isItemInWatchlist.observe(this) { inWatch ->
-            binding.btnWatchlist.text = if (inWatch) "Remove From Watchlist" else "Add To Watchlist"
-            val color = if (inWatch) Color.parseColor("#006400") else Color.parseColor("#555555")
-            binding.btnWatchlist.background.setTint(color)
-        }
-    }
-
-    private fun onNavigationItemClicked(item: MetaItem) {
+    private fun onTextItemClicked(item: TextItem) {
         // 1. Handle UP Navigation
         if (item.type == "up") {
             navigateUp()
@@ -203,23 +228,23 @@ class DetailsActivity2 : AppCompatActivity() {
         if (item.type == "season") {
             val seasonNum = item.id.toIntOrNull() ?: return
             currentSeason = seasonNum
+            updateButtonVisibility(isEpisodeLevel = true) // Now in episode list
             viewModel.loadSeasonEpisodes(currentMetaItem!!.id, seasonNum)
         }
         // 3. Handle Episode Click -> Load Streams
         else if (item.type == "episode") {
-            // ID format from ViewModel: tmdb:id:season:episode
             val parts = item.id.split(":")
             if (parts.size >= 4) {
                 val season = parts[2].toInt()
                 val episode = parts[3].toInt()
 
-                // Load Streams for this episode
+                updateButtonVisibility(isEpisodeLevel = true) // Still deep level
+
                 viewModel.loadEpisodeStreams(currentMetaItem!!.id, season, episode)
                 binding.rvNavigation.adapter = streamAdapter
 
-                // Update Header to show specific episode info
                 binding.tvTitle.text = "${currentSeriesMeta?.name} - S${season} E${episode}"
-                binding.tvDescription.text = item.description ?: item.name
+                binding.tvDescription.text = item.data as? String ?: item.text
             }
         }
     }
@@ -227,24 +252,45 @@ class DetailsActivity2 : AppCompatActivity() {
     private fun navigateUp() {
         if (binding.rvNavigation.adapter == streamAdapter) {
             // Back from Streams -> Episode List
-            binding.rvNavigation.adapter = navigationAdapter
+            binding.rvNavigation.adapter = textListAdapter
             if (currentSeason != null) {
-                // Re-display episode list header
                 updateHeaderUI(currentSeriesMeta?.name ?: "", currentSeriesMeta?.description, currentSeriesMeta?.poster, currentSeriesMeta?.background)
-                // We don't need to reload if we cache, but calling load again is safe
-                viewModel.loadSeasonEpisodes(currentMetaItem!!.id, currentSeason!!)
+                // Refresh episode list visibility (technically already loaded in adapter, but safe to ensure)
+                updateButtonVisibility(isEpisodeLevel = true)
             }
         } else if (currentSeason != null) {
-            // Back from Episodes -> Season List
+            // Back from Episodes -> Season List (Top Level)
             currentSeason = null
+            updateButtonVisibility(isEpisodeLevel = false)
             updateHeaderUI(currentSeriesMeta?.name ?: "", currentSeriesMeta?.description, currentSeriesMeta?.poster, currentSeriesMeta?.background)
-            // Trigger reload of main series meta to refresh season list
+
+            // Reload/Refresh Season list
             viewModel.loadSeriesMeta(currentMetaItem!!.id)
         } else {
-            // Back from Season List -> Exit Activity
+            // Back from Top Level -> Exit
             finish()
         }
     }
+
+    private fun createStyledChip(text: String): Chip {
+        return Chip(this).apply {
+            this.text = text
+            setChipBackgroundColorResource(R.color.chip_background_selector)
+            setTextColor(getColor(R.color.chip_text_color))
+
+            // Apply Red Border Stroke using the new Selector
+            setChipStrokeColorResource(R.color.selector_focus_stroke)
+            chipStrokeWidth = resources.getDimension(R.dimen.chip_stroke_width) // Define or hardcode 3dp
+
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { performSearch(text) }
+        }
+    }
+
+    // Helper resource getter if dimen not defined
+    private val Chip.resourcesStrokeWidth: Float
+        get() = 3 * resources.displayMetrics.density
 
     override fun onBackPressed() {
         if (currentType == "series") {
@@ -276,8 +322,9 @@ class DetailsActivity2 : AppCompatActivity() {
         binding.btnWatchlist.setOnClickListener { currentMetaItem?.let { viewModel.toggleWatchlist(it) } }
 
         binding.btnPlay.setOnClickListener {
+            // Logic: If streams visible, play first stream.
+            // If episode list visible, focus list to pick episode.
             if (binding.rvNavigation.adapter == streamAdapter) {
-                // Play first stream
                 streamAdapter.currentList.firstOrNull()?.let { stream ->
                     val intent = Intent(this, PlayerActivity::class.java).apply {
                         putExtra("stream", stream)
@@ -286,7 +333,6 @@ class DetailsActivity2 : AppCompatActivity() {
                     startActivity(intent)
                 }
             } else {
-                // Focus navigation to pick season/episode
                 binding.rvNavigation.requestFocus()
             }
         }
