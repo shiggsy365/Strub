@@ -18,7 +18,11 @@
             android:layout_gravity="center"
             app:show_buffering="always"
             app:use_controller="true"
-            app:resize_mode="fit" />
+            app:show_subtitle_button="true"
+            app:resize_mode="fit"
+            app:show_fastforward_button="true"
+            app:show_rewind_button="true"
+            />
 
         <ProgressBar
             android:id="@+id/loadingProgress"
