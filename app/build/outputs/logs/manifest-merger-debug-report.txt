@@ -160,7 +160,7 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /home/jon/.gradle/caches/tr
 	android:banner
 		ADDED from /home/jon/AndroidStudioProjects/Strub/app/src/main/AndroidManifest.xml:22:9-45
 	android:theme
-		ADDED from /home/jon/AndroidStudioProjects/Strub/app/src/main/AndroidManifest.xml:27:9-61
+		ADDED from /home/jon/AndroidStudioProjects/Strub/app/src/main/AndroidManifest.xml:27:9-54
 	android:networkSecurityConfig
 		ADDED from /home/jon/AndroidStudioProjects/Strub/app/src/main/AndroidManifest.xml:20:9-69
 	android:usesCleartextTraffic

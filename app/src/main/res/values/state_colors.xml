@@ -1,29 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Button Background Selector -->
-    <color name="button_background_default">#1F1F1F</color>
-    <color name="button_background_focused">#2A2A2A</color>
-    <color name="button_background_pressed">#333333</color>
-    
-    <!-- Chip Background Selector -->
-    <color name="chip_background_default">#1A1A1A</color>
-    <color name="chip_background_selected">#E50914</color>
-    <color name="chip_background_focused">#2A2A2A</color>
-    
-    <!-- Chip Text Selector -->
-    <color name="chip_text_default">#CCCCCC</color>
-    <color name="chip_text_selected">#FFFFFF</color>
-    <color name="chip_text_focused">#FFFFFF</color>
-    
-    <!-- Chip Stroke Selector -->
-    <color name="chip_stroke_default">#3D3D3D</color>
-    <color name="chip_stroke_selected">#E50914</color>
-    <color name="chip_stroke_focused">#E50914</color>
-    
-    <!-- Poster Stroke Selector -->
-    <color name="poster_stroke_default">#00000000</color>
-    <color name="poster_stroke_focused">#E50914</color>
-    <color name="poster_stroke_selected">#FF6B6B</color>
+
     
     <!-- Surface State Colors -->
     <color name="surface_default">#1A1A1A</color>
