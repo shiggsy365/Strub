@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.stremiompvplayer"> <uses-permission android:name="android.permission.INTERNET" />
+    package="com.example.stremiompvplayer">
+
+    <!-- Essential Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- TV Support -->
     <uses-feature
         android:name="android.hardware.touchscreen"
         android:required="false" />
@@ -20,10 +24,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.StremioMPVPlayer.Leanback"
+        android:theme="@style/Theme.StremioMPVPlayer"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
+        <!-- Main Activity - Entry Point -->
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -39,40 +44,35 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.example.stremiompvplayer.adapters.AddonListAdapter"
-            android:banner="@drawable/app_icon_your_company"
-            android:exported="false"
-            android:icon="@drawable/app_icon_your_company"
-            android:label="@string/title_activity_addon_list_adapter"
-            android:logo="@drawable/app_icon_your_company"
-            android:screenOrientation="landscape">
-        </activity>
-
-        <activity
-            android:name=".BrowseErrorActivity"
-            android:exported="false" />
+        <!-- User Selection -->
         <activity
             android:name=".UserSelectionActivity"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer" />
+
+        <!-- Settings -->
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer" />
+
+        <!-- Media Player -->
         <activity
             android:name=".PlayerActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
+
+        <!-- Details View -->
         <activity
-            android:name="DetailsActivity2"
+            android:name=".DetailsActivity2"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer" />
+
     </application>
 
 </manifest>

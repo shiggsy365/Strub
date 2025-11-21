@@ -97,7 +97,6 @@ class DetailsActivity2 : AppCompatActivity() {
             viewModel.loadEpisodeStreams(parentId, season, episode)
 
             binding.rvNavigation.adapter = streamAdapter
-            // Manually set state to drilled-down
             currentSeason = season
             updateButtonVisibility()
 
@@ -137,16 +136,13 @@ class DetailsActivity2 : AppCompatActivity() {
         viewModel.checkWatchedStatus(id)
     }
 
-    // FIX: Removed parameter, uses class state
     private fun updateButtonVisibility() {
-        // Logic: If Movie, or if Series AND drilled down to episode/streams -> Show Play/Watch button
-        // If Series Top Level -> Hide Play/Watch button
-
-        val isPlayableLevel = currentType == "movie" || (currentType == "series" && binding.rvNavigation.adapter == streamAdapter) || (currentType == "episode")
+        val isPlayableLevel = currentType == "movie" ||
+                (currentType == "series" && binding.rvNavigation.adapter == streamAdapter) ||
+                (currentType == "episode")
 
         if (isPlayableLevel) {
             binding.btnPlay.visibility = View.VISIBLE
-            // Hide Library/Watchlist when drilled down in series, but show for Movies
             if (currentType == "movie") {
                 binding.btnLibrary.visibility = View.VISIBLE
                 binding.btnWatchlist.visibility = View.VISIBLE
@@ -155,7 +151,6 @@ class DetailsActivity2 : AppCompatActivity() {
                 binding.btnWatchlist.visibility = View.GONE
             }
         } else {
-            // Top Level Series
             binding.btnPlay.visibility = View.GONE
             binding.btnLibrary.visibility = View.VISIBLE
             binding.btnWatchlist.visibility = View.VISIBLE
@@ -179,6 +174,7 @@ class DetailsActivity2 : AppCompatActivity() {
             }
         }
 
+        // FIXED: Properly observe streams
         viewModel.streams.observe(this) { streams ->
             if (binding.rvNavigation.adapter == streamAdapter) {
                 streamAdapter.submitList(streams)
@@ -194,7 +190,9 @@ class DetailsActivity2 : AppCompatActivity() {
             if (meta != null && currentType == "series") {
                 currentSeriesMeta = meta
                 if (currentSeason == null && binding.rvNavigation.adapter == textListAdapter) {
-                    if (!meta.background.isNullOrEmpty()) Glide.with(this).load(meta.background).into(binding.imgBackground)
+                    if (!meta.background.isNullOrEmpty()) {
+                        Glide.with(this).load(meta.background).into(binding.imgBackground)
+                    }
 
                     val seasons = meta.videos?.map { vid ->
                         TextItem(
@@ -238,7 +236,6 @@ class DetailsActivity2 : AppCompatActivity() {
             binding.btnWatchlist.background.setTint(color)
         }
 
-        // WATCHED STATUS OBSERVER
         viewModel.isItemWatched.observe(this) { isWatched ->
             if (isWatched) {
                 binding.btnPlay.text = "WATCHED"
@@ -260,18 +257,16 @@ class DetailsActivity2 : AppCompatActivity() {
             val seasonNum = item.id.toIntOrNull() ?: return
             currentSeason = seasonNum
             viewModel.loadSeasonEpisodes(currentMetaItem!!.id, seasonNum)
-            // Note: Adapter update happens in observer
-            // But we need to update button visibility state logic
-            // Observer will switch adapter to textListAdapter (it already is)
         } else if (item.type == "episode") {
             val parts = item.id.split(":")
             if (parts.size >= 4) {
                 val season = parts[2].toInt()
                 val episode = parts[3].toInt()
 
+                // FIXED: Load streams for the episode
                 viewModel.loadEpisodeStreams(currentMetaItem!!.id, season, episode)
                 binding.rvNavigation.adapter = streamAdapter
-                updateButtonVisibility() // Show play button
+                updateButtonVisibility()
 
                 currentMetaItem = MetaItem(
                     id = item.id,
@@ -281,7 +276,6 @@ class DetailsActivity2 : AppCompatActivity() {
                     background = currentSeriesMeta?.background,
                     description = item.data as? String
                 )
-                // Trigger watched check for this episode
                 viewModel.checkWatchedStatus(currentMetaItem!!.id)
 
                 binding.tvTitle.text = "${currentSeriesMeta?.name} - S${season} E${episode}"
@@ -304,15 +298,28 @@ class DetailsActivity2 : AppCompatActivity() {
 
         popup.setOnMenuItemClickListener { menuItem ->
             val tempMeta = if (item.type == "episode") {
-                MetaItem(id = item.id, type = "episode", name = item.text, poster = item.image, background = null, description = item.data as? String)
+                MetaItem(
+                    id = item.id,
+                    type = "episode",
+                    name = item.text,
+                    poster = item.image,
+                    background = null,
+                    description = item.data as? String
+                )
             } else {
                 null
             }
 
             if (tempMeta != null) {
                 when (menuItem.title) {
-                    "Mark as Watched" -> { viewModel.markAsWatched(tempMeta); true }
-                    "Clear Watched Status" -> { viewModel.clearWatchedStatus(tempMeta); true }
+                    "Mark as Watched" -> {
+                        viewModel.markAsWatched(tempMeta)
+                        true
+                    }
+                    "Clear Watched Status" -> {
+                        viewModel.clearWatchedStatus(tempMeta)
+                        true
+                    }
                     else -> false
                 }
             } else {
@@ -325,15 +332,25 @@ class DetailsActivity2 : AppCompatActivity() {
     private fun navigateUp() {
         if (binding.rvNavigation.adapter == streamAdapter) {
             binding.rvNavigation.adapter = textListAdapter
-            updateButtonVisibility() // Hide play button
+            updateButtonVisibility()
             if (currentSeason != null) {
-                updateHeaderUI(currentSeriesMeta?.name ?: "", currentSeriesMeta?.description, currentSeriesMeta?.poster, currentSeriesMeta?.background)
+                updateHeaderUI(
+                    currentSeriesMeta?.name ?: "",
+                    currentSeriesMeta?.description,
+                    currentSeriesMeta?.poster,
+                    currentSeriesMeta?.background
+                )
                 focusFirstNavigationItem()
             }
         } else if (currentSeason != null) {
             currentSeason = null
-            updateButtonVisibility() // Ensure correct buttons
-            updateHeaderUI(currentSeriesMeta?.name ?: "", currentSeriesMeta?.description, currentSeriesMeta?.poster, currentSeriesMeta?.background)
+            updateButtonVisibility()
+            updateHeaderUI(
+                currentSeriesMeta?.name ?: "",
+                currentSeriesMeta?.description,
+                currentSeriesMeta?.poster,
+                currentSeriesMeta?.background
+            )
             viewModel.loadSeriesMeta(currentMetaItem!!.id.split(":")[0] + ":" + currentMetaItem!!.id.split(":")[1])
         } else {
             finish()
@@ -382,12 +399,21 @@ class DetailsActivity2 : AppCompatActivity() {
 
     private fun setupUI() {
         binding.btnLibrary.setOnClickListener {
-            val idToCheck = if(currentType=="series") currentMetaItem!!.id.split(":").take(2).joinToString(":") else currentMetaItem!!.id
+            val idToCheck = if(currentType=="series") {
+                currentMetaItem!!.id.split(":").take(2).joinToString(":")
+            } else {
+                currentMetaItem!!.id
+            }
             val tempMeta = currentMetaItem!!.copy(id = idToCheck)
             viewModel.toggleLibrary(tempMeta)
         }
+
         binding.btnWatchlist.setOnClickListener {
-            val idToCheck = if(currentType=="series") currentMetaItem!!.id.split(":").take(2).joinToString(":") else currentMetaItem!!.id
+            val idToCheck = if(currentType=="series") {
+                currentMetaItem!!.id.split(":").take(2).joinToString(":")
+            } else {
+                currentMetaItem!!.id
+            }
             val tempMeta = currentMetaItem!!.copy(id = idToCheck)
             viewModel.toggleWatchlist(tempMeta)
         }

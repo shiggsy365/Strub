@@ -40,6 +40,7 @@ class DiscoverFragment : Fragment() {
     private lateinit var sidebarAdapter: SidebarAdapter
     private lateinit var contentAdapter: PosterAdapter
     private var currentType = "movie"
+    private var currentSelectedItem: MetaItem? = null
 
     companion object {
         private const val ARG_TYPE = "media_type"
@@ -67,15 +68,17 @@ class DiscoverFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh current catalog to update visuals (e.g. ticks)
-        // In a real app, we might want more targeted refreshing
+        // Update details for currently selected item to refresh watch status
+        currentSelectedItem?.let { updateDetailsPane(it) }
     }
 
     fun handleBackPress(): Boolean { return false }
     fun focusSidebar() { binding.rvSidebar.requestFocus() }
 
     private fun setupAdapters() {
-        sidebarAdapter = SidebarAdapter { catalog -> viewModel.loadContentForCatalog(catalog) }
+        sidebarAdapter = SidebarAdapter { catalog ->
+            viewModel.loadContentForCatalog(catalog)
+        }
         binding.rvSidebar.layoutManager = LinearLayoutManager(context)
         binding.rvSidebar.adapter = sidebarAdapter
 
@@ -89,33 +92,59 @@ class DiscoverFragment : Fragment() {
             }
         )
 
-        // CHANGED: Span count to 10
         binding.rvContent.layoutManager = GridLayoutManager(context, 10)
         binding.rvContent.adapter = contentAdapter
     }
 
     private fun updateDetailsPane(item: MetaItem) {
-        Glide.with(this).load(item.background ?: item.poster).into(binding.pageBackground)
+        currentSelectedItem = item
+
+        // Update background
+        Glide.with(this)
+            .load(item.background ?: item.poster)
+            .into(binding.pageBackground)
+
+        // Update metadata
         binding.detailDate.text = item.releaseDate ?: ""
-        binding.detailRating.visibility = if (item.rating != null) { binding.detailRating.text = "★ ${item.rating}"; View.VISIBLE } else View.GONE
+        binding.detailRating.visibility = if (item.rating != null) {
+            binding.detailRating.text = "★ ${item.rating}"
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.detailDescription.text = item.description ?: "No description available."
 
+        // Update title/logo
         binding.detailTitle.text = item.name
         binding.detailTitle.visibility = View.VISIBLE
         binding.detailLogo.visibility = View.GONE
+
+        // Fetch logo if possible
         viewModel.fetchItemLogo(item)
+
+        // Update watch status indicators
+        refreshWatchStatus(item)
+    }
+
+    private fun refreshWatchStatus(item: MetaItem) {
+        // Force refresh from database
+        val userId = SharedPreferencesManager.getInstance(requireContext()).getCurrentUserId()
+        if (userId != null) {
+            viewModel.checkWatchedStatus(item.id)
+        }
     }
 
     private fun loadCatalogs() {
         viewModel.getDiscoverCatalogs(currentType).observe(viewLifecycleOwner) { catalogs ->
             sidebarAdapter.submitList(catalogs)
-            if (catalogs.isNotEmpty()) viewModel.loadContentForCatalog(catalogs[0])
+            if (catalogs.isNotEmpty()) {
+                viewModel.loadContentForCatalog(catalogs[0])
+            }
         }
     }
 
     private fun showItemMenu(view: View, item: MetaItem) {
-        // Ensure black text by using a light theme context wrapper
         val wrapper = ContextThemeWrapper(requireContext(), android.R.style.Theme_DeviceDefault_Light_NoActionBar)
         val popup = PopupMenu(wrapper, view)
 
@@ -126,21 +155,34 @@ class DiscoverFragment : Fragment() {
 
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.title) {
-                "Add to Library" -> { viewModel.addToLibrary(item); true }
-                "Add to TMDB Watchlist" -> { viewModel.toggleWatchlist(item, true); true }
+                "Add to Library" -> {
+                    viewModel.addToLibrary(item)
+                    true
+                }
+                "Add to TMDB Watchlist" -> {
+                    viewModel.toggleWatchlist(item, true)
+                    true
+                }
                 "Mark as Watched" -> {
                     viewModel.markAsWatched(item)
                     // Optimistic UI update
                     item.isWatched = true
-                    item.progress = item.duration // Set to done
-                    contentAdapter.notifyItemChanged(contentAdapter.getItemPosition(item))
+                    item.progress = item.duration
+                    val position = contentAdapter.getItemPosition(item)
+                    if (position != -1) {
+                        contentAdapter.notifyItemChanged(position)
+                    }
                     true
                 }
                 "Clear Watched Status" -> {
                     viewModel.clearWatchedStatus(item)
+                    // Optimistic UI update
                     item.isWatched = false
                     item.progress = 0
-                    contentAdapter.notifyItemChanged(contentAdapter.getItemPosition(item))
+                    val position = contentAdapter.getItemPosition(item)
+                    if (position != -1) {
+                        contentAdapter.notifyItemChanged(position)
+                    }
                     true
                 }
                 else -> false
@@ -165,20 +207,38 @@ class DiscoverFragment : Fragment() {
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
             contentAdapter.updateData(items)
-            if (items.isNotEmpty()) updateDetailsPane(items[0])
+            if (items.isNotEmpty()) {
+                updateDetailsPane(items[0])
+            }
         }
+
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
             if (logoUrl != null) {
                 binding.detailTitle.visibility = View.GONE
                 binding.detailLogo.visibility = View.VISIBLE
-                Glide.with(this).load(logoUrl).fitCenter().into(binding.detailLogo)
+                Glide.with(this)
+                    .load(logoUrl)
+                    .fitCenter()
+                    .into(binding.detailLogo)
             } else {
                 binding.detailTitle.visibility = View.VISIBLE
                 binding.detailLogo.visibility = View.GONE
             }
         }
+
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+
+        // Watch the watched status to update UI
+        viewModel.isItemWatched.observe(viewLifecycleOwner) { isWatched ->
+            currentSelectedItem?.let { item ->
+                item.isWatched = isWatched
+                val position = contentAdapter.getItemPosition(item)
+                if (position != -1) {
+                    contentAdapter.notifyItemChanged(position)
+                }
+            }
         }
     }
 
@@ -187,19 +247,38 @@ class DiscoverFragment : Fragment() {
         _binding = null
     }
 
-    inner class SidebarAdapter(private val onClick: (UserCatalog) -> Unit) :
-        androidx.recyclerview.widget.ListAdapter<UserCatalog, SidebarAdapter.ViewHolder>(com.example.stremiompvplayer.adapters.CatalogConfigAdapter.DiffCallback()) {
+    inner class SidebarAdapter(
+        private val onClick: (UserCatalog) -> Unit
+    ) : androidx.recyclerview.widget.ListAdapter<UserCatalog, SidebarAdapter.ViewHolder>(
+        com.example.stremiompvplayer.adapters.CatalogConfigAdapter.DiffCallback()
+    ) {
+
+        private var selectedPosition = 0
+
         inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
             val name: TextView = view.findViewById(R.id.catalogName)
         }
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_discover_sidebar, parent, false)
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_discover_sidebar, parent, false)
             return ViewHolder(view)
         }
+
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val item = getItem(position)
             holder.name.text = item.displayName
-            holder.view.setOnClickListener { onClick(item) }
+
+            // Visual feedback for selected catalog
+            holder.view.isSelected = position == selectedPosition
+
+            holder.view.setOnClickListener {
+                val oldPosition = selectedPosition
+                selectedPosition = position
+                notifyItemChanged(oldPosition)
+                notifyItemChanged(selectedPosition)
+                onClick(item)
+            }
         }
     }
 }
