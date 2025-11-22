@@ -174,7 +174,6 @@ class DetailsActivity2 : AppCompatActivity() {
             }
         }
 
-        // FIXED: Properly observe streams
         viewModel.streams.observe(this) { streams ->
             if (binding.rvNavigation.adapter == streamAdapter) {
                 streamAdapter.submitList(streams)
@@ -245,6 +244,35 @@ class DetailsActivity2 : AppCompatActivity() {
                 binding.btnPlay.background.setTint(Color.parseColor("#E50914"))
             }
         }
+
+        // NEW: Observe logo changes and hide title when logo is available
+        viewModel.currentLogo.observe(this) { logoUrl ->
+            if (logoUrl != null) {
+                binding.tvTitle.visibility = View.GONE
+                binding.imgBackground.post {
+                    // Create an ImageView for the logo overlay if it doesn't exist
+                    val logoView = binding.imgBackground.findViewById<android.widget.ImageView>(R.id.titleLogo)
+                    if (logoView == null) {
+                        val newLogoView = android.widget.ImageView(this)
+                        newLogoView.id = R.id.titleLogo
+                        newLogoView.scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+                        val params = android.widget.FrameLayout.LayoutParams(
+                            resources.getDimensionPixelSize(R.dimen.spacing_xxxl) * 6,
+                            resources.getDimensionPixelSize(R.dimen.spacing_xxxl) * 2
+                        )
+                        params.gravity = android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL
+                        params.topMargin = resources.getDimensionPixelSize(R.dimen.spacing_xl)
+                        
+                        Glide.with(this)
+                            .load(logoUrl)
+                            .fitCenter()
+                            .into(newLogoView)
+                    }
+                }
+            } else {
+                binding.tvTitle.visibility = View.VISIBLE
+            }
+        }
     }
 
     private fun onTextItemClicked(item: TextItem) {
@@ -263,7 +291,6 @@ class DetailsActivity2 : AppCompatActivity() {
                 val season = parts[2].toInt()
                 val episode = parts[3].toInt()
 
-                // FIXED: Load streams for the episode
                 viewModel.loadEpisodeStreams(currentMetaItem!!.id, season, episode)
                 binding.rvNavigation.adapter = streamAdapter
                 updateButtonVisibility()
@@ -395,6 +422,11 @@ class DetailsActivity2 : AppCompatActivity() {
         binding.tvDescription.text = desc ?: ""
         if (!poster.isNullOrEmpty()) Glide.with(this).load(poster).into(binding.imgPoster)
         if (!bg.isNullOrEmpty()) Glide.with(this).load(bg).into(binding.imgBackground)
+        
+        // Try to fetch and display logo instead of title
+        currentMetaItem?.let { meta ->
+            viewModel.fetchItemLogo(meta)
+        }
     }
 
     private fun setupUI() {
@@ -415,7 +447,6 @@ class DetailsActivity2 : AppCompatActivity() {
                 currentMetaItem!!.id
             }
             val tempMeta = currentMetaItem!!.copy(id = idToCheck)
-            // Use force=false for explicit toggle
             viewModel.toggleWatchlist(tempMeta, force = false)
         }
 

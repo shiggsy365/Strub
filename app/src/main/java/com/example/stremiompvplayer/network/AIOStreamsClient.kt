@@ -34,8 +34,6 @@ interface AIOStreamsApiService {
 
 object AIOStreamsClient {
 
-    private const val BASE_URL = "https://aiostreams.shiggsy.co.uk/"
-
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
@@ -60,17 +58,20 @@ object AIOStreamsClient {
             .build()
     }
 
-    private fun createRetrofit(client: OkHttpClient): Retrofit {
+    private fun createRetrofit(baseUrl: String, client: OkHttpClient): Retrofit {
+        // Ensure base URL ends with /
+        val normalizedUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+        
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(normalizedUrl)
             .client(client)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
     }
 
-    fun getApi(username: String, password: String): AIOStreamsApiService {
+    fun getApi(baseUrl: String, username: String, password: String): AIOStreamsApiService {
         val client = createClient(username, password)
-        val retrofit = createRetrofit(client)
+        val retrofit = createRetrofit(baseUrl, client)
         return retrofit.create(AIOStreamsApiService::class.java)
     }
 }

@@ -9,9 +9,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.adapters.PosterAdapter
@@ -21,6 +23,8 @@ import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class SearchFragment : Fragment() {
 
@@ -35,6 +39,7 @@ class SearchFragment : Fragment() {
     }
 
     private lateinit var searchAdapter: PosterAdapter
+    private var currentSelectedItem: MetaItem? = null
 
     private enum class SearchType {
         MIXED, MOVIES, SERIES
@@ -75,12 +80,125 @@ class SearchFragment : Fragment() {
                     putExtra("type", item.type)
                 }
                 startActivity(intent)
+            },
+            onLongClick = { item ->
+                val pos = searchAdapter.getItemPosition(item)
+                val holder = binding.resultsRecycler.findViewHolderForAdapterPosition(pos)
+                if (holder != null) showItemMenu(holder.itemView, item)
             }
         )
         binding.resultsRecycler.apply {
             layoutManager = GridLayoutManager(context, 10)
             adapter = searchAdapter
         }
+
+        // Add focus listener for details pane
+        binding.resultsRecycler.addOnChildAttachStateChangeListener(object : androidx.recyclerview.widget.RecyclerView.OnChildAttachStateChangeListener {
+            override fun onChildViewAttachedToWindow(view: View) {
+                view.setOnFocusChangeListener { v, hasFocus ->
+                    if (hasFocus) {
+                        val position = binding.resultsRecycler.getChildAdapterPosition(v)
+                        if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
+                            val item = searchAdapter.getItem(position)
+                            if (item != null) {
+                                updateDetailsPane(item)
+                            }
+                        }
+                    }
+                }
+            }
+
+            override fun onChildViewDetachedFromWindow(view: View) {
+                view.setOnFocusChangeListener(null)
+            }
+        })
+    }
+
+    private fun updateDetailsPane(item: MetaItem) {
+        currentSelectedItem = item
+
+        // Show hero card
+        binding.heroCard.visibility = View.VISIBLE
+
+        // Update background
+        Glide.with(this)
+            .load(item.background ?: item.poster)
+            .into(binding.pageBackground)
+
+        // Update metadata
+        val formattedDate = try {
+            item.releaseDate?.let { dateStr ->
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val outputFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+                val date = inputFormat.parse(dateStr)
+                date?.let { outputFormat.format(it) }
+            }
+        } catch (e: Exception) {
+            item.releaseDate
+        }
+
+        binding.detailDate.text = formattedDate ?: ""
+        binding.detailRating.visibility = if (item.rating != null) {
+            binding.detailRating.text = "★ ${item.rating}"
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+
+        binding.detailDescription.text = item.description ?: "No description available."
+
+        // Update title/logo
+        binding.detailTitle.text = item.name
+        binding.detailTitle.visibility = View.VISIBLE
+        binding.detailLogo.visibility = View.GONE
+
+        // Fetch logo if possible
+        viewModel.fetchItemLogo(item)
+    }
+
+    private fun showItemMenu(view: View, item: MetaItem) {
+        val wrapper = android.view.ContextThemeWrapper(requireContext(), android.R.style.Theme_DeviceDefault_Light_NoActionBar)
+        val popup = PopupMenu(wrapper, view)
+
+        popup.menu.add("Add to Library")
+        popup.menu.add("Add to TMDB Watchlist")
+        popup.menu.add("Mark as Watched")
+        popup.menu.add("Clear Watched Status")
+
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.title) {
+                "Add to Library" -> {
+                    viewModel.addToLibrary(item)
+                    true
+                }
+                "Add to TMDB Watchlist" -> {
+                    viewModel.toggleWatchlist(item, force = true)
+                    true
+                }
+                "Mark as Watched" -> {
+                    viewModel.markAsWatched(item)
+                    item.isWatched = true
+                    item.progress = item.duration
+                    val position = searchAdapter.getItemPosition(item)
+                    if (position != -1) {
+                        searchAdapter.notifyItemChanged(position)
+                    }
+                    true
+                }
+                "Clear Watched Status" -> {
+                    viewModel.clearWatchedStatus(item)
+                    item.isWatched = false
+                    item.progress = 0
+                    val position = searchAdapter.getItemPosition(item)
+                    if (position != -1) {
+                        searchAdapter.notifyItemChanged(position)
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
     }
 
     private fun setupUI() {
@@ -131,18 +249,24 @@ class SearchFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            // Supply simplified adapter update
             searchAdapter.updateData(results)
 
             // Update UI visibility
             if (results.isEmpty()) {
                 binding.emptyState.visibility = View.GONE
                 binding.noResultsState.visibility = View.VISIBLE
-                binding.resultsRecycler.visibility = View.GONE
+                binding.contentGrid.visibility = View.GONE
+                binding.heroCard.visibility = View.GONE
             } else {
                 binding.emptyState.visibility = View.GONE
                 binding.noResultsState.visibility = View.GONE
-                binding.resultsRecycler.visibility = View.VISIBLE
+                binding.contentGrid.visibility = View.VISIBLE
+                binding.heroCard.visibility = View.VISIBLE
+                
+                // Show first result in hero card
+                if (results.isNotEmpty()) {
+                    updateDetailsPane(results[0])
+                }
             }
 
             binding.resultsRecycler.requestFocus()
@@ -157,6 +281,20 @@ class SearchFragment : Fragment() {
             }
         }
 
+        viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
+            if (logoUrl != null) {
+                binding.detailTitle.visibility = View.GONE
+                binding.detailLogo.visibility = View.VISIBLE
+                Glide.with(this)
+                    .load(logoUrl)
+                    .fitCenter()
+                    .into(binding.detailLogo)
+            } else {
+                binding.detailTitle.visibility = View.VISIBLE
+                binding.detailLogo.visibility = View.GONE
+            }
+        }
+
         viewModel.error.observe(viewLifecycleOwner) { error ->
             // Optionally show error
         }
@@ -166,9 +304,7 @@ class SearchFragment : Fragment() {
         binding.searchEditText.setText(text)
     }
 
-    // NEW: Trigger Person ID search
     fun searchByPersonId(id: Int) {
-        // Switch to Mixed or create a new logic, sticking to Mixed for general display
         binding.chipMixed.isChecked = true
         viewModel.loadPersonCredits(id)
     }

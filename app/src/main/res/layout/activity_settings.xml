@@ -4,160 +4,285 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/app_background">
+    android:background="@color/md_theme_background">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:descendantFocusability="afterDescendants">
+        android:padding="16dp">
 
+        <!-- Page Title -->
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/pageTitle"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
             android:text="Settings"
-            android:textColor="@android:color/white"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="TMDB Configuration"
-            android:textColor="@color/colorAccent"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
-
-        <TextView
-            android:id="@+id/tvTMDBStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/background_content_box"
-            android:padding="12dp"
-            android:textColor="#CCCCCC"
-            tools:text="TMDB: Not authorized" />
-
-        <Button
-            android:id="@+id/btnConfigureTMDB"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:background="@drawable/button_background"
-            app:backgroundTint="@null"
-            android:text="Set API Key"
-            android:textColor="@android:color/white"
-            android:focusable="true"
-            android:clickable="true" />
-
-        <Button
-            android:id="@+id/btnAuthoriseTMDB"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.App.HeadlineLarge"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="24dp"
-            android:background="@drawable/button_background"
-            app:backgroundTint="@null"
-            android:text="Authorise TMDB"
-            android:textColor="@android:color/white"
-            android:focusable="true"
-            android:clickable="true" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="AIOStreams Configuration"
-            android:textColor="@color/colorAccent"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp"/>
-
-        <TextView
-            android:id="@+id/tvAIOStreamsStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/background_content_box"
-            android:padding="12dp"
-            android:textColor="#CCCCCC"
-            android:text="AIOStreams: Not configured" />
-
-        <Button
-            android:id="@+id/btnConfigureAIOStreams"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:background="@drawable/button_background"
-            app:backgroundTint="@null"
-            android:text="Configure AIOStreams Credentials"
-            android:textColor="@android:color/white"
-            android:focusable="true"
-            android:clickable="true" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="User Lists Management"
-            android:textColor="@color/colorAccent"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="4dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="List Name"
-                android:textColor="#CCCCCC"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Discover"
-                android:layout_marginEnd="16dp"
-                android:textColor="#CCCCCC"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="User"
-                android:layout_marginEnd="80dp"
-                android:textColor="#CCCCCC"/>
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvCatalogConfigs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            tools:listitem="@layout/item_catalog_config"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Account"
-            android:textColor="@android:color/white"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/tvCurrentUser"
-            android:layout_width="match_parent"
+        <!-- User Info Section (Full Width) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/userCard"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:background="@drawable/background_content_box"
-            android:padding="12dp"
-            android:textColor="#CCCCCC"
-            tools:text="Current User: Guest" />
+            app:layout_constraintTop_toBottomOf="@id/pageTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:cardBackgroundColor="@color/md_theme_surfaceContainer"
+            app:cardCornerRadius="@dimen/corner_radius_medium"
+            app:cardElevation="@dimen/elevation_medium"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/md_theme_outline"
+            app:contentPadding="16dp">
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/tvCurrentUser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.App.BodyLarge"
+                android:textColor="@color/text_primary"
+                tools:text="Current User ID: user123" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Section 1: Integrations (33% width) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/integrationsCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintTop_toBottomOf="@id/userCard"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/listManagementCard"
+            app:layout_constraintWidth_percent="0.33"
+            app:cardBackgroundColor="@color/md_theme_surfaceContainer"
+            app:cardCornerRadius="@dimen/corner_radius_medium"
+            app:cardElevation="@dimen/elevation_medium"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/md_theme_outline"
+            app:contentPadding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Integrations"
+                    android:textAppearance="@style/TextAppearance.App.TitleLarge"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- TMDB Section -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="TMDB"
+                    android:textAppearance="@style/TextAppearance.App.TitleMedium"
+                    android:textColor="@color/md_theme_primary"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tvTMDBStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodyMedium"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp"
+                    tools:text="TMDB: Not authorized" />
+
+                <Button
+                    android:id="@+id/btnConfigureTMDB"
+                    style="@style/Widget.App.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Set API Key"
+                    android:textColor="@android:color/white"
+                    android:layout_marginBottom="8dp"
+                    android:focusable="true" />
+
+                <Button
+                    android:id="@+id/btnAuthoriseTMDB"
+                    style="@style/Widget.App.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Authorise TMDB"
+                    android:textColor="@android:color/white"
+                    android:layout_marginBottom="24dp"
+                    android:focusable="true" />
+
+                <!-- AIOStreams Section -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="AIOStreams"
+                    android:textAppearance="@style/TextAppearance.App.TitleMedium"
+                    android:textColor="@color/md_theme_primary"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tvAIOStreamsUrlStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodyMedium"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp"
+                    tools:text="AIOStreams URL: Not set" />
+
+                <Button
+                    android:id="@+id/btnConfigureAIOStreamsUrl"
+                    style="@style/Widget.App.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Enter AIOStreams URL"
+                    android:textColor="@android:color/white"
+                    android:layout_marginBottom="8dp"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/tvAIOStreamsStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodyMedium"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp"
+                    tools:text="AIOStreams: Not configured" />
+
+                <Button
+                    android:id="@+id/btnConfigureAIOStreams"
+                    style="@style/Widget.App.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Configure AIOStreams"
+                    android:textColor="@android:color/white"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Section 2: List Management (33% width) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/listManagementCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintTop_toBottomOf="@id/userCard"
+            app:layout_constraintStart_toEndOf="@id/integrationsCard"
+            app:layout_constraintEnd_toStartOf="@id/placeholderCard"
+            app:layout_constraintWidth_percent="0.33"
+            app:cardBackgroundColor="@color/md_theme_surfaceContainer"
+            app:cardCornerRadius="@dimen/corner_radius_medium"
+            app:cardElevation="@dimen/elevation_medium"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/md_theme_outline"
+            app:contentPadding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="List Management"
+                    android:textAppearance="@style/TextAppearance.App.TitleLarge"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="16dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="List Name"
+                        android:textAppearance="@style/TextAppearance.App.LabelMedium"
+                        android:textColor="@color/text_secondary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Show"
+                        android:layout_marginEnd="40dp"
+                        android:textAppearance="@style/TextAppearance.App.LabelMedium"
+                        android:textColor="@color/text_secondary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Order"
+                        android:layout_marginEnd="8dp"
+                        android:textAppearance="@style/TextAppearance.App.LabelMedium"
+                        android:textColor="@color/text_secondary" />
+
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvCatalogConfigs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:listitem="@layout/item_catalog_config_settings" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Section 3: Placeholder for future features (33% width) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/placeholderCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            app:layout_constraintTop_toBottomOf="@id/userCard"
+            app:layout_constraintStart_toEndOf="@id/listManagementCard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintWidth_percent="0.33"
+            app:cardBackgroundColor="@color/md_theme_surfaceContainer"
+            app:cardCornerRadius="@dimen/corner_radius_medium"
+            app:cardElevation="@dimen/elevation_medium"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/md_theme_outline"
+            app:contentPadding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Additional Settings"
+                    android:textAppearance="@style/TextAppearance.App.TitleLarge"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="16dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="More settings coming soon..."
+                    android:textAppearance="@style/TextAppearance.App.BodyMedium"
+                    android:textColor="@color/text_secondary"
+                    android:gravity="center" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

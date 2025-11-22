@@ -50,8 +50,7 @@ class SharedPreferencesManager private constructor(context: Context) {
         return prefs.getString("tmdb_session_id", null)
     }
 
-    // ... (Keep existing AIOStreams, User, and Settings methods below) ...
-
+    // --- AIOStreams ---
     fun saveAIOStreamsUsername(username: String) {
         prefs.edit().putString("aiostreams_username", username).apply()
     }
@@ -66,6 +65,14 @@ class SharedPreferencesManager private constructor(context: Context) {
 
     fun getAIOStreamsPassword(): String? {
         return prefs.getString("aiostreams_password", null)
+    }
+
+    fun saveAIOStreamsUrl(url: String) {
+        prefs.edit().putString("aiostreams_url", url).apply()
+    }
+
+    fun getAIOStreamsUrl(): String? {
+        return prefs.getString("aiostreams_url", "https://aiostreams.shiggsy.co.uk")
     }
 
     fun clearAIOStreamsCredentials() {

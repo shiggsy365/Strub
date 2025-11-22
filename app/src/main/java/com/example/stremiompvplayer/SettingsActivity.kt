@@ -130,7 +130,6 @@ class SettingsActivity : AppCompatActivity() {
         val urlText = dialogView.findViewById<TextView>(R.id.authUrlText)
         val logoImage = dialogView.findViewById<ImageView>(R.id.tmdbLogo)
 
-        // URLs
         val authUrl = "https://www.themoviedb.org/authenticate/$requestToken"
         val qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=$authUrl"
         val logoUrl = "https://files.readme.io/29c6fee-blue_short.svg"
@@ -153,6 +152,10 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupAIOStreamsSection() {
         updateAIOStreamsDisplay()
 
+        binding.btnConfigureAIOStreamsUrl.setOnClickListener {
+            showAIOStreamsUrlDialog()
+        }
+
         binding.btnConfigureAIOStreams.setOnClickListener {
             showAIOStreamsDialog()
         }
@@ -161,7 +164,18 @@ class SettingsActivity : AppCompatActivity() {
     private fun updateAIOStreamsDisplay() {
         val username = prefsManager.getAIOStreamsUsername()
         val password = prefsManager.getAIOStreamsPassword()
+        val url = prefsManager.getAIOStreamsUrl()
 
+        // URL Status
+        if (url.isNullOrEmpty()) {
+            binding.tvAIOStreamsUrlStatus.text = "AIOStreams URL: Not set"
+            binding.tvAIOStreamsUrlStatus.setTextColor(getColor(android.R.color.holo_red_light))
+        } else {
+            binding.tvAIOStreamsUrlStatus.text = "AIOStreams URL: ${url.take(30)}..."
+            binding.tvAIOStreamsUrlStatus.setTextColor(getColor(android.R.color.holo_green_light))
+        }
+
+        // Credentials Status
         if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
             binding.tvAIOStreamsStatus.text = "AIOStreams: Not configured"
             binding.tvAIOStreamsStatus.setTextColor(getColor(android.R.color.holo_red_light))
@@ -169,6 +183,29 @@ class SettingsActivity : AppCompatActivity() {
             binding.tvAIOStreamsStatus.text = "AIOStreams: Configured (${username.take(8)}...)"
             binding.tvAIOStreamsStatus.setTextColor(getColor(android.R.color.holo_green_light))
         }
+    }
+
+    private fun showAIOStreamsUrlDialog() {
+        val input = TextInputEditText(this).apply {
+            hint = "AIOStreams Base URL"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            setText(prefsManager.getAIOStreamsUrl() ?: "https://aiostreams.shiggsy.co.uk")
+            setPadding(48, 32, 48, 32)
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Set AIOStreams URL")
+            .setMessage("Enter the base URL for your AIOStreams instance")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val url = input.text.toString().trim()
+                if (url.isNotEmpty()) {
+                    prefsManager.saveAIOStreamsUrl(url)
+                    updateAIOStreamsDisplay()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showAIOStreamsDialog() {
@@ -252,7 +289,6 @@ class SettingsActivity : AppCompatActivity() {
         binding.rvCatalogConfigs.adapter = adapter
 
         viewModel.initDefaultCatalogs()
-        // Ensure User Lists are created
         viewModel.initUserLists()
 
         viewModel.allCatalogConfigs.observe(this) { list ->
