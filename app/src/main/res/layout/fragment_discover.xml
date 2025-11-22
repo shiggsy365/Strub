@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:alpha="0.15"
+            android:alpha="0.70"
             android:contentDescription="Background" />
 
         <!-- Gradient overlay for better text readability -->
@@ -25,54 +25,40 @@
             android:layout_height="match_parent"
             android:background="@drawable/gradient_overlay_modern" />
 
-        <!-- Main content container -->
+        <!-- Main content container - 16dp padding around screen -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="@dimen/spacing_md">
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp">
 
-            <!-- Sidebar for categories -->
+            <!-- Sidebar for categories - matching info box background -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/sidebarCard"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_marginEnd="@dimen/spacing_md"
-                android:layout_marginBottom="@dimen/spacing_md"
+                android:layout_marginEnd="@dimen/spacing_xs"
+                android:layout_marginBottom="@dimen/spacing_xs"
                 app:layout_constraintWidth_percent="0.25"
                 app:layout_constraintHeight_percent="0.35"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/contentGrid"
-                app:cardBackgroundColor="@color/glass_surface"
-                app:cardCornerRadius="@dimen/corner_radius_xlarge"
-                app:cardElevation="@dimen/elevation_large"
+                app:cardBackgroundColor="#00000000"
+                app:cardCornerRadius="@dimen/corner_radius_small"
+                app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="@color/md_theme_outline">
+                app:strokeColor="@color/md_theme_outline"
+                app:contentPadding="4dp">
 
-                <LinearLayout
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvSidebar"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_md">
+                    android:scrollbars="none"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Categories"
-                        android:textAppearance="?attr/textAppearanceTitleMedium"
-                        android:textColor="@color/text_primary"
-                        android:layout_marginBottom="@dimen/spacing_md" />
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvSidebar"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:scrollbars="none"
-                        android:clipToPadding="false"
-                        android:overScrollMode="never" />
-
-                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Hero section for selected content -->
@@ -80,148 +66,131 @@
                 android:id="@+id/heroCard"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_marginEnd="@dimen/spacing_md"
-                android:layout_marginBottom="@dimen/spacing_md"
+                android:layout_marginEnd="@dimen/spacing_xs"
+                android:layout_marginBottom="@dimen/spacing_xs"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/sidebarCard"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/contentGrid"
-                app:cardBackgroundColor="@color/glass_surface"
-                app:cardCornerRadius="@dimen/corner_radius_xlarge"
-                app:cardElevation="@dimen/elevation_large"
+                app:cardBackgroundColor="#00000000"
+                app:cardCornerRadius="@dimen/corner_radius_small"
+                app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="@color/md_theme_outline">
+                app:strokeColor="@color/md_theme_outline"
+                app:contentPadding="0dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:padding="@dimen/spacing_xl">
+                    android:padding="0dp">
 
                     <!-- Content metadata column -->
                     <LinearLayout
                         android:id="@+id/metaColumn"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:gravity="top"
                         android:orientation="vertical"
-                        android:gravity="center_vertical"
-                        app:layout_constraintWidth_percent="0.4"
+                        android:padding="4dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent">
+                        app:layout_constraintWidth_percent="0.4">
 
-                        <!-- Logo/Title container with aspect ratio -->
-                        <androidx.constraintlayout.widget.ConstraintLayout
+                        <!-- Logo/Title container with 4px padding -->
+                        <FrameLayout
                             android:id="@+id/logoContainer"
                             android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_weight="1"
-                            android:layout_marginBottom="@dimen/spacing_lg">
+                            android:layout_height="wrap_content"
+                            android:padding="4dp"
+                            android:layout_marginBottom="@dimen/spacing_sm">
 
                             <ImageView
                                 android:id="@+id/detailLogo"
-                                android:layout_width="0dp"
-                                android:layout_height="0dp"
-                                android:scaleType="fitCenter"
+                                android:layout_width="match_parent"
+                                android:layout_height="100dp"
                                 android:adjustViewBounds="true"
-                                android:visibility="gone"
                                 android:contentDescription="Content Logo"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
+                                android:scaleType="fitCenter"
+                                android:visibility="gone"
                                 tools:src="@drawable/movie" />
 
                             <TextView
                                 android:id="@+id/detailTitle"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginHorizontal="@dimen/spacing_md"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:ellipsize="end"
                                 android:gravity="center"
+                                android:lineSpacingExtra="@dimen/spacing_xs"
+                                android:maxLines="2"
                                 android:textAppearance="?attr/textAppearanceDisplaySmall"
                                 android:textColor="@color/text_primary"
-                                android:maxLines="3"
-                                android:ellipsize="end"
-                                android:lineSpacingExtra="@dimen/spacing_xs"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
                                 tools:text="The Matrix Resurrections" />
 
-                        </androidx.constraintlayout.widget.ConstraintLayout>
+                        </FrameLayout>
 
                         <!-- Metadata row -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
+                            android:layout_marginBottom="@dimen/spacing_sm"
                             android:gravity="center"
-                            android:layout_marginBottom="@dimen/spacing_sm">
+                            android:orientation="horizontal">
 
                             <TextView
                                 android:id="@+id/detailDate"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginEnd="@dimen/spacing_sm"
                                 android:textAppearance="?attr/textAppearanceBodyLarge"
                                 android:textColor="@color/text_secondary"
-                                android:layout_marginEnd="@dimen/spacing_md"
                                 tools:text="2023" />
 
                             <View
                                 android:layout_width="4dp"
                                 android:layout_height="4dp"
-                                android:layout_marginEnd="@dimen/spacing_md"
+                                android:layout_marginEnd="@dimen/spacing_sm"
                                 android:background="@drawable/dot_separator" />
 
                             <TextView
                                 android:id="@+id/detailRating"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textAppearance="?attr/textAppearanceBodyLarge"
-                                android:textColor="@color/warning_orange"
-                                android:textStyle="bold"
                                 android:drawableStart="@drawable/ic_star"
                                 android:drawablePadding="@dimen/spacing_xs"
+                                android:textAppearance="?attr/textAppearanceBodyMedium"
+                                android:textColor="@color/warning_orange"
+                                android:textStyle="bold"
                                 android:visibility="gone"
                                 app:drawableTint="@color/warning_orange"
-                                tools:text="8.5" 
+                                tools:text="8.5"
                                 tools:visibility="visible" />
 
                         </LinearLayout>
 
                     </LinearLayout>
 
-                    <!-- Description scroll area -->
+                    <!-- Description scroll area with 4px padding -->
                     <androidx.core.widget.NestedScrollView
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginStart="@dimen/spacing_xl"
-                        android:scrollbars="none"
-                        android:overScrollMode="never"
+                        android:padding="4dp"
                         android:fadeScrollbars="true"
+                        android:overScrollMode="never"
+                        android:scrollbars="none"
                         app:layout_constraintStart_toEndOf="@id/metaColumn"
-                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent">
+                        app:layout_constraintWidth_percent="0.6">
 
-                        <LinearLayout
+                        <TextView
+                            android:id="@+id/detailDescription"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:gravity="center_vertical"
-                            android:minHeight="300dp">
-
-                            <TextView
-                                android:id="@+id/detailDescription"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:textAppearance="?attr/textAppearanceBodyLarge"
-                                android:textColor="@color/text_secondary"
-                                android:lineSpacingExtra="@dimen/spacing_xs"
-                                android:justificationMode="inter_word"
-                                tools:text="In a world where technology has advanced beyond imagination, humanity faces its greatest challenge yet. This epic tale of survival, love, and determination will keep you on the edge of your seat from beginning to end." />
-
-                        </LinearLayout>
+                            android:justificationMode="inter_word"
+                            android:lineSpacingExtra="@dimen/spacing_xs"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="@color/text_secondary"
+                            tools:text="In a world where technology has advanced beyond imagination, humanity faces its greatest challenge yet. This epic tale of survival, love, and determination will keep you on the edge of your seat from beginning to end." />
 
                     </androidx.core.widget.NestedScrollView>
 
@@ -229,89 +198,37 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Content grid -->
+            <!-- Content grid - ZERO PADDING EVERYWHERE -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/contentGrid"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
+                android:layout_marginTop="@dimen/spacing_xs"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintHeight_percent="0.6"
                 app:cardBackgroundColor="@color/glass_surface_light"
-                app:cardCornerRadius="@dimen/corner_radius_xlarge"
+                app:cardCornerRadius="@dimen/corner_radius_small"
                 app:cardElevation="@dimen/elevation_medium"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/md_theme_outline">
+                app:strokeWidth="0dp"
+                app:contentPadding="0dp">
 
-                <LinearLayout
+                <!-- RecyclerView directly inside card - ZERO PADDING -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvContent"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_lg">
+                    android:clipToPadding="false"
+                    android:clipChildren="false"
+                    android:padding="0dp"
+                    android:layout_margin="0dp"
+                    android:scrollbars="none"
+                    android:overScrollMode="never"
+                    android:focusable="true"
+                    android:nextFocusUp="@id/rvSidebar"
+                    tools:listitem="@layout/item_poster" />
 
-                    <!-- Content header -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="@dimen/spacing_lg">
-
-                        <TextView
-                            android:id="@+id/contentSectionTitle"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Discover"
-                            android:textAppearance="?attr/textAppearanceTitleLarge"
-                            android:textColor="@color/text_primary" />
-
-                        <!-- View toggle buttons -->
-                        <com.google.android.material.button.MaterialButtonToggleGroup
-                            android:id="@+id/viewToggleGroup"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            app:singleSelection="true"
-                            app:selectionRequired="true"
-                            android:visibility="gone">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnGridView"
-                                style="@style/Widget.App.Button.Outlined"
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                app:icon="@drawable/ic_grid_view"
-                                app:iconPadding="0dp"
-                                android:checked="true" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnListView"
-                                style="@style/Widget.App.Button.Outlined"
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                app:icon="@drawable/ic_list_view"
-                                app:iconPadding="0dp" />
-
-                        </com.google.android.material.button.MaterialButtonToggleGroup>
-
-                    </LinearLayout>
-
-                    <!-- Content RecyclerView -->
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvContent"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:clipToPadding="false"
-                        android:paddingHorizontal="@dimen/spacing_sm"
-                        android:scrollbars="none"
-                        android:overScrollMode="never"
-                        android:focusable="true"
-                        android:nextFocusUp="@id/rvSidebar"
-                        tools:listitem="@layout/item_poster_modern" />
-
-                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

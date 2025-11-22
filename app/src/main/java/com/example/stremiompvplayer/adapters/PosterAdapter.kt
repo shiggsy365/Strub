@@ -33,10 +33,10 @@ class PosterAdapter(
         val params = holder.binding.poster.layoutParams as ConstraintLayout.LayoutParams
         if (item.isLandscape) {
             // Landscape: 4:3
-            params.dimensionRatio = "H,3:4"
+            params.dimensionRatio = "H,4:3"
         } else {
             // Portrait: 2:3
-            params.dimensionRatio = "H,86:58"
+            params.dimensionRatio = "H,2:3"
         }
         holder.binding.poster.layoutParams = params
 

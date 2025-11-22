@@ -6,49 +6,40 @@
     <data />
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/spacing_sm"
+        android:layout_margin="0dp"
         android:focusable="true"
         android:clickable="true"
         style="@style/Widget.App.Poster"
-        android:stateListAnimator="@animator/card_elevation"
-        app:cardCornerRadius="@dimen/poster_corner_radius"
+        app:cardCornerRadius="@dimen/corner_radius_small"
         app:cardElevation="@dimen/elevation_medium"
         app:cardBackgroundColor="@color/card_elevated"
         app:strokeWidth="@dimen/stroke_thick"
-        app:strokeColor="@color/poster_stroke_selector">
+        app:strokeColor="@color/poster_stroke_selector"
+        app:contentPadding="2dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="0dp">
 
-            <!-- Main poster image -->
+            <!-- Main poster image - maintains 2:3 aspect ratio -->
             <ImageView
                 android:id="@+id/poster"
-                android:layout_width="@dimen/poster_width"
-                android:layout_height="@dimen/poster_height_standard"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
                 android:scaleType="centerCrop"
                 android:background="@color/md_theme_surfaceDim"
                 android:contentDescription="Content Poster"
                 android:adjustViewBounds="true"
+                android:padding="0dp"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toTopOf="@+id/metadataOverlay"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintDimensionRatio="H,2:3"
                 tools:src="@drawable/movie" />
-
-            <!-- Gradient overlay for better text visibility -->
-            <View
-                android:id="@+id/gradientOverlay"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:background="@drawable/poster_gradient_overlay"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="@id/poster"
-                app:layout_constraintStart_toStartOf="@id/poster"
-                app:layout_constraintEnd_toEndOf="@id/poster" />
 
             <!-- Watch status indicators -->
             <LinearLayout
@@ -56,7 +47,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_margin="@dimen/spacing_sm"
+                android:layout_margin="@dimen/spacing_xs"
                 android:background="@drawable/status_badge_background"
                 android:padding="@dimen/spacing_xs"
                 android:gravity="center"
@@ -84,20 +75,6 @@
                     app:tint="@color/md_theme_primary"
                     android:contentDescription="In Progress" />
 
-                <!-- New indicator -->
-                <TextView
-                    android:id="@+id/newBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="NEW"
-                    android:textAppearance="?attr/textAppearanceLabelSmall"
-                    android:textColor="@color/md_theme_onPrimary"
-                    android:background="@drawable/new_badge_background"
-                    android:paddingHorizontal="@dimen/spacing_xs"
-                    android:paddingVertical="2dp"
-                    android:layout_marginStart="@dimen/spacing_xs"
-                    android:visibility="gone" />
-
             </LinearLayout>
 
             <!-- Progress indicator bar -->
@@ -115,91 +92,6 @@
                 app:layout_constraintEnd_toEndOf="@id/poster"
                 tools:progress="60"
                 tools:visibility="visible" />
-
-            <!-- Quality and source indicators -->
-            <LinearLayout
-                android:id="@+id/qualityContainer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_margin="@dimen/spacing_sm"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="@id/poster"
-                app:layout_constraintStart_toStartOf="@id/poster">
-
-                <!-- Quality badge (4K, HD, etc.) -->
-                <TextView
-                    android:id="@+id/qualityBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="4K"
-                    android:textAppearance="?attr/textAppearanceLabelSmall"
-                    android:textColor="@color/md_theme_onPrimary"
-                    android:background="@drawable/quality_badge_background"
-                    android:paddingHorizontal="@dimen/spacing_xs"
-                    android:paddingVertical="2dp"
-                    android:layout_marginEnd="@dimen/spacing_xs"
-                    android:visibility="gone" />
-
-            </LinearLayout>
-
-            <!-- Optional metadata overlay (for titles when needed) -->
-            <LinearLayout
-                android:id="@+id/metadataOverlay"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@color/glass_surface"
-                android:padding="@dimen/spacing_md"
-                android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/poster"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
-
-                <TextView
-                    android:id="@+id/title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?attr/textAppearanceLabelLarge"
-                    android:textColor="@color/text_primary"
-                    android:maxLines="2"
-                    android:ellipsize="end"
-                    android:gravity="center"
-                    android:layout_marginBottom="@dimen/spacing_xs"
-                    tools:text="The Matrix Resurrections" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center">
-
-                    <TextView
-                        android:id="@+id/year"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceLabelSmall"
-                        android:textColor="@color/text_tertiary"
-                        android:layout_marginEnd="@dimen/spacing_sm"
-                        tools:text="2023" />
-
-                    <TextView
-                        android:id="@+id/rating"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceLabelSmall"
-                        android:textColor="@color/warning_orange"
-                        android:drawableStart="@drawable/ic_star"
-                        android:drawablePadding="2dp"
-                        app:drawableTint="@color/warning_orange"
-                        android:visibility="gone"
-                        tools:text="8.5"
-                        tools:visibility="visible" />
-
-                </LinearLayout>
-
-            </LinearLayout>
 
             <!-- Focus indicator overlay -->
             <View

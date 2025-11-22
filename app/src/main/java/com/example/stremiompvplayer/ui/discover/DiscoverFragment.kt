@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
@@ -92,8 +91,28 @@ class DiscoverFragment : Fragment() {
             }
         )
 
+        // Set GridLayoutManager with 10 columns
         binding.rvContent.layoutManager = GridLayoutManager(context, 10)
         binding.rvContent.adapter = contentAdapter
+
+        // Add scroll listener to auto-update details on focus change
+        binding.rvContent.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
+            override fun onChildViewAttachedToWindow(view: View) {
+                view.setOnFocusChangeListener { v, hasFocus ->
+                    if (hasFocus) {
+                        val position = binding.rvContent.getChildAdapterPosition(v)
+                        if (position != RecyclerView.NO_POSITION) {
+                            val item = contentAdapter.getItem(position)
+                            item?.let { updateDetailsPane(it) }
+                        }
+                    }
+                }
+            }
+
+            override fun onChildViewDetachedFromWindow(view: View) {
+                view.setOnFocusChangeListener(null)
+            }
+        })
     }
 
     private fun updateDetailsPane(item: MetaItem) {
@@ -256,7 +275,7 @@ class DiscoverFragment : Fragment() {
         private var selectedPosition = 0
 
         inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
-            val name: TextView = view.findViewById(R.id.catalogName)
+            val name: android.widget.TextView = view.findViewById(R.id.catalogName)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

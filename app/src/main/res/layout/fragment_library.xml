@@ -15,7 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:alpha="0.4"
+            android:alpha="0.7"
             android:contentDescription="Background Art" />
 
         <View
@@ -34,8 +34,7 @@
             app:cardBackgroundColor="@android:color/transparent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_percent="0.63"
-            app:layout_constraintDimensionRatio="H,86:58">
+            app:layout_constraintDimensionRatio="H,2:3">
 
             <ImageView
                 android:id="@+id/selectedPoster"
