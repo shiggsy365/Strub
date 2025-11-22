@@ -10,7 +10,6 @@
         android:layout_height="match_parent"
         android:background="@color/md_theme_background">
 
-        <!-- Dynamic background image with parallax effect -->
         <ImageView
             android:id="@+id/pageBackground"
             android:layout_width="match_parent"
@@ -19,28 +18,26 @@
             android:alpha="0.70"
             android:contentDescription="Background" />
 
-        <!-- Gradient overlay for better text readability -->
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/gradient_overlay_modern" />
 
-        <!-- Main content container - 16dp padding around screen -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingLeft="16dp"
             android:paddingRight="16dp">
 
-            <!-- Sidebar for categories - matching info box background -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/sidebarCard"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
+                android:layout_marginTop="@dimen/spacing_xs"
                 android:layout_marginEnd="@dimen/spacing_xs"
                 android:layout_marginBottom="@dimen/spacing_xs"
                 app:layout_constraintWidth_percent="0.25"
-                app:layout_constraintHeight_percent="0.35"
+                app:layout_constraintHeight_default="wrap"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/contentGrid"
@@ -61,12 +58,12 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Hero section for selected content -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/heroCard"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_marginEnd="@dimen/spacing_xs"
+                android:layout_marginTop="@dimen/spacing_xs"
+                android:layout_marginEnd="@dimen/spacing_sm"
                 android:layout_marginBottom="@dimen/spacing_xs"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/sidebarCard"
@@ -84,7 +81,6 @@
                     android:layout_height="match_parent"
                     android:padding="0dp">
 
-                    <!-- Content metadata column -->
                     <LinearLayout
                         android:id="@+id/metaColumn"
                         android:layout_width="0dp"
@@ -97,7 +93,6 @@
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintWidth_percent="0.4">
 
-                        <!-- Logo/Title container with 4px padding -->
                         <FrameLayout
                             android:id="@+id/logoContainer"
                             android:layout_width="match_parent"
@@ -129,7 +124,6 @@
 
                         </FrameLayout>
 
-                        <!-- Metadata row -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -156,13 +150,12 @@
                                 android:id="@+id/detailRating"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:drawableStart="@drawable/ic_star"
                                 android:drawablePadding="@dimen/spacing_xs"
                                 android:textAppearance="?attr/textAppearanceBodyMedium"
                                 android:textColor="@color/warning_orange"
                                 android:textStyle="bold"
                                 android:visibility="gone"
-                                app:drawableTint="@color/warning_orange"
+
                                 tools:text="8.5"
                                 tools:visibility="visible" />
 
@@ -170,7 +163,6 @@
 
                     </LinearLayout>
 
-                    <!-- Description scroll area with 4px padding -->
                     <androidx.core.widget.NestedScrollView
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
@@ -190,6 +182,7 @@
                             android:lineSpacingExtra="@dimen/spacing_xs"
                             android:textAppearance="?attr/textAppearanceBodyMedium"
                             android:textColor="@color/text_secondary"
+                            android:paddingRight="8dp"
                             tools:text="In a world where technology has advanced beyond imagination, humanity faces its greatest challenge yet. This epic tale of survival, love, and determination will keep you on the edge of your seat from beginning to end." />
 
                     </androidx.core.widget.NestedScrollView>
@@ -198,7 +191,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Content grid - ZERO PADDING EVERYWHERE -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/contentGrid"
                 android:layout_width="0dp"
@@ -214,7 +206,6 @@
                 app:strokeWidth="0dp"
                 app:contentPadding="0dp">
 
-                <!-- RecyclerView directly inside card - ZERO PADDING -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvContent"
                     android:layout_width="match_parent"
@@ -233,7 +224,6 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Loading overlay -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/loadingCard"
             android:layout_width="wrap_content"

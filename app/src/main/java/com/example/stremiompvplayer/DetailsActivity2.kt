@@ -415,7 +415,8 @@ class DetailsActivity2 : AppCompatActivity() {
                 currentMetaItem!!.id
             }
             val tempMeta = currentMetaItem!!.copy(id = idToCheck)
-            viewModel.toggleWatchlist(tempMeta)
+            // Use force=false for explicit toggle
+            viewModel.toggleWatchlist(tempMeta, force = false)
         }
 
         binding.btnPlay.setOnClickListener {

@@ -15,6 +15,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlin.math.minOf
+
 
 class MainViewModel(
     private val catalogRepository: CatalogRepository,
@@ -30,6 +32,20 @@ class MainViewModel(
     private var logoFetchJob: Job? = null
 
     private val apiKey: String get() = prefsManager.getTMDBApiKey() ?: ""
+
+    // Pagination State
+    private val _currentPage = MutableLiveData(1) // Tracks App Page (18 items)
+    val currentPage: LiveData<Int> = _currentPage
+
+    private var lastRequestedCatalog: UserCatalog? = null
+
+    private val _isLastPage = MutableLiveData(false)
+    val isLastPage: LiveData<Boolean> = _isLastPage
+
+    // Cache for all loaded content to avoid missing items and simplify navigation
+    private var loadedContentCache: MutableList<MetaItem> = mutableListOf()
+    private var currentAppPage = 1 // The logical page number displayed (18 items/page)
+    private var maxAppPage = 1 // The total available logical pages based on cache size
 
     // Database observables
     val allCatalogConfigs: LiveData<List<UserCatalog>> = catalogRepository.allCatalogs
@@ -97,6 +113,37 @@ class MainViewModel(
         return MetaItem(item.itemId, item.itemType, item.name, item.poster, item.background, item.description)
     }
 
+    // === PAGINATION NAVIGATION (USES CACHE) ===
+    fun loadNextPage() {
+        if (_isLoading.value == true || currentAppPage >= maxAppPage) return
+
+        val catalog = lastRequestedCatalog ?: return
+        if (catalog.catalogId !in listOf("popular", "latest", "trending")) return
+
+        val targetPage = currentAppPage + 1
+
+        // Check if the next App Page is fully available in the cache (18 items)
+        if (targetPage * 18 <= loadedContentCache.size) {
+            // Content is already cached, just display it
+            displayPage(targetPage)
+        } else {
+            // Load new content from TMDB
+            // Calculate TMDB page number based on cache size (20 items/TMDB page)
+            val tmdbPageToFetch = (loadedContentCache.size / 20) + 1
+            loadContentForCatalog(catalog, page = tmdbPageToFetch, isInitialLoad = false)
+        }
+    }
+
+    fun loadPreviousPage() {
+        if (_isLoading.value == true || currentAppPage <= 1) return
+
+        val catalog = lastRequestedCatalog ?: return
+        if (catalog.catalogId !in listOf("popular", "latest", "trending")) return
+
+        // Previous page is always in the cache
+        displayPage(currentAppPage - 1)
+    }
+
     // === LOGO FETCHING ===
     fun fetchItemLogo(meta: MetaItem) {
         logoFetchJob?.cancel()
@@ -121,90 +168,156 @@ class MainViewModel(
         }
     }
 
-    // === CONTENT LOADING ===
-    fun loadContentForCatalog(catalog: UserCatalog) {
+    // === CONTENT LOADING (MODIFIED FOR CACHING & TMDB PAGE LOGIC) ===
+    fun loadContentForCatalog(catalog: UserCatalog, page: Int = 1, isInitialLoad: Boolean = true) {
         if (apiKey.isEmpty()) return
 
         _isLoading.postValue(true)
+
+        // Reset state only on catalog change/initial load
+        if (isInitialLoad) {
+            loadedContentCache.clear()
+            currentAppPage = 1
+            maxAppPage = 1
+            _isLastPage.postValue(false)
+            lastRequestedCatalog = catalog
+        }
+
         viewModelScope.launch {
+
             try {
-                val items = when (catalog.catalogId) {
-                    "popular" -> {
-                        if (catalog.catalogType == "movie") {
-                            TMDBClient.api.getPopularMovies(apiKey, page = 1).results.map { it.toMetaItem() }
-                        } else {
-                            TMDBClient.api.getPopularSeries(apiKey, page = 1).results.map { it.toMetaItem() }
+
+                if (catalog.catalogId in listOf("popular", "latest", "trending")) {
+                    // --- TMDB PAGINATION LOGIC ---
+                    val tmdbResponse = if (catalog.catalogType == "movie") {
+                        when (catalog.catalogId) {
+                            "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
+                            "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
+                            else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                        }
+                    } else { // series
+                        when (catalog.catalogId) {
+                            "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
+                            "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
+                            else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
                         }
                     }
-                    "latest" -> {
-                        if (catalog.catalogType == "movie") {
-                            TMDBClient.api.getLatestMovies(apiKey, page = 1).results.map { it.toMetaItem() }
-                        } else {
-                            TMDBClient.api.getLatestSeries(apiKey, page = 1).results.map { it.toMetaItem() }
-                        }
+
+                    val fetchedItems = if (tmdbResponse is TMDBMovieListResponse) {
+                        tmdbResponse.results.map { it.toMetaItem() }
+                    } else if (tmdbResponse is TMDBSeriesListResponse) {
+                        tmdbResponse.results.map { it.toMetaItem() }
+                    } else {
+                        emptyList()
                     }
-                    "trending" -> {
-                        if (catalog.catalogType == "movie") {
-                            TMDBClient.api.getTrendingMovies(apiKey, page = 1).results.map { it.toMetaItem() }
-                        } else {
-                            TMDBClient.api.getTrendingSeries(apiKey, page = 1).results.map { it.toMetaItem() }
-                        }
+
+                    // 1. Append ALL 20 fetched items to the cache
+                    loadedContentCache.addAll(fetchedItems)
+
+                    // 2. Recalculate max App Pages (based on 18 content items per page)
+                    val cacheSize = loadedContentCache.size
+                    maxAppPage = (cacheSize / 18) + (if (cacheSize % 18 > 0) 1 else 0)
+
+                    // 3. Update the App Page being displayed
+                    val pageToDisplay = if (isInitialLoad) 1 else currentAppPage
+                    displayPage(pageToDisplay)
+
+                    // Check if TMDB has no more pages to load for maxAppPage calculation
+                    if (tmdbResponse.page >= tmdbResponse.total_pages) {
+                        _isLastPage.postValue(true)
                     }
-                    "continue_movies" -> {
-                        val userId = prefsManager.getCurrentUserId() ?: "default"
-                        catalogRepository.getContinueWatching(userId, "movie").map { progress ->
-                            MetaItem(
-                                id = progress.itemId,
-                                type = progress.type,
-                                name = progress.name ?: "Unknown",
-                                poster = progress.poster,
-                                background = progress.background,
-                                description = null,
-                                isWatched = progress.isWatched,
-                                progress = progress.progress,
-                                duration = progress.duration
-                            )
+
+                } else {
+                    // --- NON-TMDB CATALOG LOGIC ---
+                    val nonTMDBItems = when (catalog.catalogId) {
+                        "continue_movies" -> {
+                            val userId = prefsManager.getCurrentUserId() ?: "default"
+                            catalogRepository.getContinueWatching(userId, "movie").map { progress ->
+                                MetaItem(
+                                    id = progress.itemId,
+                                    type = progress.type,
+                                    name = progress.name ?: "Unknown",
+                                    poster = progress.poster,
+                                    background = progress.background,
+                                    description = null,
+                                    isWatched = progress.isWatched,
+                                    progress = progress.progress,
+                                    duration = progress.duration
+                                )
+                            }
                         }
-                    }
-                    "continue_episodes" -> {
-                        val userId = prefsManager.getCurrentUserId() ?: "default"
-                        catalogRepository.getContinueWatching(userId, "episode").map { progress ->
-                            MetaItem(
-                                id = progress.itemId,
-                                type = progress.type,
-                                name = progress.name ?: "Unknown",
-                                poster = progress.poster,
-                                background = progress.background,
-                                description = null,
-                                isWatched = progress.isWatched,
-                                progress = progress.progress,
-                                duration = progress.duration
-                            )
+                        "continue_episodes" -> {
+                            val userId = prefsManager.getCurrentUserId() ?: "default"
+                            catalogRepository.getContinueWatching(userId, "episode").map { progress ->
+                                MetaItem(
+                                    id = progress.itemId,
+                                    type = progress.type,
+                                    name = progress.name ?: "Unknown",
+                                    poster = progress.poster,
+                                    background = progress.background,
+                                    description = null,
+                                    isWatched = progress.isWatched,
+                                    progress = progress.progress,
+                                    duration = progress.duration
+                                )
+                            }
                         }
+                        "next_up" -> generateNextUpList()
+                        else -> emptyList()
                     }
-                    "next_up" -> generateNextUpList()
-                    else -> emptyList()
+
+                    loadedContentCache.clear()
+                    loadedContentCache.addAll(nonTMDBItems)
+                    maxAppPage = 1 // Non-paginated
+                    _isLastPage.postValue(true)
+                    displayPage(1)
                 }
 
-                // Enhance with watch progress
-                val userId = prefsManager.getCurrentUserId() ?: "default"
-                val enhancedItems = items.map { item ->
-                    val progress = catalogRepository.getWatchProgress(userId, item.id)
-                    item.copy(
-                        isWatched = progress?.isWatched ?: false,
-                        progress = progress?.progress ?: 0,
-                        duration = progress?.duration ?: 0
-                    )
-                }
-
-                _currentCatalogContent.postValue(enhancedItems)
             } catch (e: Exception) {
                 _error.postValue("Failed to load content: ${e.message}")
-                _currentCatalogContent.postValue(emptyList())
+                loadedContentCache.clear()
+                displayPage(1)
             } finally {
                 _isLoading.postValue(false)
             }
         }
+    }
+
+    // === CACHE DISPLAY HELPER ===
+    private fun displayPage(appPage: Int) {
+        currentAppPage = appPage
+
+        // Calculate start and end indices based on 18 items per page
+        val start = (appPage - 1) * 18
+        val end = minOf(appPage * 18, loadedContentCache.size)
+
+        // SubList is inclusive at start, exclusive at end
+        val itemsForDisplay = if (start < loadedContentCache.size) {
+            loadedContentCache.subList(start, end)
+        } else {
+            emptyList()
+        }
+
+        _currentPage.postValue(appPage)
+
+        // Determine last page by comparing to maxAppPage, but respect the TMDB last page status
+        val isLastAppPage = appPage >= maxAppPage
+
+        // Check if current catalog supports pagination
+        val isPaginated = lastRequestedCatalog?.catalogId in listOf("popular", "latest", "trending")
+
+        if (!isPaginated) {
+            _isLastPage.postValue(true)
+        } else if (isLastAppPage && loadedContentCache.size < (maxAppPage * 18)) {
+            // We reached the end of the loaded cache, AND the cache isn't full, so this IS the last page.
+            // This covers the case where the last TMDB page had fewer than 20 items.
+            _isLastPage.postValue(true)
+        } else {
+            // Otherwise, if we haven't reached the max app page, or the next TMDB page is still available, we are NOT at the last page.
+            _isLastPage.postValue(isLastAppPage)
+        }
+
+        _currentCatalogContent.postValue(itemsForDisplay)
     }
 
     private suspend fun generateNextUpList(): List<MetaItem> {
@@ -702,9 +815,7 @@ class MainViewModel(
     // === CATALOG MANAGEMENT ===
     fun initUserLists() {
         viewModelScope.launch {
-            prefsManager.getCurrentUserId()?.let {
-                catalogRepository.ensureUserListCatalogs(it)
-            }
+            catalogRepository.ensureUserListCatalogs(prefsManager.getCurrentUserId() ?: "default")
         }
     }
 

@@ -8,7 +8,7 @@
             <corners android:radius="16dp" />
         </shape>
     </item>
-    
+
     <!-- Selected State -->
     <item android:state_selected="true">
         <shape android:shape="rectangle">
@@ -17,7 +17,7 @@
             <corners android:radius="16dp" />
         </shape>
     </item>
-    
+
     <!-- Pressed State -->
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
@@ -26,7 +26,7 @@
             <corners android:radius="16dp" />
         </shape>
     </item>
-    
+
     <!-- Default State -->
     <item>
         <shape android:shape="rectangle">

@@ -80,9 +80,9 @@
 <!-- ============================================ -->
 
 <!-- Primary Colors -->
-<color name="md_theme_dark_primary">#FFB4A8</color>
+<color name="md_theme_dark_primary">@color/md_theme_dark_errorContainer</color>
 <color name="md_theme_dark_onPrimary">#690005</color>
-<color name="md_theme_dark_primaryContainer">#930009</color>
+<color name="md_theme_dark_primaryContainer">#930009</color>#c7ab59
 <color name="md_theme_dark_onPrimaryContainer">#FFDAD5</color>
 
 <!-- Secondary Colors -->
@@ -125,7 +125,7 @@
 <color name="md_theme_dark_surfaceContainerLowest">#0B0808</color>
 <color name="md_theme_dark_surfaceContainerLow">#1A1515</color>
 <color name="md_theme_dark_surfaceContainer">#1E1B1A</color>
-<color name="md_theme_dark_surfaceContainerHigh">#292524</color>
+<color name="md_theme_dark_surfaceContainerHigh">@color/md_theme_dark_onError</color>
 <color name="md_theme_dark_surfaceContainerHighest">#34302F</color>
 
 <!-- ============================================ -->

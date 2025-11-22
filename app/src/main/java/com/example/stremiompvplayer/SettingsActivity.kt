@@ -252,7 +252,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.rvCatalogConfigs.adapter = adapter
 
         viewModel.initDefaultCatalogs()
-        // NEW: Ensure User Lists are created
+        // Ensure User Lists are created
         viewModel.initUserLists()
 
         viewModel.allCatalogConfigs.observe(this) { list ->

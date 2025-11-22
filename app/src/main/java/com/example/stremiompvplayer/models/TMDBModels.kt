@@ -117,10 +117,6 @@ data class TMDBEpisode(
 data class TMDBImagesResponse(
     val logos: List<TMDBImage>
 )
-data class TMDBMovieListResponse(
-    val page: Int,
-    val results: List<TMDBMovie>
-)
 
 data class TMDBMovie(
     val id: Int,
@@ -146,9 +142,27 @@ data class TMDBMovie(
     }
 }
 
+data class TMDBPaginatedResponse(
+    val page: Int,
+    val total_pages: Int,
+    val total_results: Int,
+    val results: List<TMDBMultiSearchResult>
+)
+
+// --- MOVIE LIST RESPONSE (UPDATED) ---
+data class TMDBMovieListResponse(
+    val page: Int,
+    val results: List<TMDBMovie>,
+    val total_pages: Int, // ADDED
+    val total_results: Int // ADDED
+)
+
+// --- SERIES LIST RESPONSE (UPDATED) ---
 data class TMDBSeriesListResponse(
     val page: Int,
-    val results: List<TMDBSeries>
+    val results: List<TMDBSeries>,
+    val total_pages: Int, // ADDED
+    val total_results: Int // ADDED
 )
 
 data class TMDBSeries(

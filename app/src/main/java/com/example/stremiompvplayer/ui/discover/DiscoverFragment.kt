@@ -23,6 +23,9 @@ import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.example.stremiompvplayer.adapters.PosterAdapter
+import com.example.stremiompvplayer.adapters.NavItem
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class DiscoverFragment : Fragment() {
 
@@ -40,6 +43,8 @@ class DiscoverFragment : Fragment() {
     private lateinit var contentAdapter: PosterAdapter
     private var currentType = "movie"
     private var currentSelectedItem: MetaItem? = null
+
+    // focusPositionAfterLoad is no longer needed with the post logic for buttons
 
     companion object {
         private const val ARG_TYPE = "media_type"
@@ -76,7 +81,8 @@ class DiscoverFragment : Fragment() {
 
     private fun setupAdapters() {
         sidebarAdapter = SidebarAdapter { catalog ->
-            viewModel.loadContentForCatalog(catalog)
+            // Pass isInitialLoad=true to clear cache and start fresh
+            viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
         }
         binding.rvSidebar.layoutManager = LinearLayoutManager(context)
         binding.rvSidebar.adapter = sidebarAdapter
@@ -95,7 +101,7 @@ class DiscoverFragment : Fragment() {
         binding.rvContent.layoutManager = GridLayoutManager(context, 10)
         binding.rvContent.adapter = contentAdapter
 
-        // Add scroll listener to auto-update details on focus change
+        // Re-adding the focus listener to ensure the Details Pane updates on hover/focus
         binding.rvContent.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
                 view.setOnFocusChangeListener { v, hasFocus ->
@@ -103,7 +109,10 @@ class DiscoverFragment : Fragment() {
                         val position = binding.rvContent.getChildAdapterPosition(v)
                         if (position != RecyclerView.NO_POSITION) {
                             val item = contentAdapter.getItem(position)
-                            item?.let { updateDetailsPane(it) }
+                            // Only update details for actual content items, not nav buttons
+                            if (item != null && item.id != NavItem.NAV_PREV.id && item.id != NavItem.NAV_NEXT.id) {
+                                updateDetailsPane(item)
+                            }
                         }
                     }
                 }
@@ -124,7 +133,21 @@ class DiscoverFragment : Fragment() {
             .into(binding.pageBackground)
 
         // Update metadata
-        binding.detailDate.text = item.releaseDate ?: ""
+        val formattedDate = try {
+            item.releaseDate?.let { dateStr ->
+                // Assuming item.releaseDate is in standard "yyyy-MM-dd" format
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                // Target format: "dd MMMM yyyy" (e.g., "22 November 2025")
+                val outputFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+                val date = inputFormat.parse(dateStr)
+                date?.let { outputFormat.format(it) }
+            }
+        } catch (e: Exception) {
+            // Fallback to original string or empty if parsing fails
+            item.releaseDate
+        }
+
+        binding.detailDate.text = formattedDate ?: ""
         binding.detailRating.visibility = if (item.rating != null) {
             binding.detailRating.text = "★ ${item.rating}"
             View.VISIBLE
@@ -158,7 +181,8 @@ class DiscoverFragment : Fragment() {
         viewModel.getDiscoverCatalogs(currentType).observe(viewLifecycleOwner) { catalogs ->
             sidebarAdapter.submitList(catalogs)
             if (catalogs.isNotEmpty()) {
-                viewModel.loadContentForCatalog(catalogs[0])
+                // Initial load: Pass isInitialLoad=true
+                viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
             }
         }
     }
@@ -179,7 +203,7 @@ class DiscoverFragment : Fragment() {
                     true
                 }
                 "Add to TMDB Watchlist" -> {
-                    viewModel.toggleWatchlist(item, true)
+                    viewModel.toggleWatchlist(item, force = true) // Use force=true for explicit add
                     true
                 }
                 "Mark as Watched" -> {
@@ -211,23 +235,64 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun onContentClicked(item: MetaItem) {
-        updateDetailsPane(item)
-        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-            putExtra("metaId", item.id)
-            putExtra("title", item.name)
-            putExtra("poster", item.poster)
-            putExtra("background", item.background)
-            putExtra("description", item.description)
-            putExtra("type", item.type)
+        when (item.id) {
+            NavItem.NAV_NEXT.id -> {
+                // Focus on the first item of the next page (index 0)
+                viewModel.loadNextPage()
+                binding.rvContent.post {
+                    binding.rvContent.scrollToPosition(0)
+                    binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }
+            }
+            NavItem.NAV_PREV.id -> {
+                // Focus on the last content item of the previous page (index 18)
+                viewModel.loadPreviousPage()
+                binding.rvContent.post {
+                    // Scroll to item 18 (index 17 in the adapter data, but index 18 in the view including the button)
+                    binding.rvContent.scrollToPosition(18)
+                    binding.rvContent.layoutManager?.findViewByPosition(18)?.requestFocus()
+                }
+            }
+            else -> {
+                // Regular content item click
+                updateDetailsPane(item)
+                val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
+                    putExtra("metaId", item.id)
+                    putExtra("title", item.name)
+                    putExtra("poster", item.poster)
+                    putExtra("background", item.background)
+                    putExtra("description", item.description)
+                    putExtra("type", item.type)
+                }
+                startActivity(intent)
+            }
         }
-        startActivity(intent)
     }
 
     private fun setupObservers() {
+        var currentPage = 1
+        var isLastPage = true
+
+        viewModel.currentPage.observe(viewLifecycleOwner) { page ->
+            currentPage = page
+        }
+        viewModel.isLastPage.observe(viewLifecycleOwner) { isLast ->
+            isLastPage = isLast
+        }
+
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
-            contentAdapter.updateData(items)
-            if (items.isNotEmpty()) {
+            // Use DiffUtil or notifyDataSetChanged as appropriate for PosterAdapter
+            contentAdapter.updateData(items, currentPage, isLastPage)
+
+            // Focus logic adjustment: Automatically focus on the first content item if it's an initial load
+            if (items.isNotEmpty() && currentPage == 1 && items[0].id != NavItem.NAV_PREV.id) {
                 updateDetailsPane(items[0])
+            }
+
+            // If the content is empty, clear details
+            if (items.isEmpty()) {
+                currentSelectedItem = null
+                // Code to clear details UI would go here if needed
             }
         }
 
@@ -253,10 +318,6 @@ class DiscoverFragment : Fragment() {
         viewModel.isItemWatched.observe(viewLifecycleOwner) { isWatched ->
             currentSelectedItem?.let { item ->
                 item.isWatched = isWatched
-                val position = contentAdapter.getItemPosition(item)
-                if (position != -1) {
-                    contentAdapter.notifyItemChanged(position)
-                }
             }
         }
     }

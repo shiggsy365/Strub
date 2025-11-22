@@ -131,17 +131,17 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            searchAdapter.updateData(results)
+        // ... (other observers)
 
-            if (results.isEmpty() && viewModel.isSearching.value == false) {
-                binding.noResultsText.visibility = View.VISIBLE
-                binding.resultsRecycler.visibility = View.GONE
-            } else {
-                binding.noResultsText.visibility = View.GONE
-                binding.resultsRecycler.visibility = View.VISIBLE
-            }
+        viewModel.searchResults.observe(viewLifecycleOwner) { results ->
+            // FIX: Supply default pagination status for search/library screens (non-paginated)
+            contentAdapter.updateData(results, 0, true)
+            binding.tvNoResults.visibility = if (results.isEmpty()) View.VISIBLE else View.GONE
+            binding.rvContent.requestFocus()
         }
+
+        // ... (other observers)
+
 
         viewModel.isSearching.observe(viewLifecycleOwner) { isSearching ->
             binding.progressBar.visibility = if (isSearching) View.VISIBLE else View.GONE

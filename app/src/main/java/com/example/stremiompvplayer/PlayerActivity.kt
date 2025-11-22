@@ -91,8 +91,6 @@ class PlayerActivity : AppCompatActivity() {
                     exoPlayer.seekTo(currentItem, playbackPosition)
                 } else if (currentMeta != null && currentMeta!!.progress > 0 && !currentMeta!!.isWatched) {
                     // Resume from database history if not already watched
-                    // (Ideally pass specific progress via Intent to avoid DB call on main thread here,
-                    // or use the modified MetaItem which now has progress)
                     exoPlayer.seekTo(currentItem, currentMeta!!.progress)
                 }
                 exoPlayer.prepare()
@@ -133,6 +131,7 @@ class PlayerActivity : AppCompatActivity() {
             val duration = exoPlayer.duration
 
             if (currentMeta != null && duration > 0) {
+                // This call is correct based on the MainViewModel signature
                 viewModel.saveWatchProgress(currentMeta!!, position, duration)
             }
         }
