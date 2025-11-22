@@ -82,21 +82,23 @@ class MainActivity : AppCompatActivity() {
 
         // LIBRARY DROP DOWN
         binding.chipLibrary.setOnClickListener { view ->
-            showMenu(view, listOf("Movies", "Series")) { selection ->
-                when (selection) {
-                    "Movies" -> {
-                        binding.chipLibrary.text = "Library: Movies"
-                        loadFragment(MoviesFragment())
-                    }
-                    "Series" -> {
-                        binding.chipLibrary.text = "Library: Series"
-                        loadFragment(SeriesFragment())
-                    }
-                }
+    showMenu(view, listOf("Movies", "Series")) { selection ->
+        when (selection) {
+            "Movies" -> {
+                binding.chipLibrary.text = "Library: Movies"
+                loadFragment(LibraryFragment.newInstance("movie"))
+            }
+            "Series" -> {
+                binding.chipLibrary.text = "Library: Series"
+                loadFragment(LibraryFragment.newInstance("series"))
             }
         }
+    }
+}
 
-        binding.chipSearch.setOnClickListener { loadFragment(SearchFragment()) }
+binding.chipSearch.setOnClickListener { 
+    loadFragment(SearchFragment()) 
+}
         binding.chipMore.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
     }
 

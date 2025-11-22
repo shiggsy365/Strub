@@ -16,7 +16,7 @@ import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
-import com.example.stremiompvplayer.databinding.FragmentSearchBinding
+import com.example.stremiompvplayer.databinding.FragmentSearchNewBinding
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
@@ -24,7 +24,7 @@ import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 
 class SearchFragment : Fragment() {
 
-    private var _binding: FragmentSearchBinding? = null
+    private var _binding: FragmentSearchNewBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by activityViewModels {
@@ -47,7 +47,7 @@ class SearchFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentSearchBinding.inflate(inflater, container, false)
+        _binding = FragmentSearchNewBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -78,7 +78,7 @@ class SearchFragment : Fragment() {
             }
         )
         binding.resultsRecycler.apply {
-            layoutManager = GridLayoutManager(context, 5)
+            layoutManager = GridLayoutManager(context, 10)
             adapter = searchAdapter
         }
     }
@@ -131,8 +131,8 @@ class SearchFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            // Supply default pagination status for search/library screens (non-paginated)
-            searchAdapter.updateData(results, 0, true)
+            // Supply simplified adapter update
+            searchAdapter.updateData(results)
 
             // Update UI visibility
             if (results.isEmpty()) {

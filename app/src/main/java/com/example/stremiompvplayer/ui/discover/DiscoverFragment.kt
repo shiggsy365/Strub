@@ -23,7 +23,6 @@ import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.example.stremiompvplayer.adapters.PosterAdapter
-import com.example.stremiompvplayer.adapters.NavItem
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -43,8 +42,6 @@ class DiscoverFragment : Fragment() {
     private lateinit var contentAdapter: PosterAdapter
     private var currentType = "movie"
     private var currentSelectedItem: MetaItem? = null
-
-    // focusPositionAfterLoad is no longer needed with the post logic for buttons
 
     companion object {
         private const val ARG_TYPE = "media_type"
@@ -109,8 +106,7 @@ class DiscoverFragment : Fragment() {
                         val position = binding.rvContent.getChildAdapterPosition(v)
                         if (position != RecyclerView.NO_POSITION) {
                             val item = contentAdapter.getItem(position)
-                            // Only update details for actual content items, not nav buttons
-                            if (item != null && item.id != NavItem.NAV_PREV.id && item.id != NavItem.NAV_NEXT.id) {
+                            if (item != null) {
                                 updateDetailsPane(item)
                             }
                         }
@@ -235,64 +231,32 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun onContentClicked(item: MetaItem) {
-        when (item.id) {
-            NavItem.NAV_NEXT.id -> {
-                // Focus on the first item of the next page (index 0)
-                viewModel.loadNextPage()
-                binding.rvContent.post {
-                    binding.rvContent.scrollToPosition(0)
-                    binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
-                }
-            }
-            NavItem.NAV_PREV.id -> {
-                // Focus on the last content item of the previous page (index 18)
-                viewModel.loadPreviousPage()
-                binding.rvContent.post {
-                    // Scroll to item 18 (index 17 in the adapter data, but index 18 in the view including the button)
-                    binding.rvContent.scrollToPosition(18)
-                    binding.rvContent.layoutManager?.findViewByPosition(18)?.requestFocus()
-                }
-            }
-            else -> {
-                // Regular content item click
-                updateDetailsPane(item)
-                val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-                    putExtra("metaId", item.id)
-                    putExtra("title", item.name)
-                    putExtra("poster", item.poster)
-                    putExtra("background", item.background)
-                    putExtra("description", item.description)
-                    putExtra("type", item.type)
-                }
-                startActivity(intent)
-            }
+        // Regular content item click
+        updateDetailsPane(item)
+        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
+            putExtra("metaId", item.id)
+            putExtra("title", item.name)
+            putExtra("poster", item.poster)
+            putExtra("background", item.background)
+            putExtra("description", item.description)
+            putExtra("type", item.type)
         }
+        startActivity(intent)
     }
 
     private fun setupObservers() {
-        var currentPage = 1
-        var isLastPage = true
-
-        viewModel.currentPage.observe(viewLifecycleOwner) { page ->
-            currentPage = page
-        }
-        viewModel.isLastPage.observe(viewLifecycleOwner) { isLast ->
-            isLastPage = isLast
-        }
-
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
-            // Use DiffUtil or notifyDataSetChanged as appropriate for PosterAdapter
-            contentAdapter.updateData(items, currentPage, isLastPage)
+            // Use simplified adapter update
+            contentAdapter.updateData(items)
 
-            // Focus logic adjustment: Automatically focus on the first content item if it's an initial load
-            if (items.isNotEmpty() && currentPage == 1 && items[0].id != NavItem.NAV_PREV.id) {
+            // Focus on first item if available
+            if (items.isNotEmpty()) {
                 updateDetailsPane(items[0])
             }
 
             // If the content is empty, clear details
             if (items.isEmpty()) {
                 currentSelectedItem = null
-                // Code to clear details UI would go here if needed
             }
         }
 
