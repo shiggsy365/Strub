@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.databinding.ActivityUserSelectionBinding
@@ -47,26 +47,27 @@ class UserSelectionActivity : AppCompatActivity() {
         )
 
         binding.usersRecycler.apply {
-            // Span count 3
-            layoutManager = GridLayoutManager(this@UserSelectionActivity, 3)
+            // Vertical list like sidecar
+            layoutManager = LinearLayoutManager(this@UserSelectionActivity)
             adapter = this@UserSelectionActivity.adapter
         }
     }
 
     private fun setupListeners() {
-        // Exit Button Listener
-        binding.exitAppButton.setOnClickListener {
+        binding.btnExit.setOnClickListener {
             finishAffinity()
+        }
+
+        binding.btnAddUser.setOnClickListener {
+            showAddUserDialog()
         }
     }
 
     private fun loadUsers() {
         val users = prefsManager.getAllUsers().toMutableList()
+        adapter.setUsers(users)
 
-        // Add "Add User" button
-        adapter.setUsers(users, showAddButton = true)
-
-        // If no users exist, create a default one
+        // If no users exist, force create a default one
         if (users.isEmpty()) {
             showAddUserDialog(isFirstUser = true)
         }
@@ -85,14 +86,9 @@ class UserSelectionActivity : AppCompatActivity() {
 
     private fun deleteUserProfile(user: User) {
         lifecycleScope.launch(Dispatchers.IO) {
-            // 1. Clean up database data for this user
             AppDatabase.getInstance(applicationContext).deleteUserData(user.id)
-
             withContext(Dispatchers.Main) {
-                // 2. Remove from SharedPreferences list
                 prefsManager.deleteUser(user.id)
-
-                // 3. Refresh UI
                 loadUsers()
             }
         }
@@ -136,7 +132,6 @@ class UserSelectionActivity : AppCompatActivity() {
 
     private fun selectUser(user: User) {
         prefsManager.setCurrentUser(user.id)
-
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
@@ -145,95 +140,53 @@ class UserSelectionActivity : AppCompatActivity() {
 
     private fun generateAvatarColor(): Int {
         val colors = listOf(
-            0xFFE50914.toInt(),
-            0xFF0080FF.toInt(),
-            0xFF00C853.toInt(),
-            0xFFFFAB00.toInt(),
-            0xFF9C27B0.toInt(),
-            0xFFFF6D00.toInt(),
-            0xFF00BCD4.toInt()
+            0xFFE50914.toInt(), 0xFF0080FF.toInt(), 0xFF00C853.toInt(),
+            0xFFFFAB00.toInt(), 0xFF9C27B0.toInt(), 0xFFFF6D00.toInt(), 0xFF00BCD4.toInt()
         )
         return colors[Random.nextInt(0, colors.size)]
     }
 
-    // UserAdapter Class
+    // Updated Adapter using item_user_list
     inner class UserAdapter(
         private val onUserClick: (User) -> Unit,
         private val onUserLongClick: (User) -> Unit
-    ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
         private val users = mutableListOf<User>()
-        private var showAddButton = false
 
-        private val TYPE_USER = 0
-        private val TYPE_ADD = 1
-
-        fun setUsers(newUsers: List<User>, showAddButton: Boolean) {
+        fun setUsers(newUsers: List<User>) {
             users.clear()
             users.addAll(newUsers)
-            this.showAddButton = showAddButton
             notifyDataSetChanged()
         }
 
-        override fun getItemCount(): Int = users.size + if (showAddButton) 1 else 0
+        override fun getItemCount(): Int = users.size
 
-        override fun getItemViewType(position: Int): Int {
-            return if (position < users.size) TYPE_USER else TYPE_ADD
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
             val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_user_profile, parent, false)
-
-            return if (viewType == TYPE_USER) {
-                UserViewHolder(view)
-            } else {
-                AddUserViewHolder(view)
-            }
+                .inflate(R.layout.item_user_list, parent, false)
+            return UserViewHolder(view)
         }
 
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            if (holder is UserViewHolder && position < users.size) {
-                holder.bind(users[position])
-            } else if (holder is AddUserViewHolder) {
-                holder.bind()
-            }
+        override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
+            holder.bind(users[position])
         }
 
         inner class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            private val avatarContainer: View = itemView.findViewById(R.id.avatarContainer)
-            private val avatarInitial: TextView = itemView.findViewById(R.id.avatarInitial)
             private val userName: TextView = itemView.findViewById(R.id.userName)
+            // Icon is static in xml, but we could tint it if needed using user.avatarColor
+            // private val userIcon: ImageView = itemView.findViewById(R.id.userIcon)
 
             fun bind(user: User) {
-                avatarContainer.setBackgroundColor(user.avatarColor)
-                avatarInitial.text = user.name.first().uppercase()
                 userName.text = user.name
 
-                itemView.setOnClickListener {
-                    onUserClick(user)
-                }
+                // Optional: Tint icon with user color
+                // userIcon.setColorFilter(user.avatarColor)
 
-                // NEW: Long Click Handler
+                itemView.setOnClickListener { onUserClick(user) }
                 itemView.setOnLongClickListener {
                     onUserLongClick(user)
-                    true // Consume event
-                }
-            }
-        }
-
-        inner class AddUserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            private val avatarContainer: View = itemView.findViewById(R.id.avatarContainer)
-            private val avatarInitial: TextView = itemView.findViewById(R.id.avatarInitial)
-            private val userName: TextView = itemView.findViewById(R.id.userName)
-
-            fun bind() {
-                avatarContainer.setBackgroundColor(0xFF666666.toInt())
-                avatarInitial.text = "+"
-                userName.text = "Create a Profile"
-
-                itemView.setOnClickListener {
-                    showAddUserDialog()
+                    true
                 }
             }
         }

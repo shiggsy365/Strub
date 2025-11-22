@@ -2,7 +2,10 @@ package com.example.stremiompvplayer
 
 import android.os.Bundle
 import android.text.InputType
+import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -31,6 +34,12 @@ class SettingsActivity : AppCompatActivity() {
     }
     private lateinit var adapter: CatalogConfigAdapter
     private lateinit var prefsManager: SharedPreferencesManager
+
+    // Define URLs
+    private val VIREN_URL = "https://aiostreams.viren070.me"
+    private val NHYIRA_URL = "https://aiostreamsfortheweak.nhyira.dev/"
+
+    private var userInteracted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,9 +79,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupTMDBSection() {
         updateTMDBTokenDisplay()
 
-        binding.btnConfigureTMDB.setOnClickListener {
-            showApiKeyDialog()
-        }
+        // Removed listener for btnConfigureTMDB as it was removed from layout
 
         binding.btnAuthoriseTMDB.setOnClickListener {
             if (prefsManager.hasTMDBApiKey()) {
@@ -100,28 +107,6 @@ class SettingsActivity : AppCompatActivity() {
         } else {
             binding.tvTMDBStatus.setTextColor(getColor(android.R.color.holo_red_light))
         }
-    }
-
-    private fun showApiKeyDialog() {
-        val input = TextInputEditText(this).apply {
-            hint = "TMDB API Key"
-            inputType = InputType.TYPE_CLASS_TEXT
-            setText(prefsManager.getTMDBApiKey() ?: "")
-            setPadding(48, 32, 48, 32)
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Set TMDB API Key")
-            .setView(input)
-            .setPositiveButton("Save") { _, _ ->
-                val key = input.text.toString().trim()
-                if (key.isNotEmpty()) {
-                    prefsManager.saveTMDBApiKey(key)
-                    updateTMDBTokenDisplay()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
     }
 
     private fun showAuthDialog(requestToken: String) {
@@ -152,8 +137,44 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupAIOStreamsSection() {
         updateAIOStreamsDisplay()
 
-        binding.btnConfigureAIOStreamsUrl.setOnClickListener {
-            showAIOStreamsUrlDialog()
+        val options = listOf("Viren's Server", "Nhyira's Server", "Other Server")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.spinnerAioStreamsUrl.adapter = adapter
+
+        val currentUrl = prefsManager.getAIOStreamsUrl()
+        val selectionIndex = when {
+            currentUrl?.contains("viren070.me") == true -> 0
+            currentUrl?.contains("nhyira.dev") == true -> 1
+            else -> 2
+        }
+        binding.spinnerAioStreamsUrl.setSelection(selectionIndex)
+
+        binding.spinnerAioStreamsUrl.setOnTouchListener { _, _ ->
+            userInteracted = true
+            false
+        }
+
+        binding.spinnerAioStreamsUrl.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                if (!userInteracted) return
+
+                when (position) {
+                    0 -> {
+                        prefsManager.saveAIOStreamsUrl(VIREN_URL)
+                        updateAIOStreamsDisplay()
+                    }
+                    1 -> {
+                        prefsManager.saveAIOStreamsUrl(NHYIRA_URL)
+                        updateAIOStreamsDisplay()
+                    }
+                    2 -> {
+                        showAIOStreamsUrlDialog()
+                    }
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
         binding.btnConfigureAIOStreams.setOnClickListener {
@@ -164,18 +185,9 @@ class SettingsActivity : AppCompatActivity() {
     private fun updateAIOStreamsDisplay() {
         val username = prefsManager.getAIOStreamsUsername()
         val password = prefsManager.getAIOStreamsPassword()
-        val url = prefsManager.getAIOStreamsUrl()
 
-        // URL Status
-        if (url.isNullOrEmpty()) {
-            binding.tvAIOStreamsUrlStatus.text = "AIOStreams URL: Not set"
-            binding.tvAIOStreamsUrlStatus.setTextColor(getColor(android.R.color.holo_red_light))
-        } else {
-            binding.tvAIOStreamsUrlStatus.text = "AIOStreams URL: ${url.take(30)}..."
-            binding.tvAIOStreamsUrlStatus.setTextColor(getColor(android.R.color.holo_green_light))
-        }
+        // Removed tvAIOStreamsUrlStatus update as it was removed from layout
 
-        // Credentials Status
         if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
             binding.tvAIOStreamsStatus.text = "AIOStreams: Not configured"
             binding.tvAIOStreamsStatus.setTextColor(getColor(android.R.color.holo_red_light))
@@ -189,12 +201,15 @@ class SettingsActivity : AppCompatActivity() {
         val input = TextInputEditText(this).apply {
             hint = "AIOStreams Base URL"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
-            setText(prefsManager.getAIOStreamsUrl() ?: "https://aiostreams.shiggsy.co.uk")
+            val current = prefsManager.getAIOStreamsUrl()
+            if (current != VIREN_URL && current != NHYIRA_URL) {
+                setText(current)
+            }
             setPadding(48, 32, 48, 32)
         }
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Set AIOStreams URL")
+            .setTitle("Set Custom Server URL")
             .setMessage("Enter the base URL for your AIOStreams instance")
             .setView(input)
             .setPositiveButton("Save") { _, _ ->
@@ -204,7 +219,15 @@ class SettingsActivity : AppCompatActivity() {
                     updateAIOStreamsDisplay()
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("Cancel") { _, _ ->
+                val currentUrl = prefsManager.getAIOStreamsUrl()
+                val selectionIndex = when {
+                    currentUrl?.contains("viren070.me") == true -> 0
+                    currentUrl?.contains("nhyira.dev") == true -> 1
+                    else -> 2
+                }
+                binding.spinnerAioStreamsUrl.setSelection(selectionIndex)
+            }
             .show()
     }
 

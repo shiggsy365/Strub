@@ -37,7 +37,6 @@
                 android:layout_marginEnd="@dimen/spacing_xs"
                 android:layout_marginBottom="@dimen/spacing_xs"
                 app:layout_constraintWidth_percent="0.25"
-                app:layout_constraintHeight_default="wrap"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/contentGrid"

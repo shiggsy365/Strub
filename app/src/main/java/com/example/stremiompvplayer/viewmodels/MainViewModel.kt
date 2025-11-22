@@ -95,8 +95,8 @@ class MainViewModel(
     // Library content - RAW (for filtering/sorting)
     private val _libraryMoviesRaw = MutableLiveData<List<MetaItem>>()
     private val _librarySeriesRaw = MutableLiveData<List<MetaItem>>()
-    
-    val libraryMovies = catalogRepository.getLibraryItems(prefsManager.getCurrentUserId() ?: "default", "movie").map { items -> 
+
+    val libraryMovies = catalogRepository.getLibraryItems(prefsManager.getCurrentUserId() ?: "default", "movie").map { items ->
         items.map { toMetaItem(it) }.also { _libraryMoviesRaw.value = it }
     }
     val librarySeries = catalogRepository.getLibraryItems(prefsManager.getCurrentUserId() ?: "default", "series").map { items ->
@@ -157,6 +157,9 @@ class MainViewModel(
     // === LOGO FETCHING ===
     fun fetchItemLogo(meta: MetaItem) {
         logoFetchJob?.cancel()
+        // [CHANGE] Set to empty string to indicate "Loading"
+        _currentLogo.value = ""
+
         logoFetchJob = viewModelScope.launch {
             try {
                 val idStr = meta.id.removePrefix("tmdb:")
@@ -337,10 +340,13 @@ class MainViewModel(
             // Try AIOStreams if configured
             val aioUsername = prefsManager.getAIOStreamsUsername()
             val aioPassword = prefsManager.getAIOStreamsPassword()
+            // [FIX] Retrieve the base URL (with a default fallback)
+            val aioUrl = prefsManager.getAIOStreamsUrl() ?: "https://aiostreams.shiggsy.co.uk"
 
             if (!aioUsername.isNullOrEmpty() && !aioPassword.isNullOrEmpty()) {
                 try {
-                    val aioApi = AIOStreamsClient.getApi(aioUsername, aioPassword)
+                    // [FIX] Pass aioUrl as the first argument
+                    val aioApi = AIOStreamsClient.getApi(aioUrl, aioUsername, aioPassword)
                     val aioResponse = aioApi.searchStreams(type, id)
                     if (aioResponse.success && aioResponse.data != null) {
                         allStreams.addAll(aioResponse.data.results)

@@ -34,22 +34,16 @@ class CatalogConfigAdapter(
 
             // Clear listeners first
             binding.switchDiscover.setOnCheckedChangeListener(null)
-            binding.switchUser.setOnCheckedChangeListener(null)
 
             // Set values
             binding.switchDiscover.isChecked = item.showInDiscover
-            binding.switchUser.isChecked = item.showInUser
 
             // Set Visible
             binding.switchDiscover.visibility = View.VISIBLE
-            binding.switchUser.visibility = View.VISIBLE
 
             // Re-attach listeners
             binding.switchDiscover.setOnCheckedChangeListener { _, isChecked ->
                 onUpdate(item.copy(showInDiscover = isChecked))
-            }
-            binding.switchUser.setOnCheckedChangeListener { _, isChecked ->
-                onUpdate(item.copy(showInUser = isChecked))
             }
 
             binding.btnUp.setOnClickListener {

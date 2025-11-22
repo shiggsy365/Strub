@@ -29,7 +29,6 @@
             android:paddingLeft="16dp"
             android:paddingRight="16dp">
 
-            <!-- Search Card (Sidebar) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/searchCard"
                 android:layout_width="0dp"
@@ -162,7 +161,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Hero Card (Details Pane) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/heroCard"
                 android:layout_width="0dp"
@@ -296,7 +294,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Content Grid -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/contentGrid"
                 android:layout_width="0dp"
@@ -326,7 +323,6 @@
                     android:nextFocusUp="@id/chipGroupSearchType"
                     tools:listitem="@layout/item_poster" />
 
-                <!-- Empty state -->
                 <LinearLayout
                     android:id="@+id/emptyState"
                     android:layout_width="wrap_content"
@@ -352,7 +348,6 @@
 
                 </LinearLayout>
 
-                <!-- No results state -->
                 <LinearLayout
                     android:id="@+id/noResultsState"
                     android:layout_width="wrap_content"
@@ -382,7 +377,6 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Loading overlay -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/loadingCard"
             android:layout_width="wrap_content"

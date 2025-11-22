@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -23,6 +24,9 @@ import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.example.stremiompvplayer.adapters.PosterAdapter
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -42,6 +46,8 @@ class DiscoverFragment : Fragment() {
     private lateinit var contentAdapter: PosterAdapter
     private var currentType = "movie"
     private var currentSelectedItem: MetaItem? = null
+
+    private var detailsUpdateJob: Job? = null
 
     companion object {
         private const val ARG_TYPE = "media_type"
@@ -69,7 +75,6 @@ class DiscoverFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Update details for currently selected item to refresh watch status
         currentSelectedItem?.let { updateDetailsPane(it) }
     }
 
@@ -78,7 +83,6 @@ class DiscoverFragment : Fragment() {
 
     private fun setupAdapters() {
         sidebarAdapter = SidebarAdapter { catalog ->
-            // Pass isInitialLoad=true to clear cache and start fresh
             viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
         }
         binding.rvSidebar.layoutManager = LinearLayoutManager(context)
@@ -94,11 +98,9 @@ class DiscoverFragment : Fragment() {
             }
         )
 
-        // Set GridLayoutManager with 10 columns
         binding.rvContent.layoutManager = GridLayoutManager(context, 10)
         binding.rvContent.adapter = contentAdapter
 
-        // Re-adding the focus listener to ensure the Details Pane updates on hover/focus
         binding.rvContent.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
                 view.setOnFocusChangeListener { v, hasFocus ->
@@ -107,7 +109,13 @@ class DiscoverFragment : Fragment() {
                         if (position != RecyclerView.NO_POSITION) {
                             val item = contentAdapter.getItem(position)
                             if (item != null) {
-                                updateDetailsPane(item)
+                                detailsUpdateJob?.cancel()
+                                detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
+                                    delay(1000)
+                                    if (isAdded) {
+                                        updateDetailsPane(item)
+                                    }
+                                }
                             }
                         }
                     }
@@ -123,23 +131,18 @@ class DiscoverFragment : Fragment() {
     private fun updateDetailsPane(item: MetaItem) {
         currentSelectedItem = item
 
-        // Update background
         Glide.with(this)
             .load(item.background ?: item.poster)
             .into(binding.pageBackground)
 
-        // Update metadata
         val formattedDate = try {
             item.releaseDate?.let { dateStr ->
-                // Assuming item.releaseDate is in standard "yyyy-MM-dd" format
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                // Target format: "dd MMMM yyyy" (e.g., "22 November 2025")
                 val outputFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
                 val date = inputFormat.parse(dateStr)
                 date?.let { outputFormat.format(it) }
             }
         } catch (e: Exception) {
-            // Fallback to original string or empty if parsing fails
             item.releaseDate
         }
 
@@ -153,20 +156,17 @@ class DiscoverFragment : Fragment() {
 
         binding.detailDescription.text = item.description ?: "No description available."
 
-        // Update title/logo
         binding.detailTitle.text = item.name
-        binding.detailTitle.visibility = View.VISIBLE
+        // [CHANGE] Initial state is hidden for both to prevent flash
+        binding.detailTitle.visibility = View.GONE
         binding.detailLogo.visibility = View.GONE
 
-        // Fetch logo if possible
         viewModel.fetchItemLogo(item)
 
-        // Update watch status indicators
         refreshWatchStatus(item)
     }
 
     private fun refreshWatchStatus(item: MetaItem) {
-        // Force refresh from database
         val userId = SharedPreferencesManager.getInstance(requireContext()).getCurrentUserId()
         if (userId != null) {
             viewModel.checkWatchedStatus(item.id)
@@ -177,7 +177,6 @@ class DiscoverFragment : Fragment() {
         viewModel.getDiscoverCatalogs(currentType).observe(viewLifecycleOwner) { catalogs ->
             sidebarAdapter.submitList(catalogs)
             if (catalogs.isNotEmpty()) {
-                // Initial load: Pass isInitialLoad=true
                 viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
             }
         }
@@ -199,12 +198,11 @@ class DiscoverFragment : Fragment() {
                     true
                 }
                 "Add to TMDB Watchlist" -> {
-                    viewModel.toggleWatchlist(item, force = true) // Use force=true for explicit add
+                    viewModel.toggleWatchlist(item, force = true)
                     true
                 }
                 "Mark as Watched" -> {
                     viewModel.markAsWatched(item)
-                    // Optimistic UI update
                     item.isWatched = true
                     item.progress = item.duration
                     val position = contentAdapter.getItemPosition(item)
@@ -215,7 +213,6 @@ class DiscoverFragment : Fragment() {
                 }
                 "Clear Watched Status" -> {
                     viewModel.clearWatchedStatus(item)
-                    // Optimistic UI update
                     item.isWatched = false
                     item.progress = 0
                     val position = contentAdapter.getItemPosition(item)
@@ -231,7 +228,6 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun onContentClicked(item: MetaItem) {
-        // Regular content item click
         updateDetailsPane(item)
         val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
             putExtra("metaId", item.id)
@@ -246,31 +242,36 @@ class DiscoverFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
-            // Use simplified adapter update
             contentAdapter.updateData(items)
 
-            // Focus on first item if available
             if (items.isNotEmpty()) {
                 updateDetailsPane(items[0])
             }
 
-            // If the content is empty, clear details
             if (items.isEmpty()) {
                 currentSelectedItem = null
             }
         }
 
+        // [CHANGE] Updated observer logic
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
-            if (logoUrl != null) {
-                binding.detailTitle.visibility = View.GONE
-                binding.detailLogo.visibility = View.VISIBLE
-                Glide.with(this)
-                    .load(logoUrl)
-                    .fitCenter()
-                    .into(binding.detailLogo)
-            } else {
-                binding.detailTitle.visibility = View.VISIBLE
-                binding.detailLogo.visibility = View.GONE
+            when (logoUrl) {
+                "" -> { // Loading
+                    binding.detailTitle.visibility = View.GONE
+                    binding.detailLogo.visibility = View.GONE
+                }
+                null -> { // No Logo
+                    binding.detailTitle.visibility = View.VISIBLE
+                    binding.detailLogo.visibility = View.GONE
+                }
+                else -> { // Has Logo
+                    binding.detailTitle.visibility = View.GONE
+                    binding.detailLogo.visibility = View.VISIBLE
+                    Glide.with(this)
+                        .load(logoUrl)
+                        .fitCenter()
+                        .into(binding.detailLogo)
+                }
             }
         }
 
@@ -278,7 +279,6 @@ class DiscoverFragment : Fragment() {
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
 
-        // Watch the watched status to update UI
         viewModel.isItemWatched.observe(viewLifecycleOwner) { isWatched ->
             currentSelectedItem?.let { item ->
                 item.isWatched = isWatched
@@ -289,6 +289,7 @@ class DiscoverFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        detailsUpdateJob?.cancel()
     }
 
     inner class SidebarAdapter(
@@ -312,10 +313,7 @@ class DiscoverFragment : Fragment() {
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val item = getItem(position)
             holder.name.text = item.displayName
-
-            // Visual feedback for selected catalog
             holder.view.isSelected = position == selectedPosition
-
             holder.view.setOnClickListener {
                 val oldPosition = selectedPosition
                 selectedPosition = position

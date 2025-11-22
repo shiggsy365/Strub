@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
 
         handleIntent(intent)
 
-        binding.appLogo.setOnClickListener {
+        binding.btnAppLogo.setOnClickListener {
             startActivity(Intent(this, UserSelectionActivity::class.java))
         }
 
@@ -82,23 +82,23 @@ class MainActivity : AppCompatActivity() {
 
         // LIBRARY DROP DOWN
         binding.chipLibrary.setOnClickListener { view ->
-    showMenu(view, listOf("Movies", "Series")) { selection ->
-        when (selection) {
-            "Movies" -> {
-                binding.chipLibrary.text = "Library: Movies"
-                loadFragment(LibraryFragment.newInstance("movie"))
-            }
-            "Series" -> {
-                binding.chipLibrary.text = "Library: Series"
-                loadFragment(LibraryFragment.newInstance("series"))
+            showMenu(view, listOf("Movies", "Series")) { selection ->
+                when (selection) {
+                    "Movies" -> {
+                        binding.chipLibrary.text = "Library: Movies"
+                        loadFragment(LibraryFragment.newInstance("movie"))
+                    }
+                    "Series" -> {
+                        binding.chipLibrary.text = "Library: Series"
+                        loadFragment(LibraryFragment.newInstance("series"))
+                    }
+                }
             }
         }
-    }
-}
 
-binding.chipSearch.setOnClickListener { 
-    loadFragment(SearchFragment()) 
-}
+        binding.chipSearch.setOnClickListener {
+            loadFragment(SearchFragment())
+        }
         binding.chipMore.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
     }
 
@@ -167,7 +167,7 @@ binding.chipSearch.setOnClickListener {
 
         if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event?.action == KeyEvent.ACTION_DOWN) {
             val focus = currentFocus
-            val isFocusOnMenu = focus == binding.appLogo ||
+            val isFocusOnMenu = focus == binding.btnAppLogo ||
                     focus == binding.chipDiscover ||
                     focus == binding.chipLibrary ||
                     focus == binding.chipSearch ||
@@ -190,7 +190,7 @@ binding.chipSearch.setOnClickListener {
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
 
             val focus = currentFocus
-            val isFocusOnMenu = focus == binding.appLogo ||
+            val isFocusOnMenu = focus == binding.btnAppLogo ||
                     focus == binding.chipDiscover ||
                     focus == binding.chipLibrary ||
                     focus == binding.chipSearch ||

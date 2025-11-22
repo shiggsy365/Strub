@@ -12,10 +12,12 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.R
+import com.example.stremiompvplayer.UserSelectionActivity
 import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentSearchNewBinding
@@ -23,6 +25,9 @@ import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -41,17 +46,12 @@ class SearchFragment : Fragment() {
     private lateinit var searchAdapter: PosterAdapter
     private var currentSelectedItem: MetaItem? = null
 
-    private enum class SearchType {
-        MIXED, MOVIES, SERIES
-    }
+    private var detailsUpdateJob: Job? = null
 
+    private enum class SearchType { MIXED, MOVIES, SERIES }
     private var currentSearchType = SearchType.MIXED
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSearchNewBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -59,10 +59,7 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
-        setupUI()
         setupObservers()
-
-        // Default chip selection
         binding.chipMixed.isChecked = true
         binding.searchEditText.requestFocus()
     }
@@ -71,6 +68,7 @@ class SearchFragment : Fragment() {
         searchAdapter = PosterAdapter(
             items = emptyList(),
             onClick = { item ->
+                updateDetailsPane(item)
                 val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
                     putExtra("metaId", item.id)
                     putExtra("title", item.name)
@@ -92,7 +90,6 @@ class SearchFragment : Fragment() {
             adapter = searchAdapter
         }
 
-        // Add focus listener for details pane
         binding.resultsRecycler.addOnChildAttachStateChangeListener(object : androidx.recyclerview.widget.RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
                 view.setOnFocusChangeListener { v, hasFocus ->
@@ -101,7 +98,13 @@ class SearchFragment : Fragment() {
                         if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
                             val item = searchAdapter.getItem(position)
                             if (item != null) {
-                                updateDetailsPane(item)
+                                detailsUpdateJob?.cancel()
+                                detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
+                                    delay(1000)
+                                    if (isAdded) {
+                                        updateDetailsPane(item)
+                                    }
+                                }
                             }
                         }
                     }
@@ -116,16 +119,12 @@ class SearchFragment : Fragment() {
 
     private fun updateDetailsPane(item: MetaItem) {
         currentSelectedItem = item
-
-        // Show hero card
         binding.heroCard.visibility = View.VISIBLE
 
-        // Update background
         Glide.with(this)
             .load(item.background ?: item.poster)
             .into(binding.pageBackground)
 
-        // Update metadata
         val formattedDate = try {
             item.releaseDate?.let { dateStr ->
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -147,42 +146,31 @@ class SearchFragment : Fragment() {
 
         binding.detailDescription.text = item.description ?: "No description available."
 
-        // Update title/logo
         binding.detailTitle.text = item.name
-        binding.detailTitle.visibility = View.VISIBLE
+        // [CHANGE] Initial state hidden
+        binding.detailTitle.visibility = View.GONE
         binding.detailLogo.visibility = View.GONE
 
-        // Fetch logo if possible
         viewModel.fetchItemLogo(item)
     }
 
     private fun showItemMenu(view: View, item: MetaItem) {
         val wrapper = android.view.ContextThemeWrapper(requireContext(), android.R.style.Theme_DeviceDefault_Light_NoActionBar)
         val popup = PopupMenu(wrapper, view)
-
         popup.menu.add("Add to Library")
         popup.menu.add("Add to TMDB Watchlist")
         popup.menu.add("Mark as Watched")
         popup.menu.add("Clear Watched Status")
-
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.title) {
-                "Add to Library" -> {
-                    viewModel.addToLibrary(item)
-                    true
-                }
-                "Add to TMDB Watchlist" -> {
-                    viewModel.toggleWatchlist(item, force = true)
-                    true
-                }
+                "Add to Library" -> { viewModel.addToLibrary(item); true }
+                "Add to TMDB Watchlist" -> { viewModel.toggleWatchlist(item, force = true); true }
                 "Mark as Watched" -> {
                     viewModel.markAsWatched(item)
                     item.isWatched = true
                     item.progress = item.duration
                     val position = searchAdapter.getItemPosition(item)
-                    if (position != -1) {
-                        searchAdapter.notifyItemChanged(position)
-                    }
+                    if (position != -1) searchAdapter.notifyItemChanged(position)
                     true
                 }
                 "Clear Watched Status" -> {
@@ -190,9 +178,7 @@ class SearchFragment : Fragment() {
                     item.isWatched = false
                     item.progress = 0
                     val position = searchAdapter.getItemPosition(item)
-                    if (position != -1) {
-                        searchAdapter.notifyItemChanged(position)
-                    }
+                    if (position != -1) searchAdapter.notifyItemChanged(position)
                     true
                 }
                 else -> false
@@ -201,45 +187,10 @@ class SearchFragment : Fragment() {
         popup.show()
     }
 
-    private fun setupUI() {
-        binding.searchButton.setOnClickListener {
-            performSearch(binding.searchEditText.text.toString())
-            hideKeyboard()
-        }
 
-        binding.searchEditText.setOnEditorActionListener { v, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
-                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
-                performSearch(binding.searchEditText.text.toString())
-                hideKeyboard()
-                true
-            } else {
-                false
-            }
-        }
-
-        // Chip Logic
-        binding.chipGroupSearchType.setOnCheckedChangeListener { group, checkedId ->
-            if (checkedId == View.NO_ID) return@setOnCheckedChangeListener
-
-            currentSearchType = when(checkedId) {
-                R.id.chipMixed -> SearchType.MIXED
-                R.id.chipMovies -> SearchType.MOVIES
-                R.id.chipSeries -> SearchType.SERIES
-                else -> SearchType.MIXED
-            }
-
-            // Re-trigger search if there is text
-            val query = binding.searchEditText.text.toString()
-            if (query.isNotBlank()) {
-                performSearch(query)
-            }
-        }
-    }
 
     private fun performSearch(query: String) {
         if (query.isBlank()) return
-
         when (currentSearchType) {
             SearchType.MIXED -> viewModel.searchTMDB(query)
             SearchType.MOVIES -> viewModel.searchMovies(query)
@@ -250,8 +201,6 @@ class SearchFragment : Fragment() {
     private fun setupObservers() {
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
             searchAdapter.updateData(results)
-
-            // Update UI visibility
             if (results.isEmpty()) {
                 binding.emptyState.visibility = View.GONE
                 binding.noResultsState.visibility = View.VISIBLE
@@ -262,65 +211,46 @@ class SearchFragment : Fragment() {
                 binding.noResultsState.visibility = View.GONE
                 binding.contentGrid.visibility = View.VISIBLE
                 binding.heroCard.visibility = View.VISIBLE
-                
-                // Show first result in hero card
-                if (results.isNotEmpty()) {
-                    updateDetailsPane(results[0])
-                }
+                if (results.isNotEmpty()) updateDetailsPane(results[0])
             }
-
             binding.resultsRecycler.requestFocus()
         }
-
         viewModel.isSearching.observe(viewLifecycleOwner) { isSearching ->
             binding.progressBar.visibility = if (isSearching) View.VISIBLE else View.GONE
             binding.loadingCard.visibility = if (isSearching) View.VISIBLE else View.GONE
-
-            if (isSearching) {
-                binding.noResultsState.visibility = View.GONE
-            }
+            if (isSearching) binding.noResultsState.visibility = View.GONE
         }
 
+        // [CHANGE] Updated observer
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
-            if (logoUrl != null) {
-                binding.detailTitle.visibility = View.GONE
-                binding.detailLogo.visibility = View.VISIBLE
-                Glide.with(this)
-                    .load(logoUrl)
-                    .fitCenter()
-                    .into(binding.detailLogo)
-            } else {
-                binding.detailTitle.visibility = View.VISIBLE
-                binding.detailLogo.visibility = View.GONE
+            when (logoUrl) {
+                "" -> {
+                    binding.detailTitle.visibility = View.GONE
+                    binding.detailLogo.visibility = View.GONE
+                }
+                null -> {
+                    binding.detailTitle.visibility = View.VISIBLE
+                    binding.detailLogo.visibility = View.GONE
+                }
+                else -> {
+                    binding.detailTitle.visibility = View.GONE
+                    binding.detailLogo.visibility = View.VISIBLE
+                    Glide.with(this).load(logoUrl).fitCenter().into(binding.detailLogo)
+                }
             }
         }
-
-        viewModel.error.observe(viewLifecycleOwner) { error ->
-            // Optionally show error
-        }
     }
 
-    fun setSearchText(text: String) {
-        binding.searchEditText.setText(text)
-    }
-
-    fun searchByPersonId(id: Int) {
-        binding.chipMixed.isChecked = true
-        viewModel.loadPersonCredits(id)
-    }
-
-    private fun hideKeyboard() {
-        val inputMethodManager = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        inputMethodManager.hideSoftInputFromWindow(binding.searchEditText.windowToken, 0)
-    }
+    fun setSearchText(text: String) { binding.searchEditText.setText(text) }
+    fun searchByPersonId(id: Int) { binding.chipMixed.isChecked = true; viewModel.loadPersonCredits(id) }
+    private fun hideKeyboard() { (requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(binding.searchEditText.windowToken, 0) }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
         viewModel.clearSearchResults()
+        detailsUpdateJob?.cancel()
     }
 
-    fun focusSearch() {
-        binding.searchEditText.requestFocus()
-    }
+    fun focusSearch() { binding.searchEditText.requestFocus() }
 }

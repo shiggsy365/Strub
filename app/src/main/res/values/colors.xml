@@ -33,28 +33,33 @@
 <!-- ============================================ -->
 
 <!-- Primary Colors -->
-<color name="md_theme_light_primary">#C00711</color>
-<color name="md_theme_light_onPrimary">#FFFFFF</color>
-<color name="md_theme_light_primaryContainer">#FFDAD5</color>
-<color name="md_theme_light_onPrimaryContainer">#410002</color>
 
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#FFDAD5</color>
+    <color name="md_theme_light_secondaryContainer">#FFDAD4</color>
+    <color name="md_theme_light_tertiaryContainer">#FBDFA6</color>
+
+    <color name="md_theme_light_onPrimaryContainer">#184dc9</color>
+
+    <color name="md_theme_light_primary">#590987</color>
 <!-- Secondary Colors -->
-<color name="md_theme_light_secondary">#775652</color>
-<color name="md_theme_light_onSecondary">#FFFFFF</color>
-<color name="md_theme_light_secondaryContainer">#FFDAD4</color>
-<color name="md_theme_light_onSecondaryContainer">#2C1512</color>
+
+    <color name="md_theme_light_secondary">#775652</color>
+
+
+    <color name="md_theme_light_onSecondaryContainer">#184dc9</color>
 
 <!-- Tertiary Colors -->
 <color name="md_theme_light_tertiary">#705C2E</color>
-<color name="md_theme_light_onTertiary">#FFFFFF</color>
-<color name="md_theme_light_tertiaryContainer">#FBDFA6</color>
-<color name="md_theme_light_onTertiaryContainer">#251A00</color>
+<color name="md_theme_light_onTertiaryContainer">#184dc9</color>
 
 <!-- Error Colors -->
-<color name="md_theme_light_error">#BA1A1A</color>
+<color name="md_theme_light_error">#590987</color>
 <color name="md_theme_light_errorContainer">#FFDAD6</color>
 <color name="md_theme_light_onError">#FFFFFF</color>
-<color name="md_theme_light_onErrorContainer">#410002</color>
+<color name="md_theme_light_onErrorContainer">#184dc9</color>
 
 <!-- Background Colors -->
 <color name="md_theme_light_background">#FFFBFF</color>
@@ -70,7 +75,7 @@
 <color name="md_theme_light_inverseSurface">#362F2E</color>
 <color name="md_theme_light_inversePrimary">#FFB4A8</color>
 <color name="md_theme_light_shadow">#000000</color>
-<color name="md_theme_light_surfaceTint">#C00711</color>
+<color name="md_theme_light_surfaceTint">#590987</color>
 <color name="md_theme_light_outlineVariant">#D8C2BE</color>
 <color name="md_theme_light_scrim">#000000</color>
 
@@ -81,7 +86,7 @@
 
 <!-- Primary Colors -->
 <color name="md_theme_dark_primary">@color/md_theme_dark_errorContainer</color>
-<color name="md_theme_dark_onPrimary">#690005</color>
+<color name="md_theme_dark_onPrimary">#184dc9</color>
 <color name="md_theme_dark_primaryContainer">#930009</color>#c7ab59
 <color name="md_theme_dark_onPrimaryContainer">#FFDAD5</color>
 
@@ -99,8 +104,8 @@
 
 <!-- Error Colors -->
 <color name="md_theme_dark_error">#FFB4AB</color>
-<color name="md_theme_dark_errorContainer">#93000A</color>
-<color name="md_theme_dark_onError">#690005</color>
+<color name="md_theme_dark_errorContainer">#590987</color>
+<color name="md_theme_dark_onError">#184dc9</color>
 <color name="md_theme_dark_onErrorContainer">#FFDAD6</color>
 
 <!-- Background Colors -->
@@ -115,7 +120,7 @@
 <color name="md_theme_dark_outline">#A08C89</color>
 <color name="md_theme_dark_inverseOnSurface">#201A19</color>
 <color name="md_theme_dark_inverseSurface">#ECE0DE</color>
-<color name="md_theme_dark_inversePrimary">#C00711</color>
+<color name="md_theme_dark_inversePrimary">#590987</color>
 <color name="md_theme_dark_shadow">#000000</color>
 <color name="md_theme_dark_surfaceTint">#FFB4A8</color>
 <color name="md_theme_dark_outlineVariant">#534341</color>
@@ -131,7 +136,7 @@
 <!-- ============================================ -->
 <!-- Seed Color                                   -->
 <!-- ============================================ -->
-<color name="seed">#E50914</color>
+<color name="seed">#590987</color>
 
 <!-- ============================================ -->
 <!-- Legacy/Alias Colors (Keep for compatibility)-->
@@ -245,5 +250,5 @@
 <!-- Legacy Android colors -->
 <color name="black">#FF000000</color>
 <color name="white">#FFFFFFFF</color>
-<color name="ic_launcher_background">#000000</color>
+<color name="ic_launcher_background">#00000000</color>
 </resources>

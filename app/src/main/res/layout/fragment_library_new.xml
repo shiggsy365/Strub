@@ -37,7 +37,6 @@
                 android:layout_marginEnd="@dimen/spacing_xs"
                 android:layout_marginBottom="@dimen/spacing_xs"
                 app:layout_constraintWidth_percent="0.25"
-                app:layout_constraintHeight_default="wrap"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/contentGrid"
@@ -46,77 +45,15 @@
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/md_theme_outline"
-                app:contentPadding="12dp">
+                app:contentPadding="4dp">
 
-                <LinearLayout
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvLibrarySidebar"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="top">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Filters &amp; Sort"
-                        android:textAppearance="@style/TextAppearance.App.TitleMedium"
-                        android:textColor="@color/text_primary"
-                        android:gravity="center"
-                        android:layout_marginBottom="12dp" />
-
-                    <Button
-                        android:id="@+id/btnSortAddedDate"
-                        style="@style/Widget.App.Button.Outlined"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Sort: Date Added ↓"
-                        android:textSize="12sp"
-                        android:paddingVertical="8dp"
-                        android:layout_marginBottom="8dp"
-                        android:focusable="true" />
-
-                    <Button
-                        android:id="@+id/btnSortReleaseDate"
-                        style="@style/Widget.App.Button.Outlined"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Sort: Release Date"
-                        android:textSize="12sp"
-                        android:paddingVertical="8dp"
-                        android:layout_marginBottom="8dp"
-                        android:focusable="true" />
-
-                    <Button
-                        android:id="@+id/btnSortTitle"
-                        style="@style/Widget.App.Button.Outlined"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Sort: Title"
-                        android:textSize="12sp"
-                        android:paddingVertical="8dp"
-                        android:layout_marginBottom="8dp"
-                        android:focusable="true" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Filter by Genre"
-                        android:textAppearance="@style/TextAppearance.App.LabelMedium"
-                        android:textColor="@color/text_secondary"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="8dp" />
-
-                    <Button
-                        android:id="@+id/btnGenreAll"
-                        style="@style/Widget.App.Button.Outlined"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="All Genres"
-                        android:textSize="12sp"
-                        android:paddingVertical="8dp"
-                        android:layout_marginBottom="4dp"
-                        android:focusable="true" />
-
-                </LinearLayout>
+                    android:layout_height="match_parent"
+                    android:scrollbars="none"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never" />
 
             </com.google.android.material.card.MaterialCardView>
 

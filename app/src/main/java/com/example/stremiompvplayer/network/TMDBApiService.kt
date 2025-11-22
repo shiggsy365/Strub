@@ -65,16 +65,20 @@ interface TMDBApiService {
         @Query("api_key") apiKey: String
     ): TMDBCreditsResponse
 
+    // [FIX] Added include_image_language to filter for English/Neutral logos
     @GET("movie/{id}/images")
     suspend fun getMovieImages(
         @Path("id") id: Int,
-        @Query("api_key") apiKey: String
+        @Query("api_key") apiKey: String,
+        @Query("include_image_language") includeImageLanguage: String = "en,null"
     ): TMDBImagesResponse
 
+    // [FIX] Added include_image_language to filter for English/Neutral logos
     @GET("tv/{id}/images")
     suspend fun getTVImages(
         @Path("id") id: Int,
-        @Query("api_key") apiKey: String
+        @Query("api_key") apiKey: String,
+        @Query("include_image_language") includeImageLanguage: String = "en,null"
     ): TMDBImagesResponse
 
     @POST("authentication/session/new")

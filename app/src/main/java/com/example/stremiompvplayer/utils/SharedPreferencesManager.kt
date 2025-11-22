@@ -10,6 +10,9 @@ class SharedPreferencesManager private constructor(context: Context) {
     private val gson = Gson()
 
     companion object {
+        // [CHANGE] Hardcoded TMDB Key - Replace this with your actual key
+        private const val TMDB_API_KEY = "YOUR_TMDB_API_KEY_HERE"
+
         @Volatile
         private var instance: SharedPreferencesManager? = null
 
@@ -28,17 +31,18 @@ class SharedPreferencesManager private constructor(context: Context) {
         return prefs.getInt("tmdb_account_id", -1)
     }
 
-    // --- TMDB API KEY (Option A) ---
+    // --- TMDB API KEY ---
     fun saveTMDBApiKey(key: String) {
-        prefs.edit().putString("tmdb_api_key", key).apply()
+        // No-op
     }
 
-    fun getTMDBApiKey(): String? {
-        return prefs.getString("tmdb_api_key", null)
+    fun getTMDBApiKey(): String {
+        // [CHANGE] Read from the external Secrets object
+        return Secrets.TMDB_API_KEY
     }
 
     fun hasTMDBApiKey(): Boolean {
-        return !getTMDBApiKey().isNullOrEmpty()
+        return getTMDBApiKey().isNotEmpty()
     }
 
     // --- TMDB SESSION ---
@@ -72,7 +76,8 @@ class SharedPreferencesManager private constructor(context: Context) {
     }
 
     fun getAIOStreamsUrl(): String? {
-        return prefs.getString("aiostreams_url", "https://aiostreams.shiggsy.co.uk")
+        // Default to Viren's server if not set
+        return prefs.getString("aiostreams_url", "https://aiostreams.viren070.me")
     }
 
     fun clearAIOStreamsCredentials() {

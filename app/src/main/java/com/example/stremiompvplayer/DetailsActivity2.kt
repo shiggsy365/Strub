@@ -117,12 +117,10 @@ class DetailsActivity2 : AppCompatActivity() {
             viewModel.fetchCast(id, currentType)
 
             if (currentType == "movie") {
-                // Movies are always at "play level"
                 viewModel.loadStreams("movie", id)
                 binding.rvNavigation.adapter = streamAdapter
                 updateButtonVisibility()
             } else {
-                // Series starts at top level
                 currentSeason = null
                 updateButtonVisibility()
                 viewModel.loadSeriesMeta(id)
@@ -245,32 +243,25 @@ class DetailsActivity2 : AppCompatActivity() {
             }
         }
 
-        // NEW: Observe logo changes and hide title when logo is available
+        // [CHANGE] Updated observer logic for flash prevention
         viewModel.currentLogo.observe(this) { logoUrl ->
-            if (logoUrl != null) {
-                binding.tvTitle.visibility = View.GONE
-                binding.imgBackground.post {
-                    // Create an ImageView for the logo overlay if it doesn't exist
-                    val logoView = binding.imgBackground.findViewById<android.widget.ImageView>(R.id.titleLogo)
-                    if (logoView == null) {
-                        val newLogoView = android.widget.ImageView(this)
-                        newLogoView.id = R.id.titleLogo
-                        newLogoView.scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
-                        val params = android.widget.FrameLayout.LayoutParams(
-                            resources.getDimensionPixelSize(R.dimen.spacing_xxxl) * 6,
-                            resources.getDimensionPixelSize(R.dimen.spacing_xxxl) * 2
-                        )
-                        params.gravity = android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL
-                        params.topMargin = resources.getDimensionPixelSize(R.dimen.spacing_xl)
-                        
-                        Glide.with(this)
-                            .load(logoUrl)
-                            .fitCenter()
-                            .into(newLogoView)
-                    }
+            when (logoUrl) {
+                "" -> { // Loading
+                    binding.tvTitle.visibility = View.GONE
+                    binding.imgLogo.visibility = View.GONE
                 }
-            } else {
-                binding.tvTitle.visibility = View.VISIBLE
+                null -> { // No Logo
+                    binding.tvTitle.visibility = View.VISIBLE
+                    binding.imgLogo.visibility = View.GONE
+                }
+                else -> { // Has Logo
+                    binding.tvTitle.visibility = View.GONE
+                    binding.imgLogo.visibility = View.VISIBLE
+                    Glide.with(this)
+                        .load(logoUrl)
+                        .fitCenter()
+                        .into(binding.imgLogo)
+                }
             }
         }
     }
@@ -419,11 +410,14 @@ class DetailsActivity2 : AppCompatActivity() {
 
     private fun updateHeaderUI(title: String, desc: String?, poster: String?, bg: String?) {
         binding.tvTitle.text = title
+        // [CHANGE] Initial state is hidden for both title and logo to prevent flash
+        binding.tvTitle.visibility = View.GONE
+        binding.imgLogo.visibility = View.GONE
+
         binding.tvDescription.text = desc ?: ""
         if (!poster.isNullOrEmpty()) Glide.with(this).load(poster).into(binding.imgPoster)
         if (!bg.isNullOrEmpty()) Glide.with(this).load(bg).into(binding.imgBackground)
-        
-        // Try to fetch and display logo instead of title
+
         currentMetaItem?.let { meta ->
             viewModel.fetchItemLogo(meta)
         }
