@@ -15,7 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlin.math.minOf
+import kotlin.math.min
 
 
 class MainViewModel(
@@ -223,8 +223,17 @@ class MainViewModel(
                     displayPage(pageToDisplay)
 
                     // Check if TMDB has no more pages to load for maxAppPage calculation
-                    if (tmdbResponse.page >= tmdbResponse.total_pages) {
-                        _isLastPage.postValue(true)
+                    when (tmdbResponse) {
+                        is TMDBMovieListResponse -> {
+                            if (tmdbResponse.page >= tmdbResponse.total_pages) {
+                                _isLastPage.postValue(true)
+                            }
+                        }
+                        is TMDBSeriesListResponse -> {
+                            if (tmdbResponse.page >= tmdbResponse.total_pages) {
+                                _isLastPage.postValue(true)
+                            }
+                        }
                     }
 
                 } else {
@@ -289,7 +298,7 @@ class MainViewModel(
 
         // Calculate start and end indices based on 18 items per page
         val start = (appPage - 1) * 18
-        val end = minOf(appPage * 18, loadedContentCache.size)
+        val end = min(appPage * 18, loadedContentCache.size)
 
         // SubList is inclusive at start, exclusive at end
         val itemsForDisplay = if (start < loadedContentCache.size) {

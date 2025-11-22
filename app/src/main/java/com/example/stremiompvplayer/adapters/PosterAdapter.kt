@@ -3,6 +3,7 @@ package com.example.stremiompvplayer.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -30,14 +31,16 @@ class PosterAdapter(
     private val NEXT_BUTTON_INDEX = 19 // Position 20
     private val MAX_DISPLAY_ITEMS = 20
 
-    // IMPORTANT: The views must be accessed correctly from the ItemPosterBinding object
     class ViewHolder(val binding: ItemPosterBinding) : RecyclerView.ViewHolder(binding.root) {
         val posterContainer: View = binding.root.findViewById(R.id.poster_container)
         val navButtonContainer: View = binding.root.findViewById(R.id.nav_button_container)
         val navIcon: android.widget.ImageView = binding.root.findViewById(R.id.nav_icon)
         val navText: android.widget.TextView = binding.root.findViewById(R.id.nav_text)
 
-        // Note: poster, iconWatched, iconInProgress are accessed via binding.xxx below
+        // Access views inside poster_container
+        val poster: ImageView by lazy { posterContainer.findViewById(R.id.poster) }
+        val iconWatched: ImageView by lazy { posterContainer.findViewById(R.id.iconWatched) }
+        val iconInProgress: ImageView by lazy { posterContainer.findViewById(R.id.iconInProgress) }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -74,9 +77,9 @@ class PosterAdapter(
 
             // Show/Hide Containers
             holder.navButtonContainer.visibility = if (isVisible) View.VISIBLE else View.GONE
-            holder.binding.poster.visibility = View.GONE
-            holder.binding.iconWatched.visibility = View.GONE
-            holder.binding.iconInProgress.visibility = View.GONE
+            holder.poster.visibility = View.GONE
+            holder.iconWatched.visibility = View.GONE
+            holder.iconInProgress.visibility = View.GONE
 
             holder.itemView.isFocusable = isVisible
             holder.itemView.isFocusableInTouchMode = isVisible
@@ -104,16 +107,16 @@ class PosterAdapter(
         if (displayItem != null) {
             val item = displayItem
 
-            holder.binding.poster.visibility = View.VISIBLE
+            holder.poster.visibility = View.VISIBLE
 
             // --- ASPECT RATIO LOGIC ---
-            val params = holder.binding.poster.layoutParams as ConstraintLayout.LayoutParams
+            val params = holder.poster.layoutParams as ConstraintLayout.LayoutParams
             if (item.isLandscape) {
                 params.dimensionRatio = "H,4:3"
             } else {
                 params.dimensionRatio = "H,2:3"
             }
-            holder.binding.poster.layoutParams = params
+            holder.poster.layoutParams = params
 
             // Load Image
             Glide.with(holder.itemView.context)
@@ -121,11 +124,11 @@ class PosterAdapter(
                 .placeholder(R.drawable.movie)
                 .error(R.drawable.movie)
                 .transition(DrawableTransitionOptions.withCrossFade())
-                .into(holder.binding.poster)
+                .into(holder.poster)
 
             // Watched Ticks
-            holder.binding.iconWatched.visibility = if (item.isWatched) View.VISIBLE else View.GONE
-            holder.binding.iconInProgress.visibility = if (!item.isWatched && item.progress > 0) View.VISIBLE else View.GONE
+            holder.iconWatched.visibility = if (item.isWatched) View.VISIBLE else View.GONE
+            holder.iconInProgress.visibility = if (!item.isWatched && item.progress > 0) View.VISIBLE else View.GONE
 
             holder.itemView.setOnClickListener { onClick(item) }
 
@@ -140,9 +143,9 @@ class PosterAdapter(
             holder.itemView.isFocusableInTouchMode = true
         } else {
             // Empty slot (position > actual item count)
-            holder.binding.poster.visibility = View.GONE
-            holder.binding.iconWatched.visibility = View.GONE
-            holder.binding.iconInProgress.visibility = View.GONE
+            holder.poster.visibility = View.GONE
+            holder.iconWatched.visibility = View.GONE
+            holder.iconInProgress.visibility = View.GONE
             holder.itemView.setOnClickListener(null)
             holder.itemView.isFocusable = false
             holder.itemView.isFocusableInTouchMode = false

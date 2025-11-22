@@ -21,7 +21,6 @@ import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
-import com.google.android.material.chip.Chip
 
 class SearchFragment : Fragment() {
 
@@ -131,22 +130,30 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        // ... (other observers)
-
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            // FIX: Supply default pagination status for search/library screens (non-paginated)
-            contentAdapter.updateData(results, 0, true)
-            binding.tvNoResults.visibility = if (results.isEmpty()) View.VISIBLE else View.GONE
-            binding.rvContent.requestFocus()
+            // Supply default pagination status for search/library screens (non-paginated)
+            searchAdapter.updateData(results, 0, true)
+
+            // Update UI visibility
+            if (results.isEmpty()) {
+                binding.emptyState.visibility = View.GONE
+                binding.noResultsState.visibility = View.VISIBLE
+                binding.resultsRecycler.visibility = View.GONE
+            } else {
+                binding.emptyState.visibility = View.GONE
+                binding.noResultsState.visibility = View.GONE
+                binding.resultsRecycler.visibility = View.VISIBLE
+            }
+
+            binding.resultsRecycler.requestFocus()
         }
-
-        // ... (other observers)
-
 
         viewModel.isSearching.observe(viewLifecycleOwner) { isSearching ->
             binding.progressBar.visibility = if (isSearching) View.VISIBLE else View.GONE
+            binding.loadingCard.visibility = if (isSearching) View.VISIBLE else View.GONE
+
             if (isSearching) {
-                binding.noResultsText.visibility = View.GONE
+                binding.noResultsState.visibility = View.GONE
             }
         }
 
@@ -154,6 +161,7 @@ class SearchFragment : Fragment() {
             // Optionally show error
         }
     }
+
     fun setSearchText(text: String) {
         binding.searchEditText.setText(text)
     }
@@ -164,6 +172,7 @@ class SearchFragment : Fragment() {
         binding.chipMixed.isChecked = true
         viewModel.loadPersonCredits(id)
     }
+
     private fun hideKeyboard() {
         val inputMethodManager = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(binding.searchEditText.windowToken, 0)
