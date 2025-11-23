@@ -10,7 +10,17 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.example.stremiompvplayer.models.*
+// Explicit imports instead of wildcard to fix kapt NullPointerException
+import com.example.stremiompvplayer.models.CollectedItem
+import com.example.stremiompvplayer.models.CollectedItemDao
+import com.example.stremiompvplayer.models.Converters
+import com.example.stremiompvplayer.models.FeedList
+import com.example.stremiompvplayer.models.HubSlot
+import com.example.stremiompvplayer.models.LibraryItem
+import com.example.stremiompvplayer.models.NextUpItem
+import com.example.stremiompvplayer.models.UserCatalog
+import com.example.stremiompvplayer.models.UserCatalogDao
+import com.example.stremiompvplayer.models.WatchProgress
 
 @Database(
     entities = [
