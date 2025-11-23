@@ -1,6 +1,5 @@
 package com.example.stremiompvplayer.network
-
-import com.example.stremiompvplayer.models.*
+import com.example.stremiompvplayer.models.TMDBAccountDetails
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -9,6 +8,21 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import com.example.stremiompvplayer.models.TMDBCreditsResponse
 import com.example.stremiompvplayer.models.TMDBAggregateCreditsResponse
+import com.example.stremiompvplayer.models.TMDBExternalIdsResponse
+import com.example.stremiompvplayer.models.TMDBImagesResponse
+import com.example.stremiompvplayer.models.TMDBMovie
+import com.example.stremiompvplayer.models.TMDBMovieListResponse
+import com.example.stremiompvplayer.models.TMDBMultiSearchResponse
+import com.example.stremiompvplayer.models.TMDBPersonCreditsResponse
+import com.example.stremiompvplayer.models.TMDBPersonListResponse
+import com.example.stremiompvplayer.models.TMDBPostResponse
+import com.example.stremiompvplayer.models.TMDBRequestTokenResponse
+import com.example.stremiompvplayer.models.TMDBSeasonDetails
+import com.example.stremiompvplayer.models.TMDBSeriesDetailResponse
+import com.example.stremiompvplayer.models.TMDBSeriesListResponse
+import com.example.stremiompvplayer.models.TMDBSessionResponse
+import com.example.stremiompvplayer.models.TMDBTVDetails
+import com.example.stremiompvplayer.models.TMDBWatchlistBody
 
 interface TMDBApiService {
 

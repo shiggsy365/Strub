@@ -8,8 +8,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.example.stremiompvplayer.CatalogRepository
-import com.example.stremiompvplayer.models.*
-import com.example.stremiompvplayer.network.*
+import com.example.stremiompvplayer.models.Meta
+import com.example.stremiompvplayer.models.MetaItem
+import com.example.stremiompvplayer.models.Stream
+import com.example.stremiompvplayer.models.UserCatalog
+import com.example.stremiompvplayer.network.TMDBClient
+import com.example.stremiompvplayer.network.TraktClient
+import com.example.stremiompvplayer.network.TraktDeviceCodeResponse
 import com.example.stremiompvplayer.utils.Secrets
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import kotlinx.coroutines.Job
@@ -17,6 +22,20 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.example.stremiompvplayer.network.TraktIds
+import com.example.stremiompvplayer.network.TraktMovie
+import com.example.stremiompvplayer.models.CollectedItem
+import com.example.stremiompvplayer.models.TMDBMovieListResponse
+import com.example.stremiompvplayer.models.TMDBSeriesListResponse
+import com.example.stremiompvplayer.models.WatchProgress
+import com.example.stremiompvplayer.network.TraktHistoryBody
+import com.example.stremiompvplayer.network.TraktShow
+import com.example.stremiompvplayer.network.TraktScrobbleBody
+import com.example.stremiompvplayer.network.TraktEpisode
+import com.example.stremiompvplayer.models.Video
+import com.example.stremiompvplayer.models.TMDBWatchlistBody
+import com.example.stremiompvplayer.network.AIOStreamsClient
+
 
 class MainViewModel(
     private val catalogRepository: CatalogRepository,
