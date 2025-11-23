@@ -36,7 +36,8 @@ class SettingsActivity : AppCompatActivity() {
             SharedPreferencesManager.getInstance(this)
         )
     }
-    private lateinit var adapter: CatalogConfigAdapter
+    private lateinit var movieAdapter: CatalogConfigAdapter
+    private lateinit var seriesAdapter: CatalogConfigAdapter
     private lateinit var prefsManager: SharedPreferencesManager
 
     // Define URLs
@@ -520,17 +521,18 @@ class SettingsActivity : AppCompatActivity() {
     // ==============================
 
     private fun setupCatalogList() {
-        adapter = CatalogConfigAdapter(
+        // Setup Movie Adapter
+        movieAdapter = CatalogConfigAdapter(
             onUpdate = { catalog -> viewModel.updateCatalogConfig(catalog) },
             onMoveUp = { catalog, pos ->
-                val list = adapter.currentList
+                val list = movieAdapter.currentList
                 if (pos > 0) {
                     val prev = list[pos - 1]
                     viewModel.swapCatalogOrder(catalog, prev)
                 }
             },
             onMoveDown = { catalog, pos ->
-                val list = adapter.currentList
+                val list = movieAdapter.currentList
                 if (pos < list.size - 1) {
                     val next = list[pos + 1]
                     viewModel.swapCatalogOrder(catalog, next)
@@ -539,13 +541,41 @@ class SettingsActivity : AppCompatActivity() {
         )
 
         binding.rvCatalogConfigs.layoutManager = LinearLayoutManager(this)
-        binding.rvCatalogConfigs.adapter = adapter
+        binding.rvCatalogConfigs.adapter = movieAdapter
+
+        // Setup Series Adapter
+        seriesAdapter = CatalogConfigAdapter(
+            onUpdate = { catalog -> viewModel.updateCatalogConfig(catalog) },
+            onMoveUp = { catalog, pos ->
+                val list = seriesAdapter.currentList
+                if (pos > 0) {
+                    val prev = list[pos - 1]
+                    viewModel.swapCatalogOrder(catalog, prev)
+                }
+            },
+            onMoveDown = { catalog, pos ->
+                val list = seriesAdapter.currentList
+                if (pos < list.size - 1) {
+                    val next = list[pos + 1]
+                    viewModel.swapCatalogOrder(catalog, next)
+                }
+            }
+        )
+
+        binding.rvSeriesCatalogConfigs.layoutManager = LinearLayoutManager(this)
+        binding.rvSeriesCatalogConfigs.adapter = seriesAdapter
 
         viewModel.initDefaultCatalogs()
         viewModel.initUserLists()
 
-        viewModel.allCatalogConfigs.observe(this) { list ->
-            adapter.submitList(list)
+        // Observe movie catalogs
+        viewModel.movieCatalogs.observe(this) { list ->
+            movieAdapter.submitList(list)
+        }
+
+        // Observe series catalogs
+        viewModel.seriesCatalogs.observe(this) { list ->
+            seriesAdapter.submitList(list)
         }
     }
 
