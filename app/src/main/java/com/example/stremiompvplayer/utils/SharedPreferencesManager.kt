@@ -53,6 +53,29 @@ class SharedPreferencesManager private constructor(context: Context) {
     fun getTMDBSessionId(): String? {
         return prefs.getString("tmdb_session_id", null)
     }
+    fun saveTraktTokens(accessToken: String, refreshToken: String) {
+        prefs.edit()
+            .putString("trakt_access_token", accessToken)
+            .putString("trakt_refresh_token", refreshToken)
+            .putBoolean("trakt_enabled", true)
+            .apply()
+    }
+
+    fun getTraktAccessToken(): String? = prefs.getString("trakt_access_token", null)
+
+    fun isTraktEnabled(): Boolean = prefs.getBoolean("trakt_enabled", false)
+
+    fun setTraktEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("trakt_enabled", enabled).apply()
+    }
+
+    fun clearTraktData() {
+        prefs.edit()
+            .remove("trakt_access_token")
+            .remove("trakt_refresh_token")
+            .remove("trakt_enabled")
+            .apply()
+    }
 
     // --- AIOStreams ---
     fun saveAIOStreamsUsername(username: String) {

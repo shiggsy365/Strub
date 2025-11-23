@@ -107,8 +107,17 @@ class PlayerActivity : AppCompatActivity() {
                     }
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        if (isPlaying) {
-                            // Keep screen on logic handled by flag, but can do extra UI updates here
+                        currentMeta?.let { meta ->
+                            val duration = player?.duration ?: 0L
+                            val position = player?.currentPosition ?: 0L
+                            if (duration > 0) {
+                                val progress = (position.toFloat() / duration.toFloat()) * 100f
+                                if (isPlaying) {
+                                    viewModel.scrobble("start", meta, progress)
+                                } else {
+                                    viewModel.scrobble("pause", meta, progress)
+                                }
+                            }
                         }
                     }
                 })
@@ -117,9 +126,17 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun releasePlayer() {
         player?.let { exoPlayer ->
-            playbackPosition = exoPlayer.currentPosition
-            currentItem = exoPlayer.currentMediaItemIndex
-            playWhenReady = exoPlayer.playWhenReady
+            // ... existing code ...
+
+            // Scrobble Stop
+            currentMeta?.let { meta ->
+                val duration = exoPlayer.duration
+                val position = exoPlayer.currentPosition
+                if (duration > 0) {
+                    val progress = (position.toFloat() / duration.toFloat()) * 100f
+                    viewModel.scrobble("stop", meta, progress)
+                }
+            }
             exoPlayer.release()
         }
         player = null

@@ -218,6 +218,14 @@ interface TMDBApiService {
         @Query("sort_by") sortBy: String = "created_at.desc"
     ): TMDBSeriesListResponse
 
+    // [ADDED] This was missing and causing the unresolved reference error
+    @GET("movie/{movie_id}")
+    suspend fun getMovieDetails(
+        @Path("movie_id") movieId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBMovie
+
     @POST("account/{account_id}/watchlist")
     suspend fun addToWatchlist(
         @Path("account_id") accountId: Int,

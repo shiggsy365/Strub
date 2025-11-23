@@ -1,11 +1,14 @@
 package com.example.stremiompvplayer
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -17,6 +20,7 @@ import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.adapters.CatalogConfigAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
+import com.example.stremiompvplayer.network.TraktDeviceCodeResponse
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
@@ -40,6 +44,8 @@ class SettingsActivity : AppCompatActivity() {
     private val NHYIRA_URL = "https://aiostreamsfortheweak.nhyira.dev/"
 
     private var userInteracted = false
+    // Track active Trakt dialog to dismiss it on success
+    private var traktAuthDialog: androidx.appcompat.app.AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,15 +56,17 @@ class SettingsActivity : AppCompatActivity() {
 
         setupUserSection()
         setupTMDBSection()
+        setupTraktSection() // [NEW]
         setupAIOStreamsSection()
         setupCatalogList()
         setupObservers()
     }
 
     private fun setupObservers() {
+        // TMDB Observers
         viewModel.requestToken.observe(this) { token ->
             if (token != null) {
-                showAuthDialog(token)
+                showTMDBAuthDialog(token)
             }
         }
 
@@ -69,17 +77,162 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
+        // Trakt Observers [NEW]
+        viewModel.traktDeviceCode.observe(this) { codeData ->
+            if (codeData != null) {
+                showTraktAuthDialog(codeData)
+            } else {
+                // If null, it might mean success (dialog dismissed)
+                traktAuthDialog?.dismiss()
+            }
+        }
+
+        viewModel.isTraktEnabled.observe(this) { enabled ->
+            updateTraktUI(enabled)
+        }
+
+        // General Error Observer
         viewModel.error.observe(this) { error ->
-            if (error != null && error.contains("Auth")) {
+            if (error != null) {
                 Toast.makeText(this, error, Toast.LENGTH_LONG).show()
             }
         }
     }
 
+    // ==============================
+    //        TRAKT SECTION
+    // ==============================
+
+    private fun setupTraktSection() {
+        // Auth Button
+        binding.btnTraktAuth.setOnClickListener {
+            if (viewModel.isTraktEnabled.value == true) {
+                // Logout
+                MaterialAlertDialogBuilder(this)
+                    .setTitle("Disconnect Trakt")
+                    .setMessage("Are you sure you want to disconnect your Trakt account?")
+                    .setPositiveButton("Disconnect") { _, _ ->
+                        viewModel.logoutTrakt()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            } else {
+                // Login
+                viewModel.startTraktAuth()
+            }
+        }
+
+        // Sync Button
+        binding.btnTraktSync.setOnClickListener {
+            showTraktSyncDialog()
+        }
+    }
+
+    private fun updateTraktUI(isEnabled: Boolean) {
+        if (isEnabled) {
+            binding.tvTraktStatus.text = "Trakt: Connected"
+            binding.tvTraktStatus.setTextColor(getColor(android.R.color.holo_green_light))
+            binding.btnTraktAuth.text = "Disconnect Trakt"
+            binding.btnTraktSync.visibility = View.VISIBLE // Show Sync
+        } else {
+            binding.tvTraktStatus.text = "Trakt: Disconnected"
+            binding.tvTraktStatus.setTextColor(getColor(android.R.color.holo_red_light))
+            binding.btnTraktAuth.text = "Connect Trakt"
+            binding.btnTraktSync.visibility = View.GONE // Hide Sync
+        }
+    }
+
+    private fun showTraktAuthDialog(data: TraktDeviceCodeResponse) {
+        val msg = "1. Visit: ${data.verification_url}\n2. Enter Code: ${data.user_code}"
+
+        // Create a container for the dialog view
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 40)
+        }
+
+        val codeText = TextView(this).apply {
+            text = data.user_code
+            textSize = 32f
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(getColor(android.R.color.holo_blue_light))
+            setPadding(0, 20, 0, 20)
+            setTextIsSelectable(true)
+        }
+
+        val urlText = TextView(this).apply {
+            text = "Visit: ${data.verification_url}"
+            textSize = 16f
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
+            setPadding(0, 0, 0, 20)
+            setOnClickListener {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(data.verification_url))
+                startActivity(intent)
+            }
+        }
+
+        container.addView(urlText)
+        container.addView(codeText)
+        container.addView(TextView(this).apply {
+            text = "Use a web browser to complete authentication. This dialog will close automatically when done."
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
+            textSize = 12f
+        })
+
+        traktAuthDialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Connect Trakt")
+            .setView(container)
+            .setNegativeButton("Cancel") { _, _ ->
+                // User cancelled manually
+            }
+            .show()
+    }
+
+    private fun showTraktSyncDialog() {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 40)
+        }
+
+        val cbHistory = CheckBox(this).apply {
+            text = "Import Watched History\n(Adds to Library & marks watched)"
+            isChecked = true
+        }
+        val cbNextUp = CheckBox(this).apply {
+            text = "Add 'Next Up' List\n(Adds Trakt Next Up row to Home)"
+            isChecked = true
+        }
+        val cbLists = CheckBox(this).apply {
+            text = "Add Trakt Lists\n(Popular, Watchlist, Trending)"
+            isChecked = true
+        }
+
+        container.addView(cbHistory)
+        container.addView(cbNextUp)
+        container.addView(cbLists)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Sync Options")
+            .setView(container)
+            .setPositiveButton("Sync") { _, _ ->
+                viewModel.performTraktSync(
+                    syncHistory = cbHistory.isChecked,
+                    syncNextUp = cbNextUp.isChecked,
+                    syncLists = cbLists.isChecked
+                )
+                Toast.makeText(this, "Sync started in background...", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    // ==============================
+    //        TMDB SECTION
+    // ==============================
+
     private fun setupTMDBSection() {
         updateTMDBTokenDisplay()
-
-        // Removed listener for btnConfigureTMDB as it was removed from layout
 
         binding.btnAuthoriseTMDB.setOnClickListener {
             if (prefsManager.hasTMDBApiKey()) {
@@ -109,7 +262,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun showAuthDialog(requestToken: String) {
+    private fun showTMDBAuthDialog(requestToken: String) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_tmdb_auth, null)
         val qrImage = dialogView.findViewById<ImageView>(R.id.qrCodeImage)
         val urlText = dialogView.findViewById<TextView>(R.id.authUrlText)
@@ -133,6 +286,10 @@ class SettingsActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
+
+    // ==============================
+    //      AIOSTREAMS SECTION
+    // ==============================
 
     private fun setupAIOStreamsSection() {
         updateAIOStreamsDisplay()
@@ -185,8 +342,6 @@ class SettingsActivity : AppCompatActivity() {
     private fun updateAIOStreamsDisplay() {
         val username = prefsManager.getAIOStreamsUsername()
         val password = prefsManager.getAIOStreamsPassword()
-
-        // Removed tvAIOStreamsUrlStatus update as it was removed from layout
 
         if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
             binding.tvAIOStreamsStatus.text = "AIOStreams: Not configured"
@@ -288,6 +443,10 @@ class SettingsActivity : AppCompatActivity() {
             }
             .show()
     }
+
+    // ==============================
+    //      CATALOG SECTION
+    // ==============================
 
     private fun setupCatalogList() {
         adapter = CatalogConfigAdapter(
