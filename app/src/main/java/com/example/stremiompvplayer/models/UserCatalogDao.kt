@@ -90,6 +90,10 @@ interface CollectedItemDao {
     @Query("SELECT * FROM collected_items WHERE userId = :userId AND itemType = :itemType ORDER BY collectedDate DESC")
     fun getCollectedItems(userId: String, itemType: String): LiveData<List<CollectedItem>>
 
+    // Get ALL collected items for a user (both movies and series) - used for metadata scraping
+    @Query("SELECT * FROM collected_items WHERE userId = :userId ORDER BY collectedDate DESC")
+    suspend fun getAllCollectedItems(userId: String): List<CollectedItem>
+
     // Get collected items sorted by name
     @Query("SELECT * FROM collected_items WHERE userId = :userId AND itemType = :itemType ORDER BY name ASC")
     fun getCollectedItemsByName(userId: String, itemType: String): LiveData<List<CollectedItem>>
