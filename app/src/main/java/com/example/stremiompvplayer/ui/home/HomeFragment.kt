@@ -65,12 +65,8 @@ class HomeFragment : Fragment() {
 
     private fun setupNextUpSection() {
         nextUpAdapter = PosterAdapter(
-            onClick = { item -> openDetails(item) },
-            onFocus = { item ->
-                currentNextUpItem = item
-                updateNextUpSidecar(item)
-            },
-            onLongClick = { item -> false }
+            items = emptyList(),
+            onClick = { item -> openDetails(item) }
         )
 
         binding.rvNextUp.apply {
@@ -82,12 +78,8 @@ class HomeFragment : Fragment() {
 
     private fun setupContinueEpisodesSection() {
         continueEpisodesAdapter = PosterAdapter(
-            onClick = { item -> openDetails(item) },
-            onFocus = { item ->
-                currentContinueEpisodeItem = item
-                updateContinueEpisodesSidecar(item)
-            },
-            onLongClick = { item -> false }
+            items = emptyList(),
+            onClick = { item -> openDetails(item) }
         )
 
         binding.rvContinueEpisodes.apply {
@@ -99,12 +91,8 @@ class HomeFragment : Fragment() {
 
     private fun setupContinueMoviesSection() {
         continueMoviesAdapter = PosterAdapter(
-            onClick = { item -> openDetails(item) },
-            onFocus = { item ->
-                currentContinueMovieItem = item
-                updateContinueMoviesSidecar(item)
-            },
-            onLongClick = { item -> false }
+            items = emptyList(),
+            onClick = { item -> openDetails(item) }
         )
 
         binding.rvContinueMovies.apply {
@@ -116,21 +104,21 @@ class HomeFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.homeNextUp.observe(viewLifecycleOwner) { items ->
-            nextUpAdapter.submitList(items)
+            nextUpAdapter.updateData(items)
             if (items.isNotEmpty() && currentNextUpItem == null) {
                 updateNextUpSidecar(items[0])
             }
         }
 
         viewModel.homeContinueEpisodes.observe(viewLifecycleOwner) { items ->
-            continueEpisodesAdapter.submitList(items)
+            continueEpisodesAdapter.updateData(items)
             if (items.isNotEmpty() && currentContinueEpisodeItem == null) {
                 updateContinueEpisodesSidecar(items[0])
             }
         }
 
         viewModel.homeContinueMovies.observe(viewLifecycleOwner) { items ->
-            continueMoviesAdapter.submitList(items)
+            continueMoviesAdapter.updateData(items)
             if (items.isNotEmpty() && currentContinueMovieItem == null) {
                 updateContinueMoviesSidecar(items[0])
             }
