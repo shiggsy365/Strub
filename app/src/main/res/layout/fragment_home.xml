@@ -135,7 +135,7 @@
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/rvNextUp"
                             android:layout_width="0dp"
-                            android:layout_height="150dp"
+                            android:layout_height="match_parent"
                             android:layout_weight="0.7"
                             android:clipToPadding="false"
                             android:clipChildren="false"
@@ -245,7 +245,7 @@
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/rvContinueEpisodes"
                             android:layout_width="0dp"
-                            android:layout_height="150dp"
+                            android:layout_height="match_parent"
                             android:layout_weight="0.7"
                             android:clipToPadding="false"
                             android:clipChildren="false"
@@ -341,7 +341,7 @@
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/rvContinueMovies"
                             android:layout_width="0dp"
-                            android:layout_height="150dp"
+                            android:layout_height="match_parent"
                             android:layout_weight="0.7"
                             android:clipToPadding="false"
                             android:clipChildren="false"

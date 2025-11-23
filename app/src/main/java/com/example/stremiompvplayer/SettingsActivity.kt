@@ -414,6 +414,10 @@ class SettingsActivity : AppCompatActivity() {
     private fun updateAIOStreamsDisplay() {
         val username = prefsManager.getAIOStreamsUsername()
         val password = prefsManager.getAIOStreamsPassword()
+        val url = prefsManager.getAIOStreamsUrl() ?: VIREN_URL
+
+        // Update URL display
+        binding.tvAIOStreamsUrl.text = "URL: $url"
 
         if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
             binding.tvAIOStreamsStatus.text = "AIOStreams: Not configured"

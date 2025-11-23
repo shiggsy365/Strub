@@ -202,6 +202,16 @@
                     android:overlapAnchor="false" />
 
                 <TextView
+                    android:id="@+id/tvAIOStreamsUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodySmall"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp"
+                    android:textStyle="italic"
+                    tools:text="URL: https://aiostreams.viren070.me" />
+
+                <TextView
                     android:id="@+id/tvAIOStreamsStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

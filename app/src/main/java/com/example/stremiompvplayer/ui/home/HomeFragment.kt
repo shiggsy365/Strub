@@ -178,8 +178,13 @@ class HomeFragment : Fragment() {
             binding.nextUpEpisode.visibility = View.GONE
         }
 
-        // Rating - would need to fetch from TMDB if not in MetaItem
-        binding.nextUpRating.visibility = View.GONE
+        // Rating
+        if (item.rating != null && item.rating.isNotEmpty()) {
+            binding.nextUpRating.text = "★ ${item.rating}"
+            binding.nextUpRating.visibility = View.VISIBLE
+        } else {
+            binding.nextUpRating.visibility = View.GONE
+        }
 
         // Fetch logo
         viewModel.fetchItemLogo(item)
@@ -208,7 +213,12 @@ class HomeFragment : Fragment() {
         }
 
         // Rating
-        binding.continueEpisodesRating.visibility = View.GONE
+        if (item.rating != null && item.rating.isNotEmpty()) {
+            binding.continueEpisodesRating.text = "★ ${item.rating}"
+            binding.continueEpisodesRating.visibility = View.VISIBLE
+        } else {
+            binding.continueEpisodesRating.visibility = View.GONE
+        }
 
         // Fetch logo
         viewModel.fetchItemLogo(item)
@@ -224,7 +234,12 @@ class HomeFragment : Fragment() {
         binding.continueMoviesTitle.text = item.name
 
         // Rating
-        binding.continueMoviesRating.visibility = View.GONE
+        if (item.rating != null && item.rating.isNotEmpty()) {
+            binding.continueMoviesRating.text = "★ ${item.rating}"
+            binding.continueMoviesRating.visibility = View.VISIBLE
+        } else {
+            binding.continueMoviesRating.visibility = View.GONE
+        }
 
         // Fetch logo
         viewModel.fetchItemLogo(item)
