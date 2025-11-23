@@ -53,6 +53,19 @@
                     app:chipSpacing="8dp">
 
                     <com.google.android.material.chip.Chip
+                        android:id="@+id/chipHome"
+                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Home"
+                        android:focusable="true"
+                        android:textColor="@android:color/white"
+                        app:chipBackgroundColor="@color/chip_background_selector"
+                        app:chipStrokeColor="@color/chip_stroke_selector"
+                        app:chipStrokeWidth="1dp"
+                        app:chipCornerRadius="@dimen/corner_radius_small" />
+
+                    <com.google.android.material.chip.Chip
                         android:id="@+id/chipDiscover"
                         style="@style/Widget.MaterialComponents.Chip.Choice"
                         android:layout_width="wrap_content"

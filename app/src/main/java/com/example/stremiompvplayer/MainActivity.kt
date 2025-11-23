@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivityMainBinding
 import com.example.stremiompvplayer.ui.discover.DiscoverFragment
+import com.example.stremiompvplayer.ui.home.HomeFragment
 import com.example.stremiompvplayer.ui.library.LibraryFragment
 import com.example.stremiompvplayer.ui.movies.MoviesFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
@@ -48,10 +49,9 @@ class MainActivity : AppCompatActivity() {
         viewModel.checkTMDBAuthAndSync()
 
         if (savedInstanceState == null) {
-            // Default to Discover Movies
-            binding.chipDiscover.isChecked = true
-            binding.chipDiscover.text = "Discover: Movies"
-            loadFragment(DiscoverFragment.newInstance("movie"))
+            // Default to Home
+            binding.chipHome.isChecked = true
+            loadFragment(HomeFragment.newInstance())
         }
 
         handleIntent(intent)
@@ -64,6 +64,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
+        // HOME
+        binding.chipHome.setOnClickListener {
+            loadFragment(HomeFragment.newInstance())
+        }
+
         // DISCOVER DROP DOWN
         binding.chipDiscover.setOnClickListener { view ->
             showMenu(view, listOf("Movies", "Series")) { selection ->
@@ -168,6 +173,7 @@ class MainActivity : AppCompatActivity() {
         if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event?.action == KeyEvent.ACTION_DOWN) {
             val focus = currentFocus
             val isFocusOnMenu = focus == binding.btnAppLogo ||
+                    focus == binding.chipHome ||
                     focus == binding.chipDiscover ||
                     focus == binding.chipLibrary ||
                     focus == binding.chipSearch ||
@@ -191,6 +197,7 @@ class MainActivity : AppCompatActivity() {
 
             val focus = currentFocus
             val isFocusOnMenu = focus == binding.btnAppLogo ||
+                    focus == binding.chipHome ||
                     focus == binding.chipDiscover ||
                     focus == binding.chipLibrary ||
                     focus == binding.chipSearch ||
@@ -200,6 +207,7 @@ class MainActivity : AppCompatActivity() {
                 return super.onKeyDown(keyCode, event)
             } else {
                 when {
+                    binding.chipHome.isChecked -> binding.chipHome.requestFocus()
                     binding.chipDiscover.isChecked -> binding.chipDiscover.requestFocus()
                     binding.chipLibrary.isChecked -> binding.chipLibrary.requestFocus()
                     binding.chipSearch.isChecked -> binding.chipSearch.requestFocus()
