@@ -701,7 +701,7 @@ class MainViewModel(
                                     poster = poster,
                                     background = background,
                                     description = details.overview,
-                                    releaseDate = details.first_air_date
+                                    releaseDate = null
                                 )
                                 catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
                             } catch (e: Exception) {
