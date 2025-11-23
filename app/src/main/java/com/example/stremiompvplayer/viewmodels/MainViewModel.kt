@@ -608,19 +608,25 @@ class MainViewModel(
                     _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Fetching watched history..."))
 
                     val watchedMovies = TraktClient.api.getWatchedMovies(bearer, clientId)
+                    val importedMovieIds = mutableListOf<Int>()
+
                     watchedMovies.forEach { item ->
                         item.movie?.ids?.tmdb?.let { tmdbId ->
                             val meta = MetaItem("tmdb:$tmdbId", "movie", item.movie.title, null, null, "Trakt Import")
                             catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
                             catalogRepository.saveWatchProgress(WatchProgress(userId, meta.id, "movie", 0, 0, true, System.currentTimeMillis(), meta.name, null, null, null, null, null))
+                            importedMovieIds.add(tmdbId)
                         }
                     }
 
                     val watchedShows = TraktClient.api.getWatchedShows(bearer, clientId)
+                    val importedShowIds = mutableListOf<Int>()
+
                     watchedShows.forEach { item ->
                         item.show?.ids?.tmdb?.let { showTmdbId ->
                             val seriesMeta = MetaItem("tmdb:$showTmdbId", "series", item.show.title, null, null, "Trakt Import")
                             catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, seriesMeta))
+                            importedShowIds.add(showTmdbId)
 
                             item.seasons?.forEach { season ->
                                 season.episodes.forEach { ep ->
@@ -630,6 +636,57 @@ class MainViewModel(
                                             "${item.show.title} S${season.number}E${ep.number}", null, null, "tmdb:$showTmdbId", season.number, ep.number)
                                     )
                                 }
+                            }
+                        }
+                    }
+
+                    // Refresh TMDB metadata for all imported items
+                    if (fetchMetadata && apiKey.isNotEmpty()) {
+                        _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Refreshing metadata from TMDB..."))
+
+                        // Refresh movie metadata
+                        importedMovieIds.forEach { tmdbId ->
+                            try {
+                                val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
+                                val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+
+                                // Update the library item with enriched metadata
+                                val enrichedMeta = MetaItem(
+                                    id = "tmdb:$tmdbId",
+                                    type = "movie",
+                                    name = details.title,
+                                    poster = poster,
+                                    background = background,
+                                    description = details.overview,
+                                    releaseDate = details.release_date
+                                )
+                                catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
+                            } catch (e: Exception) {
+                                Log.e("TraktSync", "Failed to refresh movie $tmdbId: ${e.message}")
+                            }
+                        }
+
+                        // Refresh show metadata
+                        importedShowIds.forEach { tmdbId ->
+                            try {
+                                val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                                val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+
+                                // Update the library item with enriched metadata
+                                val enrichedMeta = MetaItem(
+                                    id = "tmdb:$tmdbId",
+                                    type = "series",
+                                    name = details.name,
+                                    poster = poster,
+                                    background = background,
+                                    description = details.overview,
+                                    releaseDate = details.first_air_date
+                                )
+                                catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
+                            } catch (e: Exception) {
+                                Log.e("TraktSync", "Failed to refresh show $tmdbId: ${e.message}")
                             }
                         }
                     }
