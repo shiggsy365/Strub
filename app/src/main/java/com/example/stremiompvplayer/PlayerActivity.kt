@@ -198,9 +198,10 @@ class PlayerActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         // Scrobble stop when leaving player
-        val progress = (player?.currentPosition ?: 0).toFloat() /
-                (player?.duration ?: 1).toFloat() * 100
-        viewModel.scrobble("stop", currentMeta, progress)
+        currentMeta?.let { meta ->
+            val progress = (player?.currentPosition ?: 0).toFloat() /
+                    (player?.duration ?: 1).toFloat() * 100
+            viewModel.scrobble("stop", meta, progress)
+        }
     }
 }
-

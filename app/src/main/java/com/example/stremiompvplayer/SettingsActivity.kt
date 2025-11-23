@@ -56,10 +56,13 @@ class SettingsActivity : AppCompatActivity() {
 
         setupUserSection()
         setupTMDBSection()
-        setupTraktSection() // [NEW]
+        setupTraktSection()
         setupAIOStreamsSection()
         setupCatalogList()
         setupObservers()
+
+        // NEW: Setup Trakt progress observers
+        setupTraktProgressObservers()
     }
 
     private fun setupObservers() {
@@ -77,7 +80,7 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        // Trakt Observers [NEW]
+        // Trakt Observers
         viewModel.traktDeviceCode.observe(this) { codeData ->
             if (codeData != null) {
                 showTraktAuthDialog(codeData)
@@ -95,6 +98,63 @@ class SettingsActivity : AppCompatActivity() {
         viewModel.error.observe(this) { error ->
             if (error != null) {
                 Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    // ==============================
+    //   TRAKT PROGRESS OBSERVERS (NEW!)
+    // ==============================
+
+    private fun setupTraktProgressObservers() {
+        // Progress counter (e.g., "Movies: 45/100")
+        viewModel.traktSyncProgress.observe(this) { progress ->
+            if (progress.isNullOrEmpty() || progress == "Sync complete!") {
+                binding.tvTraktSyncProgress.visibility = View.GONE
+            } else {
+                binding.tvTraktSyncProgress.visibility = View.VISIBLE
+                binding.tvTraktSyncProgress.text = progress
+            }
+        }
+
+        // Status messages and UI state management
+        viewModel.traktSyncStatus.observe(this) { status ->
+            when (status) {
+                is MainViewModel.TraktSyncStatus.Idle -> {
+                    binding.tvTraktSyncStatus.visibility = View.GONE
+                    binding.traktSyncProgressBar.visibility = View.GONE
+                    binding.btnTraktSync.isEnabled = true
+                    binding.btnTraktSync.text = "Sync Trakt"
+                }
+                is MainViewModel.TraktSyncStatus.Syncing -> {
+                    binding.tvTraktSyncStatus.visibility = View.VISIBLE
+                    binding.tvTraktSyncStatus.text = status.progress
+                    binding.tvTraktSyncStatus.setTextColor(getColor(R.color.text_secondary))
+                    binding.traktSyncProgressBar.visibility = View.VISIBLE
+                    binding.btnTraktSync.isEnabled = false
+                    binding.btnTraktSync.text = "Syncing..."
+                }
+                is MainViewModel.TraktSyncStatus.Success -> {
+                    binding.tvTraktSyncStatus.visibility = View.VISIBLE
+                    binding.tvTraktSyncStatus.text = status.message
+                    binding.tvTraktSyncStatus.setTextColor(getColor(android.R.color.holo_green_light))
+                    binding.traktSyncProgressBar.visibility = View.GONE
+                    binding.btnTraktSync.isEnabled = true
+                    binding.btnTraktSync.text = "Sync Trakt"
+
+                    // Auto-hide success message after 3 seconds
+                    binding.tvTraktSyncStatus.postDelayed({
+                        binding.tvTraktSyncStatus.visibility = View.GONE
+                    }, 3000)
+                }
+                is MainViewModel.TraktSyncStatus.Error -> {
+                    binding.tvTraktSyncStatus.visibility = View.VISIBLE
+                    binding.tvTraktSyncStatus.text = status.message
+                    binding.tvTraktSyncStatus.setTextColor(getColor(android.R.color.holo_red_light))
+                    binding.traktSyncProgressBar.visibility = View.GONE
+                    binding.btnTraktSync.isEnabled = true
+                    binding.btnTraktSync.text = "Retry Sync"
+                }
             }
         }
     }
@@ -219,9 +279,20 @@ class SettingsActivity : AppCompatActivity() {
                 viewModel.performTraktSync(
                     syncHistory = cbHistory.isChecked,
                     syncNextUp = cbNextUp.isChecked,
-                    syncLists = cbLists.isChecked
+                    syncLists = cbLists.isChecked,
+                    fetchMetadata = true // Full sync with posters
                 )
-                Toast.makeText(this, "Sync started in background...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Sync started...", Toast.LENGTH_SHORT).show()
+            }
+            .setNeutralButton("Fast Sync") { _, _ ->
+                // NEW: Fast sync option without metadata
+                viewModel.performTraktSync(
+                    syncHistory = cbHistory.isChecked,
+                    syncNextUp = cbNextUp.isChecked,
+                    syncLists = cbLists.isChecked,
+                    fetchMetadata = false // Skip posters for faster sync
+                )
+                Toast.makeText(this, "Fast sync started (no posters)...", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()

@@ -110,7 +110,8 @@ class MainViewModel(
     private val _localSeriesRaw = catalogRepository.getLibraryItems(prefsManager.getCurrentUserId() ?: "default", "series").map { items ->
         items.map { toMetaItem(it) }
     }
-
+    private val _traktSyncProgress = MutableLiveData<String>()
+    val traktSyncProgress: LiveData<String> = _traktSyncProgress
     private val _traktMoviesRaw = MutableLiveData<List<MetaItem>>()
     private val _traktSeriesRaw = MutableLiveData<List<MetaItem>>()
 
@@ -150,19 +151,14 @@ class MainViewModel(
     }
 
     private fun updateMovieSource() {
-        val useTrakt = _isTraktEnabled.value == true
-        val rawItems = if (useTrakt) _traktMoviesRaw.value else _localMoviesRaw.value
-        libraryMovies.value = rawItems ?: emptyList()
-
-        // Re-apply sort/filter whenever source changes
+        // ALWAYS use local database
+        libraryMovies.value = _localMoviesRaw.value ?: emptyList()
         filterAndSortLibrary("movie")
     }
 
     private fun updateSeriesSource() {
-        val useTrakt = _isTraktEnabled.value == true
-        val rawItems = if (useTrakt) _traktSeriesRaw.value else _localSeriesRaw.value
-        librarySeries.value = rawItems ?: emptyList()
-
+        // ALWAYS use local database
+        librarySeries.value = _localSeriesRaw.value ?: emptyList()
         filterAndSortLibrary("series")
     }
 
@@ -220,24 +216,7 @@ class MainViewModel(
         _traktSeriesRaw.postValue(emptyList())
     }
 
-    // === TRAKT SYNC ===
-    fun resolveWatchedConflicts() {
-        viewModelScope.launch {
-            val localWatched = catalogRepository.getWatchProgress(userId, itemId)
-            // Fetch from Trakt
-            val traktWatched = getTraktWatchedStatus(itemId)
-
-            // Use most recent timestamp
-            if (localWatched.lastUpdated > traktWatched.lastWatchedAt) {
-                // Push local to Trakt
-                pushToTrakt(localWatched)
-            } else {
-                // Pull from Trakt
-                saveLocalProgress(traktWatched)
-            }
-        }
-    }
-    fun syncTraktLibrary() {
+  fun syncTraktLibrary() {
         val token = prefsManager.getTraktAccessToken() ?: return
         val bearer = "Bearer $token"
         val clientId = Secrets.TRAKT_CLIENT_ID
@@ -283,47 +262,66 @@ class MainViewModel(
         }
     }
 
-    fun performTraktSync(syncHistory: Boolean, syncNextUp: Boolean, syncLists: Boolean) {
+    fun performTraktSync(syncHistory: Boolean, syncNextUp: Boolean, syncLists: Boolean, fetchMetadata: Boolean = true) {
         if (!prefsManager.isTraktEnabled()) {
             _error.postValue("Trakt is not connected")
             return
         }
 
         _isLoading.postValue(true)
+        _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Starting sync..."))
+
         viewModelScope.launch {
             val token = prefsManager.getTraktAccessToken() ?: return@launch
             val userId = prefsManager.getCurrentUserId() ?: "default"
             val bearer = "Bearer $token"
             val clientId = Secrets.TRAKT_CLIENT_ID
 
+            // TMDB metadata cache to avoid duplicate fetches
+            val tmdbMovieCache = mutableMapOf<Int, Pair<String?, String?>>() // id -> (poster, background)
+            val tmdbShowCache = mutableMapOf<Int, Pair<String?, String?>>()
+
             try {
                 // 1. Sync Watched History
                 if (syncHistory) {
+                    _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Fetching watched movies..."))
+
                     // --- IMPORT MOVIES ---
                     val watchedMovies = TraktClient.api.getWatchedMovies(bearer, clientId)
-                    // Enrich data in parallel chunks to avoid hitting rate limits too hard but also fast
-                    watchedMovies.chunked(10).forEach { batch ->
+                    val totalMovies = watchedMovies.size
+                    var processedMovies = 0
+
+                    _traktSyncProgress.postValue("Movies: 0/$totalMovies")
+
+                    // Increased batch size for better performance
+                    watchedMovies.chunked(20).forEach { batch ->
                         batch.map { item ->
                             async {
                                 item.movie?.ids?.tmdb?.let { tmdbId ->
-                                    // Try fetch details from TMDB
                                     var poster: String? = null
                                     var background: String? = null
                                     var desc: String? = null
-                                    if (apiKey.isNotEmpty()) {
+
+                                    // Only fetch metadata if enabled and not cached
+                                    if (fetchMetadata && apiKey.isNotEmpty() && !tmdbMovieCache.containsKey(tmdbId)) {
                                         try {
                                             val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
                                             poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                             background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
                                             desc = details.overview
+                                            tmdbMovieCache[tmdbId] = Pair(poster, background)
                                         } catch (e: Exception) { /* ignore */ }
+                                    } else if (tmdbMovieCache.containsKey(tmdbId)) {
+                                        val cached = tmdbMovieCache[tmdbId]!!
+                                        poster = cached.first
+                                        background = cached.second
                                     }
 
                                     val meta = MetaItem("tmdb:$tmdbId", "movie", item.movie.title, poster, background, desc ?: "Imported from Trakt")
 
                                     catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
 
-                                    // Mark watched - FIXED: Remove id parameter
+                                    // Mark watched
                                     val progress = WatchProgress(
                                         userId = userId,
                                         itemId = meta.id,
@@ -343,24 +341,41 @@ class MainViewModel(
                                 }
                             }
                         }.awaitAll()
-                        delay(100) // Small delay between chunks
+
+                        processedMovies += batch.size
+                        _traktSyncProgress.postValue("Movies: $processedMovies/$totalMovies")
+                        delay(50) // Reduced delay for faster sync
                     }
 
                     // --- IMPORT SHOWS ---
+                    _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Fetching watched shows..."))
+
                     val watchedShows = TraktClient.api.getWatchedShows(bearer, clientId)
-                    watchedShows.chunked(5).forEach { batch ->
+                    val totalShows = watchedShows.size
+                    var processedShows = 0
+
+                    _traktSyncProgress.postValue("Shows: 0/$totalShows")
+
+                    // Increased batch size
+                    watchedShows.chunked(10).forEach { batch ->
                         batch.map { item ->
                             async {
                                 item.show?.ids?.tmdb?.let { showTmdbId ->
-                                    // Fetch Series Details
                                     var poster: String? = null
                                     var background: String? = null
-                                    if (apiKey.isNotEmpty()) {
+
+                                    // Fetch Series Details (with caching)
+                                    if (fetchMetadata && apiKey.isNotEmpty() && !tmdbShowCache.containsKey(showTmdbId)) {
                                         try {
                                             val details = TMDBClient.api.getTVDetails(showTmdbId, apiKey)
                                             poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                             background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                            tmdbShowCache[showTmdbId] = Pair(poster, background)
                                         } catch (e: Exception) { /* ignore */ }
+                                    } else if (tmdbShowCache.containsKey(showTmdbId)) {
+                                        val cached = tmdbShowCache[showTmdbId]!!
+                                        poster = cached.first
+                                        background = cached.second
                                     }
 
                                     // Add Series to Library
@@ -379,7 +394,6 @@ class MainViewModel(
                                         season.episodes.forEach { ep ->
                                             val epId = "tmdb:$showTmdbId:${season.number}:${ep.number}"
 
-                                            // FIXED: Remove id parameter
                                             val progress = WatchProgress(
                                                 userId = userId,
                                                 itemId = epId,
@@ -401,19 +415,24 @@ class MainViewModel(
                                 }
                             }
                         }.awaitAll()
-                        delay(200)
+
+                        processedShows += batch.size
+                        _traktSyncProgress.postValue("Shows: $processedShows/$totalShows")
+                        delay(100) // Reduced delay
                     }
                 }
 
                 // 2. Add Trakt 'Next Up' Catalog
                 if (syncNextUp) {
+                    _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Adding Next Up catalog..."))
+
                     val nextUpCatalog = UserCatalog(
                         userId = userId,
                         catalogId = "trakt_next_up",
                         catalogType = "series",
                         catalogName = "Trakt Next Up",
                         customName = "Next Up (Trakt)",
-                        displayOrder = 0, // Put at top
+                        displayOrder = 0,
                         pageType = "series",
                         addonUrl = "trakt",
                         manifestId = "trakt_official",
@@ -423,8 +442,10 @@ class MainViewModel(
                     catalogRepository.updateCatalog(nextUpCatalog)
                 }
 
-                // 3. Add Trakt Lists (Popular, Watchlist, Trending)
+                // 3. Add Trakt Lists
                 if (syncLists) {
+                    _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Adding Trakt lists..."))
+
                     val catalogs = listOf(
                         UserCatalog(0, userId, "trakt_watchlist", "movie", "Trakt Watchlist", null, 1, "movies", "trakt", "trakt_official", true, false),
                         UserCatalog(0, userId, "trakt_popular_movies", "movie", "Trakt Popular Movies", null, 2, "movies", "trakt", "trakt_official", true, true),
@@ -436,11 +457,15 @@ class MainViewModel(
                     catalogs.forEach { catalogRepository.updateCatalog(it) }
                 }
 
-                // Refresh UI if needed
+                // Refresh UI
                 initUserLists()
+
+                _traktSyncStatus.postValue(TraktSyncStatus.Success("Sync completed successfully!"))
+                _traktSyncProgress.postValue("Sync complete!")
 
             } catch (e: Exception) {
                 _error.postValue("Sync Failed: ${e.message}")
+                _traktSyncStatus.postValue(TraktSyncStatus.Error("Sync failed: ${e.message}"))
                 Log.e("MainViewModel", "Trakt Sync Error", e)
             } finally {
                 _isLoading.postValue(false)

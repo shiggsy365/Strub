@@ -132,6 +132,39 @@
                     android:layout_marginBottom="8dp"
                     android:focusable="true" />
 
+                <TextView
+                    android:id="@+id/tvTraktSyncProgress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodyMedium"
+                    android:textColor="@color/md_theme_primary"
+                    android:layout_marginBottom="8dp"
+                    android:visibility="gone"
+                    tools:text="Movies: 45/100"
+                    tools:visibility="visible" />
+
+                <!-- Status Message -->
+                <TextView
+                    android:id="@+id/tvTraktSyncStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodySmall"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp"
+                    android:visibility="gone"
+                    tools:text="Fetching watched movies..."
+                    tools:visibility="visible" />
+
+                <!-- Progress Bar -->
+                <ProgressBar
+                    android:id="@+id/traktSyncProgressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone"
+                    android:indeterminate="true" />
+
                 <Button
                     android:id="@+id/btnTraktSync"
                     style="@style/Widget.App.Button.Outlined"
