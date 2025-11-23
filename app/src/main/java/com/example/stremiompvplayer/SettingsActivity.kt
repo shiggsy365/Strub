@@ -20,6 +20,7 @@ import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.adapters.CatalogConfigAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
+import com.example.stremiompvplayer.models.UserCatalog
 import com.example.stremiompvplayer.network.TraktDeviceCodeResponse
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel

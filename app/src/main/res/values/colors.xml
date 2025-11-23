@@ -5,6 +5,7 @@
     <color name="md_theme_surfaceDim">#111111</color>
     <color name="md_theme_surfaceBright">#2C2C2C</color>
  <color name="color_primary_variant">@color/md_theme_primaryContainer</color>
+   <color name="error_red">@color/md_theme_primaryContainer</color>
     <color name="color_on_primary">@color/md_theme_onPrimary</color>
     <color name="color_secondary">@color/md_theme_secondary</color>
     <color name="color_secondary_variant">@color/md_theme_secondaryContainer</color>

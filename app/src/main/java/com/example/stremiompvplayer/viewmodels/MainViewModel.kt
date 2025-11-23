@@ -35,6 +35,8 @@ import com.example.stremiompvplayer.network.TraktEpisode
 import com.example.stremiompvplayer.models.Video
 import com.example.stremiompvplayer.models.TMDBWatchlistBody
 import com.example.stremiompvplayer.network.AIOStreamsClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 class MainViewModel(
@@ -377,18 +379,21 @@ class MainViewModel(
 
             if (token != null) {
                 val bearer = "Bearer $token"
+                // INCREASED LIMIT TO 100
+                val limit = 100
+
                 val items: List<MetaItem> = when (catalog.catalogId) {
                     "trakt_next_up" -> generateNextUpList()
 
                     "trakt_continue_movies" -> {
-                        val list = TraktClient.api.getPausedMovies(bearer, clientId)
+                        val list = TraktClient.api.getPausedMovies(bearer, clientId, limit = limit)
                         list.mapNotNull { it.movie }.map { movie ->
                             MetaItem(id = "tmdb:${movie.ids.tmdb}", type = "movie", name = movie.title, description = "Paused", poster = null, background = null)
                         }
                     }
 
                     "trakt_continue_shows" -> {
-                        val list = TraktClient.api.getPausedEpisodes(bearer, clientId)
+                        val list = TraktClient.api.getPausedEpisodes(bearer, clientId, limit = limit)
                         list.mapNotNull { item ->
                             val show = item.show
                             val ep = item.episode
@@ -398,7 +403,7 @@ class MainViewModel(
                                     MetaItem(
                                         id = "trakt_ep:${show.ids.tmdb}:$epTmdbId",
                                         type = "episode",
-                                        name = "${show.title} - ${ep.number}",
+                                        name = "${show.title} - ${ep.number}", // Ensure Show Title is visible
                                         description = "Paused at ${(item.progress ?: 0f).toInt()}%",
                                         poster = null, background = null
                                     )
@@ -425,11 +430,11 @@ class MainViewModel(
 
                     else -> emptyList()
                 }
-
                 return enrichWithTmdbMetadata(items, catalog.catalogId)
             } else {
                 return emptyList()
             }
+
 
         } else if (catalog.catalogId in listOf("popular", "latest", "trending")) {
             val pagesToLoad = listOf(1, 2)
@@ -594,7 +599,8 @@ class MainViewModel(
                                     val metaItem = MetaItem(
                                         id = nextEpisodeId,
                                         type = "episode",
-                                        name = nextEpDetails.name,
+                                        // UPDATED: Prefix with Show Name for clarity in sidecar
+                                        name = "${showDetails.name}: ${nextEpDetails.name}",
                                         poster = poster,
                                         background = background,
                                         description = nextEpDetails.overview ?: "Next episode"
@@ -609,6 +615,55 @@ class MainViewModel(
         }
         // Sort by lastUpdated (most recent first) and return only the MetaItems
         return nextUpItems.sortedByDescending { it.second }.map { it.first }
+    }
+
+    fun removeFromLibrary(itemId: String, syncToTrakt: Boolean = true) {
+        val currentUserId = prefsManager.getCurrentUserId() ?: return
+        viewModelScope.launch {
+            try {
+                // 1. Remove from Local Database
+                catalogRepository.removeFromLibrary(itemId, currentUserId)
+                _isItemInLibrary.postValue(false)
+
+                // 2. Remove from Trakt Collection (Recursive removal)
+                if (syncToTrakt && prefsManager.isTraktEnabled()) {
+                    val token = prefsManager.getTraktAccessToken()
+                    val idStr = itemId.removePrefix("tmdb:")
+                    val tmdbId = idStr.split(":").firstOrNull()?.toIntOrNull()
+
+                    if (token != null && tmdbId != null) {
+                        val bearer = "Bearer $token"
+                        // Determine type from ID structure or lookup (simplifying to ID check)
+                        val isSeries = itemId.count { it == ':' } >= 1 // Rough check, or pass 'type' param
+
+                        // We construct a body to remove the ITEM (Movie or Show)
+                        val body = if (isSeries) {
+                            TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, tmdbId, null, null))))
+                        } else {
+                            TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, tmdbId, null, null))))
+                        }
+
+                        // Remove from Collection
+                        TraktClient.api.removeFromCollection(bearer, Secrets.TRAKT_CLIENT_ID, body)
+
+                        // Optional: Also remove from History to clean up "Continue Watching"
+                        TraktClient.api.removeFromHistory(bearer, Secrets.TRAKT_CLIENT_ID, body)
+                    }
+                }
+
+                // Refresh Home to reflect changes immediately
+                loadHomeContent()
+
+                _actionResult.postValue(ActionResult.Success("Removed from Library & Trakt"))
+            } catch (e: Exception) {
+                _actionResult.postValue(ActionResult.Error("Failed to remove: ${e.message}"))
+            }
+        }
+    }
+
+    // overload for convenience if needed
+    fun removeFromLibrary(item: MetaItem) {
+        removeFromLibrary(item.id, true)
     }
 
     // === TRAKT SYNC ===
@@ -1001,6 +1056,8 @@ class MainViewModel(
         }
     }
 
+
+
     fun checkWatchedStatus(itemId: String) {
         val currentUserId = prefsManager.getCurrentUserId() ?: return
         viewModelScope.launch {
@@ -1250,16 +1307,7 @@ class MainViewModel(
         }
     }
 
-    fun removeFromLibrary(itemId: String, syncToTrakt: Boolean = true) {
-        val currentUserId = prefsManager.getCurrentUserId() ?: return
-        viewModelScope.launch {
-            try {
-                catalogRepository.removeFromLibrary(itemId, currentUserId)
-                _isItemInLibrary.postValue(false)
-                _actionResult.postValue(ActionResult.Success("Removed from library"))
-            } catch (e: Exception) { _actionResult.postValue(ActionResult.Error("Failed to remove from library: ${e.message}")) }
-        }
-    }
+
 
     fun toggleLibrary(meta: MetaItem) {
         val currentUserId = prefsManager.getCurrentUserId() ?: return

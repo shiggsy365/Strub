@@ -53,6 +53,14 @@ interface TraktApi {
         @Header("trakt-api-key") clientId: String,
         @Query("limit") limit: Int = 20
     ): List<TraktPlaybackItem>
+    // NEW: Remove from Collection
+
+    @POST("sync/collection/remove")
+    suspend fun removeFromCollection(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
 
     @GET("sync/playback/episodes")
     suspend fun getPausedEpisodes(

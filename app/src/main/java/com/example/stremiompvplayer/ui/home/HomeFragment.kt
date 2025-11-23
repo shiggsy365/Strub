@@ -18,6 +18,8 @@ import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 
 class HomeFragment : Fragment() {
 
@@ -45,12 +47,6 @@ class HomeFragment : Fragment() {
             return HomeFragment()
         }
     }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -65,9 +61,9 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupRecyclerViewHeights() {
-        // Set max height to 25% of screen height
+        // UPDATED: Set max height to 27% of screen height
         val displayMetrics = resources.displayMetrics
-        val maxHeight = (displayMetrics.heightPixels * 0.25).toInt()
+        val maxHeight = (displayMetrics.heightPixels * 0.27).toInt()
 
         binding.rvNextUp.layoutParams.height = maxHeight
         binding.rvContinueEpisodes.layoutParams.height = maxHeight
@@ -77,47 +73,62 @@ class HomeFragment : Fragment() {
     private fun setupNextUpSection() {
         nextUpAdapter = PosterAdapter(
             items = emptyList(),
-            onClick = { item -> openDetails(item) }
+            onClick = { item -> openDetails(item) },
+            // NEW: Long Press Listener
+            onLongClick = { item -> showRemoveDialog(item) }
         )
-
-        binding.rvNextUp.apply {
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            adapter = nextUpAdapter
-            setHasFixedSize(true)
-        }
+        // ... existing apply ...
     }
 
     private fun setupContinueEpisodesSection() {
         continueEpisodesAdapter = PosterAdapter(
             items = emptyList(),
-            onClick = { item -> openDetails(item) }
+            onClick = { item -> openDetails(item) },
+            // NEW: Long Press Listener
+            onLongClick = { item -> showRemoveDialog(item) }
         )
-
-        binding.rvContinueEpisodes.apply {
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            adapter = continueEpisodesAdapter
-            setHasFixedSize(true)
-        }
+        // ... existing apply ...
     }
 
     private fun setupContinueMoviesSection() {
         continueMoviesAdapter = PosterAdapter(
             items = emptyList(),
-            onClick = { item -> openDetails(item) }
+            onClick = { item -> openDetails(item) },
+            // NEW: Long Press Listener
+            onLongClick = { item -> showRemoveDialog(item) }
         )
-
-        binding.rvContinueMovies.apply {
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            adapter = continueMoviesAdapter
-            setHasFixedSize(true)
-        }
+        // ... existing apply ...
     }
 
+    private fun showRemoveDialog(item: MetaItem) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Remove from Library?")
+            .setMessage("This will remove '${item.name}' from your local library and Trakt collection.")
+            .setPositiveButton("Remove") { _, _ ->
+                viewModel.removeFromLibrary(item)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        return binding.root
+    }
     private fun setupObservers() {
         viewModel.homeNextUp.observe(viewLifecycleOwner) { items ->
             nextUpAdapter.updateData(items)
             if (items.isNotEmpty() && currentNextUpItem == null) {
                 updateNextUpSidecar(items[0])
+            }
+        }
+
+        viewModel.actionResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is MainViewModel.ActionResult.Success ->
+                    Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                is MainViewModel.ActionResult.Error ->
+                    Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
             }
         }
 
