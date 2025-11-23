@@ -151,14 +151,30 @@ class MainViewModel(
     }
 
     private fun updateMovieSource() {
-        // ALWAYS use local database
-        libraryMovies.value = _localMoviesRaw.value ?: emptyList()
+        // 1. Get local items (database)
+        val localItems = _localMoviesRaw.value ?: emptyList()
+
+        // 2. Get Trakt items (API fetch)
+        val traktItems = _traktMoviesRaw.value ?: emptyList()
+
+        // 3. Merge them: Local items come first, so they take precedence in duplicates
+        val combined = (localItems + traktItems).distinctBy { it.id }
+
+        libraryMovies.value = combined
         filterAndSortLibrary("movie")
     }
 
     private fun updateSeriesSource() {
-        // ALWAYS use local database
-        librarySeries.value = _localSeriesRaw.value ?: emptyList()
+        // 1. Get local items
+        val localItems = _localSeriesRaw.value ?: emptyList()
+
+        // 2. Get Trakt items
+        val traktItems = _traktSeriesRaw.value ?: emptyList()
+
+        // 3. Merge and deduplicate
+        val combined = (localItems + traktItems).distinctBy { it.id }
+
+        librarySeries.value = combined
         filterAndSortLibrary("series")
     }
 

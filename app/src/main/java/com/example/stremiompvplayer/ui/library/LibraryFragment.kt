@@ -252,6 +252,8 @@ class LibraryFragment : Fragment() {
     }
 
     private fun setupObservers() {
+        viewModel.libraryMovies.observe(viewLifecycleOwner) {}
+        viewModel.librarySeries.observe(viewLifecycleOwner) {}
         val liveData = if (currentType == "movie") {
             viewModel.filteredLibraryMovies
         } else {
