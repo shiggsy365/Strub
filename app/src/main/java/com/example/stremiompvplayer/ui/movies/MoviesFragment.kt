@@ -95,7 +95,6 @@ class MoviesFragment : Fragment() {
             popup.menu.add("Add to Library")
         }
 
-        popup.menu.add("Add to TMDB Watchlist")
         popup.menu.add("Mark as Watched")
         popup.menu.add("Clear Watched Status")
 
@@ -107,10 +106,6 @@ class MoviesFragment : Fragment() {
                 }
                 "Remove from Library" -> {
                     viewModel.removeFromLibrary(item.id)
-                    true
-                }
-                "Add to TMDB Watchlist" -> {
-                    viewModel.toggleWatchlist(item, force = true)
                     true
                 }
                 "Mark as Watched" -> {
