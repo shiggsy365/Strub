@@ -108,7 +108,8 @@ data class TMDBEpisode(
     val episode_number: Int,
     val season_number: Int,
     val still_path: String?,
-    val overview: String?
+    val overview: String?,
+    @Json(name = "air_date") val airDate: String? // <--- ADD THIS LINE
 )
 
 // --- TV CREDITS (Aggregate) ---

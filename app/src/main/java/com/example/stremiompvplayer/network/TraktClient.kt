@@ -29,21 +29,35 @@ interface TraktApi {
     @POST("oauth/device/token")
     suspend fun getDeviceToken(@Body body: Map<String, String>): TraktTokenResponse
 
-    // --- SYNC & HISTORY (GET) ---
+    // --- SYNC & HISTORY ---
     @GET("sync/watched/movies")
     suspend fun getWatchedMovies(
         @Header("Authorization") token: String,
-        @Header("trakt-api-key") clientId: String,
-        @Header("trakt-api-version") version: String = "2"
+        @Header("trakt-api-key") clientId: String
     ): List<TraktWatchedItem>
 
     @GET("sync/watched/shows")
     suspend fun getWatchedShows(
         @Header("Authorization") token: String,
-        @Header("trakt-api-key") clientId: String,
-        @Header("trakt-api-version") version: String = "2"
+        @Header("trakt-api-key") clientId: String
     ): List<TraktWatchedItem>
 
+    // --- PLAYBACK (CONTINUE WATCHING) ---
+    @GET("sync/playback/movies")
+    suspend fun getPausedMovies(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Query("limit") limit: Int = 20
+    ): List<TraktPlaybackItem>
+
+    @GET("sync/playback/episodes")
+    suspend fun getPausedEpisodes(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Query("limit") limit: Int = 20
+    ): List<TraktPlaybackItem>
+
+    // --- COLLECTIONS & LISTS ---
     @GET("sync/collection/movies")
     suspend fun getMovieCollection(
         @Header("Authorization") token: String,
@@ -56,7 +70,14 @@ interface TraktApi {
         @Header("trakt-api-key") clientId: String
     ): List<TraktCollectionItem>
 
-    // --- SYNC ACTION (POST) [NEW] ---
+    @GET("sync/watchlist")
+    suspend fun getWatchlist(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Query("type") type: String? = null
+    ): List<TraktListItem>
+
+    // --- ACTIONS ---
     @POST("sync/history")
     suspend fun addToHistory(
         @Header("Authorization") token: String,
@@ -71,33 +92,15 @@ interface TraktApi {
         @Body body: TraktHistoryBody
     ): TraktSyncResponse
 
-    // --- LISTS ---
-    @GET("sync/watchlist")
-    suspend fun getWatchlist(
-        @Header("Authorization") token: String,
-        @Header("trakt-api-key") clientId: String,
-        @Query("type") type: String? = null // movies, shows
-    ): List<TraktListItem>
-
+    // --- DISCOVER ---
     @GET("movies/popular")
-    suspend fun getPopularMovies(
-        @Header("trakt-api-key") clientId: String
-    ): List<TraktMovie>
-
+    suspend fun getPopularMovies(@Header("trakt-api-key") clientId: String): List<TraktMovie>
     @GET("shows/popular")
-    suspend fun getPopularShows(
-        @Header("trakt-api-key") clientId: String
-    ): List<TraktShow>
-
+    suspend fun getPopularShows(@Header("trakt-api-key") clientId: String): List<TraktShow>
     @GET("movies/trending")
-    suspend fun getTrendingMovies(
-        @Header("trakt-api-key") clientId: String
-    ): List<TraktTrendingItem>
-
+    suspend fun getTrendingMovies(@Header("trakt-api-key") clientId: String): List<TraktTrendingItem>
     @GET("shows/trending")
-    suspend fun getTrendingShows(
-        @Header("trakt-api-key") clientId: String
-    ): List<TraktTrendingItem>
+    suspend fun getTrendingShows(@Header("trakt-api-key") clientId: String): List<TraktTrendingItem>
 
     // --- SCROBBLE ---
     @POST("scrobble/start")
@@ -123,44 +126,22 @@ interface TraktApi {
 }
 
 // --- Data Models ---
+data class TraktDeviceCodeResponse(val device_code: String, val user_code: String, val verification_url: String, val expires_in: Int, val interval: Int)
+data class TraktTokenResponse(val access_token: String, val refresh_token: String)
+data class TraktWatchedItem(val last_watched_at: String?, val plays: Int, val movie: TraktMovie?, val show: TraktShow?, val seasons: List<TraktSeason>?)
+data class TraktCollectionItem(val last_collected_at: String?, val movie: TraktMovie?, val show: TraktShow?)
+data class TraktListItem(val type: String, val movie: TraktMovie?, val show: TraktShow?)
+data class TraktTrendingItem(val watchers: Int, val movie: TraktMovie?, val show: TraktShow?)
 
-data class TraktDeviceCodeResponse(
-    val device_code: String,
-    val user_code: String,
-    val verification_url: String,
-    val expires_in: Int,
-    val interval: Int
-)
-
-data class TraktTokenResponse(
-    val access_token: String,
-    val refresh_token: String
-)
-
-data class TraktWatchedItem(
-    val last_watched_at: String?,
-    val plays: Int,
+// NEW: Playback (Paused) Item
+data class TraktPlaybackItem(
+    val progress: Float?,
+    val paused_at: String?,
+    val id: Long?,
+    val type: String?,
     val movie: TraktMovie?,
     val show: TraktShow?,
-    val seasons: List<TraktSeason>?
-)
-
-data class TraktCollectionItem(
-    val last_collected_at: String?,
-    val movie: TraktMovie?,
-    val show: TraktShow?
-)
-
-data class TraktListItem(
-    val type: String,
-    val movie: TraktMovie?,
-    val show: TraktShow?
-)
-
-data class TraktTrendingItem(
-    val watchers: Int,
-    val movie: TraktMovie?,
-    val show: TraktShow?
+    val episode: TraktEpisode?
 )
 
 data class TraktMovie(val title: String, val year: Int?, val ids: TraktIds)
@@ -169,26 +150,10 @@ data class TraktSeason(val number: Int, val episodes: List<TraktEpisode>)
 data class TraktEpisode(val number: Int, val plays: Int = 0, val last_watched_at: String? = null, val ids: TraktIds? = null)
 data class TraktIds(val trakt: Int, val tmdb: Int?, val imdb: String?, val slug: String?)
 
-// [NEW] For adding/removing history
-data class TraktHistoryBody(
-    val movies: List<TraktMovie>? = null,
-    val shows: List<TraktShow>? = null,
-    val episodes: List<TraktEpisode>? = null // Note: Episodes usually need simple IDs or Season/Ep structure inside Show context, but Trakt accepts nested structure too. Simplest is Movie/Show objects.
-)
-
-data class TraktSyncResponse(
-    val added: TraktSyncStats?,
-    val deleted: TraktSyncStats?,
-    val not_found: TraktSyncNotFound?
-)
+data class TraktHistoryBody(val movies: List<TraktMovie>? = null, val shows: List<TraktShow>? = null, val episodes: List<TraktEpisode>? = null)
+data class TraktSyncResponse(val added: TraktSyncStats?, val deleted: TraktSyncStats?, val not_found: TraktSyncNotFound?)
 data class TraktSyncStats(val movies: Int, val episodes: Int)
 data class TraktSyncNotFound(val movies: List<TraktIds>?, val shows: List<TraktIds>?, val episodes: List<TraktIds>?)
 
-data class TraktScrobbleBody(
-    val progress: Float,
-    val movie: TraktMovie? = null,
-    val show: TraktShow? = null,
-    val episode: TraktEpisode? = null
-)
-
+data class TraktScrobbleBody(val progress: Float, val movie: TraktMovie? = null, val show: TraktShow? = null, val episode: TraktEpisode? = null)
 data class TraktScrobbleResponse(val action: String?, val progress: Float?)
