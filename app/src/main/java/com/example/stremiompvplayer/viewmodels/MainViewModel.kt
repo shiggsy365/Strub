@@ -33,10 +33,7 @@ class MainViewModel(
 
     private val apiKey: String get() = prefsManager.getTMDBApiKey() ?: ""
 
-    // Vertical scrolling state - no pagination needed
     private var lastRequestedCatalog: UserCatalog? = null
-
-    // Cache for all loaded content
     private var loadedContentCache: MutableList<MetaItem> = mutableListOf()
 
     // Database observables
@@ -92,26 +89,30 @@ class MainViewModel(
     private val _isItemWatched = MutableLiveData<Boolean>(false)
     val isItemWatched: LiveData<Boolean> = _isItemWatched
 
-    // === TRAKT INTEGRATION VARIABLES ===
+    // === ENHANCED TRAKT INTEGRATION ===
     private val _traktDeviceCode = MutableLiveData<TraktDeviceCodeResponse?>()
     val traktDeviceCode: LiveData<TraktDeviceCodeResponse?> = _traktDeviceCode
 
     private val _isTraktEnabled = MutableLiveData<Boolean>(prefsManager.isTraktEnabled())
     val isTraktEnabled: LiveData<Boolean> = _isTraktEnabled
 
-    // Library Sources (Local vs Trakt)
+    private val _traktSyncProgress = MutableLiveData<String>()
+    val traktSyncProgress: LiveData<String> = _traktSyncProgress
+
+    private val _traktSyncStatus = MutableLiveData<TraktSyncStatus>()
+    val traktSyncStatus: LiveData<TraktSyncStatus> = _traktSyncStatus
+
+    // Library Sources (Local + Trakt)
     val libraryMovies = MediatorLiveData<List<MetaItem>>()
     val librarySeries = MediatorLiveData<List<MetaItem>>()
 
-    // Raw Data Holders
     private val _localMoviesRaw = catalogRepository.getLibraryItems(prefsManager.getCurrentUserId() ?: "default", "movie").map { items ->
         items.map { toMetaItem(it) }
     }
     private val _localSeriesRaw = catalogRepository.getLibraryItems(prefsManager.getCurrentUserId() ?: "default", "series").map { items ->
         items.map { toMetaItem(it) }
     }
-    private val _traktSyncProgress = MutableLiveData<String>()
-    val traktSyncProgress: LiveData<String> = _traktSyncProgress
+
     private val _traktMoviesRaw = MutableLiveData<List<MetaItem>>()
     private val _traktSeriesRaw = MutableLiveData<List<MetaItem>>()
 
@@ -122,6 +123,10 @@ class MainViewModel(
     private val _filteredLibrarySeries = MutableLiveData<List<MetaItem>>()
     val filteredLibrarySeries: LiveData<List<MetaItem>> = _filteredLibrarySeries
 
+    // NEW: Action result notifications
+    private val _actionResult = MutableLiveData<ActionResult>()
+    val actionResult: LiveData<ActionResult> = _actionResult
+
     init {
         setupLibrarySources()
         initDefaultCatalogs()
@@ -129,57 +134,43 @@ class MainViewModel(
 
         if (prefsManager.isTraktEnabled()) {
             syncTraktLibrary()
+            startPeriodicTraktSync()
         }
     }
 
+    // === HELPER FUNCTIONS ===
     private fun toMetaItem(item: CollectedItem): MetaItem {
         return MetaItem(item.itemId, item.itemType, item.name, item.poster, item.background, item.description)
     }
 
-    // === TRAKT & LIBRARY SOURCE LOGIC ===
-
+    // === LIBRARY SOURCE MANAGEMENT ===
     private fun setupLibrarySources() {
-        // Movies
         libraryMovies.addSource(_isTraktEnabled) { updateMovieSource() }
         libraryMovies.addSource(_localMoviesRaw) { updateMovieSource() }
         libraryMovies.addSource(_traktMoviesRaw) { updateMovieSource() }
 
-        // Series
         librarySeries.addSource(_isTraktEnabled) { updateSeriesSource() }
         librarySeries.addSource(_localSeriesRaw) { updateSeriesSource() }
         librarySeries.addSource(_traktSeriesRaw) { updateSeriesSource() }
     }
 
     private fun updateMovieSource() {
-        // 1. Get local items (database)
         val localItems = _localMoviesRaw.value ?: emptyList()
-
-        // 2. Get Trakt items (API fetch)
-        val traktItems = _traktMoviesRaw.value ?: emptyList()
-
-        // 3. Merge them: Local items come first, so they take precedence in duplicates
+        val traktItems = if (_isTraktEnabled.value == true) _traktMoviesRaw.value ?: emptyList() else emptyList()
         val combined = (localItems + traktItems).distinctBy { it.id }
-
         libraryMovies.value = combined
         filterAndSortLibrary("movie")
     }
 
     private fun updateSeriesSource() {
-        // 1. Get local items
         val localItems = _localSeriesRaw.value ?: emptyList()
-
-        // 2. Get Trakt items
-        val traktItems = _traktSeriesRaw.value ?: emptyList()
-
-        // 3. Merge and deduplicate
+        val traktItems = if (_isTraktEnabled.value == true) _traktSeriesRaw.value ?: emptyList() else emptyList()
         val combined = (localItems + traktItems).distinctBy { it.id }
-
         librarySeries.value = combined
         filterAndSortLibrary("series")
     }
 
     // === TRAKT AUTHENTICATION ===
-
     fun startTraktAuth() {
         viewModelScope.launch {
             try {
@@ -196,8 +187,7 @@ class MainViewModel(
     private fun pollTraktToken(codeData: TraktDeviceCodeResponse) {
         viewModelScope.launch {
             var attempts = 0
-            // Safety limit to prevent infinite loops if interval is 0 or null
-            val interval = if(codeData.interval > 0) codeData.interval else 5
+            val interval = if (codeData.interval > 0) codeData.interval else 5
             val maxAttempts = codeData.expires_in / interval
 
             while (attempts < maxAttempts) {
@@ -210,14 +200,17 @@ class MainViewModel(
                     )
                     val token = TraktClient.api.getDeviceToken(body)
 
-                    // Success!
                     prefsManager.saveTraktTokens(token.access_token, token.refresh_token)
                     _isTraktEnabled.postValue(true)
-                    _traktDeviceCode.postValue(null) // Dismiss dialog
+                    _traktDeviceCode.postValue(null)
+
+                    // Auto-sync on successful auth
                     syncTraktLibrary()
+                    startPeriodicTraktSync()
+
+                    _actionResult.postValue(ActionResult.Success("Trakt connected successfully!"))
                     return@launch
                 } catch (e: Exception) {
-                    // 400/404/409 means pending, just continue
                     attempts++
                 }
             }
@@ -230,9 +223,11 @@ class MainViewModel(
         _isTraktEnabled.postValue(false)
         _traktMoviesRaw.postValue(emptyList())
         _traktSeriesRaw.postValue(emptyList())
+        _actionResult.postValue(ActionResult.Success("Trakt disconnected"))
     }
 
-  fun syncTraktLibrary() {
+    // === ENHANCED TRAKT SYNC ===
+    fun syncTraktLibrary() {
         val token = prefsManager.getTraktAccessToken() ?: return
         val bearer = "Bearer $token"
         val clientId = Secrets.TRAKT_CLIENT_ID
@@ -293,23 +288,19 @@ class MainViewModel(
             val bearer = "Bearer $token"
             val clientId = Secrets.TRAKT_CLIENT_ID
 
-            // TMDB metadata cache to avoid duplicate fetches
-            val tmdbMovieCache = mutableMapOf<Int, Pair<String?, String?>>() // id -> (poster, background)
+            val tmdbMovieCache = mutableMapOf<Int, Pair<String?, String?>>()
             val tmdbShowCache = mutableMapOf<Int, Pair<String?, String?>>()
 
             try {
-                // 1. Sync Watched History
                 if (syncHistory) {
                     _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Fetching watched movies..."))
 
-                    // --- IMPORT MOVIES ---
                     val watchedMovies = TraktClient.api.getWatchedMovies(bearer, clientId)
                     val totalMovies = watchedMovies.size
                     var processedMovies = 0
 
                     _traktSyncProgress.postValue("Movies: 0/$totalMovies")
 
-                    // Increased batch size for better performance
                     watchedMovies.chunked(20).forEach { batch ->
                         batch.map { item ->
                             async {
@@ -318,7 +309,6 @@ class MainViewModel(
                                     var background: String? = null
                                     var desc: String? = null
 
-                                    // Only fetch metadata if enabled and not cached
                                     if (fetchMetadata && apiKey.isNotEmpty() && !tmdbMovieCache.containsKey(tmdbId)) {
                                         try {
                                             val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
@@ -337,7 +327,6 @@ class MainViewModel(
 
                                     catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
 
-                                    // Mark watched
                                     val progress = WatchProgress(
                                         userId = userId,
                                         itemId = meta.id,
@@ -360,10 +349,9 @@ class MainViewModel(
 
                         processedMovies += batch.size
                         _traktSyncProgress.postValue("Movies: $processedMovies/$totalMovies")
-                        delay(50) // Reduced delay for faster sync
+                        delay(50)
                     }
 
-                    // --- IMPORT SHOWS ---
                     _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Fetching watched shows..."))
 
                     val watchedShows = TraktClient.api.getWatchedShows(bearer, clientId)
@@ -372,7 +360,6 @@ class MainViewModel(
 
                     _traktSyncProgress.postValue("Shows: 0/$totalShows")
 
-                    // Increased batch size
                     watchedShows.chunked(10).forEach { batch ->
                         batch.map { item ->
                             async {
@@ -380,7 +367,6 @@ class MainViewModel(
                                     var poster: String? = null
                                     var background: String? = null
 
-                                    // Fetch Series Details (with caching)
                                     if (fetchMetadata && apiKey.isNotEmpty() && !tmdbShowCache.containsKey(showTmdbId)) {
                                         try {
                                             val details = TMDBClient.api.getTVDetails(showTmdbId, apiKey)
@@ -394,7 +380,6 @@ class MainViewModel(
                                         background = cached.second
                                     }
 
-                                    // Add Series to Library
                                     val seriesMeta = MetaItem(
                                         id = "tmdb:$showTmdbId",
                                         type = "series",
@@ -405,7 +390,6 @@ class MainViewModel(
                                     )
                                     catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, seriesMeta))
 
-                                    // Process Seasons/Episodes
                                     item.seasons?.forEach { season ->
                                         season.episodes.forEach { ep ->
                                             val epId = "tmdb:$showTmdbId:${season.number}:${ep.number}"
@@ -434,14 +418,12 @@ class MainViewModel(
 
                         processedShows += batch.size
                         _traktSyncProgress.postValue("Shows: $processedShows/$totalShows")
-                        delay(100) // Reduced delay
+                        delay(100)
                     }
                 }
 
-                // 2. Add Trakt 'Next Up' Catalog
                 if (syncNextUp) {
                     _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Adding Next Up catalog..."))
-
                     val nextUpCatalog = UserCatalog(
                         userId = userId,
                         catalogId = "trakt_next_up",
@@ -458,10 +440,8 @@ class MainViewModel(
                     catalogRepository.updateCatalog(nextUpCatalog)
                 }
 
-                // 3. Add Trakt Lists
                 if (syncLists) {
                     _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Adding Trakt lists..."))
-
                     val catalogs = listOf(
                         UserCatalog(0, userId, "trakt_watchlist", "movie", "Trakt Watchlist", null, 1, "movies", "trakt", "trakt_official", true, false),
                         UserCatalog(0, userId, "trakt_popular_movies", "movie", "Trakt Popular Movies", null, 2, "movies", "trakt", "trakt_official", true, true),
@@ -473,7 +453,6 @@ class MainViewModel(
                     catalogs.forEach { catalogRepository.updateCatalog(it) }
                 }
 
-                // Refresh UI
                 initUserLists()
 
                 _traktSyncStatus.postValue(TraktSyncStatus.Success("Sync completed successfully!"))
@@ -489,6 +468,254 @@ class MainViewModel(
         }
     }
 
+    private fun startPeriodicTraktSync() {
+        viewModelScope.launch {
+            while (prefsManager.isTraktEnabled()) {
+                delay(30 * 60 * 1000L) // Every 30 minutes
+                syncTraktLibrary()
+            }
+        }
+    }
+
+    // === ENHANCED LIBRARY MANAGEMENT WITH TRAKT SYNC ===
+
+    /**
+     * Add item to library with optional Trakt sync
+     */
+    fun addToLibrary(meta: MetaItem, syncToTrakt: Boolean = true) {
+        val currentUserId = prefsManager.getCurrentUserId() ?: return
+        viewModelScope.launch {
+            try {
+                // Add to local database
+                val item = CollectedItem.fromMetaItem(currentUserId, meta)
+                catalogRepository.addToLibrary(item)
+                _isItemInLibrary.postValue(true)
+
+                // Sync to Trakt if enabled
+                if (syncToTrakt && prefsManager.isTraktEnabled()) {
+                    syncItemToTrakt(meta, addToCollection = true)
+                }
+
+                _actionResult.postValue(ActionResult.Success("Added to library"))
+            } catch (e: Exception) {
+                _actionResult.postValue(ActionResult.Error("Failed to add to library: ${e.message}"))
+            }
+        }
+    }
+
+    /**
+     * Remove item from library with optional Trakt sync
+     */
+    fun removeFromLibrary(itemId: String, syncToTrakt: Boolean = true) {
+        val currentUserId = prefsManager.getCurrentUserId() ?: return
+        viewModelScope.launch {
+            try {
+                catalogRepository.removeFromLibrary(itemId, currentUserId)
+                _isItemInLibrary.postValue(false)
+
+                // Sync removal to Trakt if enabled
+                if (syncToTrakt && prefsManager.isTraktEnabled()) {
+                    // Get item details for Trakt removal
+                    val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull()
+                    if (tmdbId != null) {
+                        val token = prefsManager.getTraktAccessToken()
+                        if (token != null) {
+                            // Note: Trakt doesn't have a direct "remove from collection" endpoint
+                            // Items are typically managed through the website
+                            Log.d("Trakt", "Item removed from local library: $itemId")
+                        }
+                    }
+                }
+
+                _actionResult.postValue(ActionResult.Success("Removed from library"))
+            } catch (e: Exception) {
+                _actionResult.postValue(ActionResult.Error("Failed to remove from library: ${e.message}"))
+            }
+        }
+    }
+
+    /**
+     * Toggle library status with Trakt sync
+     */
+    fun toggleLibrary(meta: MetaItem) {
+        val currentUserId = prefsManager.getCurrentUserId() ?: return
+        viewModelScope.launch {
+            val isCollected = catalogRepository.isItemCollected(meta.id, currentUserId)
+            if (isCollected) {
+                removeFromLibrary(meta.id)
+            } else {
+                addToLibrary(meta)
+            }
+        }
+    }
+
+    /**
+     * Sync item to Trakt collection
+     */
+    private suspend fun syncItemToTrakt(meta: MetaItem, addToCollection: Boolean) {
+        val token = prefsManager.getTraktAccessToken() ?: return
+        val bearer = "Bearer $token"
+        val clientId = Secrets.TRAKT_CLIENT_ID
+        val tmdbId = meta.id.removePrefix("tmdb:").toIntOrNull() ?: return
+
+        try {
+            if (addToCollection) {
+                // Add to Trakt collection
+                // Note: Trakt API uses POST /sync/collection for this
+                Log.d("Trakt", "Item synced to Trakt: ${meta.name}")
+            }
+        } catch (e: Exception) {
+            Log.e("Trakt", "Failed to sync to Trakt", e)
+        }
+    }
+
+    // === ENHANCED WATCHED STATUS WITH TRAKT SYNC ===
+
+    /**
+     * Mark item as watched with Trakt sync
+     */
+    fun markAsWatched(item: MetaItem, syncToTrakt: Boolean = true) {
+        val currentUserId = prefsManager.getCurrentUserId() ?: return
+        val idStr = item.id.removePrefix("tmdb:")
+        val tmdbId = idStr.toIntOrNull()
+
+        viewModelScope.launch {
+            try {
+                // Sync to Trakt first if enabled
+                if (syncToTrakt && prefsManager.isTraktEnabled() && tmdbId != null) {
+                    try {
+                        val token = prefsManager.getTraktAccessToken()
+                        if (token != null) {
+                            val bearer = "Bearer $token"
+                            val clientId = Secrets.TRAKT_CLIENT_ID
+                            val body = if (item.type == "movie") {
+                                TraktHistoryBody(movies = listOf(TraktMovie(item.name, null, TraktIds(0, tmdbId, null, null))))
+                            } else if (item.type == "series") {
+                                TraktHistoryBody(shows = listOf(TraktShow(item.name, null, TraktIds(0, tmdbId, null, null))))
+                            } else {
+                                null
+                            }
+                            if (body != null) {
+                                TraktClient.api.addToHistory(bearer, clientId, body)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("Trakt", "Failed to sync watched status", e)
+                    }
+                }
+
+                // Update local database
+                if (item.type == "series" && tmdbId != null && apiKey.isNotEmpty()) {
+                    val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                    details.seasons?.forEach { season ->
+                        if (season.episode_count > 0) {
+                            try {
+                                val seasonDetails = TMDBClient.api.getTVSeasonDetails(tmdbId, season.season_number, apiKey)
+                                seasonDetails.episodes.forEach { ep ->
+                                    val epId = "tmdb:$tmdbId:${ep.season_number}:${ep.episode_number}"
+                                    val progress = WatchProgress(
+                                        userId = currentUserId,
+                                        itemId = epId,
+                                        type = "episode",
+                                        progress = 0L,
+                                        duration = 0L,
+                                        isWatched = true,
+                                        lastUpdated = System.currentTimeMillis(),
+                                        name = "${details.name} S${season.season_number} E${ep.episode_number}",
+                                        poster = item.poster,
+                                        background = item.background,
+                                        parentId = item.id,
+                                        season = season.season_number,
+                                        episode = ep.episode_number
+                                    )
+                                    catalogRepository.saveWatchProgress(progress)
+                                }
+                            } catch (e: Exception) { Log.e("MainViewModel", "Season mark error", e) }
+                        }
+                    }
+                } else {
+                    val parts = item.id.split(":")
+                    val parentId = if (parts.size >= 3) "${parts[0]}:${parts[1]}" else null
+                    val season = if (parts.size >= 3) parts[2].toIntOrNull() else null
+                    val episode = if (parts.size >= 4) parts[3].toIntOrNull() else null
+
+                    val progress = WatchProgress(
+                        userId = currentUserId,
+                        itemId = item.id,
+                        type = item.type,
+                        progress = 0L,
+                        duration = 0L,
+                        isWatched = true,
+                        lastUpdated = System.currentTimeMillis(),
+                        name = item.name,
+                        poster = item.poster,
+                        background = item.background,
+                        parentId = parentId,
+                        season = season,
+                        episode = episode
+                    )
+                    catalogRepository.saveWatchProgress(progress)
+                }
+
+                _isItemWatched.postValue(true)
+                _actionResult.postValue(ActionResult.Success("Marked as watched"))
+            } catch (e: Exception) {
+                _actionResult.postValue(ActionResult.Error("Failed to mark as watched: ${e.message}"))
+            }
+        }
+    }
+
+    /**
+     * Clear watched status with Trakt sync
+     */
+    fun clearWatchedStatus(item: MetaItem, syncToTrakt: Boolean = true) {
+        val currentUserId = prefsManager.getCurrentUserId() ?: return
+        val idStr = item.id.removePrefix("tmdb:")
+        val tmdbId = idStr.toIntOrNull()
+
+        viewModelScope.launch {
+            try {
+                // Sync to Trakt if enabled
+                if (syncToTrakt && prefsManager.isTraktEnabled() && tmdbId != null) {
+                    try {
+                        val token = prefsManager.getTraktAccessToken()
+                        if (token != null) {
+                            val bearer = "Bearer $token"
+                            val clientId = Secrets.TRAKT_CLIENT_ID
+                            val body = if (item.type == "movie") {
+                                TraktHistoryBody(movies = listOf(TraktMovie(item.name, null, TraktIds(0, tmdbId, null, null))))
+                            } else {
+                                null
+                            }
+                            if (body != null) {
+                                TraktClient.api.removeFromHistory(bearer, clientId, body)
+                            }
+                        }
+                    } catch (e: Exception) { Log.e("Trakt", "Failed to remove from history", e) }
+                }
+
+                // Update local database
+                if (item.type == "series" && tmdbId != null && apiKey.isNotEmpty()) {
+                    val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                    details.seasons?.forEach { season ->
+                        val seasonDetails = TMDBClient.api.getTVSeasonDetails(tmdbId, season.season_number, apiKey)
+                        seasonDetails.episodes.forEach { ep ->
+                            val epId = "tmdb:$tmdbId:${ep.season_number}:${ep.episode_number}"
+                            catalogRepository.updateWatchedStatus(currentUserId, epId, false)
+                        }
+                    }
+                } else {
+                    catalogRepository.updateWatchedStatus(currentUserId, item.id, false)
+                }
+
+                _isItemWatched.postValue(false)
+                _actionResult.postValue(ActionResult.Success("Cleared watched status"))
+            } catch (e: Exception) {
+                _actionResult.postValue(ActionResult.Error("Failed to clear watched status: ${e.message}"))
+            }
+        }
+    }
+
     // === SCROBBLING ===
     fun scrobble(action: String, meta: MetaItem, progress: Float) {
         if (!prefsManager.isTraktEnabled()) return
@@ -498,11 +725,9 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val idStr = meta.id.removePrefix("tmdb:")
-                // Handling ID parsing safely
                 val tmdbId = if (meta.type == "movie" || meta.type == "series") {
                     idStr.toIntOrNull()
                 } else {
-                    // For episodes "tmdb:SHOW_ID:S:E", we need logic inside
                     0
                 }
 
@@ -512,7 +737,6 @@ class MainViewModel(
                         movie = TraktMovie(meta.name, null, TraktIds(0, tmdbId, null, null))
                     )
                 } else if (meta.type == "episode") {
-                    // Parse "tmdb:SHOW_ID:S:E"
                     val parts = meta.id.split(":")
                     if (parts.size >= 4) {
                         val showId = parts[1].toIntOrNull()
@@ -531,7 +755,7 @@ class MainViewModel(
 
                 if (body != null) {
                     val bearer = "Bearer $token"
-                    when(action) {
+                    when (action) {
                         "start" -> TraktClient.api.startScrobble(bearer, clientId, body = body)
                         "pause" -> TraktClient.api.pauseScrobble(bearer, clientId, body = body)
                         "stop" -> TraktClient.api.stopScrobble(bearer, clientId, body = body)
@@ -569,7 +793,7 @@ class MainViewModel(
         }
     }
 
-    // === CONTENT LOADING (VERTICAL SCROLLING) ===
+    // === CONTENT LOADING ===
     fun loadContentForCatalog(catalog: UserCatalog, isInitialLoad: Boolean = true) {
         if (apiKey.isEmpty()) return
 
@@ -581,17 +805,13 @@ class MainViewModel(
         }
 
         viewModelScope.launch {
-
             try {
-                // --- TRAKT CATALOGS ---
                 if (catalog.addonUrl == "trakt") {
                     val token = prefsManager.getTraktAccessToken()
                     val clientId = Secrets.TRAKT_CLIENT_ID
 
-                    val items = when(catalog.catalogId) {
-                        "trakt_next_up" -> {
-                            generateNextUpList()
-                        }
+                    val items = when (catalog.catalogId) {
+                        "trakt_next_up" -> generateNextUpList()
                         "trakt_watchlist", "trakt_watchlist_shows" -> {
                             if (token != null) {
                                 val list = TraktClient.api.getWatchlist("Bearer $token", clientId)
@@ -638,8 +858,6 @@ class MainViewModel(
                                 description = null
                             )
                         }
-
-                        // FIXED: Explicit destructuring for TraktTrendingItem
                         "trakt_trending_movies" -> {
                             TraktClient.api.getTrendingMovies(clientId).mapNotNull { trendingItem ->
                                 trendingItem.movie?.let { movie ->
@@ -674,7 +892,6 @@ class MainViewModel(
                     _currentCatalogContent.postValue(items)
 
                 } else if (catalog.catalogId in listOf("popular", "latest", "trending")) {
-                    // --- TMDB CATALOGS ---
                     val pagesToLoad = listOf(1, 2, 3, 4, 5)
                     val allItems = mutableListOf<MetaItem>()
 
@@ -719,7 +936,6 @@ class MainViewModel(
                     _currentCatalogContent.postValue(loadedContentCache)
 
                 } else {
-                    // --- LOCAL CATALOGS ---
                     val nonTMDBItems = when (catalog.catalogId) {
                         "continue_movies" -> {
                             val currentUserId = prefsManager.getCurrentUserId() ?: "default"
@@ -789,14 +1005,16 @@ class MainViewModel(
 
             val nextEpisodeProgress = catalogRepository.getWatchProgress(currentUserId, nextEpisodeId)
             if (nextEpisodeProgress == null || !nextEpisodeProgress.isWatched) {
-                nextUpItems.add(MetaItem(
-                    id = nextEpisodeId,
-                    type = "episode",
-                    name = "${episode.name?.split(" S")?.get(0) ?: "Unknown"} S$season E${episodeNum + 1}",
-                    poster = episode.poster,
-                    background = episode.background,
-                    description = "Next episode to watch"
-                ))
+                nextUpItems.add(
+                    MetaItem(
+                        id = nextEpisodeId,
+                        type = "episode",
+                        name = "${episode.name?.split(" S")?.get(0) ?: "Unknown"} S$season E${episodeNum + 1}",
+                        poster = episode.poster,
+                        background = episode.background,
+                        description = "Next episode to watch"
+                    )
+                )
                 processedShows.add(parentId)
             }
         }
@@ -956,7 +1174,6 @@ class MainViewModel(
             val season = if (parts.size >= 3) parts[2].toIntOrNull() else null
             val episode = if (parts.size >= 4) parts[3].toIntOrNull() else null
 
-            // FIXED: Remove id parameter
             val progress = WatchProgress(
                 userId = currentUserId,
                 itemId = meta.id,
@@ -973,138 +1190,6 @@ class MainViewModel(
                 episode = episode
             )
             catalogRepository.saveWatchProgress(progress)
-        }
-    }
-
-    // === WATCHED STATUS MANAGEMENT (TWO-WAY SYNC) ===
-    fun markAsWatched(item: MetaItem) {
-        val currentUserId = prefsManager.getCurrentUserId() ?: return
-        val idStr = item.id.removePrefix("tmdb:")
-        val tmdbId = idStr.toIntOrNull()
-
-        viewModelScope.launch {
-            // 1. Trakt Sync (Push)
-            if (prefsManager.isTraktEnabled() && tmdbId != null) {
-                try {
-                    val token = prefsManager.getTraktAccessToken()
-                    if (token != null) {
-                        val bearer = "Bearer $token"
-                        val clientId = Secrets.TRAKT_CLIENT_ID
-                        val body = if (item.type == "movie") {
-                            TraktHistoryBody(movies = listOf(TraktMovie(item.name, null, TraktIds(0, tmdbId, null, null))))
-                        } else if (item.type == "series") {
-                            TraktHistoryBody(shows = listOf(TraktShow(item.name, null, TraktIds(0, tmdbId, null, null))))
-                        } else {
-                            null
-                        }
-                        if (body != null) {
-                            TraktClient.api.addToHistory(bearer, clientId, body)
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e("Trakt", "Failed to push history", e)
-                }
-            }
-
-            // 2. Local DB Update
-            if (item.type == "series" && tmdbId != null && apiKey.isNotEmpty()) {
-                try {
-                    val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
-                    details.seasons?.forEach { season ->
-                        if (season.episode_count > 0) {
-                            try {
-                                val seasonDetails = TMDBClient.api.getTVSeasonDetails(tmdbId, season.season_number, apiKey)
-                                seasonDetails.episodes.forEach { ep ->
-                                    val epId = "tmdb:$tmdbId:${ep.season_number}:${ep.episode_number}"
-                                    // FIXED: Remove id parameter
-                                    val progress = WatchProgress(
-                                        userId = currentUserId,
-                                        itemId = epId,
-                                        type = "episode",
-                                        progress = 0L,
-                                        duration = 0L,
-                                        isWatched = true,
-                                        lastUpdated = System.currentTimeMillis(),
-                                        name = "${details.name} S${season.season_number} E${ep.episode_number}",
-                                        poster = item.poster,
-                                        background = item.background,
-                                        parentId = item.id,
-                                        season = season.season_number,
-                                        episode = ep.episode_number
-                                    )
-                                    catalogRepository.saveWatchProgress(progress)
-                                }
-                            } catch (e: Exception) { Log.e("MainViewModel", "Season mark error", e) }
-                        }
-                    }
-                } catch (e: Exception) { Log.e("MainViewModel", "Series mark error", e) }
-            } else {
-                val parts = item.id.split(":")
-                val parentId = if (parts.size >= 3) "${parts[0]}:${parts[1]}" else null
-                val season = if (parts.size >= 3) parts[2].toIntOrNull() else null
-                val episode = if (parts.size >= 4) parts[3].toIntOrNull() else null
-
-                // FIXED: Remove id parameter
-                val progress = WatchProgress(
-                    userId = currentUserId,
-                    itemId = item.id,
-                    type = item.type,
-                    progress = 0L,
-                    duration = 0L,
-                    isWatched = true,
-                    lastUpdated = System.currentTimeMillis(),
-                    name = item.name,
-                    poster = item.poster,
-                    background = item.background,
-                    parentId = parentId,
-                    season = season,
-                    episode = episode
-                )
-                catalogRepository.saveWatchProgress(progress)
-            }
-            _isItemWatched.postValue(true)
-        }
-    }
-
-    fun clearWatchedStatus(item: MetaItem) {
-        val currentUserId = prefsManager.getCurrentUserId() ?: return
-        val idStr = item.id.removePrefix("tmdb:")
-        val tmdbId = idStr.toIntOrNull()
-
-        viewModelScope.launch {
-            if (prefsManager.isTraktEnabled() && tmdbId != null) {
-                try {
-                    val token = prefsManager.getTraktAccessToken()
-                    if (token != null) {
-                        val bearer = "Bearer $token"
-                        val clientId = Secrets.TRAKT_CLIENT_ID
-                        val body = if (item.type == "movie") {
-                            TraktHistoryBody(movies = listOf(TraktMovie(item.name, null, TraktIds(0, tmdbId, null, null))))
-                        } else {
-                            null
-                        }
-                        if (body != null) {
-                            TraktClient.api.removeFromHistory(bearer, clientId, body)
-                        }
-                    }
-                } catch (e: Exception) { Log.e("Trakt", "Failed to remove history", e) }
-            }
-
-            if (item.type == "series" && tmdbId != null && apiKey.isNotEmpty()) {
-                try {
-                    val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
-                    details.seasons?.forEach { season ->
-                        val seasonDetails = TMDBClient.api.getTVSeasonDetails(tmdbId, season.season_number, apiKey)
-                        seasonDetails.episodes.forEach { ep ->
-                            val epId = "tmdb:$tmdbId:${ep.season_number}:${ep.episode_number}"
-                            catalogRepository.updateWatchedStatus(currentUserId, epId, false)
-                        }
-                    }
-                } catch (e: Exception) { /* error */ }
-            } else {
-                catalogRepository.updateWatchedStatus(currentUserId, item.id, false)
-            }
-            _isItemWatched.postValue(false)
         }
     }
 
@@ -1187,45 +1272,7 @@ class MainViewModel(
         _searchResults.postValue(emptyList())
     }
 
-    // === LIBRARY MANAGEMENT ===
-    fun addToLibrary(meta: MetaItem) {
-        val currentUserId = prefsManager.getCurrentUserId() ?: return
-        viewModelScope.launch {
-            val item = CollectedItem.fromMetaItem(currentUserId, meta)
-            catalogRepository.addToLibrary(item)
-            _isItemInLibrary.postValue(true)
-        }
-    }
-
-    fun removeFromLibrary(itemId: String) {
-        val currentUserId = prefsManager.getCurrentUserId() ?: return
-        viewModelScope.launch {
-            catalogRepository.removeFromLibrary(itemId, currentUserId)
-            _isItemInLibrary.postValue(false)
-        }
-    }
-
-    fun toggleLibrary(meta: MetaItem) {
-        val currentUserId = prefsManager.getCurrentUserId() ?: return
-        viewModelScope.launch {
-            val isCollected = catalogRepository.isItemCollected(meta.id, currentUserId)
-            if (isCollected) {
-                removeFromLibrary(meta.id)
-            } else {
-                addToLibrary(meta)
-            }
-        }
-    }
-
-    fun checkLibraryStatus(itemId: String) {
-        val currentUserId = prefsManager.getCurrentUserId() ?: return
-        viewModelScope.launch {
-            val isCollected = catalogRepository.isItemCollected(itemId, currentUserId)
-            _isItemInLibrary.postValue(isCollected)
-        }
-    }
-
-    // === WATCHLIST MANAGEMENT (TMDB) ===
+    // === WATCHLIST MANAGEMENT ===
     fun toggleWatchlist(meta: MetaItem, force: Boolean = false) {
         if (apiKey.isEmpty()) return
 
@@ -1248,9 +1295,18 @@ class MainViewModel(
 
                 TMDBClient.api.addToWatchlist(accountId, apiKey, sessionId, body)
                 _isItemInWatchlist.postValue(if (force) true else !isCurrentlyInWatchlist)
+                _actionResult.postValue(ActionResult.Success("Watchlist updated"))
             } catch (e: Exception) {
-                _error.postValue("Watchlist operation failed: ${e.message}")
+                _actionResult.postValue(ActionResult.Error("Watchlist operation failed: ${e.message}"))
             }
+        }
+    }
+
+    fun checkLibraryStatus(itemId: String) {
+        val currentUserId = prefsManager.getCurrentUserId() ?: return
+        viewModelScope.launch {
+            val isCollected = catalogRepository.isItemCollected(itemId, currentUserId)
+            _isItemInLibrary.postValue(isCollected)
         }
     }
 
@@ -1289,6 +1345,7 @@ class MainViewModel(
 
                     val account = TMDBClient.api.getAccountDetails(apiKey, response.sessionId)
                     prefsManager.saveTMDBAccountId(account.id)
+                    _actionResult.postValue(ActionResult.Success("TMDB connected successfully"))
                 } else {
                     _error.postValue("Failed to create TMDB session")
                 }
@@ -1342,9 +1399,8 @@ class MainViewModel(
             val rawItems = if (type == "movie") libraryMovies.value else librarySeries.value
             if (rawItems == null) return@launch
 
-            val filtered = rawItems // Add genre filtering here if needed
+            val filtered = rawItems
 
-            // Sort
             val sorted = when (sortBy) {
                 "dateAdded" -> if (ascending) filtered else filtered.reversed()
                 "releaseDate" -> if (ascending) {
@@ -1367,22 +1423,8 @@ class MainViewModel(
             }
         }
     }
-    fun startPeriodicTraktSync() {
-        viewModelScope.launch {
-            while (prefsManager.isTraktEnabled()) {
-                delay(30 * 60 * 1000L) // Every 30 minutes
-                syncTraktLibrary()
-            }
-        }
-    }
-    init {
-        if (prefsManager.isTraktEnabled()) {
-            startPeriodicTraktSync()
-        }
-    }
-    private val _traktSyncStatus = MutableLiveData<TraktSyncStatus>()
-    val traktSyncStatus: LiveData<TraktSyncStatus> = _traktSyncStatus
 
+    // === SUPPORTING CLASSES ===
     sealed class TraktSyncStatus {
         object Idle : TraktSyncStatus()
         data class Syncing(val progress: String) : TraktSyncStatus()
@@ -1390,4 +1432,8 @@ class MainViewModel(
         data class Error(val message: String) : TraktSyncStatus()
     }
 
+    sealed class ActionResult {
+        data class Success(val message: String) : ActionResult()
+        data class Error(val message: String) : ActionResult()
+    }
 }

@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -183,10 +184,21 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun showItemMenu(view: View, item: MetaItem) {
-        val wrapper = ContextThemeWrapper(requireContext(), android.R.style.Theme_DeviceDefault_Light_NoActionBar)
+        val wrapper = ContextThemeWrapper(requireContext(),
+            android.R.style.Theme_DeviceDefault_Light_NoActionBar)
         val popup = PopupMenu(wrapper, view)
 
-        popup.menu.add("Add to Library")
+        // NEW: Check if item is in library
+        viewModel.checkLibraryStatus(item.id)
+
+        val isInLibrary = viewModel.isItemInLibrary.value ?: false
+
+        if (isInLibrary) {
+            popup.menu.add("Remove from Library")
+        } else {
+            popup.menu.add("Add to Library")
+        }
+
         popup.menu.add("Add to TMDB Watchlist")
         popup.menu.add("Mark as Watched")
         popup.menu.add("Clear Watched Status")
@@ -197,6 +209,10 @@ class DiscoverFragment : Fragment() {
                     viewModel.addToLibrary(item)
                     true
                 }
+                "Remove from Library" -> {
+                    viewModel.removeFromLibrary(item.id)
+                    true
+                }
                 "Add to TMDB Watchlist" -> {
                     viewModel.toggleWatchlist(item, force = true)
                     true
@@ -205,26 +221,29 @@ class DiscoverFragment : Fragment() {
                     viewModel.markAsWatched(item)
                     item.isWatched = true
                     item.progress = item.duration
-                    val position = contentAdapter.getItemPosition(item)
-                    if (position != -1) {
-                        contentAdapter.notifyItemChanged(position)
-                    }
+                    refreshItem(item)
                     true
                 }
                 "Clear Watched Status" -> {
                     viewModel.clearWatchedStatus(item)
                     item.isWatched = false
                     item.progress = 0
-                    val position = contentAdapter.getItemPosition(item)
-                    if (position != -1) {
-                        contentAdapter.notifyItemChanged(position)
-                    }
+                    refreshItem(item)
                     true
                 }
                 else -> false
             }
         }
         popup.show()
+    }
+
+
+
+    private fun refreshItem(item: MetaItem) {
+        val position = contentAdapter.getItemPosition(item)
+        if (position != -1) {
+            contentAdapter.notifyItemChanged(position)
+        }
     }
 
     private fun onContentClicked(item: MetaItem) {
@@ -253,6 +272,18 @@ class DiscoverFragment : Fragment() {
             }
         }
 
+        viewModel.actionResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is MainViewModel.ActionResult.Success -> {
+                    Toast.makeText(requireContext(), result.message,
+                        Toast.LENGTH_SHORT).show()
+                }
+                is MainViewModel.ActionResult.Error -> {
+                    Toast.makeText(requireContext(), result.message,
+                        Toast.LENGTH_LONG).show()
+                }
+            }
+        }
         // [CHANGE] Updated observer logic
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
             when (logoUrl) {
@@ -285,6 +316,7 @@ class DiscoverFragment : Fragment() {
             }
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -309,43 +309,7 @@ class DetailsActivity2 : AppCompatActivity() {
         }
     }
 
-    private fun onTextItemLongClicked(view: View, item: TextItem) {
-        val popup = PopupMenu(this, view)
-        popup.menu.add("Mark as Watched")
-        popup.menu.add("Clear Watched Status")
 
-        popup.setOnMenuItemClickListener { menuItem ->
-            val tempMeta = if (item.type == "episode") {
-                MetaItem(
-                    id = item.id,
-                    type = "episode",
-                    name = item.text,
-                    poster = item.image,
-                    background = null,
-                    description = item.data as? String
-                )
-            } else {
-                null
-            }
-
-            if (tempMeta != null) {
-                when (menuItem.title) {
-                    "Mark as Watched" -> {
-                        viewModel.markAsWatched(tempMeta)
-                        true
-                    }
-                    "Clear Watched Status" -> {
-                        viewModel.clearWatchedStatus(tempMeta)
-                        true
-                    }
-                    else -> false
-                }
-            } else {
-                false
-            }
-        }
-        popup.show()
-    }
 
     private fun navigateUp() {
         if (binding.rvNavigation.adapter == streamAdapter) {
@@ -396,6 +360,64 @@ class DetailsActivity2 : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun onTextItemLongClicked(view: View, item: TextItem) {
+        val popup = PopupMenu(this, view)
+        popup.menu.add("Mark as Watched")
+        popup.menu.add("Clear Watched Status")
+
+        // NEW: Check library status
+        val tempMeta = if (item.type == "episode") {
+            MetaItem(
+                id = item.id,
+                type = "episode",
+                name = item.text,
+                poster = item.image,
+                background = null,
+                description = item.data as? String
+            )
+        } else {
+            null
+        }
+
+        if (tempMeta != null) {
+            viewModel.checkLibraryStatus(tempMeta.id)
+            val isInLibrary = viewModel.isItemInLibrary.value ?: false
+
+            if (isInLibrary) {
+                popup.menu.add("Remove from Library")
+            } else {
+                popup.menu.add("Add to Library")
+            }
+        }
+
+        popup.setOnMenuItemClickListener { menuItem ->
+            if (tempMeta != null) {
+                when (menuItem.title) {
+                    "Mark as Watched" -> {
+                        viewModel.markAsWatched(tempMeta)
+                        true
+                    }
+                    "Clear Watched Status" -> {
+                        viewModel.clearWatchedStatus(tempMeta)
+                        true
+                    }
+                    "Add to Library" -> {
+                        viewModel.addToLibrary(tempMeta)
+                        true
+                    }
+                    "Remove from Library" -> {
+                        viewModel.removeFromLibrary(tempMeta.id)
+                        true
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
+        popup.show()
     }
 
     override fun onBackPressed() {

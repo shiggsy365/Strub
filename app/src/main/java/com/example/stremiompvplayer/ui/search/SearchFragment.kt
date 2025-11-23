@@ -3,6 +3,8 @@ package com.example.stremiompvplayer.ui.search
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.ContextThemeWrapper
+
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +12,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -43,6 +46,17 @@ class SearchFragment : Fragment() {
         )
     }
 
+    private fun updateItemUI(item: MetaItem, isWatched: Boolean) {
+        item.isWatched = isWatched
+        item.progress = if (isWatched) item.duration else 0
+
+        val position = contentAdapter.getItemPosition(item)
+        if (position != -1) {
+            contentAdapter.notifyItemChanged(position)
+        }
+    }
+
+    private lateinit var contentAdapter: PosterAdapter
     private lateinit var searchAdapter: PosterAdapter
     private var currentSelectedItem: MetaItem? = null
 
@@ -155,36 +169,64 @@ class SearchFragment : Fragment() {
     }
 
     private fun showItemMenu(view: View, item: MetaItem) {
-        val wrapper = android.view.ContextThemeWrapper(requireContext(), android.R.style.Theme_DeviceDefault_Light_NoActionBar)
+        val wrapper = ContextThemeWrapper(requireContext(),
+            android.R.style.Theme_DeviceDefault_Light_NoActionBar)
         val popup = PopupMenu(wrapper, view)
-        popup.menu.add("Add to Library")
+
+        // NEW: Check if item is in library
+        viewModel.checkLibraryStatus(item.id)
+
+        val isInLibrary = viewModel.isItemInLibrary.value ?: false
+
+        if (isInLibrary) {
+            popup.menu.add("Remove from Library")
+        } else {
+            popup.menu.add("Add to Library")
+        }
+
         popup.menu.add("Add to TMDB Watchlist")
         popup.menu.add("Mark as Watched")
         popup.menu.add("Clear Watched Status")
+
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.title) {
-                "Add to Library" -> { viewModel.addToLibrary(item); true }
-                "Add to TMDB Watchlist" -> { viewModel.toggleWatchlist(item, force = true); true }
+                "Add to Library" -> {
+                    viewModel.addToLibrary(item)
+                    true
+                }
+                "Remove from Library" -> {
+                    viewModel.removeFromLibrary(item.id)
+                    true
+                }
+                "Add to TMDB Watchlist" -> {
+                    viewModel.toggleWatchlist(item, force = true)
+                    true
+                }
                 "Mark as Watched" -> {
                     viewModel.markAsWatched(item)
                     item.isWatched = true
                     item.progress = item.duration
-                    val position = searchAdapter.getItemPosition(item)
-                    if (position != -1) searchAdapter.notifyItemChanged(position)
+                    refreshItem(item)
                     true
                 }
                 "Clear Watched Status" -> {
                     viewModel.clearWatchedStatus(item)
                     item.isWatched = false
                     item.progress = 0
-                    val position = searchAdapter.getItemPosition(item)
-                    if (position != -1) searchAdapter.notifyItemChanged(position)
+                    refreshItem(item)
                     true
                 }
                 else -> false
             }
         }
         popup.show()
+    }
+
+    private fun refreshItem(item: MetaItem) {
+        val position = contentAdapter.getItemPosition(item)
+        if (position != -1) {
+            contentAdapter.notifyItemChanged(position)
+        }
     }
 
 
@@ -219,6 +261,18 @@ class SearchFragment : Fragment() {
             binding.progressBar.visibility = if (isSearching) View.VISIBLE else View.GONE
             binding.loadingCard.visibility = if (isSearching) View.VISIBLE else View.GONE
             if (isSearching) binding.noResultsState.visibility = View.GONE
+        }
+        viewModel.actionResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is MainViewModel.ActionResult.Success -> {
+                    Toast.makeText(requireContext(), result.message,
+                        Toast.LENGTH_SHORT).show()
+                }
+                is MainViewModel.ActionResult.Error -> {
+                    Toast.makeText(requireContext(), result.message,
+                        Toast.LENGTH_LONG).show()
+                }
+            }
         }
 
         // [CHANGE] Updated observer
