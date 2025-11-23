@@ -100,6 +100,12 @@ class CatalogRepository(
         }
     }
 
+    suspend fun getAllLibraryItems(userId: String): List<CollectedItem> {
+        return withContext(Dispatchers.IO) {
+            collectedItemDao.getAllCollectedItems(userId)
+        }
+    }
+
     suspend fun removeFromLibrary(itemId: String, userId: String) {
         withContext(Dispatchers.IO) {
             // Construct the composite ID used in CollectedItem
