@@ -1176,6 +1176,40 @@ class MainViewModel(
         viewModelScope.launch { catalogRepository.swapOrder(catalog1, catalog2) }
     }
 
+    fun deleteCatalog(catalog: UserCatalog) {
+        viewModelScope.launch { catalogRepository.deleteCatalog(catalog) }
+    }
+
+    fun addCustomList(listType: String, urlOrId: String, customName: String, pageType: String) {
+        viewModelScope.launch {
+            val userId = prefsManager.getCurrentUserId() ?: "default"
+            val catalogType = if (pageType == "movies") "movie" else "series"
+
+            // Generate a unique catalog ID based on the list type and URL/ID
+            val catalogId = "${listType}_${urlOrId.hashCode()}"
+
+            // Get the next display order
+            val maxOrder = catalogRepository.getMaxDisplayOrderForPage(userId, pageType) ?: 0
+
+            val catalog = UserCatalog(
+                id = 0,
+                userId = userId,
+                catalogId = catalogId,
+                catalogType = catalogType,
+                catalogName = customName.ifEmpty { "$listType List - ${urlOrId.take(20)}" },
+                customName = customName.ifEmpty { null },
+                displayOrder = maxOrder + 1,
+                pageType = pageType,
+                addonUrl = listType,
+                manifestId = listType,
+                showInDiscover = true,
+                showInUser = true
+            )
+
+            catalogRepository.insertCatalog(catalog)
+        }
+    }
+
     fun getDiscoverCatalogs(type: String): LiveData<List<UserCatalog>> {
         // The 'allCatalogConfigs' source is already filtered to exclude Home items
         // So we just need to check the type and 'showInDiscover'

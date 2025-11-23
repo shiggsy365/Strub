@@ -12,7 +12,8 @@ import com.example.stremiompvplayer.models.UserCatalog
 class CatalogConfigAdapter(
     private val onUpdate: (UserCatalog) -> Unit,
     private val onMoveUp: (UserCatalog, Int) -> Unit,
-    private val onMoveDown: (UserCatalog, Int) -> Unit
+    private val onMoveDown: (UserCatalog, Int) -> Unit,
+    private val onDelete: ((UserCatalog) -> Unit)? = null
 ) : ListAdapter<UserCatalog, CatalogConfigAdapter.ViewHolder>(DiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -44,6 +45,14 @@ class CatalogConfigAdapter(
             // Re-attach listeners
             binding.switchDiscover.setOnCheckedChangeListener { _, isChecked ->
                 onUpdate(item.copy(showInDiscover = isChecked))
+            }
+
+            // Show delete button for custom lists (not from tmdb or built-in local lists)
+            val isCustomList = item.addonUrl != "tmdb" &&
+                               item.catalogId !in listOf("continue_movies", "continue_episodes", "next_up")
+            binding.btnDelete.visibility = if (isCustomList && onDelete != null) View.VISIBLE else View.GONE
+            binding.btnDelete.setOnClickListener {
+                onDelete?.invoke(item)
             }
 
             binding.btnUp.setOnClickListener {
