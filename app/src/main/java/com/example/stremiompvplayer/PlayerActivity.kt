@@ -162,13 +162,6 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        saveProgress() // Save whenever we stop
-        if (android.os.Build.VERSION.SDK_INT > 23) {
-            releasePlayer()
-        }
-    }
     private fun hideSystemUi() {
         // Immersive mode
         binding.root.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
@@ -178,4 +171,36 @@ class PlayerActivity : AppCompatActivity() {
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
     }
+    private fun setupScrobbling(meta: MetaItem) {
+        player?.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_READY -> {
+                        val progress = (player?.currentPosition ?: 0).toFloat() /
+                                (player?.duration ?: 1).toFloat() * 100
+                        viewModel.scrobble("start", meta, progress)
+                    }
+                }
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                val progress = (player?.currentPosition ?: 0).toFloat() /
+                        (player?.duration ?: 1).toFloat() * 100
+                if (isPlaying) {
+                    viewModel.scrobble("start", meta, progress)
+                } else {
+                    viewModel.scrobble("pause", meta, progress)
+                }
+            }
+        })
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Scrobble stop when leaving player
+        val progress = (player?.currentPosition ?: 0).toFloat() /
+                (player?.duration ?: 1).toFloat() * 100
+        viewModel.scrobble("stop", currentMeta, progress)
+    }
 }
+
