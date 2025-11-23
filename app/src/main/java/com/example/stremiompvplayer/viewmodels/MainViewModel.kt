@@ -545,7 +545,7 @@ class MainViewModel(
                 episodes.maxWithOrNull(compareBy<WatchProgress> { it.season!! }.thenBy { it.episode!! })
             }
 
-        val nextUpItems = mutableListOf<MetaItem>()
+        val nextUpItems = mutableListOf<Pair<MetaItem, Long>>() // Pair of MetaItem and lastUpdated timestamp
 
         for ((showId, latestEpisode) in latestEpisodesByShow) {
             if (latestEpisode == null) continue
@@ -591,16 +591,15 @@ class MainViewModel(
                                     val background = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/original$it" }
                                         ?: showDetails.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
 
-                                    nextUpItems.add(
-                                        MetaItem(
-                                            id = nextEpisodeId,
-                                            type = "episode",
-                                            name = nextEpDetails.name,
-                                            poster = poster,
-                                            background = background,
-                                            description = nextEpDetails.overview ?: "Next episode"
-                                        )
+                                    val metaItem = MetaItem(
+                                        id = nextEpisodeId,
+                                        type = "episode",
+                                        name = nextEpDetails.name,
+                                        poster = poster,
+                                        background = background,
+                                        description = nextEpDetails.overview ?: "Next episode"
                                     )
+                                    nextUpItems.add(Pair(metaItem, latestEpisode.lastUpdated))
                                 }
                             }
                         }
@@ -608,7 +607,8 @@ class MainViewModel(
                 }
             } catch (e: Exception) { Log.e("NextUp", "Error processing next episode", e) }
         }
-        return nextUpItems
+        // Sort by lastUpdated (most recent first) and return only the MetaItems
+        return nextUpItems.sortedByDescending { it.second }.map { it.first }
     }
 
     // === TRAKT SYNC ===
@@ -730,6 +730,12 @@ class MainViewModel(
                     }
                 }
 
+                // After sync, ensure all library items have metadata
+                if (fetchMetadata && apiKey.isNotEmpty()) {
+                    _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Checking library for missing metadata..."))
+                    ensureAllLibraryItemsHaveMetadata()
+                }
+
                 _traktSyncStatus.postValue(TraktSyncStatus.Success("Sync Complete"))
 
             } catch (e: Exception) {
@@ -737,6 +743,63 @@ class MainViewModel(
             } finally {
                 _isLoading.postValue(false)
             }
+        }
+    }
+
+    private suspend fun ensureAllLibraryItemsHaveMetadata() {
+        val userId = prefsManager.getCurrentUserId() ?: return
+        if (apiKey.isEmpty()) return
+
+        try {
+            // Get all library items
+            val libraryItems = catalogRepository.getAllLibraryItems(userId)
+
+            libraryItems.forEach { item ->
+                // Check if item is missing metadata (no poster or background)
+                if (item.poster.isNullOrEmpty() || item.background.isNullOrEmpty()) {
+                    val tmdbId = item.id.removePrefix("tmdb:").split(":").firstOrNull()?.toIntOrNull()
+                    if (tmdbId != null) {
+                        try {
+                            when (item.type) {
+                                "movie" -> {
+                                    val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
+                                    val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                    val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                    val enrichedMeta = MetaItem(
+                                        id = "tmdb:$tmdbId",
+                                        type = "movie",
+                                        name = details.title,
+                                        poster = poster,
+                                        background = background,
+                                        description = details.overview,
+                                        releaseDate = details.release_date
+                                    )
+                                    catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
+                                }
+                                "series" -> {
+                                    val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                                    val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                    val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                    val enrichedMeta = MetaItem(
+                                        id = "tmdb:$tmdbId",
+                                        type = "series",
+                                        name = details.name,
+                                        poster = poster,
+                                        background = background,
+                                        description = details.overview,
+                                        releaseDate = null
+                                    )
+                                    catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e("MetadataSync", "Failed to fetch metadata for ${item.id}: ${e.message}")
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MetadataSync", "Error ensuring library metadata: ${e.message}")
         }
     }
 

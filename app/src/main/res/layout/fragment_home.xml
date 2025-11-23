@@ -63,7 +63,7 @@
                             android:layout_height="match_parent"
                             android:layout_weight="0.3"
                             android:padding="@dimen/spacing_sm"
-                            android:minHeight="200dp">
+                            android:minHeight="150dp">
 
                             <FrameLayout
                                 android:id="@+id/nextUpLogoContainer"
@@ -128,20 +128,6 @@
                                 tools:text="9.5"
                                 tools:visibility="visible" />
 
-                            <TextView
-                                android:id="@+id/nextUpDescription"
-                                android:layout_width="match_parent"
-                                android:layout_height="0dp"
-                                android:layout_marginTop="@dimen/spacing_sm"
-                                android:ellipsize="end"
-                                android:lineSpacingExtra="@dimen/spacing_xs"
-                                android:textAppearance="?attr/textAppearanceBodySmall"
-                                android:textColor="@color/text_secondary"
-                                app:layout_constraintTop_toBottomOf="@id/nextUpRating"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                tools:text="A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing methamphetamine to provide for his family." />
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -149,7 +135,7 @@
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/rvNextUp"
                             android:layout_width="0dp"
-                            android:layout_height="200dp"
+                            android:layout_height="150dp"
                             android:layout_weight="0.7"
                             android:clipToPadding="false"
                             android:clipChildren="false"
@@ -187,7 +173,7 @@
                             android:layout_height="match_parent"
                             android:layout_weight="0.3"
                             android:padding="@dimen/spacing_sm"
-                            android:minHeight="200dp">
+                            android:minHeight="150dp">
 
                             <FrameLayout
                                 android:id="@+id/continueEpisodesLogoContainer"
@@ -252,20 +238,6 @@
                                 tools:text="8.7"
                                 tools:visibility="visible" />
 
-                            <TextView
-                                android:id="@+id/continueEpisodesDescription"
-                                android:layout_width="match_parent"
-                                android:layout_height="0dp"
-                                android:layout_marginTop="@dimen/spacing_sm"
-                                android:ellipsize="end"
-                                android:lineSpacingExtra="@dimen/spacing_xs"
-                                android:textAppearance="?attr/textAppearanceBodySmall"
-                                android:textColor="@color/text_secondary"
-                                app:layout_constraintTop_toBottomOf="@id/continueEpisodesRating"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                tools:text="Continue watching your favorite shows." />
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -273,7 +245,7 @@
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/rvContinueEpisodes"
                             android:layout_width="0dp"
-                            android:layout_height="200dp"
+                            android:layout_height="150dp"
                             android:layout_weight="0.7"
                             android:clipToPadding="false"
                             android:clipChildren="false"
@@ -311,7 +283,7 @@
                             android:layout_height="match_parent"
                             android:layout_weight="0.3"
                             android:padding="@dimen/spacing_sm"
-                            android:minHeight="200dp">
+                            android:minHeight="150dp">
 
                             <FrameLayout
                                 android:id="@+id/continueMoviesLogoContainer"
@@ -362,20 +334,6 @@
                                 tools:text="8.8"
                                 tools:visibility="visible" />
 
-                            <TextView
-                                android:id="@+id/continueMoviesDescription"
-                                android:layout_width="match_parent"
-                                android:layout_height="0dp"
-                                android:layout_marginTop="@dimen/spacing_sm"
-                                android:ellipsize="end"
-                                android:lineSpacingExtra="@dimen/spacing_xs"
-                                android:textAppearance="?attr/textAppearanceBodySmall"
-                                android:textColor="@color/text_secondary"
-                                app:layout_constraintTop_toBottomOf="@id/continueMoviesRating"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                tools:text="Continue watching your favorite movies." />
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -383,7 +341,7 @@
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/rvContinueMovies"
                             android:layout_width="0dp"
-                            android:layout_height="200dp"
+                            android:layout_height="150dp"
                             android:layout_weight="0.7"
                             android:clipToPadding="false"
                             android:clipChildren="false"

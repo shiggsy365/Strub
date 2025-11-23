@@ -178,9 +178,6 @@ class HomeFragment : Fragment() {
             binding.nextUpEpisode.visibility = View.GONE
         }
 
-        // Update description
-        binding.nextUpDescription.text = item.description ?: "No description available."
-
         // Rating - would need to fetch from TMDB if not in MetaItem
         binding.nextUpRating.visibility = View.GONE
 
@@ -210,9 +207,6 @@ class HomeFragment : Fragment() {
             binding.continueEpisodesEpisode.visibility = View.GONE
         }
 
-        // Update description
-        binding.continueEpisodesDescription.text = item.description ?: "Continue watching your favorite shows."
-
         // Rating
         binding.continueEpisodesRating.visibility = View.GONE
 
@@ -228,9 +222,6 @@ class HomeFragment : Fragment() {
     private fun updateContinueMoviesSidecar(item: MetaItem) {
         // Update title/logo
         binding.continueMoviesTitle.text = item.name
-
-        // Update description
-        binding.continueMoviesDescription.text = item.description ?: "Continue watching your favorite movies."
 
         // Rating
         binding.continueMoviesRating.visibility = View.GONE
