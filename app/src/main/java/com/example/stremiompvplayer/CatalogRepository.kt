@@ -88,6 +88,18 @@ class CatalogRepository(
         }
     }
 
+    suspend fun deleteCatalog(catalog: UserCatalog) {
+        withContext(Dispatchers.IO) {
+            userCatalogDao.delete(catalog)
+        }
+    }
+
+    suspend fun getMaxDisplayOrderForPage(userId: String, pageType: String): Int? {
+        return withContext(Dispatchers.IO) {
+            userCatalogDao.getMaxDisplayOrder(userId, pageType)
+        }
+    }
+
     // --- LIBRARY METHODS ---
 
     fun getLibraryItems(userId: String, type: String): LiveData<List<CollectedItem>> {

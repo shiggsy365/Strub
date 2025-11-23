@@ -377,16 +377,14 @@ class SettingsActivity : AppCompatActivity() {
             currentUrl?.contains("nhyira.dev") == true -> 1
             else -> 2
         }
-        binding.spinnerAioStreamsUrl.setSelection(selectionIndex)
-
-        binding.spinnerAioStreamsUrl.setOnTouchListener { _, _ ->
-            userInteracted = true
-            false
-        }
 
         binding.spinnerAioStreamsUrl.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                if (!userInteracted) return
+                if (!userInteracted) {
+                    // First time setup - allow it to complete
+                    userInteracted = true
+                    return
+                }
 
                 when (position) {
                     0 -> {
@@ -405,6 +403,8 @@ class SettingsActivity : AppCompatActivity() {
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
+
+        binding.spinnerAioStreamsUrl.setSelection(selectionIndex)
 
         binding.btnConfigureAIOStreams.setOnClickListener {
             showAIOStreamsDialog()
@@ -541,7 +541,8 @@ class SettingsActivity : AppCompatActivity() {
                     val next = list[pos + 1]
                     viewModel.swapCatalogOrder(catalog, next)
                 }
-            }
+            },
+            onDelete = { catalog -> deleteCatalog(catalog) }
         )
 
         binding.rvCatalogConfigs.layoutManager = LinearLayoutManager(this)
@@ -563,7 +564,8 @@ class SettingsActivity : AppCompatActivity() {
                     val next = list[pos + 1]
                     viewModel.swapCatalogOrder(catalog, next)
                 }
-            }
+            },
+            onDelete = { catalog -> deleteCatalog(catalog) }
         )
 
         binding.rvSeriesCatalogConfigs.layoutManager = LinearLayoutManager(this)
@@ -581,6 +583,92 @@ class SettingsActivity : AppCompatActivity() {
         viewModel.seriesCatalogs.observe(this) { list ->
             seriesAdapter.submitList(list)
         }
+
+        // Add Custom List Buttons
+        binding.btnAddMovieList.setOnClickListener {
+            showAddCustomListDialog("movies")
+        }
+
+        binding.btnAddSeriesList.setOnClickListener {
+            showAddCustomListDialog("series")
+        }
+    }
+
+    private fun deleteCatalog(catalog: UserCatalog) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Delete List")
+            .setMessage("Are you sure you want to delete '${catalog.displayName}'?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteCatalog(catalog)
+                Toast.makeText(this, "List deleted", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showAddCustomListDialog(pageType: String) {
+        val listTypeItems = arrayOf("mdblist", "IMDB List", "TMDB List", "Trakt List")
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Add Custom List - ${pageType.capitalize()}")
+            .setItems(listTypeItems) { _, which ->
+                when (which) {
+                    0 -> showListUrlDialog("mdblist", pageType)
+                    1 -> showListUrlDialog("imdb", pageType)
+                    2 -> showListUrlDialog("tmdb", pageType)
+                    3 -> showListUrlDialog("trakt", pageType)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showListUrlDialog(listType: String, pageType: String) {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 16, 48, 16)
+        }
+
+        val urlInput = TextInputEditText(this).apply {
+            hint = when (listType) {
+                "mdblist" -> "mdblist.com URL or ID"
+                "imdb" -> "IMDB List ID (e.g., ls123456789)"
+                "tmdb" -> "TMDB List ID"
+                "trakt" -> "Trakt List URL or username/listname"
+                else -> "List URL or ID"
+            }
+            inputType = InputType.TYPE_CLASS_TEXT
+            setSingleLine(true)
+        }
+
+        val nameInput = TextInputEditText(this).apply {
+            hint = "Custom Name (optional)"
+            inputType = InputType.TYPE_CLASS_TEXT
+            setSingleLine(true)
+        }
+
+        container.addView(urlInput)
+        container.addView(nameInput)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Enter ${listType.toUpperCase()} List Details")
+            .setView(container)
+            .setPositiveButton("Add") { _, _ ->
+                val url = urlInput.text.toString().trim()
+                val customName = nameInput.text.toString().trim()
+                if (url.isNotEmpty()) {
+                    addCustomList(listType, url, customName, pageType)
+                } else {
+                    Toast.makeText(this, "Please enter a valid URL or ID", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun addCustomList(listType: String, urlOrId: String, customName: String, pageType: String) {
+        viewModel.addCustomList(listType, urlOrId, customName, pageType)
+        Toast.makeText(this, "Custom list added", Toast.LENGTH_SHORT).show()
     }
 
     private fun setupUserSection() {

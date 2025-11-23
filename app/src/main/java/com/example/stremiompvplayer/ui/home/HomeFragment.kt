@@ -54,6 +54,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupRecyclerViewHeights()
         setupNextUpSection()
         setupContinueEpisodesSection()
         setupContinueMoviesSection()
@@ -61,6 +62,16 @@ class HomeFragment : Fragment() {
 
         // Load home content
         viewModel.loadHomeContent()
+    }
+
+    private fun setupRecyclerViewHeights() {
+        // Set max height to 25% of screen height
+        val displayMetrics = resources.displayMetrics
+        val maxHeight = (displayMetrics.heightPixels * 0.25).toInt()
+
+        binding.rvNextUp.layoutParams.height = maxHeight
+        binding.rvContinueEpisodes.layoutParams.height = maxHeight
+        binding.rvContinueMovies.layoutParams.height = maxHeight
     }
 
     private fun setupNextUpSection() {

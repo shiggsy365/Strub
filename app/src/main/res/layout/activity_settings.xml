@@ -301,6 +301,16 @@
                 android:layout_weight="1"
                 tools:listitem="@layout/item_catalog_config_settings" />
 
+            <Button
+                android:id="@+id/btnAddMovieList"
+                style="@style/Widget.App.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Add Custom List"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="8dp"
+                android:focusable="true" />
+
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
@@ -372,6 +382,16 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 tools:listitem="@layout/item_catalog_config_settings" />
+
+            <Button
+                android:id="@+id/btnAddSeriesList"
+                style="@style/Widget.App.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Add Custom List"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="8dp"
+                android:focusable="true" />
 
         </LinearLayout>
 
