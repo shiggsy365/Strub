@@ -252,9 +252,14 @@ class LibraryFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        viewModel.libraryMovies.observe(viewLifecycleOwner) {}
-        viewModel.librarySeries.observe(viewLifecycleOwner) {}
+        viewModel.libraryMovies.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            // Keep this empty, we just need to keep the LiveData active
+        })
+        viewModel.librarySeries.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            // Keep this empty
+        })
         val liveData = if (currentType == "movie") {
+
             viewModel.filteredLibraryMovies
         } else {
             viewModel.filteredLibrarySeries
