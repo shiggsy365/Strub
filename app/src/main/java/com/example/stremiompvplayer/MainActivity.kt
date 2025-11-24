@@ -19,6 +19,7 @@ import com.example.stremiompvplayer.ui.movies.MoviesFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
 import com.example.stremiompvplayer.ui.series.SeriesFragment
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import com.example.stremiompvplayer.utils.FocusMemoryManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.google.android.material.chip.Chip
@@ -26,6 +27,8 @@ import com.google.android.material.chip.Chip
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private val focusMemoryManager = FocusMemoryManager.getInstance()
+    private var currentFragmentKey: String? = null
 
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(
@@ -168,10 +171,62 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadFragment(fragment: Fragment) {
+    private fun loadFragment(fragment: Fragment, fragmentKey: String? = null) {
+        // Save focus state before loading new fragment
+        currentFragmentKey?.let { key ->
+            currentFocus?.let { view ->
+                focusMemoryManager.saveFocus(key, view)
+            }
+        }
+
+        // Update current fragment key
+        currentFragmentKey = fragmentKey ?: when (fragment) {
+            is HomeFragment -> "home"
+            is DiscoverFragment -> focusMemoryManager.getFragmentKey("discover", fragment.arguments?.getString("type") ?: "movie")
+            is LibraryFragment -> focusMemoryManager.getFragmentKey("library", fragment.arguments?.getString("type") ?: "movie")
+            is SearchFragment -> "search"
+            is LiveTVFragment -> "livetv"
+            is SeriesFragment -> focusMemoryManager.getFragmentKey("series", fragment.arguments?.getString("seriesId") ?: "unknown")
+            else -> fragment.javaClass.simpleName
+        }
+
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .commit()
+
+        // Restore focus after fragment is loaded
+        currentFragmentKey?.let { key ->
+            if (focusMemoryManager.hasFocusMemory(key)) {
+                binding.root.postDelayed({
+                    focusMemoryManager.restoreFocus(key)
+                }, 150)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Save current focus state
+        currentFragmentKey?.let { key ->
+            currentFocus?.let { view ->
+                focusMemoryManager.saveFocus(key, view)
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Clean up stale focus memory
+        focusMemoryManager.cleanupStale()
+
+        // Restore focus if available
+        currentFragmentKey?.let { key ->
+            if (focusMemoryManager.hasFocusMemory(key)) {
+                binding.root.postDelayed({
+                    focusMemoryManager.restoreFocus(key)
+                }, 100)
+            }
+        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -188,6 +243,15 @@ class MainActivity : AppCompatActivity() {
                     focus == binding.chipMore
 
             if (isFocusOnMenu) {
+                // Check if we have saved focus to restore
+                currentFragmentKey?.let { key ->
+                    if (focusMemoryManager.hasFocusMemory(key)) {
+                        focusMemoryManager.restoreFocus(key)
+                        return true
+                    }
+                }
+
+                // Otherwise use default fragment-specific focus
                 if (currentFragment is SearchFragment) {
                     currentFragment.focusSearch()
                     return true
@@ -215,6 +279,13 @@ class MainActivity : AppCompatActivity() {
             if (isFocusOnMenu) {
                 return super.onKeyDown(keyCode, event)
             } else {
+                // Save current focus before returning to menu
+                currentFragmentKey?.let { key ->
+                    currentFocus?.let { view ->
+                        focusMemoryManager.saveFocus(key, view)
+                    }
+                }
+
                 when {
                     binding.chipHome.isChecked -> binding.chipHome.requestFocus()
                     binding.chipDiscover.isChecked -> binding.chipDiscover.requestFocus()

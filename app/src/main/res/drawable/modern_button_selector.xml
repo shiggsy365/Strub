@@ -1,73 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modern button style with Material Design 3 principles -->
+<!-- Modern button style with vibrant gradients and depth -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    
-    <!-- Pressed State -->
+
+    <!-- Pressed State - Deeper press with gradient -->
     <item android:state_pressed="true">
         <layer-list>
-            <!-- Background -->
+            <!-- Gradient background pressed -->
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="@color/md_theme_primaryContainer" />
+                    <gradient
+                        android:angle="135"
+                        android:startColor="@color/gradient_primary_end"
+                        android:endColor="@color/md_theme_dark_primaryContainer"
+                        android:type="linear" />
                     <corners android:radius="@dimen/corner_radius_large" />
                 </shape>
             </item>
-            
-            <!-- Pressed indicator -->
+
+            <!-- Inner shadow effect -->
             <item android:top="2dp" android:bottom="2dp" android:left="2dp" android:right="2dp">
                 <shape android:shape="rectangle">
-                    <solid android:color="#1AE50914" />
+                    <solid android:color="#3000D9FF" />
                     <corners android:radius="@dimen/corner_radius_medium" />
                 </shape>
             </item>
         </layer-list>
     </item>
-    
-    <!-- Focused State -->
+
+    <!-- Focused State - Vibrant glow effect -->
     <item android:state_focused="true">
         <layer-list>
-            <!-- Background -->
-            <item>
+            <!-- Outer glow - bright cyan halo -->
+            <item android:insetTop="-4dp" android:insetBottom="-4dp"
+                  android:insetLeft="-4dp" android:insetRight="-4dp">
                 <shape android:shape="rectangle">
-                    <solid android:color="@color/md_theme_primary" />
-                    <corners android:radius="@dimen/corner_radius_large" />
+                    <solid android:color="#4000F0FF" />
+                    <corners android:radius="@dimen/corner_radius_xlarge" />
                 </shape>
             </item>
-            
-            <!-- Focus ring -->
-            <item>
-                <shape android:shape="rectangle">
-                    <solid android:color="#00000000" />
-                    <corners android:radius="@dimen/corner_radius_large" />
-                    <stroke android:width="@dimen/stroke_thick" android:color="@color/md_theme_onPrimary" />
-                </shape>
-            </item>
-            
-            <!-- Outer glow -->
-            <item android:insetTop="-2dp" android:insetBottom="-2dp" 
+
+            <!-- Middle glow layer -->
+            <item android:insetTop="-2dp" android:insetBottom="-2dp"
                   android:insetLeft="-2dp" android:insetRight="-2dp">
                 <shape android:shape="rectangle">
                     <solid android:color="#00000000" />
                     <corners android:radius="@dimen/corner_radius_xlarge" />
-                    <stroke android:width="1dp" android:color="#66E50914" />
+                    <stroke android:width="2dp" android:color="#8000D9FF" />
+                </shape>
+            </item>
+
+            <!-- Gradient background -->
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="135"
+                        android:startColor="@color/gradient_primary_start"
+                        android:endColor="@color/gradient_primary_end"
+                        android:type="linear" />
+                    <corners android:radius="@dimen/corner_radius_large" />
+                </shape>
+            </item>
+
+            <!-- Bright border -->
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#00000000" />
+                    <corners android:radius="@dimen/corner_radius_large" />
+                    <stroke android:width="2dp" android:color="@color/focus_primary" />
+                </shape>
+            </item>
+
+            <!-- Top highlight -->
+            <item android:height="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#40FFFFFF" />
+                    <corners android:radius="@dimen/corner_radius_large" />
                 </shape>
             </item>
         </layer-list>
     </item>
-    
-    <!-- Disabled State -->
+
+    <!-- Disabled State - Muted -->
     <item android:state_enabled="false">
         <shape android:shape="rectangle">
             <solid android:color="@color/md_theme_surfaceDim" />
             <corners android:radius="@dimen/corner_radius_large" />
         </shape>
     </item>
-    
-    <!-- Default State -->
+
+    <!-- Default State - Subtle gradient -->
     <item>
-        <shape android:shape="rectangle">
-            <solid android:color="@color/md_theme_primary" />
-            <corners android:radius="@dimen/corner_radius_large" />
-        </shape>
+        <layer-list>
+            <!-- Gradient background -->
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="135"
+                        android:startColor="@color/gradient_primary_start"
+                        android:centerColor="@color/md_theme_dark_primary"
+                        android:endColor="@color/gradient_primary_end"
+                        android:type="linear" />
+                    <corners android:radius="@dimen/corner_radius_large" />
+                </shape>
+            </item>
+
+            <!-- Subtle top highlight -->
+            <item android:height="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#20FFFFFF" />
+                    <corners android:radius="@dimen/corner_radius_large" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
 </selector>

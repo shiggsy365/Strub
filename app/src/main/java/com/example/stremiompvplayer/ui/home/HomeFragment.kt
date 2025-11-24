@@ -23,6 +23,7 @@ import com.example.stremiompvplayer.databinding.FragmentHomeBinding
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.models.UserCatalog
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import com.example.stremiompvplayer.utils.FocusMemoryManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import kotlinx.coroutines.Job
@@ -49,6 +50,9 @@ class HomeFragment : Fragment() {
     // [FIX] Track current catalog to refresh it on Resume
     private var currentCatalog: UserCatalog? = null
 
+    private val focusMemoryManager = FocusMemoryManager.getInstance()
+    private val fragmentKey = "home"
+
     companion object {
         fun newInstance(): HomeFragment {
             return HomeFragment()
@@ -73,6 +77,29 @@ class HomeFragment : Fragment() {
         // [FIX] Reload the current list when returning to screen (e.g. from Player)
         currentCatalog?.let {
             viewModel.loadContentForCatalog(it, isInitialLoad = true)
+        }
+
+        // Restore previously focused position for seamless navigation
+        val savedPosition = focusMemoryManager.getSavedPosition(fragmentKey)
+        if (savedPosition >= 0 && savedPosition < contentAdapter.itemCount) {
+            binding.root.postDelayed({
+                binding.rvContent.scrollToPosition(savedPosition)
+                binding.rvContent.postDelayed({
+                    binding.rvContent.layoutManager?.findViewByPosition(savedPosition)?.requestFocus()
+                }, 100)
+            }, 150)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Save current focus before leaving fragment
+        val currentView = view?.findFocus()
+        if (currentView != null) {
+            val position = binding.rvContent.getChildAdapterPosition(currentView)
+            if (position != RecyclerView.NO_POSITION) {
+                focusMemoryManager.saveFocus(fragmentKey, currentView, position)
+            }
         }
     }
 
@@ -106,6 +133,9 @@ class HomeFragment : Fragment() {
                     if (hasFocus) {
                         val position = binding.rvContent.getChildAdapterPosition(v)
                         if (position != RecyclerView.NO_POSITION) {
+                            // Save focus position for seamless navigation
+                            focusMemoryManager.saveFocus(fragmentKey, v, position)
+
                             val item = contentAdapter.getItem(position)
                             if (item != null) {
                                 detailsUpdateJob?.cancel()

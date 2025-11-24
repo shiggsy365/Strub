@@ -22,6 +22,7 @@ import com.example.stremiompvplayer.databinding.FragmentDiscoverBinding
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.models.UserCatalog
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import com.example.stremiompvplayer.utils.FocusMemoryManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.example.stremiompvplayer.adapters.PosterAdapter
@@ -49,6 +50,9 @@ class DiscoverFragment : Fragment() {
     private var currentSelectedItem: MetaItem? = null
 
     private var detailsUpdateJob: Job? = null
+    private val focusMemoryManager = FocusMemoryManager.getInstance()
+    private val fragmentKey: String
+        get() = focusMemoryManager.getFragmentKey("discover", currentType)
 
     companion object {
         private const val ARG_TYPE = "media_type"
@@ -77,6 +81,29 @@ class DiscoverFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         currentSelectedItem?.let { updateDetailsPane(it) }
+
+        // Restore previously focused position for seamless navigation
+        val savedPosition = focusMemoryManager.getSavedPosition(fragmentKey)
+        if (savedPosition >= 0 && savedPosition < contentAdapter.itemCount) {
+            binding.root.postDelayed({
+                binding.rvContent.scrollToPosition(savedPosition)
+                binding.rvContent.postDelayed({
+                    binding.rvContent.layoutManager?.findViewByPosition(savedPosition)?.requestFocus()
+                }, 100)
+            }, 150)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Save current focus before leaving fragment
+        val currentView = view?.findFocus()
+        if (currentView != null) {
+            val position = binding.rvContent.getChildAdapterPosition(currentView)
+            if (position != RecyclerView.NO_POSITION) {
+                focusMemoryManager.saveFocus(fragmentKey, currentView, position)
+            }
+        }
     }
 
     fun handleBackPress(): Boolean { return false }
@@ -108,6 +135,9 @@ class DiscoverFragment : Fragment() {
                     if (hasFocus) {
                         val position = binding.rvContent.getChildAdapterPosition(v)
                         if (position != RecyclerView.NO_POSITION) {
+                            // Save focus position for seamless navigation
+                            focusMemoryManager.saveFocus(fragmentKey, v, position)
+
                             val item = contentAdapter.getItem(position)
                             if (item != null) {
                                 detailsUpdateJob?.cancel()
