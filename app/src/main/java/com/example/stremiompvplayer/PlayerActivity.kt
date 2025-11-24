@@ -56,32 +56,22 @@ class PlayerActivity : AppCompatActivity() {
 
     public override fun onStart() {
         super.onStart()
-        if (android.os.Build.VERSION.SDK_INT > 23) {
-            initializePlayer()
-        }
+        initializePlayer()
     }
 
     public override fun onResume() {
         super.onResume()
         hideSystemUi()
-        if (android.os.Build.VERSION.SDK_INT <= 23 || player == null) {
+        if (player == null) {
             initializePlayer()
         }
     }
 
     public override fun onPause() {
         super.onPause()
-        saveProgress() // Save whenever we pause or leave
-        if (android.os.Build.VERSION.SDK_INT <= 23) {
-            releasePlayer()
-        }
-    }
-
-    public override fun onStop() {
-        super.onStop()
-        if (android.os.Build.VERSION.SDK_INT > 23) {
-            releasePlayer()
-        }
+        saveProgress()
+        // [FIX] Release player immediately on pause to stop audio when pressing back
+        releasePlayer()
     }
 
     @OptIn(UnstableApi::class) private fun initializePlayer() {
@@ -145,13 +135,12 @@ class PlayerActivity : AppCompatActivity() {
             currentItem = exoPlayer.currentMediaItemIndex
             playWhenReady = exoPlayer.playWhenReady
 
-            // Scrobble Stop
+            // [FIX] Scrobble Stop on exit
             currentMeta?.let { meta ->
                 val duration = exoPlayer.duration
                 val position = exoPlayer.currentPosition
                 if (duration > 0) {
                     val progress = (position.toFloat() / duration.toFloat()) * 100f
-                    // [FIX] Ensure final stop scrobble is sent
                     viewModel.scrobble("stop", meta, progress)
                 }
             }

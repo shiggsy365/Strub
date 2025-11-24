@@ -46,6 +46,9 @@ class HomeFragment : Fragment() {
     private var currentSelectedItem: MetaItem? = null
     private var detailsUpdateJob: Job? = null
 
+    // [FIX] Track current catalog to refresh it on Resume
+    private var currentCatalog: UserCatalog? = null
+
     companion object {
         fun newInstance(): HomeFragment {
             return HomeFragment()
@@ -67,11 +70,16 @@ class HomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         currentSelectedItem?.let { updateDetailsPane(it) }
+        // [FIX] Reload the current list when returning to screen (e.g. from Player)
+        currentCatalog?.let {
+            viewModel.loadContentForCatalog(it, isInitialLoad = true)
+        }
     }
 
     private fun setupAdapters() {
         // Sidebar Setup
         sidebarAdapter = SidebarAdapter { catalog ->
+            currentCatalog = catalog
             viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
         }
         binding.rvSidebar.layoutManager = LinearLayoutManager(context)
@@ -125,6 +133,7 @@ class HomeFragment : Fragment() {
 
         // Auto-load the first catalog (Next Up)
         if (catalogs.isNotEmpty()) {
+            currentCatalog = catalogs[0]
             viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
         }
     }
@@ -200,14 +209,10 @@ class HomeFragment : Fragment() {
                     }
                     "Mark as Watched" -> {
                         viewModel.markAsWatched(item)
-                        item.isWatched = true
-                        contentAdapter.notifyDataSetChanged()
                         true
                     }
                     "Clear Watched Status" -> {
                         viewModel.clearWatchedStatus(item)
-                        item.isWatched = false
-                        contentAdapter.notifyDataSetChanged()
                         true
                     }
                     else -> false
@@ -266,7 +271,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // Loading Logic (RESTORED)
+        // Loading Logic
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.loadingCard.visibility = if (isLoading) View.VISIBLE else View.GONE
         }

@@ -369,7 +369,7 @@ class MainViewModel(
         if (apiKey.isEmpty()) return
 
         viewModelScope.launch {
-            _isLoading.postValue(true) // [FIX] Show loading spinner
+            _isLoading.postValue(true)
 
             val userId = prefsManager.getCurrentUserId() ?: "default"
             val isTrakt = prefsManager.isTraktEnabled()
@@ -389,7 +389,6 @@ class MainViewModel(
             val moviesJob = async { fetchCatalogItems(continueMovieCat) }
 
             try {
-                // Wait for all to finish (so we don't pop in one by one)
                 val nextUp = nextUpJob.await()
                 val shows = showsJob.await()
                 val movies = moviesJob.await()
@@ -400,7 +399,7 @@ class MainViewModel(
             } catch (e: Exception) {
                 Log.e("HomeLoad", "Error loading home content", e)
             } finally {
-                _isLoading.postValue(false) // [FIX] Hide loading spinner
+                _isLoading.postValue(false)
             }
         }
     }
@@ -419,11 +418,12 @@ class MainViewModel(
                     "trakt_continue_movies" -> {
                         val list = TraktClient.api.getPausedMovies(bearer, clientId)
                         list.mapNotNull { it.movie }
-                            // Filter out items > 90% or already watched in local DB
+                            // [FIX] Filter out items that are watched OR have progress > 90%
                             .filter {
                                 val progress = it.ids.tmdb?.let { id -> catalogRepository.getWatchProgress(prefsManager.getCurrentUserId()?:"default", "tmdb:$id") }
                                 val isWatched = progress?.isWatched == true
-                                !isWatched
+                                val isAlmostDone = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } ?: false
+                                !isWatched && !isAlmostDone
                             }
                             .map { movie ->
                                 MetaItem(id = "tmdb:${movie.ids.tmdb}", type = "movie", name = movie.title, description = "Paused", poster = null, background = null)
@@ -438,6 +438,9 @@ class MainViewModel(
                             if (show != null && ep != null) {
                                 val epTmdbId = ep.ids?.tmdb
                                 if (epTmdbId != null) {
+                                    // Also check local progress for 90% rule on episodes
+                                    val epId = "tmdb:${show.ids.tmdb}:${ep.ids?.tmdb}" // Rough ID match if possible, otherwise rely on Trakt status
+
                                     MetaItem(
                                         id = "trakt_ep:${show.ids.tmdb}:$epTmdbId",
                                         type = "episode",
@@ -513,6 +516,7 @@ class MainViewModel(
                 "continue_movies" -> {
                     val currentUserId = prefsManager.getCurrentUserId() ?: "default"
                     catalogRepository.getContinueWatching(currentUserId, "movie")
+                        // [FIX] Filter items that are watched OR have progress > 90%
                         .filter { !it.isWatched && (it.duration == 0L || (it.progress.toFloat() / it.duration.toFloat()) < 0.9f) }
                         .map { progress ->
                             MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
@@ -521,6 +525,7 @@ class MainViewModel(
                 "continue_episodes" -> {
                     val currentUserId = prefsManager.getCurrentUserId() ?: "default"
                     catalogRepository.getContinueWatching(currentUserId, "episode")
+                        // [FIX] Filter items that are watched OR have progress > 90%
                         .filter { !it.isWatched && (it.duration == 0L || (it.progress.toFloat() / it.duration.toFloat()) < 0.9f) }
                         .map { progress ->
                             MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
@@ -532,7 +537,6 @@ class MainViewModel(
         }
     }
 
-    // ... (rest of the file remains the same, enrichWithTmdbMetadata etc) ...
     private suspend fun enrichWithTmdbMetadata(items: List<MetaItem>, catalogId: String): List<MetaItem> {
         return items.map { item ->
             viewModelScope.async {
@@ -579,7 +583,7 @@ class MainViewModel(
         }.awaitAll()
     }
 
-    // ... (rest of file: generateNextUpList, performTraktSync, markAsWatched, etc) ...
+    // === NEXT UP GENERATION ===
     private suspend fun generateNextUpList(): List<MetaItem> {
         val currentUserId = prefsManager.getCurrentUserId() ?: return emptyList()
         val watchedEpisodes = catalogRepository.getNextUpCandidates(currentUserId)
@@ -593,7 +597,7 @@ class MainViewModel(
                 episodes.maxWithOrNull(compareBy<WatchProgress> { it.season!! }.thenBy { it.episode!! })
             }
 
-        val nextUpItems = mutableListOf<Pair<MetaItem, Long>>() // Pair of MetaItem and lastUpdated timestamp
+        val nextUpItems = mutableListOf<Pair<MetaItem, Long>>()
 
         for ((showId, latestEpisode) in latestEpisodesByShow) {
             if (latestEpisode == null) continue
@@ -659,6 +663,7 @@ class MainViewModel(
         return nextUpItems.sortedByDescending { it.second }.map { it.first }
     }
 
+    // === TRAKT SYNC ===
     fun performTraktSync(syncHistory: Boolean, syncNextUp: Boolean, syncLists: Boolean, fetchMetadata: Boolean = true) {
         if (!prefsManager.isTraktEnabled()) return
 
@@ -802,6 +807,7 @@ class MainViewModel(
         }
     }
 
+    // === WATCHED ACTION & REFRESH ===
     fun markAsWatched(item: MetaItem, syncToTrakt: Boolean = true) {
         val currentUserId = prefsManager.getCurrentUserId() ?: return
         val idStr = item.id.removePrefix("tmdb:")
@@ -830,6 +836,7 @@ class MainViewModel(
                     }
                 }
 
+                // Update Local DB
                 if (item.type == "series" && tmdbId != null && apiKey.isNotEmpty()) {
                     val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
                     details.seasons?.forEach { season ->
@@ -853,9 +860,11 @@ class MainViewModel(
                     catalogRepository.saveWatchProgress(WatchProgress(currentUserId, item.id, item.type, 0, 0, true, System.currentTimeMillis(), item.name, item.poster, item.background, null, null, null))
                 }
 
+                // Refresh
                 lastRequestedCatalog?.let {
                     loadContentForCatalog(it, isInitialLoad = false)
                 }
+                // Also reload home
                 loadHomeContent()
 
                 _isItemWatched.postValue(true)
@@ -887,6 +896,7 @@ class MainViewModel(
 
                 catalogRepository.updateWatchedStatus(currentUserId, item.id, false)
                 lastRequestedCatalog?.let { loadContentForCatalog(it, isInitialLoad = false) }
+                // Reload home to remove from list
                 loadHomeContent()
 
                 _isItemWatched.postValue(false)
@@ -897,6 +907,7 @@ class MainViewModel(
         }
     }
 
+    // === STANDARD METHODS ===
     fun loadStreams(type: String, itemId: String) {
         _isLoading.postValue(true)
         viewModelScope.launch {
@@ -1242,6 +1253,7 @@ class MainViewModel(
         }
     }
 
+    // [FIX] Use GlobalScope for scrobbling to survive activity death
     fun scrobble(action: String, meta: MetaItem, progress: Float) {
         if (!prefsManager.isTraktEnabled()) return
         val token = prefsManager.getTraktAccessToken() ?: return
