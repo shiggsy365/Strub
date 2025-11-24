@@ -112,6 +112,13 @@ interface TraktApi {
         @Body body: TraktHistoryBody
     ): TraktSyncResponse
 
+    @retrofit2.http.DELETE("sync/playback/{id}")
+    suspend fun removePlaybackProgress(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @retrofit2.http.Path("id") playbackId: Long
+    )
+
     // --- DISCOVER ---
     @GET("movies/popular")
     suspend fun getPopularMovies(@Header("trakt-api-key") clientId: String): List<TraktMovie>

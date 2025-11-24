@@ -647,11 +647,53 @@ class MainViewModel(
                 }
                 "continue_episodes" -> {
                     val currentUserId = prefsManager.getCurrentUserId() ?: "default"
-                    catalogRepository.getContinueWatching(currentUserId, "episode")
+                    val episodes = catalogRepository.getContinueWatching(currentUserId, "episode")
                         .filter { !it.isWatched && (it.duration == 0L || (it.progress.toFloat() / it.duration.toFloat()) < 0.9f) }
-                        .map { progress ->
+
+                    // Enrich with TMDB episode details
+                    episodes.mapNotNull { progress ->
+                        try {
+                            val parts = progress.itemId.split(":")
+                            if (parts.size >= 4 && apiKey.isNotEmpty()) {
+                                val showId = parts[1].toIntOrNull()
+                                val seasonNum = parts[2].toIntOrNull()
+                                val episodeNum = parts[3].toIntOrNull()
+
+                                if (showId != null && seasonNum != null && episodeNum != null) {
+                                    val showDetails = TMDBClient.api.getTVDetails(showId, apiKey)
+                                    val seasonDetails = TMDBClient.api.getTVSeasonDetails(showId, seasonNum, apiKey)
+                                    val episode = seasonDetails.episodes.find { it.episode_number == episodeNum }
+
+                                    if (episode != null) {
+                                        MetaItem(
+                                            id = progress.itemId,
+                                            type = progress.type,
+                                            name = "${showDetails.name} - ${episode.name}",
+                                            poster = progress.poster ?: episode.still_path?.let { "https://image.tmdb.org/t/p/w500$it" },
+                                            background = progress.background,
+                                            description = episode.overview,
+                                            isWatched = progress.isWatched,
+                                            progress = progress.progress,
+                                            duration = progress.duration
+                                        )
+                                    } else {
+                                        // Fallback if episode not found
+                                        MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
+                                    }
+                                } else {
+                                    // Fallback if parsing fails
+                                    MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
+                                }
+                            } else {
+                                // Fallback if no API key or wrong ID format
+                                MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            // Fallback on error
                             MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
                         }
+                    }
                 }
                 "next_up" -> generateNextUpList()
                 else -> emptyList()
@@ -692,7 +734,14 @@ class MainViewModel(
                                 val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                 val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
                                 item.copy(poster = poster, background = background, description = details.overview)
+                            } else if (item.type == "episode") {
+                                // For episodes, preserve episode description and use show poster/background
+                                val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                                val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                item.copy(poster = poster, background = background)
                             } else {
+                                // For series, use show description
                                 val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
                                 val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                 val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
@@ -1006,6 +1055,42 @@ class MainViewModel(
 
                         if (body != null) {
                             TraktClient.api.addToHistory(bearer, Secrets.TRAKT_CLIENT_ID, body)
+
+                            // Remove from playback progress (continue watching)
+                            try {
+                                val playbackItems = if (item.type == "movie") {
+                                    TraktClient.api.getPausedMovies(bearer, Secrets.TRAKT_CLIENT_ID)
+                                } else {
+                                    TraktClient.api.getPausedEpisodes(bearer, Secrets.TRAKT_CLIENT_ID)
+                                }
+
+                                // Find matching playback item by TMDB ID
+                                val matchingPlayback = playbackItems.find { playbackItem ->
+                                    when (item.type) {
+                                        "movie" -> playbackItem.movie?.ids?.tmdb == tmdbId
+                                        "episode" -> {
+                                            val parts = item.id.split(":")
+                                            if (parts.size >= 4) {
+                                                val showId = parts[1].toIntOrNull()
+                                                val s = parts[2].toIntOrNull()
+                                                val e = parts[3].toIntOrNull()
+                                                playbackItem.show?.ids?.tmdb == showId &&
+                                                playbackItem.episode?.season == s &&
+                                                playbackItem.episode?.number == e
+                                            } else false
+                                        }
+                                        else -> false
+                                    }
+                                }
+
+                                // Remove from playback if found
+                                matchingPlayback?.id?.let { playbackId ->
+                                    TraktClient.api.removePlaybackProgress(bearer, Secrets.TRAKT_CLIENT_ID, playbackId)
+                                }
+                            } catch (e: Exception) {
+                                // Log but don't fail - the item is still marked as watched locally
+                                e.printStackTrace()
+                            }
                         }
                     }
                 }
@@ -1245,6 +1330,29 @@ class MainViewModel(
             val season = if (parts.size >= 3) parts[2].toIntOrNull() else null
             val episode = if (parts.size >= 4) parts[3].toIntOrNull() else null
 
+            // For episodes, try to fetch proper episode details for better name storage
+            var displayName = meta.name
+            if (meta.type == "episode" && parts.size >= 4 && apiKey.isNotEmpty()) {
+                try {
+                    val showId = parts[1].toIntOrNull()
+                    val seasonNum = parts[2].toIntOrNull()
+                    val episodeNum = parts[3].toIntOrNull()
+
+                    if (showId != null && seasonNum != null && episodeNum != null) {
+                        val showDetails = TMDBClient.api.getTVDetails(showId, apiKey)
+                        val seasonDetails = TMDBClient.api.getTVSeasonDetails(showId, seasonNum, apiKey)
+                        val episodeDetails = seasonDetails.episodes.find { it.episode_number == episodeNum }
+
+                        if (episodeDetails != null) {
+                            displayName = "${showDetails.name} - ${episodeDetails.name}"
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Fallback to original name on error
+                    e.printStackTrace()
+                }
+            }
+
             val progress = WatchProgress(
                 userId = currentUserId,
                 itemId = meta.id,
@@ -1253,7 +1361,7 @@ class MainViewModel(
                 duration = duration,
                 isWatched = currentPos >= duration * 0.9,
                 lastUpdated = System.currentTimeMillis(),
-                name = meta.name,
+                name = displayName,
                 poster = meta.poster,
                 background = meta.background,
                 parentId = parentId,
