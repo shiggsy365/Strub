@@ -60,6 +60,9 @@ class MainActivity : AppCompatActivity() {
         // Refresh home content (discover lists) on app startup
         viewModel.loadHomeContent()
 
+        // Clear Live TV cache to force refresh on first load after app restart
+        LiveTVFragment.clearCache()
+
         if (savedInstanceState == null) {
             // Default to Home
             binding.chipHome.isChecked = true

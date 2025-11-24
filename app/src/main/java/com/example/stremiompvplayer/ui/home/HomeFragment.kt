@@ -314,8 +314,18 @@ class HomeFragment : Fragment() {
     }
 
     fun focusSidebar() {
-        binding.rvSidebar.requestFocus()
-        binding.rvSidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
+        binding.root.postDelayed({
+            val firstView = binding.rvSidebar.layoutManager?.findViewByPosition(0)
+            if (firstView != null && firstView.isFocusable) {
+                firstView.requestFocus()
+            } else {
+                binding.rvSidebar.requestFocus()
+                // Try again after another delay if view wasn't ready
+                binding.root.postDelayed({
+                    binding.rvSidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }, 100)
+            }
+        }, 50)
     }
 
     override fun onDestroyView() {

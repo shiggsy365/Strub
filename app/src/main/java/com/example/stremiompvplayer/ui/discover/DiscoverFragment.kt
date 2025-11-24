@@ -107,7 +107,20 @@ class DiscoverFragment : Fragment() {
     }
 
     fun handleBackPress(): Boolean { return false }
-    fun focusSidebar() { binding.rvSidebar.requestFocus() }
+    fun focusSidebar() {
+        binding.root.postDelayed({
+            val firstView = binding.rvSidebar.layoutManager?.findViewByPosition(0)
+            if (firstView != null && firstView.isFocusable) {
+                firstView.requestFocus()
+            } else {
+                binding.rvSidebar.requestFocus()
+                // Try again after another delay if view wasn't ready
+                binding.root.postDelayed({
+                    binding.rvSidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }, 100)
+            }
+        }, 50)
+    }
 
     private fun setupAdapters() {
         sidebarAdapter = SidebarAdapter { catalog ->
