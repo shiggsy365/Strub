@@ -250,5 +250,15 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <ProgressBar
+            android:id="@+id/progressBarStreams"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="@id/rvNavigation"
+            app:layout_constraintBottom_toBottomOf="@id/rvNavigation"
+            app:layout_constraintStart_toStartOf="@id/rvNavigation"
+            app:layout_constraintEnd_toEndOf="@id/rvNavigation"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

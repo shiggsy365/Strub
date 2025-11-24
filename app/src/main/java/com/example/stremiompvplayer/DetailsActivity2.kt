@@ -183,7 +183,14 @@ class DetailsActivity2 : AppCompatActivity() {
         }
 
         viewModel.isLoading.observe(this) { loading ->
-            binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+            // Show spinner in streams pane when loading streams, otherwise show center spinner
+            if (binding.rvNavigation.adapter == streamAdapter) {
+                binding.progressBarStreams.visibility = if (loading) View.VISIBLE else View.GONE
+                binding.progressBar.visibility = View.GONE
+            } else {
+                binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+                binding.progressBarStreams.visibility = View.GONE
+            }
         }
 
         viewModel.metaDetails.observe(this) { meta ->
