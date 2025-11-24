@@ -67,12 +67,47 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStop() {
+    super.onStop()
+    if (player != null) {
+        saveProgress() // Ensure we save locally
+        releasePlayer() // Ensure we scrobble 'stop' to Trakt
+    }
+    }
+
     public override fun onPause() {
         super.onPause()
         saveProgress()
         // [FIX] Release player immediately on pause to stop audio when pressing back
         releasePlayer()
     }
+
+    private fun releasePlayer() {
+    player?.let { exoPlayer ->
+         playbackPosition = exoPlayer.currentPosition
+            currentItem = exoPlayer.currentMediaItemIndex
+            playWhenReady = exoPlayer.playWhenReady
+
+        // Scrobble STOP
+        currentMeta?.let { meta ->
+            val duration = exoPlayer.duration
+            val position = exoPlayer.currentPosition
+            
+            // Only scrobble if meaningful duration
+            if (duration > 0) {
+                val progress = (position.toFloat() / duration.toFloat()) * 100f
+                viewModel.scrobble("stop", meta, progress)
+                
+                // OPTIONAL: If >90%, explicitly mark watched here to be safe
+                if (progress > 90f) {
+                     viewModel.markAsWatched(meta, syncToTrakt = false) // Trakt scrobble handles remote, we handle local
+                }
+            }
+        }
+        exoPlayer.release()
+    }
+    player = null
+}
 
     @OptIn(UnstableApi::class) private fun initializePlayer() {
         if (player != null) return
@@ -127,26 +162,6 @@ class PlayerActivity : AppCompatActivity() {
                     }
                 })
             }
-    }
-
-    private fun releasePlayer() {
-        player?.let { exoPlayer ->
-            playbackPosition = exoPlayer.currentPosition
-            currentItem = exoPlayer.currentMediaItemIndex
-            playWhenReady = exoPlayer.playWhenReady
-
-            // [FIX] Scrobble Stop on exit
-            currentMeta?.let { meta ->
-                val duration = exoPlayer.duration
-                val position = exoPlayer.currentPosition
-                if (duration > 0) {
-                    val progress = (position.toFloat() / duration.toFloat()) * 100f
-                    viewModel.scrobble("stop", meta, progress)
-                }
-            }
-            exoPlayer.release()
-        }
-        player = null
     }
 
     private fun saveProgress() {
