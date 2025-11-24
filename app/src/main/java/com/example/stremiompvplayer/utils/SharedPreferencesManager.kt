@@ -119,12 +119,13 @@ class SharedPreferencesManager private constructor(context: Context) {
         return gson.fromJson(json, type) ?: emptyList()
     }
 
-    fun createUser(name: String, avatarColor: Int): User {
+    fun createUser(name: String, avatarColor: Int, isKidsProfile: Boolean = false): User {
         val users = getAllUsers().toMutableList()
         val newUser = User(
             id = System.currentTimeMillis().toString(),
             name = name,
-            avatarColor = avatarColor
+            avatarColor = avatarColor,
+            isKidsProfile = isKidsProfile
         )
         users.add(newUser)
         saveUsers(users)
@@ -191,5 +192,5 @@ class SharedPreferencesManager private constructor(context: Context) {
     }
 }
 
-data class User(val id: String, val name: String, val avatarColor: Int)
+data class User(val id: String, val name: String, val avatarColor: Int, val isKidsProfile: Boolean = false)
 data class UserSettings(var autoPlayFirstStream: Boolean = false, var subtitlesEnabled: Boolean = true, var subtitleSize: Int = 20, var subtitleColor: Int = android.graphics.Color.WHITE)

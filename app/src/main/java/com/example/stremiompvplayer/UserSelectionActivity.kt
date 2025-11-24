@@ -6,6 +6,8 @@ import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -102,13 +104,24 @@ class UserSelectionActivity : AppCompatActivity() {
             setPadding(48, 32, 48, 32)
         }
 
+        val kidsCheckBox = CheckBox(this).apply {
+            text = "Kids Profile (PG content only)"
+            setPadding(48, 16, 48, 32)
+        }
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(input)
+            addView(kidsCheckBox)
+        }
+
         MaterialAlertDialogBuilder(this)
             .setTitle(if (isFirstUser) "Create Your Profile" else "Add Profile")
-            .setView(input)
+            .setView(container)
             .setPositiveButton("Create") { _, _ ->
                 val name = input.text.toString().trim()
                 if (name.isNotEmpty()) {
-                    createUser(name)
+                    createUser(name, kidsCheckBox.isChecked)
                 }
             }
             .apply {
@@ -120,9 +133,9 @@ class UserSelectionActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun createUser(name: String) {
+    private fun createUser(name: String, isKidsProfile: Boolean = false) {
         val avatarColor = generateAvatarColor()
-        val user = prefsManager.createUser(name, avatarColor)
+        val user = prefsManager.createUser(name, avatarColor, isKidsProfile)
         loadUsers()
 
         if (prefsManager.getAllUsers().size == 1) {

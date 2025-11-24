@@ -489,20 +489,48 @@ class MainViewModel(
             val pagesToLoad = listOf(1, 2)
             val allItems = mutableListOf<MetaItem>()
 
+            // Check if current user is a kids profile
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val isKidsProfile = currentUser?.isKidsProfile == true
+
             val deferredResults = pagesToLoad.map { page ->
                 viewModelScope.async {
                     try {
-                        if (catalog.catalogType == "movie") {
-                            when (catalog.catalogId) {
-                                "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
-                                "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
-                                else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                        if (isKidsProfile) {
+                            // Use discover endpoints with kids filtering
+                            if (catalog.catalogType == "movie") {
+                                TMDBClient.api.discoverMovies(
+                                    apiKey = apiKey,
+                                    page = page,
+                                    sortBy = "popularity.desc",
+                                    certificationCountry = "GB",
+                                    certificationLte = "PG",
+                                    includeAdult = false
+                                )
+                            } else {
+                                TMDBClient.api.discoverTV(
+                                    apiKey = apiKey,
+                                    page = page,
+                                    sortBy = "popularity.desc",
+                                    withGenres = "10762", // Kids genre
+                                    includeAdult = false
+                                )
                             }
                         } else {
-                            when (catalog.catalogId) {
-                                "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
-                                "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
-                                else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                            // Use regular endpoints for non-kids profiles
+                            if (catalog.catalogType == "movie") {
+                                when (catalog.catalogId) {
+                                    "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
+                                    "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
+                                    else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                                }
+                            } else {
+                                when (catalog.catalogId) {
+                                    "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
+                                    "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
+                                    else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                                }
                             }
                         }
                     } catch (e: Exception) { null }
@@ -1066,8 +1094,19 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val response = TMDBClient.api.searchMulti(apiKey, query)
-                val results = response.results.filter { it.media_type == "movie" || it.media_type == "tv" }.map { it.toMetaItem() }
-                _searchResults.postValue(results)
+                var results = response.results.filter { it.media_type == "movie" || it.media_type == "tv" }
+
+                // Filter for kids profiles
+                val currentUserId = prefsManager.getCurrentUserId()
+                val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+                if (currentUser?.isKidsProfile == true) {
+                    val safeGenres = listOf(16, 10751, 10762) // Animation, Family, Kids
+                    results = results.filter { result ->
+                        result.genre_ids?.any { it in safeGenres } == true
+                    }
+                }
+
+                _searchResults.postValue(results.map { it.toMetaItem() })
             } catch (e: Exception) {
                 _error.postValue("Search failed: ${e.message}")
                 _searchResults.postValue(emptyList())
@@ -1081,8 +1120,19 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val response = TMDBClient.api.searchMovies(apiKey, query)
-                val results = response.results.map { it.toMetaItem() }
-                _searchResults.postValue(results)
+                var results = response.results
+
+                // Filter for kids profiles
+                val currentUserId = prefsManager.getCurrentUserId()
+                val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+                if (currentUser?.isKidsProfile == true) {
+                    val safeGenres = listOf(16, 10751, 10762) // Animation, Family, Kids
+                    results = results.filter { movie ->
+                        movie.genre_ids?.any { it in safeGenres } == true
+                    }
+                }
+
+                _searchResults.postValue(results.map { it.toMetaItem() })
             } catch (e: Exception) {
                 _error.postValue("Movie search failed: ${e.message}")
                 _searchResults.postValue(emptyList())
@@ -1096,8 +1146,19 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val response = TMDBClient.api.searchSeries(apiKey, query)
-                val results = response.results.map { it.toMetaItem() }
-                _searchResults.postValue(results)
+                var results = response.results
+
+                // Filter for kids profiles
+                val currentUserId = prefsManager.getCurrentUserId()
+                val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+                if (currentUser?.isKidsProfile == true) {
+                    val safeGenres = listOf(16, 10751, 10762) // Animation, Family, Kids
+                    results = results.filter { series ->
+                        series.genre_ids?.any { it in safeGenres } == true
+                    }
+                }
+
+                _searchResults.postValue(results.map { it.toMetaItem() })
             } catch (e: Exception) {
                 _error.postValue("Series search failed: ${e.message}")
                 _searchResults.postValue(emptyList())
