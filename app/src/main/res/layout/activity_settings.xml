@@ -211,6 +211,43 @@
                     android:layout_height="wrap_content"
                     android:text="Configure Manifest URL"
                     android:textColor="@android:color/white"
+                    android:layout_marginBottom="24dp"
+                    android:focusable="true" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Live TV"
+                    android:textAppearance="@style/TextAppearance.App.TitleMedium"
+                    android:textColor="@color/md_theme_primary"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tvLiveTVUrls"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodySmall"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp"
+                    android:textStyle="italic"
+                    tools:text="Not configured" />
+
+                <TextView
+                    android:id="@+id/tvLiveTVStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodyMedium"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp"
+                    tools:text="Live TV: Not configured" />
+
+                <Button
+                    android:id="@+id/btnConfigureLiveTV"
+                    style="@style/Widget.App.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Configure Live TV"
+                    android:textColor="@android:color/white"
                     android:focusable="true" />
 
             </LinearLayout>

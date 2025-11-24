@@ -96,6 +96,30 @@ class SharedPreferencesManager private constructor(context: Context) {
             .apply()
     }
 
+    // --- Live TV ---
+    fun saveLiveTVM3UUrl(m3uUrl: String) {
+        prefs.edit().putString("livetv_m3u_url", m3uUrl).apply()
+    }
+
+    fun getLiveTVM3UUrl(): String? {
+        return prefs.getString("livetv_m3u_url", null)
+    }
+
+    fun saveLiveTVEPGUrl(epgUrl: String) {
+        prefs.edit().putString("livetv_epg_url", epgUrl).apply()
+    }
+
+    fun getLiveTVEPGUrl(): String? {
+        return prefs.getString("livetv_epg_url", null)
+    }
+
+    fun clearLiveTVCredentials() {
+        prefs.edit()
+            .remove("livetv_m3u_url")
+            .remove("livetv_epg_url")
+            .apply()
+    }
+
     fun getTMDBAccessToken(): String? { return prefs.getString("tmdb_access_token", null) }
     fun saveTMDBAccessToken(token: String) { prefs.edit().putString("tmdb_access_token", token).apply() }
 
