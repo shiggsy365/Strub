@@ -359,3 +359,22 @@ data class TMDBListItem(
         )
     }
 }
+
+// --- VIDEOS (Trailers) ---
+data class TMDBVideosResponse(
+    val id: Int,
+    val results: List<TMDBVideo>
+) : Serializable
+
+data class TMDBVideo(
+    val id: String,
+    @Json(name = "iso_639_1") val language: String,
+    @Json(name = "iso_3166_1") val country: String,
+    val key: String,
+    val name: String,
+    val site: String,
+    val size: Int,
+    val type: String,
+    val official: Boolean,
+    @Json(name = "published_at") val publishedAt: String?
+) : Serializable

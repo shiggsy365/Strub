@@ -479,5 +479,52 @@ class DetailsActivity2 : AppCompatActivity() {
                 }
             }
         }
+
+        binding.btnTrailer.setOnClickListener {
+            currentMetaItem?.let { item ->
+                val idToCheck = if(currentType=="series") {
+                    item.id.split(":").take(2).joinToString(":")
+                } else {
+                    item.id
+                }
+                val typeToCheck = if(currentType == "episode") "series" else currentType
+
+                lifecycleScope.launch {
+                    val trailerUrl = viewModel.fetchTrailer(idToCheck, typeToCheck)
+                    if (trailerUrl != null) {
+                        // Open YouTube URL in an external app
+                        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(trailerUrl))
+                        startActivity(intent)
+                    } else {
+                        // Show a toast or error message
+                        android.widget.Toast.makeText(
+                            this@DetailsActivity2,
+                            "No trailer available",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+
+        binding.btnMoreLikeThis.setOnClickListener {
+            currentMetaItem?.let { item ->
+                val idToCheck = if(currentType=="series") {
+                    item.id.split(":").take(2).joinToString(":")
+                } else {
+                    item.id
+                }
+                val typeToCheck = if(currentType == "episode") "series" else currentType
+
+                val intent = Intent(this, SimilarActivity::class.java).apply {
+                    putExtra("metaId", idToCheck)
+                    putExtra("type", typeToCheck)
+                    putExtra("title", item.name)
+                    putExtra("poster", item.poster)
+                    putExtra("background", item.background)
+                }
+                startActivity(intent)
+            }
+        }
     }
 }

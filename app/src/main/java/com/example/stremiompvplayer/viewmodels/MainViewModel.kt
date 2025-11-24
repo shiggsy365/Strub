@@ -1493,6 +1493,44 @@ class MainViewModel(
         }
     }
 
+    // Fetch trailer for a movie or series
+    suspend fun fetchTrailer(itemId: String, type: String): String? {
+        if (apiKey.isEmpty()) return null
+        return try {
+            val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull() ?: return null
+            val videos = if (type == "movie") {
+                TMDBClient.api.getMovieVideos(tmdbId, apiKey)
+            } else {
+                TMDBClient.api.getTVVideos(tmdbId, apiKey)
+            }
+            // Find first video with type "Trailer" and site "YouTube"
+            val trailer = videos.results.firstOrNull { it.type == "Trailer" && it.site == "YouTube" }
+            trailer?.let { "https://www.youtube.com/watch?v=${it.key}" }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to fetch trailer", e)
+            null
+        }
+    }
+
+    // Fetch similar content for a movie or series
+    suspend fun fetchSimilarContent(itemId: String, type: String): List<MetaItem> {
+        if (apiKey.isEmpty()) return emptyList()
+        return try {
+            val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull() ?: return emptyList()
+            val results = if (type == "movie") {
+                val response = TMDBClient.api.getSimilarMovies(tmdbId, apiKey)
+                response.results.map { it.toMetaItem() }
+            } else {
+                val response = TMDBClient.api.getSimilarTV(tmdbId, apiKey)
+                response.results.map { it.toMetaItem() }
+            }
+            results
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to fetch similar content", e)
+            emptyList()
+        }
+    }
+
     sealed class TraktSyncStatus {
         object Idle : TraktSyncStatus()
         data class Syncing(val progress: String) : TraktSyncStatus()

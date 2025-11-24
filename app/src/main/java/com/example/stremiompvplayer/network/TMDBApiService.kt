@@ -24,6 +24,7 @@ import com.example.stremiompvplayer.models.TMDBSessionResponse
 import com.example.stremiompvplayer.models.TMDBTVDetails
 import com.example.stremiompvplayer.models.TMDBWatchlistBody
 import com.example.stremiompvplayer.models.TMDBListDetailsResponse
+import com.example.stremiompvplayer.models.TMDBVideosResponse
 
 interface TMDBApiService {
 
@@ -288,4 +289,36 @@ interface TMDBApiService {
         @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US"
     ): TMDBListDetailsResponse
+
+    // --- VIDEOS (Trailers) ---
+    @GET("movie/{movie_id}/videos")
+    suspend fun getMovieVideos(
+        @Path("movie_id") movieId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBVideosResponse
+
+    @GET("tv/{series_id}/videos")
+    suspend fun getTVVideos(
+        @Path("series_id") seriesId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBVideosResponse
+
+    // --- SIMILAR CONTENT ---
+    @GET("movie/{movie_id}/similar")
+    suspend fun getSimilarMovies(
+        @Path("movie_id") movieId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1
+    ): TMDBMovieListResponse
+
+    @GET("tv/{series_id}/similar")
+    suspend fun getSimilarTV(
+        @Path("series_id") seriesId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1
+    ): TMDBSeriesListResponse
 }
