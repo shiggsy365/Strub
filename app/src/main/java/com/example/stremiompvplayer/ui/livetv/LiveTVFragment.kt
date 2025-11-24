@@ -55,8 +55,22 @@ class LiveTVFragment : Fragment() {
     private var selectedGroup: String? = null
 
     companion object {
+        // Cache EPG data to avoid reloading on every tab switch
+        private var cachedChannels = listOf<Channel>()
+        private var cachedPrograms = listOf<EPGProgram>()
+        private var cachedChannelsWithPrograms = listOf<ChannelWithPrograms>()
+        private var lastLoadTime: Long = 0
+
         fun newInstance(): LiveTVFragment {
             return LiveTVFragment()
+        }
+
+        // Called from MainActivity on app startup or from settings to force refresh
+        fun clearCache() {
+            cachedChannels = emptyList()
+            cachedPrograms = emptyList()
+            cachedChannelsWithPrograms = emptyList()
+            lastLoadTime = 0
         }
     }
 
@@ -68,14 +82,37 @@ class LiveTVFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupAdapters()
+
+        // Only load if cache is empty (first time or after manual refresh)
+        if (cachedChannelsWithPrograms.isEmpty()) {
+            loadLiveTVData()
+        } else {
+            // Use cached data
+            allChannels = cachedChannels
+            allPrograms = cachedPrograms
+            channelsWithPrograms = cachedChannelsWithPrograms
+            setupGroupFilters()
+            updateChannelList()
+            if (channelsWithPrograms.isNotEmpty()) {
+                selectedChannel = channelsWithPrograms[0]
+                updateDetailsPane(channelsWithPrograms[0])
+            }
+        }
+    }
+
+    // Public method to manually refresh EPG data
+    fun refreshEPG() {
+        clearCache()
         loadLiveTVData()
     }
 
     private fun setupAdapters() {
-        // TV Guide Adapter
+        // TV Guide Adapter - play channel on click
         tvGuideAdapter = TVGuideAdapter { channelWithPrograms ->
             selectedChannel = channelWithPrograms
             updateDetailsPane(channelWithPrograms)
+            // Play channel directly on click
+            playChannel(channelWithPrograms.channel)
         }
 
         binding.rvTVGuide.layoutManager = LinearLayoutManager(context)
@@ -85,11 +122,6 @@ class LiveTVFragment : Fragment() {
         upcomingAdapter = UpcomingProgramAdapter()
         binding.rvUpcoming.layoutManager = LinearLayoutManager(context)
         binding.rvUpcoming.adapter = upcomingAdapter
-
-        // Play Button
-        binding.btnPlay.setOnClickListener {
-            selectedChannel?.let { playChannel(it.channel) }
-        }
     }
 
     private fun loadLiveTVData() {
@@ -134,6 +166,12 @@ class LiveTVFragment : Fragment() {
 
                 // Combine channels with programs
                 channelsWithPrograms = buildChannelsWithPrograms()
+
+                // Cache the loaded data
+                cachedChannels = allChannels
+                cachedPrograms = allPrograms
+                cachedChannelsWithPrograms = channelsWithPrograms
+                lastLoadTime = System.currentTimeMillis()
 
                 // Update UI
                 withContext(Dispatchers.Main) {
@@ -326,8 +364,18 @@ class LiveTVFragment : Fragment() {
     }
 
     fun focusSidebar() {
-        binding.rvTVGuide.requestFocus()
-        binding.rvTVGuide.layoutManager?.findViewByPosition(0)?.requestFocus()
+        binding.root.postDelayed({
+            val firstView = binding.rvTVGuide.layoutManager?.findViewByPosition(0)
+            if (firstView != null && firstView.isFocusable) {
+                firstView.requestFocus()
+            } else {
+                binding.rvTVGuide.requestFocus()
+                // Try again after another delay if view wasn't ready
+                binding.root.postDelayed({
+                    binding.rvTVGuide.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }, 100)
+            }
+        }, 50)
     }
 
     override fun onDestroyView() {

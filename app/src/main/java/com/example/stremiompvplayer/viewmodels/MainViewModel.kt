@@ -445,7 +445,9 @@ class MainViewModel(
                             if (show != null && ep != null && ep.ids?.tmdb != null) {
                                 val showTmdbId = show.ids.tmdb
                                 val epTmdbId = ep.ids.tmdb
-                                val epId = "tmdb:$showTmdbId:${ep.season}:${ep.number}" // Construct standard local ID
+                                val season = ep.season ?: 1
+                                val episode = ep.number ?: 1
+                                val epId = "tmdb:$showTmdbId:$season:$episode" // Construct standard local ID
 
                                 // CHECK LOCAL DB
                                 val progress = catalogRepository.getWatchProgress(prefsManager.getCurrentUserId() ?: "default", epId)
@@ -453,10 +455,11 @@ class MainViewModel(
                                 val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
 
                                 if (!isLocallyWatched && !isLocallyFinished) {
+                                    val episodeTitle = ep.title ?: "Episode $episode"
                                     MetaItem(
-                                        id = "trakt_ep:${showTmdbId}:$epTmdbId",
+                                        id = epId,
                                         type = "episode",
-                                        name = "${show.title} - ${ep.number}",
+                                        name = "${show.title} - S${season.toString().padStart(2, '0')}E${episode.toString().padStart(2, '0')} - $episodeTitle",
                                         description = "Paused at ${(item.progress ?: 0f).toInt()}%",
                                         poster = null, background = null
                                     )
@@ -759,8 +762,8 @@ class MainViewModel(
     }
 
     // === NEXT UP GENERATION ===
-    private suspend fun generateNextUpList(): List<MetaItem> {
-        val currentUserId = prefsManager.getCurrentUserId() ?: return emptyList()
+    private suspend fun generateNextUpList(): List<MetaItem> = withContext(Dispatchers.IO) {
+        val currentUserId = prefsManager.getCurrentUserId() ?: return@withContext emptyList()
         val watchedEpisodes = catalogRepository.getNextUpCandidates(currentUserId)
         val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
         val today = dateFormat.format(java.util.Date())
@@ -772,70 +775,73 @@ class MainViewModel(
                 episodes.maxWithOrNull(compareBy<WatchProgress> { it.season!! }.thenBy { it.episode!! })
             }
 
-        val nextUpItems = mutableListOf<Pair<MetaItem, Long>>()
+        // Process all shows in parallel
+        val nextUpItems = latestEpisodesByShow.mapNotNull { (showId, latestEpisode) ->
+            async {
+                if (latestEpisode == null) return@async null
 
-        for ((showId, latestEpisode) in latestEpisodesByShow) {
-            if (latestEpisode == null) continue
+                val tmdbId = showId.removePrefix("tmdb:").toIntOrNull() ?: return@async null
+                val currentSeason = latestEpisode.season!!
+                val currentEpisode = latestEpisode.episode!!
 
-            val tmdbId = showId.removePrefix("tmdb:").toIntOrNull() ?: continue
-            val currentSeason = latestEpisode.season!!
-            val currentEpisode = latestEpisode.episode!!
+                try {
+                    val showDetails = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                    var nextSeasonNum = currentSeason
+                    var nextEpisodeNum = currentEpisode + 1
+                    var potentialNextFound = false
 
-            try {
-                val showDetails = TMDBClient.api.getTVDetails(tmdbId, apiKey)
-                var nextSeasonNum = currentSeason
-                var nextEpisodeNum = currentEpisode + 1
-                var potentialNextFound = false
-
-                val currentSeasonSpec = showDetails.seasons?.find { it.season_number == currentSeason }
-                if (currentSeasonSpec != null && currentEpisode < currentSeasonSpec.episode_count) {
-                    potentialNextFound = true
-                } else {
-                    val nextSeasonSpec = showDetails.seasons?.find { it.season_number == currentSeason + 1 }
-                    if (nextSeasonSpec != null && nextSeasonSpec.episode_count > 0) {
-                        nextSeasonNum = currentSeason + 1
-                        nextEpisodeNum = 1
+                    val currentSeasonSpec = showDetails.seasons?.find { it.season_number == currentSeason }
+                    if (currentSeasonSpec != null && currentEpisode < currentSeasonSpec.episode_count) {
                         potentialNextFound = true
+                    } else {
+                        val nextSeasonSpec = showDetails.seasons?.find { it.season_number == currentSeason + 1 }
+                        if (nextSeasonSpec != null && nextSeasonSpec.episode_count > 0) {
+                            nextSeasonNum = currentSeason + 1
+                            nextEpisodeNum = 1
+                            potentialNextFound = true
+                        }
                     }
-                }
 
-                if (potentialNextFound) {
-                    try {
-                        val seasonDetails = TMDBClient.api.getTVSeasonDetails(tmdbId, nextSeasonNum, apiKey)
-                        val nextEpDetails = seasonDetails.episodes.find { it.episode_number == nextEpisodeNum }
+                    if (potentialNextFound) {
+                        try {
+                            val seasonDetails = TMDBClient.api.getTVSeasonDetails(tmdbId, nextSeasonNum, apiKey)
+                            val nextEpDetails = seasonDetails.episodes.find { it.episode_number == nextEpisodeNum }
 
-                        if (nextEpDetails != null) {
-                            val isReleased = nextEpDetails.airDate == null || nextEpDetails.airDate <= today
+                            if (nextEpDetails != null) {
+                                val isReleased = nextEpDetails.airDate == null || nextEpDetails.airDate <= today
 
-                            if (isReleased) {
-                                val nextEpisodeId = "$showId:$nextSeasonNum:$nextEpisodeNum"
-                                val nextEpisodeProgress = catalogRepository.getWatchProgress(currentUserId, nextEpisodeId)
+                                if (isReleased) {
+                                    val nextEpisodeId = "$showId:$nextSeasonNum:$nextEpisodeNum"
+                                    val nextEpisodeProgress = catalogRepository.getWatchProgress(currentUserId, nextEpisodeId)
 
-                                if (nextEpisodeProgress == null || !nextEpisodeProgress.isWatched) {
-                                    val poster = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/w500$it" }
-                                        ?: showDetails.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                    if (nextEpisodeProgress == null || !nextEpisodeProgress.isWatched) {
+                                        val poster = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                            ?: showDetails.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
 
-                                    val background = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/original$it" }
-                                        ?: showDetails.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                        val background = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                            ?: showDetails.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
 
-                                    val metaItem = MetaItem(
-                                        id = nextEpisodeId,
-                                        type = "episode",
-                                        name = nextEpDetails.name,
-                                        poster = poster,
-                                        background = background,
-                                        description = nextEpDetails.overview ?: "Next episode"
-                                    )
-                                    nextUpItems.add(Pair(metaItem, latestEpisode.lastUpdated))
+                                        val metaItem = MetaItem(
+                                            id = nextEpisodeId,
+                                            type = "episode",
+                                            name = nextEpDetails.name,
+                                            poster = poster,
+                                            background = background,
+                                            description = nextEpDetails.overview ?: "Next episode"
+                                        )
+                                        return@async Pair(metaItem, latestEpisode.lastUpdated)
+                                    }
                                 }
                             }
-                        }
-                    } catch (e: Exception) { Log.e("NextUp", "Failed season details", e) }
-                }
-            } catch (e: Exception) { Log.e("NextUp", "Error processing next episode", e) }
-        }
+                        } catch (e: Exception) { Log.e("NextUp", "Failed season details", e) }
+                    }
+                } catch (e: Exception) { Log.e("NextUp", "Error processing next episode", e) }
+                null
+            }
+        }.awaitAll().filterNotNull()
+
         // Sort by lastUpdated (most recent first) and return only the MetaItems
-        return nextUpItems.sortedByDescending { it.second }.map { it.first }
+        nextUpItems.sortedByDescending { it.second }.map { it.first }
     }
 
     // === TRAKT SYNC ===
@@ -1638,31 +1644,53 @@ class MainViewModel(
         val clientId = Secrets.TRAKT_CLIENT_ID
         GlobalScope.launch(Dispatchers.IO) {
             try {
-                val idStr = meta.id.removePrefix("tmdb:")
-                val tmdbId = if (meta.type == "movie" || meta.type == "series") idStr.toIntOrNull() else 0
-                val body: TraktScrobbleBody? = if (meta.type == "movie" && tmdbId != null) {
-                    TraktScrobbleBody(progress, TraktMovie(meta.name, null, TraktIds(0, tmdbId, null, null)))
+                val body: TraktScrobbleBody? = if (meta.type == "movie") {
+                    val idStr = meta.id.removePrefix("tmdb:")
+                    val tmdbId = idStr.toIntOrNull()
+                    if (tmdbId != null && tmdbId > 0) {
+                        TraktScrobbleBody(progress, TraktMovie(meta.name, null, TraktIds(0, tmdbId, null, null)))
+                    } else {
+                        Log.e("Trakt", "Invalid movie ID: ${meta.id}")
+                        null
+                    }
                 } else if (meta.type == "episode") {
                     val parts = meta.id.split(":")
                     if (parts.size >= 4) {
                         val showId = parts[1].toIntOrNull()
                         val s = parts[2].toIntOrNull()
                         val e = parts[3].toIntOrNull()
-                        if (showId != null && s != null && e != null) {
+                        if (showId != null && showId > 0 && s != null && e != null) {
                             TraktScrobbleBody(progress, episode = TraktEpisode(s, e), show = TraktShow(meta.name, null, TraktIds(0, showId, null, null)))
-                        } else null
-                    } else null
-                } else null
+                        } else {
+                            Log.e("Trakt", "Invalid episode ID: ${meta.id}")
+                            null
+                        }
+                    } else {
+                        Log.e("Trakt", "Episode ID format invalid: ${meta.id}")
+                        null
+                    }
+                } else {
+                    Log.e("Trakt", "Unsupported scrobble type: ${meta.type}")
+                    null
+                }
 
                 if (body != null) {
                     val bearer = "Bearer $token"
-                    when (action) {
+                    val response = when (action) {
                         "start" -> TraktClient.api.startScrobble(bearer, clientId, body = body)
                         "pause" -> TraktClient.api.pauseScrobble(bearer, clientId, body = body)
                         "stop" -> TraktClient.api.stopScrobble(bearer, clientId, body = body)
+                        else -> null
                     }
+                    if (response != null) {
+                        Log.d("Trakt", "Scrobble $action successful: ${meta.name} at ${progress.toInt()}%")
+                    }
+                } else {
+                    Log.e("Trakt", "Scrobble body is null, cannot send $action scrobble")
                 }
-            } catch (e: Exception) { Log.e("Trakt", "Scrobble failed", e) }
+            } catch (e: Exception) {
+                Log.e("Trakt", "Scrobble $action failed for ${meta.name}", e)
+            }
         }
     }
 

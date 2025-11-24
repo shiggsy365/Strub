@@ -158,16 +158,6 @@
                         android:layout_marginBottom="24dp"
                         tools:progress="65" />
 
-                    <!-- Play Button -->
-                    <Button
-                        android:id="@+id/btnPlay"
-                        style="@style/Widget.App.Button.Filled"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Play Channel"
-                        android:layout_marginBottom="16dp"
-                        android:focusable="true" />
-
                     <!-- Upcoming Programs -->
                     <TextView
                         android:layout_width="match_parent"
