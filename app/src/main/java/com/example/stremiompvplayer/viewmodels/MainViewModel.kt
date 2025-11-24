@@ -734,7 +734,14 @@ class MainViewModel(
                                 val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                 val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
                                 item.copy(poster = poster, background = background, description = details.overview)
+                            } else if (item.type == "episode") {
+                                // For episodes, preserve episode description and use show poster/background
+                                val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                                val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                item.copy(poster = poster, background = background)
                             } else {
+                                // For series, use show description
                                 val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
                                 val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                 val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
