@@ -334,6 +334,11 @@ class LibraryFragment : Fragment() {
         }
     }
 
+    fun focusSidebar() {
+        binding.rvLibrarySidebar.requestFocus()
+        binding.rvLibrarySidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

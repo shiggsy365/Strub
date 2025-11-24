@@ -118,6 +118,10 @@ class MainViewModel(
     private val _traktSyncStatus = MutableLiveData<TraktSyncStatus>()
     val traktSyncStatus: LiveData<TraktSyncStatus> = _traktSyncStatus
 
+    // EPG/TV Guide State
+    private val _epgParsingStatus = MutableLiveData<String>()
+    val epgParsingStatus: LiveData<String> = _epgParsingStatus
+
     // Library Sources (Local + Trakt)
     val libraryMovies = MediatorLiveData<List<MetaItem>>()
     val librarySeries = MediatorLiveData<List<MetaItem>>()
@@ -1713,6 +1717,26 @@ class MainViewModel(
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to fetch similar content", e)
             emptyList()
+        }
+    }
+
+    fun refreshTVGuide() {
+        viewModelScope.launch {
+            val epgUrl = prefsManager.getLiveTVEPGUrl()
+            if (epgUrl.isNullOrEmpty()) {
+                _epgParsingStatus.postValue("Error: No EPG URL configured")
+                return@launch
+            }
+
+            try {
+                _epgParsingStatus.postValue("Starting EPG refresh...")
+                val programs = com.example.stremiompvplayer.utils.EPGParser.parseEPG(epgUrl) { status ->
+                    _epgParsingStatus.postValue(status)
+                }
+                _epgParsingStatus.postValue("Success: Loaded ${programs.size} programs")
+            } catch (e: Exception) {
+                _epgParsingStatus.postValue("Error: ${e.message}")
+            }
         }
     }
 

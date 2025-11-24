@@ -117,6 +117,33 @@ class SettingsActivity : AppCompatActivity() {
                 Toast.makeText(this, error, Toast.LENGTH_LONG).show()
             }
         }
+
+        // EPG Parsing Status Observer
+        viewModel.epgParsingStatus.observe(this) { status ->
+            if (status.isNullOrEmpty()) {
+                binding.tvEPGParsingStatus.visibility = View.GONE
+            } else {
+                binding.tvEPGParsingStatus.visibility = View.VISIBLE
+                binding.tvEPGParsingStatus.text = status
+
+                // Color based on status
+                when {
+                    status.startsWith("Error") -> {
+                        binding.tvEPGParsingStatus.setTextColor(getColor(android.R.color.holo_red_light))
+                    }
+                    status.startsWith("Success") || status.startsWith("Completed") -> {
+                        binding.tvEPGParsingStatus.setTextColor(getColor(android.R.color.holo_green_light))
+                        // Auto-hide success message after 5 seconds
+                        binding.tvEPGParsingStatus.postDelayed({
+                            binding.tvEPGParsingStatus.visibility = View.GONE
+                        }, 5000)
+                    }
+                    else -> {
+                        binding.tvEPGParsingStatus.setTextColor(getColor(R.color.text_secondary))
+                    }
+                }
+            }
+        }
     }
 
     // ==============================
@@ -445,6 +472,10 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.btnConfigureLiveTV.setOnClickListener {
             showLiveTVDialog()
+        }
+
+        binding.btnRefreshTVGuide.setOnClickListener {
+            viewModel.refreshTVGuide()
         }
     }
 

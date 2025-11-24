@@ -123,9 +123,12 @@ class LiveTVFragment : Fragment() {
 
                 // Load EPG if configured
                 if (!epgUrl.isNullOrEmpty()) {
-                    binding.tvLoadingMessage.text = "Loading TV guide..."
                     allPrograms = withContext(Dispatchers.IO) {
-                        EPGParser.parseEPG(epgUrl)
+                        EPGParser.parseEPG(epgUrl) { status ->
+                            withContext(Dispatchers.Main) {
+                                binding.tvLoadingMessage.text = status
+                            }
+                        }
                     }
                 }
 
@@ -320,6 +323,11 @@ class LiveTVFragment : Fragment() {
         val duration = endTime - startTime
         val elapsed = currentTime - startTime
         return ((elapsed.toFloat() / duration.toFloat()) * 100).toInt()
+    }
+
+    fun focusSidebar() {
+        binding.rvTVGuide.requestFocus()
+        binding.rvTVGuide.layoutManager?.findViewByPosition(0)?.requestFocus()
     }
 
     override fun onDestroyView() {

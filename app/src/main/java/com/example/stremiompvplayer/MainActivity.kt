@@ -52,6 +52,14 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.checkTMDBAuthAndSync()
 
+        // Sync Trakt on app startup if enabled
+        if (SharedPreferencesManager.getInstance(this).isTraktEnabled()) {
+            viewModel.syncTraktLibrary()
+        }
+
+        // Refresh home content (discover lists) on app startup
+        viewModel.loadHomeContent()
+
         if (savedInstanceState == null) {
             // Default to Home
             binding.chipHome.isChecked = true
@@ -252,13 +260,27 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 // Otherwise use default fragment-specific focus
-                if (currentFragment is SearchFragment) {
-                    currentFragment.focusSearch()
-                    return true
-                }
-                if (currentFragment is DiscoverFragment) {
-                    currentFragment.focusSidebar()
-                    return true
+                when (currentFragment) {
+                    is SearchFragment -> {
+                        currentFragment.focusSearch()
+                        return true
+                    }
+                    is DiscoverFragment -> {
+                        currentFragment.focusSidebar()
+                        return true
+                    }
+                    is HomeFragment -> {
+                        currentFragment.focusSidebar()
+                        return true
+                    }
+                    is LibraryFragment -> {
+                        currentFragment.focusSidebar()
+                        return true
+                    }
+                    is LiveTVFragment -> {
+                        currentFragment.focusSidebar()
+                        return true
+                    }
                 }
             }
         }

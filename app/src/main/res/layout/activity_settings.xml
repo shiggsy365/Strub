@@ -286,6 +286,26 @@
                     android:textColor="@android:color/white"
                     android:focusable="true" />
 
+                <Button
+                    android:id="@+id/btnRefreshTVGuide"
+                    style="@style/Widget.App.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Refresh TV Guide"
+                    android:textColor="@android:color/white"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/tvEPGParsingStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodySmall"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone"
+                    tools:text="Parsing EPG data..." />
+
             </LinearLayout>
         </ScrollView>
     </com.google.android.material.card.MaterialCardView>
