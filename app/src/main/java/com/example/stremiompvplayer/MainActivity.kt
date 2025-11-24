@@ -14,9 +14,7 @@ import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivityMainBinding
 import com.example.stremiompvplayer.ui.discover.DiscoverFragment
 import com.example.stremiompvplayer.ui.library.LibraryFragment
-import com.example.stremiompvplayer.ui.movies.MoviesFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
-import com.example.stremiompvplayer.ui.series.SeriesFragment
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
@@ -192,7 +190,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
-            if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
 
             val focus = currentFocus
