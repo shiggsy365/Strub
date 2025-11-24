@@ -125,7 +125,7 @@ class LiveTVFragment : Fragment() {
                 if (!epgUrl.isNullOrEmpty()) {
                     allPrograms = withContext(Dispatchers.IO) {
                         EPGParser.parseEPG(epgUrl) { status ->
-                            withContext(Dispatchers.Main) {
+                            lifecycleScope.launch(Dispatchers.Main) {
                                 binding.tvLoadingMessage.text = status
                             }
                         }
