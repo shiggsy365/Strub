@@ -617,7 +617,10 @@ class MainViewModel(
                                 }
                             }
                         }
-                    } catch (e: Exception) { null }
+                    } catch (e: Exception) {
+                        Log.e("MainViewModel", "Error fetching TMDB ${catalog.catalogId} ${catalog.catalogType} page $page", e)
+                        null
+                    }
                 }
             }
             val results = deferredResults.awaitAll()
@@ -850,6 +853,9 @@ class MainViewModel(
 
                     if (fetchMetadata && apiKey.isNotEmpty()) {
                         _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Refreshing metadata from TMDB..."))
+                        var successCount = 0
+                        var failCount = 0
+
                         importedMovieIds.forEach { tmdbId ->
                             try {
                                 val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
@@ -857,8 +863,13 @@ class MainViewModel(
                                 val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
                                 val enrichedMeta = MetaItem("tmdb:$tmdbId", "movie", details.title, poster, background, details.overview, details.release_date)
                                 catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
-                            } catch (e: Exception) {}
+                                successCount++
+                            } catch (e: Exception) {
+                                Log.e("TraktSync", "Error fetching metadata for movie tmdb:$tmdbId", e)
+                                failCount++
+                            }
                         }
+
                         importedShowIds.forEach { tmdbId ->
                             try {
                                 val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
@@ -866,8 +877,16 @@ class MainViewModel(
                                 val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
                                 val enrichedMeta = MetaItem("tmdb:$tmdbId", "series", details.name, poster, background, details.overview, null)
                                 catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
-                            } catch (e: Exception) {}
+                                successCount++
+                            } catch (e: Exception) {
+                                Log.e("TraktSync", "Error fetching metadata for series tmdb:$tmdbId", e)
+                                failCount++
+                            }
                         }
+
+                        Log.i("TraktSync", "Metadata enrichment: $successCount succeeded, $failCount failed")
+                    } else if (fetchMetadata && apiKey.isEmpty()) {
+                        Log.w("TraktSync", "Cannot fetch metadata: TMDB API key is not configured")
                     }
                 }
 
@@ -902,12 +921,20 @@ class MainViewModel(
 
     private suspend fun ensureAllLibraryItemsHaveMetadata() {
         val userId = prefsManager.getCurrentUserId() ?: return
-        if (apiKey.isEmpty()) return
+        if (apiKey.isEmpty()) {
+            Log.w("TraktSync", "Cannot ensure metadata: TMDB API key is not configured")
+            return
+        }
         withContext(Dispatchers.IO) {
             try {
                 val libraryItems = catalogRepository.getAllLibraryItems(userId)
+                var checkedCount = 0
+                var updatedCount = 0
+                var errorCount = 0
+
                 libraryItems.forEach { item ->
                     if (item.poster.isNullOrEmpty() || item.background.isNullOrEmpty()) {
+                        checkedCount++
                         val tmdbId = item.itemId.removePrefix("tmdb:").split(":").firstOrNull()?.toIntOrNull()
                         if (tmdbId != null) {
                             try {
@@ -918,6 +945,7 @@ class MainViewModel(
                                         val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
                                         val enrichedMeta = MetaItem("tmdb:$tmdbId", "movie", details.title, poster, background, details.overview, details.release_date)
                                         catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
+                                        updatedCount++
                                     }
                                     "series" -> {
                                         val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
@@ -925,13 +953,20 @@ class MainViewModel(
                                         val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
                                         val enrichedMeta = MetaItem("tmdb:$tmdbId", "series", details.name, poster, background, details.overview, null)
                                         catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
+                                        updatedCount++
                                     }
                                 }
-                            } catch (e: Exception) {}
+                            } catch (e: Exception) {
+                                Log.e("TraktSync", "Error fetching metadata for ${item.itemType} ${item.itemId}", e)
+                                errorCount++
+                            }
                         }
                     }
                 }
-            } catch (e: Exception) {}
+                Log.i("TraktSync", "Metadata backfill: checked $checkedCount items, updated $updatedCount, errors $errorCount")
+            } catch (e: Exception) {
+                Log.e("TraktSync", "Error in ensureAllLibraryItemsHaveMetadata", e)
+            }
         }
     }
 
@@ -1059,16 +1094,34 @@ class MainViewModel(
                 try {
                     val aioApi = AIOStreamsClient.getApi(manifestUrl)
                     val streamUrl = when (type) {
-                        "movie" -> AIOStreamsClient.buildMovieStreamUrl(manifestUrl, itemId)
-                        "series" -> {
-                            // itemId format for series: "imdbId:season:episode"
-                            val parts = itemId.split(":")
-                            if (parts.size == 3) {
-                                val imdbId = parts[0]
-                                val season = parts[1].toIntOrNull() ?: 1
-                                val episode = parts[2].toIntOrNull() ?: 1
-                                AIOStreamsClient.buildSeriesStreamUrl(manifestUrl, imdbId, season, episode)
+                        "movie" -> {
+                            // For movies, convert tmdb:12345 to IMDb ID
+                            val imdbId = getImdbIdForMovie(itemId)
+                            if (imdbId != null) {
+                                AIOStreamsClient.buildMovieStreamUrl(manifestUrl, imdbId)
                             } else {
+                                Log.e("MainViewModel", "Could not get IMDb ID for movie: $itemId")
+                                null
+                            }
+                        }
+                        "series" -> {
+                            // itemId format for series: "tmdb:12345:season:episode"
+                            val parts = itemId.split(":")
+                            if (parts.size == 4 && parts[0] == "tmdb") {
+                                val tmdbId = parts[1].toIntOrNull()
+                                val season = parts[2].toIntOrNull() ?: 1
+                                val episode = parts[3].toIntOrNull() ?: 1
+
+                                // Get IMDb ID from TMDB ID
+                                val imdbId = getImdbIdForSeries(tmdbId)
+                                if (imdbId != null) {
+                                    AIOStreamsClient.buildSeriesStreamUrl(manifestUrl, imdbId, season, episode)
+                                } else {
+                                    Log.e("MainViewModel", "Could not get IMDb ID for series: $itemId")
+                                    null
+                                }
+                            } else {
+                                Log.e("MainViewModel", "Invalid series itemId format: $itemId")
                                 null
                             }
                         }
@@ -1083,6 +1136,29 @@ class MainViewModel(
             }
             _streams.postValue(allStreams)
             _isLoading.postValue(false)
+        }
+    }
+
+    private suspend fun getImdbIdForMovie(itemId: String): String? {
+        return try {
+            if (apiKey.isEmpty()) return null
+            val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull() ?: return null
+            val externalIds = TMDBClient.api.getMovieExternalIds(tmdbId, apiKey)
+            externalIds.imdbId
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Error getting IMDb ID for movie $itemId", e)
+            null
+        }
+    }
+
+    private suspend fun getImdbIdForSeries(tmdbId: Int?): String? {
+        return try {
+            if (apiKey.isEmpty() || tmdbId == null) return null
+            val externalIds = TMDBClient.api.getTVExternalIds(tmdbId, apiKey)
+            externalIds.imdbId
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Error getting IMDb ID for series $tmdbId", e)
+            null
         }
     }
 
