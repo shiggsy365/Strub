@@ -3,6 +3,7 @@ package com.example.stremiompvplayer
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.text.InputType
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -13,6 +14,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -27,6 +29,11 @@ import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -45,6 +52,15 @@ class SettingsActivity : AppCompatActivity() {
     // Track active Trakt dialog to dismiss it on success
     private var traktAuthDialog: androidx.appcompat.app.AlertDialog? = null
 
+    // Activity result launchers for import/export
+    private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let { exportToFile(it) }
+    }
+
+    private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { importFromFile(it) }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
@@ -53,6 +69,7 @@ class SettingsActivity : AppCompatActivity() {
         prefsManager = SharedPreferencesManager.getInstance(this)
 
         setupUserSection()
+        setupImportExportButtons()
         setupTMDBSection()
         setupTraktSection()
         setupAIOStreamsSection()
@@ -659,5 +676,65 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupUserSection() {
         val userId = prefsManager.getCurrentUserId()
         binding.tvCurrentUser.text = "Current User ID: $userId"
+    }
+
+    // ==============================
+    //   IMPORT/EXPORT SECTION
+    // ==============================
+
+    private fun setupImportExportButtons() {
+        binding.btnExportProfile.setOnClickListener {
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val fileName = "strub_profile_$timestamp.json"
+            exportLauncher.launch(fileName)
+        }
+
+        binding.btnImportProfile.setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Import Profile Settings")
+                .setMessage("Importing will replace all current settings, users, and integrations. Continue?")
+                .setPositiveButton("Import") { _, _ ->
+                    importLauncher.launch(arrayOf("application/json"))
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+    }
+
+    private fun exportToFile(uri: Uri) {
+        try {
+            val exportJson = prefsManager.exportProfileSettings()
+            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(exportJson.toByteArray())
+            }
+            Toast.makeText(this, "Profile settings exported successfully!", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun importFromFile(uri: Uri) {
+        try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val jsonString = reader.use { it.readText() }
+
+            val success = prefsManager.importProfileSettings(jsonString)
+            if (success) {
+                Toast.makeText(this, "Profile settings imported successfully! Please restart the app.", Toast.LENGTH_LONG).show()
+                // Update UI to reflect imported data
+                setupUserSection()
+                updateTMDBTokenDisplay()
+                updateTraktUI(prefsManager.isTraktEnabled())
+                updateAIOStreamsDisplay()
+                updateLiveTVDisplay()
+            } else {
+                Toast.makeText(this, "Import failed: Invalid file format", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Import failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 }
