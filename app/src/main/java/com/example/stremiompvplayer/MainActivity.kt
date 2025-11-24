@@ -14,6 +14,7 @@ import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivityMainBinding
 import com.example.stremiompvplayer.ui.discover.DiscoverFragment
 import com.example.stremiompvplayer.ui.library.LibraryFragment
+import com.example.stremiompvplayer.ui.livetv.LiveTVFragment
 import com.example.stremiompvplayer.ui.movies.MoviesFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
 import com.example.stremiompvplayer.ui.series.SeriesFragment
@@ -104,6 +105,12 @@ class MainActivity : AppCompatActivity() {
         binding.chipSearch.setOnClickListener {
             loadFragment(SearchFragment())
         }
+
+        // LIVE TV
+        binding.chipLiveTV.setOnClickListener {
+            loadFragment(LiveTVFragment.newInstance())
+        }
+
         binding.chipMore.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
     }
 
@@ -177,6 +184,7 @@ class MainActivity : AppCompatActivity() {
                     focus == binding.chipDiscover ||
                     focus == binding.chipLibrary ||
                     focus == binding.chipSearch ||
+                    focus == binding.chipLiveTV ||
                     focus == binding.chipMore
 
             if (isFocusOnMenu) {
@@ -201,6 +209,7 @@ class MainActivity : AppCompatActivity() {
                     focus == binding.chipDiscover ||
                     focus == binding.chipLibrary ||
                     focus == binding.chipSearch ||
+                    focus == binding.chipLiveTV ||
                     focus == binding.chipMore
 
             if (isFocusOnMenu) {
@@ -211,6 +220,7 @@ class MainActivity : AppCompatActivity() {
                     binding.chipDiscover.isChecked -> binding.chipDiscover.requestFocus()
                     binding.chipLibrary.isChecked -> binding.chipLibrary.requestFocus()
                     binding.chipSearch.isChecked -> binding.chipSearch.requestFocus()
+                    binding.chipLiveTV.isChecked -> binding.chipLiveTV.requestFocus()
                     else -> binding.navigationScroll.requestFocus()
                 }
                 return true

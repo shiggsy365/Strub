@@ -56,6 +56,7 @@ class SettingsActivity : AppCompatActivity() {
         setupTMDBSection()
         setupTraktSection()
         setupAIOStreamsSection()
+        setupLiveTVSection()
         setupCatalogList()
         setupObservers()
 
@@ -413,6 +414,93 @@ class SettingsActivity : AppCompatActivity() {
             .setNeutralButton("Clear") { _, _ ->
                 prefsManager.clearAIOStreamsCredentials()
                 updateAIOStreamsDisplay()
+            }
+            .show()
+    }
+
+    // ==============================
+    //      LIVE TV SECTION
+    // ==============================
+
+    private fun setupLiveTVSection() {
+        updateLiveTVDisplay()
+
+        binding.btnConfigureLiveTV.setOnClickListener {
+            showLiveTVDialog()
+        }
+    }
+
+    private fun updateLiveTVDisplay() {
+        val m3uUrl = prefsManager.getLiveTVM3UUrl()
+        val epgUrl = prefsManager.getLiveTVEPGUrl()
+
+        if (m3uUrl.isNullOrEmpty() && epgUrl.isNullOrEmpty()) {
+            binding.tvLiveTVUrls.text = "Not configured"
+            binding.tvLiveTVStatus.text = "Live TV: Not configured"
+            binding.tvLiveTVStatus.setTextColor(getColor(android.R.color.holo_red_light))
+        } else {
+            val displayText = buildString {
+                if (!m3uUrl.isNullOrEmpty()) {
+                    append("M3U: ${if (m3uUrl.length > 30) m3uUrl.take(27) + "..." else m3uUrl}")
+                }
+                if (!epgUrl.isNullOrEmpty()) {
+                    if (isNotEmpty()) append("\n")
+                    append("EPG: ${if (epgUrl.length > 30) epgUrl.take(27) + "..." else epgUrl}")
+                }
+            }
+            binding.tvLiveTVUrls.text = displayText
+            binding.tvLiveTVStatus.text = "Live TV: Configured"
+            binding.tvLiveTVStatus.setTextColor(getColor(android.R.color.holo_green_light))
+        }
+    }
+
+    private fun showLiveTVDialog() {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 16, 48, 16)
+        }
+
+        val m3uInput = TextInputEditText(this).apply {
+            hint = "M3U Playlist URL"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            setText(prefsManager.getLiveTVM3UUrl() ?: "")
+            setSingleLine(true)
+        }
+
+        val epgInput = TextInputEditText(this).apply {
+            hint = "EPG XML URL"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            setText(prefsManager.getLiveTVEPGUrl() ?: "")
+            setSingleLine(true)
+        }
+
+        container.addView(m3uInput)
+        container.addView(epgInput)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Configure Live TV")
+            .setMessage("Enter URLs for M3U playlist and EPG (XMLTV) guide data")
+            .setView(container)
+            .setPositiveButton("Save") { _, _ ->
+                val m3u = m3uInput.text.toString().trim()
+                val epg = epgInput.text.toString().trim()
+
+                if (m3u.isNotEmpty()) {
+                    prefsManager.saveLiveTVM3UUrl(m3u)
+                }
+                if (epg.isNotEmpty()) {
+                    prefsManager.saveLiveTVEPGUrl(epg)
+                }
+
+                if (m3u.isNotEmpty() || epg.isNotEmpty()) {
+                    updateLiveTVDisplay()
+                    Toast.makeText(this, "Live TV configured", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .setNeutralButton("Clear") { _, _ ->
+                prefsManager.clearLiveTVCredentials()
+                updateLiveTVDisplay()
             }
             .show()
     }
