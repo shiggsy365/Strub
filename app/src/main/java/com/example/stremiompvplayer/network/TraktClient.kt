@@ -159,7 +159,7 @@ data class TraktPlaybackItem(
 data class TraktMovie(val title: String, val year: Int?, val ids: TraktIds)
 data class TraktShow(val title: String, val year: Int?, val ids: TraktIds)
 data class TraktSeason(val number: Int, val episodes: List<TraktEpisode>)
-data class TraktEpisode(val number: Int, val plays: Int = 0, val last_watched_at: String? = null, val ids: TraktIds? = null)
+data class TraktEpisode(val season: Int = 1, val number: Int, val plays: Int = 0, val last_watched_at: String? = null, val ids: TraktIds? = null)
 data class TraktIds(val trakt: Int, val tmdb: Int?, val imdb: String?, val slug: String?)
 
 data class TraktHistoryBody(val movies: List<TraktMovie>? = null, val shows: List<TraktShow>? = null, val episodes: List<TraktEpisode>? = null)
