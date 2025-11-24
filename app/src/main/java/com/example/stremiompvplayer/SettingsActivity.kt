@@ -482,6 +482,9 @@ class SettingsActivity : AppCompatActivity() {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             setText(prefsManager.getLiveTVM3UUrl() ?: "")
             setSingleLine(true)
+            isFocusable = true
+            isFocusableInTouchMode = true
+            imeOptions = EditorInfo.IME_ACTION_NEXT
         }
 
         val epgInput = TextInputEditText(this).apply {
@@ -489,6 +492,9 @@ class SettingsActivity : AppCompatActivity() {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             setText(prefsManager.getLiveTVEPGUrl() ?: "")
             setSingleLine(true)
+            isFocusable = true
+            isFocusableInTouchMode = true
+            imeOptions = EditorInfo.IME_ACTION_DONE
         }
 
         container.addView(m3uInput)
