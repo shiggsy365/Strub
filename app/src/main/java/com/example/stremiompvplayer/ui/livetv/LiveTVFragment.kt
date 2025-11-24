@@ -226,8 +226,8 @@ class LiveTVFragment : Fragment() {
         if (!channel.logo.isNullOrEmpty()) {
             Glide.with(this)
                 .load(channel.logo)
-                .placeholder(R.drawable.ic_launcher_foreground)
-                .error(R.drawable.ic_launcher_foreground)
+                .placeholder(R.mipmap.ic_launcher_foreground)
+                .error(R.mipmap.ic_launcher_foreground)
                 .into(binding.detailChannelLogo)
             binding.detailChannelLogo.visibility = View.VISIBLE
         } else {

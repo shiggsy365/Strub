@@ -78,7 +78,7 @@
             android:layout_marginStart="16dp"
             app:cardBackgroundColor="@color/md_theme_surfaceContainer"
             app:cardCornerRadius="@dimen/corner_radius_medium"
-            app:cardElevation="@dimen/elevation_high">
+            app:cardElevation="8dp">
 
             <ScrollView
                 android:layout_width="match_parent"
@@ -203,7 +203,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:cardBackgroundColor="@color/md_theme_surfaceContainer"
         app:cardCornerRadius="@dimen/corner_radius_medium"
-        app:cardElevation="@dimen/elevation_high"
+        app:cardElevation="8dp"
         app:contentPadding="32dp">
 
         <LinearLayout

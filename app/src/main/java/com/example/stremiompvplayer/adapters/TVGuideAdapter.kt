@@ -52,11 +52,11 @@ class TVGuideAdapter(
         if (!item.channel.logo.isNullOrEmpty()) {
             Glide.with(holder.itemView.context)
                 .load(item.channel.logo)
-                .placeholder(R.drawable.ic_launcher_foreground)
-                .error(R.drawable.ic_launcher_foreground)
+                .placeholder(R.mipmap.ic_launcher_foreground)
+                .error(R.mipmap.ic_launcher_foreground)
                 .into(holder.channelLogo)
         } else {
-            holder.channelLogo.setImageResource(R.drawable.ic_launcher_foreground)
+            holder.channelLogo.setImageResource(R.mipmap.ic_launcher_foreground)
         }
 
         // Display current program

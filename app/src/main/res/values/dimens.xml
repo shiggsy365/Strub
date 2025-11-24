@@ -51,7 +51,7 @@
 
     <!-- Poster dimensions -->
     <dimen name="poster_width">150dp</dimen>
-    <dimen name="poster_height_standard">225dp</dimen> <!-- 2:3 ratio -->
+    <dimen name="poster_height_standard">248dp</dimen> <!-- 2:3 ratio -->
     <dimen name="poster_height_landscape">84dp</dimen>  <!-- 16:9 ratio -->
     <dimen name="poster_corner_radius">@dimen/corner_radius_medium</dimen>
 

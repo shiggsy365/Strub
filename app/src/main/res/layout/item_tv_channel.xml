@@ -9,7 +9,7 @@
     android:clickable="true"
     app:cardBackgroundColor="@color/md_theme_surfaceContainer"
     app:cardCornerRadius="@dimen/corner_radius_small"
-    app:cardElevation="@dimen/elevation_low"
+    app:cardElevation="4dp"
     app:strokeWidth="2dp"
     app:strokeColor="@android:color/transparent">
 

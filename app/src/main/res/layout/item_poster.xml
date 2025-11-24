@@ -40,7 +40,7 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintDimensionRatio="H,2:3"
+                    app:layout_constraintDimensionRatio="H,58:96"
                     tools:src="@drawable/movie" />
 
                 <!-- Watched Icon (Green Checkmark) -->
