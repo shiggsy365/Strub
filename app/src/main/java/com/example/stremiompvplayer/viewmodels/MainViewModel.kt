@@ -647,11 +647,53 @@ class MainViewModel(
                 }
                 "continue_episodes" -> {
                     val currentUserId = prefsManager.getCurrentUserId() ?: "default"
-                    catalogRepository.getContinueWatching(currentUserId, "episode")
+                    val episodes = catalogRepository.getContinueWatching(currentUserId, "episode")
                         .filter { !it.isWatched && (it.duration == 0L || (it.progress.toFloat() / it.duration.toFloat()) < 0.9f) }
-                        .map { progress ->
+
+                    // Enrich with TMDB episode details
+                    episodes.mapNotNull { progress ->
+                        try {
+                            val parts = progress.itemId.split(":")
+                            if (parts.size >= 4 && apiKey.isNotEmpty()) {
+                                val showId = parts[1].toIntOrNull()
+                                val seasonNum = parts[2].toIntOrNull()
+                                val episodeNum = parts[3].toIntOrNull()
+
+                                if (showId != null && seasonNum != null && episodeNum != null) {
+                                    val showDetails = TMDBClient.api.getTVDetails(showId, apiKey)
+                                    val seasonDetails = TMDBClient.api.getTVSeasonDetails(showId, seasonNum, apiKey)
+                                    val episode = seasonDetails.episodes.find { it.episode_number == episodeNum }
+
+                                    if (episode != null) {
+                                        MetaItem(
+                                            id = progress.itemId,
+                                            type = progress.type,
+                                            name = "${showDetails.name} - ${episode.name}",
+                                            poster = progress.poster ?: episode.still_path?.let { "https://image.tmdb.org/t/p/w500$it" },
+                                            background = progress.background,
+                                            description = episode.overview,
+                                            isWatched = progress.isWatched,
+                                            progress = progress.progress,
+                                            duration = progress.duration
+                                        )
+                                    } else {
+                                        // Fallback if episode not found
+                                        MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
+                                    }
+                                } else {
+                                    // Fallback if parsing fails
+                                    MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
+                                }
+                            } else {
+                                // Fallback if no API key or wrong ID format
+                                MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            // Fallback on error
                             MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
                         }
+                    }
                 }
                 "next_up" -> generateNextUpList()
                 else -> emptyList()
@@ -1281,6 +1323,29 @@ class MainViewModel(
             val season = if (parts.size >= 3) parts[2].toIntOrNull() else null
             val episode = if (parts.size >= 4) parts[3].toIntOrNull() else null
 
+            // For episodes, try to fetch proper episode details for better name storage
+            var displayName = meta.name
+            if (meta.type == "episode" && parts.size >= 4 && apiKey.isNotEmpty()) {
+                try {
+                    val showId = parts[1].toIntOrNull()
+                    val seasonNum = parts[2].toIntOrNull()
+                    val episodeNum = parts[3].toIntOrNull()
+
+                    if (showId != null && seasonNum != null && episodeNum != null) {
+                        val showDetails = TMDBClient.api.getTVDetails(showId, apiKey)
+                        val seasonDetails = TMDBClient.api.getTVSeasonDetails(showId, seasonNum, apiKey)
+                        val episodeDetails = seasonDetails.episodes.find { it.episode_number == episodeNum }
+
+                        if (episodeDetails != null) {
+                            displayName = "${showDetails.name} - ${episodeDetails.name}"
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Fallback to original name on error
+                    e.printStackTrace()
+                }
+            }
+
             val progress = WatchProgress(
                 userId = currentUserId,
                 itemId = meta.id,
@@ -1289,7 +1354,7 @@ class MainViewModel(
                 duration = duration,
                 isWatched = currentPos >= duration * 0.9,
                 lastUpdated = System.currentTimeMillis(),
-                name = meta.name,
+                name = displayName,
                 poster = meta.poster,
                 background = meta.background,
                 parentId = parentId,
