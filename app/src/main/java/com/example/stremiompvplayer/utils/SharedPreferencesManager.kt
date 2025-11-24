@@ -200,7 +200,136 @@ class SharedPreferencesManager private constructor(context: Context) {
             UserSettings()
         }
     }
+
+    // Export all profile settings to JSON
+    fun exportProfileSettings(): String {
+        val tmdbAccountId = getTMDBAccountId()
+        val tmdbSettings = TMDBSettings(
+            accountId = if (tmdbAccountId != -1) tmdbAccountId else null,
+            sessionId = getTMDBSessionId(),
+            accessToken = getTMDBAccessToken()
+        )
+
+        val traktAccessToken = getTraktAccessToken()
+        val traktSettings = if (traktAccessToken != null) {
+            TraktSettings(
+                accessToken = traktAccessToken,
+                refreshToken = prefs.getString("trakt_refresh_token", null),
+                enabled = isTraktEnabled()
+            )
+        } else null
+
+        val liveTVSettings = LiveTVSettings(
+            m3uUrl = getLiveTVM3UUrl(),
+            epgUrl = getLiveTVEPGUrl()
+        )
+
+        val integrations = IntegrationSettings(
+            tmdb = tmdbSettings,
+            trakt = traktSettings,
+            aioStreams = getAIOStreamsManifestUrl(),
+            liveTV = liveTVSettings
+        )
+
+        val exportData = ProfileExportData(
+            users = getAllUsers(),
+            currentUserId = getCurrentUserId(),
+            userSettings = getUserSettings(),
+            addonUrls = getUserAddonUrls(),
+            integrations = integrations
+        )
+
+        return gson.toJson(exportData)
+    }
+
+    // Import profile settings from JSON
+    fun importProfileSettings(jsonString: String): Boolean {
+        return try {
+            val exportData = gson.fromJson(jsonString, ProfileExportData::class.java)
+
+            // Import users
+            saveUsers(exportData.users)
+
+            // Import current user
+            exportData.currentUserId?.let { setCurrentUser(it) }
+
+            // Import user settings
+            saveUserSettings(exportData.userSettings)
+
+            // Import addon URLs
+            prefs.edit().putString("addon_urls", gson.toJson(exportData.addonUrls)).apply()
+
+            // Import integrations
+            val editor = prefs.edit()
+
+            // TMDB
+            exportData.integrations.tmdb?.let { tmdb ->
+                tmdb.accountId?.let { if (it != -1) editor.putInt("tmdb_account_id", it) }
+                tmdb.sessionId?.let { editor.putString("tmdb_session_id", it) }
+                tmdb.accessToken?.let { editor.putString("tmdb_access_token", it) }
+            }
+
+            // Trakt
+            exportData.integrations.trakt?.let { trakt ->
+                trakt.accessToken?.let { editor.putString("trakt_access_token", it) }
+                trakt.refreshToken?.let { editor.putString("trakt_refresh_token", it) }
+                editor.putBoolean("trakt_enabled", trakt.enabled)
+            }
+
+            // AIOStreams
+            exportData.integrations.aioStreams?.let {
+                editor.putString("aiostreams_manifest_url", it)
+            }
+
+            // Live TV
+            exportData.integrations.liveTV?.let { liveTV ->
+                liveTV.m3uUrl?.let { editor.putString("livetv_m3u_url", it) }
+                liveTV.epgUrl?.let { editor.putString("livetv_epg_url", it) }
+            }
+
+            editor.apply()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }
 
 data class User(val id: String, val name: String, val avatarColor: Int, val isKidsProfile: Boolean = false)
 data class UserSettings(var autoPlayFirstStream: Boolean = false, var subtitlesEnabled: Boolean = true, var subtitleSize: Int = 20, var subtitleColor: Int = android.graphics.Color.WHITE)
+
+// Data model for exporting/importing profile settings
+data class ProfileExportData(
+    val version: Int = 1,
+    val exportDate: Long = System.currentTimeMillis(),
+    val users: List<User>,
+    val currentUserId: String?,
+    val userSettings: UserSettings,
+    val addonUrls: List<String>,
+    val integrations: IntegrationSettings
+)
+
+data class IntegrationSettings(
+    val tmdb: TMDBSettings?,
+    val trakt: TraktSettings?,
+    val aioStreams: String?,
+    val liveTV: LiveTVSettings?
+)
+
+data class TMDBSettings(
+    val accountId: Int?,
+    val sessionId: String?,
+    val accessToken: String?
+)
+
+data class TraktSettings(
+    val accessToken: String?,
+    val refreshToken: String?,
+    val enabled: Boolean
+)
+
+data class LiveTVSettings(
+    val m3uUrl: String?,
+    val epgUrl: String?
+)
