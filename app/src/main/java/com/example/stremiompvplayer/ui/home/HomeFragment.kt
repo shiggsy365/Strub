@@ -313,6 +313,11 @@ class HomeFragment : Fragment() {
         }
     }
 
+    fun focusSidebar() {
+        binding.rvSidebar.requestFocus()
+        binding.rvSidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

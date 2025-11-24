@@ -14,15 +14,17 @@ object EPGParser {
 
     private val dateFormat = SimpleDateFormat("yyyyMMddHHmmss Z", Locale.US)
 
-    suspend fun parseEPG(url: String): List<EPGProgram> {
+    suspend fun parseEPG(url: String, onProgress: ((String) -> Unit)? = null): List<EPGProgram> {
         val programs = mutableListOf<EPGProgram>()
 
         try {
+            onProgress?.invoke("Downloading EPG data...")
             val connection = URL(url).openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.connectTimeout = 15000
             connection.readTimeout = 15000
 
+            onProgress?.invoke("Parsing XML...")
             val factory = XmlPullParserFactory.newInstance()
             val parser = factory.newPullParser()
             parser.setInput(BufferedReader(InputStreamReader(connection.inputStream)))
@@ -35,6 +37,7 @@ object EPGParser {
             var currentStop: Long? = null
             var currentCategory: String? = null
             var currentIcon: String? = null
+            var programCount = 0
 
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 when (eventType) {
@@ -77,6 +80,10 @@ object EPGParser {
                                         icon = currentIcon
                                     )
                                 )
+                                programCount++
+                                if (programCount % 100 == 0) {
+                                    onProgress?.invoke("Parsed $programCount programs...")
+                                }
                             }
 
                             // Reset for next program
@@ -94,7 +101,9 @@ object EPGParser {
             }
 
             connection.disconnect()
+            onProgress?.invoke("Completed: Parsed ${programs.size} programs")
         } catch (e: Exception) {
+            onProgress?.invoke("Error: ${e.message}")
             e.printStackTrace()
         }
 
