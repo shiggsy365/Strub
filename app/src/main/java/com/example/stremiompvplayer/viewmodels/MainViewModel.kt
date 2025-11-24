@@ -260,8 +260,8 @@ class MainViewModel(
                     // Auto-sync on successful auth
                     syncTraktLibrary()
 
-                    // Trigger full setup including lists
-                    performTraktSync(syncHistory = true, syncNextUp = true, syncLists = true, fetchMetadata = false)
+                    // Trigger full setup including lists with metadata
+                    performTraktSync(syncHistory = true, syncNextUp = true, syncLists = true, fetchMetadata = true)
 
                     startPeriodicTraktSync()
 
@@ -619,6 +619,7 @@ class MainViewModel(
                         }
                     } catch (e: Exception) {
                         Log.e("MainViewModel", "Error fetching TMDB ${catalog.catalogId} ${catalog.catalogType} page $page", e)
+                        _error.postValue("Failed to load ${catalog.catalogId} ${catalog.catalogType}: ${e.message}")
                         null
                     }
                 }
