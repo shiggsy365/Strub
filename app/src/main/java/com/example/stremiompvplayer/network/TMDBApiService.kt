@@ -255,4 +255,28 @@ interface TMDBApiService {
         @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US"
     ): TMDBPersonCreditsResponse
+
+    // --- DISCOVER (Kids Filtering) ---
+    @GET("discover/movie")
+    suspend fun discoverMovies(
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("sort_by") sortBy: String = "popularity.desc",
+        @Query("certification_country") certificationCountry: String? = null,
+        @Query("certification.lte") certificationLte: String? = null,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("primary_release_date.lte") releaseDate: String? = null
+    ): TMDBMovieListResponse
+
+    @GET("discover/tv")
+    suspend fun discoverTV(
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("sort_by") sortBy: String = "popularity.desc",
+        @Query("with_genres") withGenres: String? = null,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("first_air_date.lte") airDate: String? = null
+    ): TMDBSeriesListResponse
 }

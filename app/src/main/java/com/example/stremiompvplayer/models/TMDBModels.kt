@@ -126,7 +126,8 @@ data class TMDBMovie(
     val backdrop_path: String?,
     val overview: String?,
     val release_date: String?,
-    val vote_average: Double?
+    val vote_average: Double?,
+    val genre_ids: List<Int>? = null
 ) {
     fun toMetaItem(): MetaItem {
         return MetaItem(
@@ -173,7 +174,8 @@ data class TMDBSeries(
     val backdrop_path: String?,
     val overview: String?,
     val first_air_date: String?,
-    val vote_average: Double?
+    val vote_average: Double?,
+    val genre_ids: List<Int>? = null
 ) {
     fun toMetaItem(): MetaItem {
         return MetaItem(
@@ -205,7 +207,8 @@ data class TMDBMultiSearchResult(
     val overview: String?,
     val release_date: String?,
     val first_air_date: String?,
-    val vote_average: Double?
+    val vote_average: Double?,
+    val genre_ids: List<Int>? = null
 ) {
     val mediaType: String get() = media_type
 
