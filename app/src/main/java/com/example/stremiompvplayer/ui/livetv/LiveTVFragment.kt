@@ -265,18 +265,41 @@ class LiveTVFragment : Fragment() {
 
     private fun playChannel(channel: Channel) {
         try {
-            // Use ExoPlayer via Intent
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(Uri.parse(channel.url), "video/*")
-                putExtra("title", channel.name)
-            }
+            // Create Stream object for ExoPlayer
+            val stream = com.example.stremiompvplayer.models.Stream(
+                name = channel.name,
+                description = "Live TV Channel",
+                infoHash = null,
+                url = channel.url,
+                ytId = null,
+                behaviorHints = null,
+                proxied = false,
+                library = false,
+                service = null,
+                streamType = "live",
+                resolution = null,
+                size = null,
+                seeders = null,
+                addon = "Live TV",
+                parsedFile = null
+            )
 
-            // Try to launch with external player if available
-            if (intent.resolveActivity(requireContext().packageManager) != null) {
-                startActivity(intent)
-            } else {
-                Toast.makeText(context, "No video player available", Toast.LENGTH_SHORT).show()
+            // Create MetaItem for player
+            val metaItem = com.example.stremiompvplayer.models.MetaItem(
+                id = "livetv:${channel.id}",
+                type = "channel",
+                name = channel.name,
+                poster = channel.logo,
+                background = null,
+                description = channel.group ?: "Live TV Channel"
+            )
+
+            // Launch PlayerActivity with ExoPlayer
+            val intent = Intent(requireContext(), com.example.stremiompvplayer.PlayerActivity::class.java).apply {
+                putExtra("stream", stream)
+                putExtra("meta", metaItem)
             }
+            startActivity(intent)
         } catch (e: Exception) {
             Toast.makeText(context, "Error playing channel: ${e.message}", Toast.LENGTH_SHORT).show()
             e.printStackTrace()

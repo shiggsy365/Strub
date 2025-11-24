@@ -30,6 +30,7 @@ import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -692,7 +693,12 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnExportProfile.setOnClickListener {
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             val fileName = "strub_profile_$timestamp.json"
-            exportLauncher.launch(fileName)
+            try {
+                exportLauncher.launch(fileName)
+            } catch (e: Exception) {
+                // Fallback: Share via ACTION_SEND if document picker unavailable
+                exportViaShare(fileName)
+            }
         }
 
         binding.btnImportProfile.setOnClickListener {
@@ -714,6 +720,37 @@ class SettingsActivity : AppCompatActivity() {
                 outputStream.write(exportJson.toByteArray())
             }
             Toast.makeText(this, "Profile settings exported successfully!", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun exportViaShare(fileName: String) {
+        try {
+            val exportJson = prefsManager.exportProfileSettings()
+
+            // Save to cache directory first
+            val cacheFile = File(cacheDir, fileName)
+            cacheFile.writeText(exportJson)
+
+            // Create content URI using FileProvider
+            val contentUri = androidx.core.content.FileProvider.getUriForFile(
+                this,
+                "${applicationContext.packageName}.fileprovider",
+                cacheFile
+            )
+
+            // Share via ACTION_SEND
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_STREAM, contentUri)
+                putExtra(Intent.EXTRA_SUBJECT, "Strub Profile Settings")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            startActivity(Intent.createChooser(shareIntent, "Export Settings"))
+            Toast.makeText(this, "Share settings file to save it", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()

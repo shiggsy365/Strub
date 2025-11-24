@@ -1006,6 +1006,42 @@ class MainViewModel(
 
                         if (body != null) {
                             TraktClient.api.addToHistory(bearer, Secrets.TRAKT_CLIENT_ID, body)
+
+                            // Remove from playback progress (continue watching)
+                            try {
+                                val playbackItems = if (item.type == "movie") {
+                                    TraktClient.api.getPausedMovies(bearer, Secrets.TRAKT_CLIENT_ID)
+                                } else {
+                                    TraktClient.api.getPausedEpisodes(bearer, Secrets.TRAKT_CLIENT_ID)
+                                }
+
+                                // Find matching playback item by TMDB ID
+                                val matchingPlayback = playbackItems.find { playbackItem ->
+                                    when (item.type) {
+                                        "movie" -> playbackItem.movie?.ids?.tmdb == tmdbId
+                                        "episode" -> {
+                                            val parts = item.id.split(":")
+                                            if (parts.size >= 4) {
+                                                val showId = parts[1].toIntOrNull()
+                                                val s = parts[2].toIntOrNull()
+                                                val e = parts[3].toIntOrNull()
+                                                playbackItem.show?.ids?.tmdb == showId &&
+                                                playbackItem.episode?.season == s &&
+                                                playbackItem.episode?.number == e
+                                            } else false
+                                        }
+                                        else -> false
+                                    }
+                                }
+
+                                // Remove from playback if found
+                                matchingPlayback?.id?.let { playbackId ->
+                                    TraktClient.api.removePlaybackProgress(bearer, Secrets.TRAKT_CLIENT_ID, playbackId)
+                                }
+                            } catch (e: Exception) {
+                                // Log but don't fail - the item is still marked as watched locally
+                                e.printStackTrace()
+                            }
                         }
                     }
                 }
