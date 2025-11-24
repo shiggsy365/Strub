@@ -112,6 +112,18 @@
                         android:textColor="@android:color/white"
                         android:focusable="true"
                         app:strokeColor="@color/selector_focus_stroke"
+                        app:strokeWidth="3dp"
+                        android:layout_marginBottom="0dp"/>
+
+                    <Button
+                        android:id="@+id/btnMoreLikeThis"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="More Like This"
+                        android:backgroundTint="#555555"
+                        android:textColor="@android:color/white"
+                        android:focusable="true"
+                        app:strokeColor="@color/selector_focus_stroke"
                         app:strokeWidth="3dp" />
 
                 </LinearLayout>

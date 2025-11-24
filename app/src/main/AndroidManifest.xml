@@ -73,6 +73,13 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer" />
 
+        <!-- Similar Content View -->
+        <activity
+            android:name=".SimilarActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.StremioMPVPlayer" />
+
     </application>
 
 </manifest>
