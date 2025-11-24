@@ -338,8 +338,12 @@ class MainViewModel(
 
     // Original method used by DiscoverFragment
     fun loadContentForCatalog(catalog: UserCatalog, isInitialLoad: Boolean = true) {
-        if (apiKey.isEmpty()) return
+        if (apiKey.isEmpty()) {
+            Log.e("CatalogLoad", "API key is empty! Catalog: ${catalog.catalogId}")
+            return
+        }
 
+        Log.d("CatalogLoad", "Loading catalog: ${catalog.catalogId} (${catalog.displayName})")
         _isLoading.postValue(true)
         if (isInitialLoad) {
             loadedContentCache.clear()
@@ -349,6 +353,7 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val items = fetchCatalogItems(catalog)
+                Log.d("CatalogLoad", "Fetched ${items.size} items for ${catalog.catalogId}")
 
                 if (isInitialLoad) {
                     loadedContentCache.addAll(items)
@@ -357,6 +362,7 @@ class MainViewModel(
                     _currentCatalogContent.postValue(items)
                 }
             } catch (e: Exception) {
+                Log.e("CatalogLoad", "Error loading ${catalog.catalogId}", e)
                 _error.postValue("Load failed: ${e.message}")
                 if (isInitialLoad) {
                     _currentCatalogContent.postValue(emptyList())
@@ -369,13 +375,17 @@ class MainViewModel(
 
     // Load all Home sections in parallel (Called by HomeFragment)
     fun loadHomeContent() {
-        if (apiKey.isEmpty()) return
+        if (apiKey.isEmpty()) {
+            Log.e("HomeLoad", "API key is empty! Cannot load home content")
+            return
+        }
 
         viewModelScope.launch {
             _isLoading.postValue(true)
 
             val userId = prefsManager.getCurrentUserId() ?: "default"
             val isTrakt = prefsManager.isTraktEnabled()
+            Log.d("HomeLoad", "Loading home content - userId: $userId, isTrakt: $isTrakt")
 
             // Create catalogs on the fly for Home (skipping the filtered DB list)
             val nextUpCat = if (isTrakt) UserCatalog(0, userId, "trakt_next_up", "series", "Next Up", null, 0, "series", "trakt", "trakt_official", true, true)
@@ -396,11 +406,14 @@ class MainViewModel(
                 val shows = showsJob.await()
                 val movies = moviesJob.await()
 
+                Log.d("HomeLoad", "Loaded - NextUp: ${nextUp.size}, Shows: ${shows.size}, Movies: ${movies.size}")
+
                 _homeNextUp.postValue(nextUp)
                 _homeContinueEpisodes.postValue(shows)
                 _homeContinueMovies.postValue(movies)
             } catch (e: Exception) {
                 Log.e("HomeLoad", "Error loading home content", e)
+                _error.postValue("Failed to load home content: ${e.message}")
             } finally {
                 _isLoading.postValue(false)
             }
@@ -455,11 +468,10 @@ class MainViewModel(
                                 val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
 
                                 if (!isLocallyWatched && !isLocallyFinished) {
-                                    val episodeTitle = ep.title ?: "Episode $episode"
                                     MetaItem(
                                         id = epId,
                                         type = "episode",
-                                        name = "${show.title} - S${season.toString().padStart(2, '0')}E${episode.toString().padStart(2, '0')} - $episodeTitle",
+                                        name = "${show.title} - S${season.toString().padStart(2, '0')}E${episode.toString().padStart(2, '0')}",
                                         description = "Paused at ${(item.progress ?: 0f).toInt()}%",
                                         poster = null, background = null
                                     )
