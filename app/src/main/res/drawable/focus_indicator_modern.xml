@@ -1,49 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Advanced focus indicator with glow effect -->
+<!-- Advanced focus indicator with modern cyan glow effect -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Focused State with glow -->
+    <!-- Focused State with vibrant glow -->
     <item android:state_focused="true">
         <layer-list>
-            <!-- Outer glow -->
+            <!-- Outer glow - soft cyan halo -->
             <item>
                 <shape android:shape="rectangle">
                     <solid android:color="#00000000" />
-                    <corners android:radius="16dp" />
-                    <stroke android:width="4dp" android:color="#33E50914" />
+                    <corners android:radius="18dp" />
+                    <stroke android:width="5dp" android:color="#2000D9FF" />
                 </shape>
             </item>
-            
-            <!-- Middle glow -->
-            <item android:insetTop="2dp" android:insetBottom="2dp" 
+
+            <!-- Middle glow - stronger cyan -->
+            <item android:insetTop="2dp" android:insetBottom="2dp"
                   android:insetLeft="2dp" android:insetRight="2dp">
                 <shape android:shape="rectangle">
                     <solid android:color="#00000000" />
-                    <corners android:radius="14dp" />
-                    <stroke android:width="2dp" android:color="#66E50914" />
+                    <corners android:radius="16dp" />
+                    <stroke android:width="3dp" android:color="#5000F0FF" />
                 </shape>
             </item>
-            
-            <!-- Inner border -->
-            <item android:insetTop="4dp" android:insetBottom="4dp" 
-                  android:insetLeft="4dp" android:insetRight="4dp">
+
+            <!-- Inner border - bright cyan -->
+            <item android:insetTop="5dp" android:insetBottom="5dp"
+                  android:insetLeft="5dp" android:insetRight="5dp">
                 <shape android:shape="rectangle">
                     <solid android:color="#00000000" />
+                    <corners android:radius="13dp" />
+                    <stroke android:width="2dp" android:color="@color/focus_primary" />
+                </shape>
+            </item>
+
+            <!-- Subtle inner highlight -->
+            <item android:insetTop="6dp" android:insetBottom="6dp"
+                  android:insetLeft="6dp" android:insetRight="6dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#10141B2D" />
                     <corners android:radius="12dp" />
-                    <stroke android:width="2dp" android:color="@color/md_theme_primary" />
                 </shape>
             </item>
         </layer-list>
     </item>
-    
-    <!-- Selected State -->
+
+    <!-- Selected State - coral accent -->
     <item android:state_selected="true">
         <shape android:shape="rectangle">
             <solid android:color="#00000000" />
             <corners android:radius="16dp" />
-            <stroke android:width="3dp" android:color="@color/focus_secondary" />
+            <stroke android:width="3dp" android:color="@color/md_theme_tertiary" />
         </shape>
     </item>
-    
+
     <!-- Default transparent -->
     <item>
         <shape android:shape="rectangle">

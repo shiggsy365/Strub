@@ -82,62 +82,78 @@
 
 <!-- ============================================ -->
 <!-- Material Design 3 Color System               -->
-<!-- Dark Theme Colors (Your Current Theme)       -->
+<!-- Modern Dark Theme Colors                     -->
+<!-- Inspired by contemporary streaming UIs       -->
 <!-- ============================================ -->
 
-<!-- Primary Colors -->
-<color name="md_theme_dark_primary">@color/md_theme_dark_errorContainer</color>
-<color name="md_theme_dark_onPrimary">#184dc9</color>
-<color name="md_theme_dark_primaryContainer">#930009</color>#c7ab59
-<color name="md_theme_dark_onPrimaryContainer">#FFDAD5</color>
+<!-- Primary Colors - Electric Cyan/Blue -->
+<color name="md_theme_dark_primary">#00D9FF</color>
+<color name="md_theme_dark_onPrimary">#003544</color>
+<color name="md_theme_dark_primaryContainer">#004D61</color>
+<color name="md_theme_dark_onPrimaryContainer">#B3ECFF</color>
 
-<!-- Secondary Colors -->
-<color name="md_theme_dark_secondary">#E7BDB7</color>
-<color name="md_theme_dark_onSecondary">#442925</color>
-<color name="md_theme_dark_secondaryContainer">#5D3F3B</color>
-<color name="md_theme_dark_onSecondaryContainer">#FFDAD4</color>
+<!-- Secondary Colors - Vibrant Purple -->
+<color name="md_theme_dark_secondary">#BB86FC</color>
+<color name="md_theme_dark_onSecondary">#3A1E5D</color>
+<color name="md_theme_dark_secondaryContainer">#512E7A</color>
+<color name="md_theme_dark_onSecondaryContainer">#E8DDFF</color>
 
-<!-- Tertiary Colors -->
-<color name="md_theme_dark_tertiary">#DEC48C</color>
-<color name="md_theme_dark_onTertiary">#3E2E04</color>
-<color name="md_theme_dark_tertiaryContainer">#564419</color>
-<color name="md_theme_dark_onTertiaryContainer">#FBDFA6</color>
+<!-- Tertiary Colors - Coral/Pink Accent -->
+<color name="md_theme_dark_tertiary">#FF6B9D</color>
+<color name="md_theme_dark_onTertiary">#5C1036</color>
+<color name="md_theme_dark_tertiaryContainer">#7D294E</color>
+<color name="md_theme_dark_onTertiaryContainer">#FFD9E5</color>
 
 <!-- Error Colors -->
-<color name="md_theme_dark_error">#FFB4AB</color>
-<color name="md_theme_dark_errorContainer">#590987</color>
-<color name="md_theme_dark_onError">#184dc9</color>
-<color name="md_theme_dark_onErrorContainer">#FFDAD6</color>
+<color name="md_theme_dark_error">#FF5449</color>
+<color name="md_theme_dark_errorContainer">#8C1D18</color>
+<color name="md_theme_dark_onError">#680003</color>
+<color name="md_theme_dark_onErrorContainer">#FFDAD5</color>
 
-<!-- Background Colors -->
-<color name="md_theme_dark_background">#0F0F0F</color>
-<color name="md_theme_dark_onBackground">#ECE0DE</color>
-<color name="md_theme_dark_surface">#1A1A1A</color>
-<color name="md_theme_dark_onSurface">#ECE0DE</color>
+<!-- Background Colors - Deep Navy -->
+<color name="md_theme_dark_background">#0A0E1A</color>
+<color name="md_theme_dark_onBackground">#E3E2E6</color>
+<color name="md_theme_dark_surface">#141B2D</color>
+<color name="md_theme_dark_onSurface">#E3E2E6</color>
 
 <!-- Surface Variants -->
-<color name="md_theme_dark_surfaceVariant">#534341</color>
-<color name="md_theme_dark_onSurfaceVariant">#D8C2BE</color>
-<color name="md_theme_dark_outline">#A08C89</color>
-<color name="md_theme_dark_inverseOnSurface">#201A19</color>
-<color name="md_theme_dark_inverseSurface">#ECE0DE</color>
-<color name="md_theme_dark_inversePrimary">#590987</color>
+<color name="md_theme_dark_surfaceVariant">#40464F</color>
+<color name="md_theme_dark_onSurfaceVariant">#C0C6D0</color>
+<color name="md_theme_dark_outline">#8A9099</color>
+<color name="md_theme_dark_inverseOnSurface">#1A1C1E</color>
+<color name="md_theme_dark_inverseSurface">#E3E2E6</color>
+<color name="md_theme_dark_inversePrimary">#006780</color>
 <color name="md_theme_dark_shadow">#000000</color>
-<color name="md_theme_dark_surfaceTint">#FFB4A8</color>
-<color name="md_theme_dark_outlineVariant">#534341</color>
+<color name="md_theme_dark_surfaceTint">#00D9FF</color>
+<color name="md_theme_dark_outlineVariant">#40464F</color>
 <color name="md_theme_dark_scrim">#000000</color>
 
-<!-- Surface Container Colors -->
-<color name="md_theme_dark_surfaceContainerLowest">#0B0808</color>
-<color name="md_theme_dark_surfaceContainerLow">#1A1515</color>
-<color name="md_theme_dark_surfaceContainer">#1E1B1A</color>
-<color name="md_theme_dark_surfaceContainerHigh">@color/md_theme_dark_onError</color>
-<color name="md_theme_dark_surfaceContainerHighest">#34302F</color>
+<!-- Surface Container Colors - Layered Navy/Charcoal -->
+<color name="md_theme_dark_surfaceContainerLowest">#050812</color>
+<color name="md_theme_dark_surfaceContainerLow">#0F1420</color>
+<color name="md_theme_dark_surfaceContainer">#1A2332</color>
+<color name="md_theme_dark_surfaceContainerHigh">#242F3F</color>
+<color name="md_theme_dark_surfaceContainerHighest">#2F3B4C</color>
 
 <!-- ============================================ -->
 <!-- Seed Color                                   -->
 <!-- ============================================ -->
-<color name="seed">#590987</color>
+<color name="seed">#00D9FF</color>
+
+<!-- ============================================ -->
+<!-- Modern Gradient System                       -->
+<!-- ============================================ -->
+<color name="gradient_primary_start">#00D9FF</color>
+<color name="gradient_primary_end">#0088CC</color>
+<color name="gradient_secondary_start">#BB86FC</color>
+<color name="gradient_secondary_end">#7B61FF</color>
+<color name="gradient_accent_start">#FF6B9D</color>
+<color name="gradient_accent_end">#FF3D71</color>
+
+<!-- Focus gradient for glow effects -->
+<color name="focus_gradient_start">#00F0FF</color>
+<color name="focus_gradient_center">#00D9FF</color>
+<color name="focus_gradient_end">#0088CC</color>
 
 <!-- ============================================ -->
 <!-- Legacy/Alias Colors (Keep for compatibility)-->
@@ -190,24 +206,25 @@
 
 <!-- Additional app-specific colors -->
 <color name="app_background">@color/md_theme_background</color>
-<color name="color_primary">#E50914</color>
-<color name="colorAccent">@color/color_primary</color>
+<color name="color_primary">#00D9FF</color>
+<color name="colorAccent">@color/md_theme_dark_primary</color>
 
 <!-- Semantic Colors -->
-<color name="success_green">#4CAF50</color>
-<color name="warning_orange">#FF9800</color>
-<color name="info_blue">#2196F3</color>
+<color name="success_green">#00E676</color>
+<color name="warning_orange">#FFB300</color>
+<color name="info_blue">#00B8D4</color>
 
-<!-- Glass morphism -->
-<color name="glass_surface">#1A1A1A80</color>
-<color name="glass_surface_light">#2626264D</color>
+<!-- Glass morphism - Modern with blur effects -->
+<color name="glass_surface">#1A233280</color>
+<color name="glass_surface_light">#2F3B4C4D</color>
 <color name="card_elevated">@color/md_theme_surfaceContainer</color>
 
-<!-- Focus states -->
-<color name="focus_primary">#E50914</color>
-<color name="focus_secondary">#FF6B6B</color>
-<color name="selection_highlight">#E5091420</color>
-<color name="selection_color">#E5091440</color>
+<!-- Focus states - Vibrant glowing effect -->
+<color name="focus_primary">#00F0FF</color>
+<color name="focus_secondary">#80F4FF</color>
+<color name="focus_glow">#00D9FF80</color>
+<color name="selection_highlight">#00D9FF30</color>
+<color name="selection_color">#00D9FF50</color>
 
 <!-- Text colors -->
 <color name="text_primary">@color/md_theme_onSurface</color>
@@ -224,24 +241,24 @@
 <color name="shimmer_base">@color/md_theme_surfaceContainerLow</color>
 <color name="shimmer_highlight">@color/md_theme_surfaceContainer</color>
 
-<!-- Chip colors -->
+<!-- Chip colors - Modern glassmorphic style -->
 <color name="chip_background">@color/md_theme_surfaceContainerLow</color>
-<color name="chip_background_default">@color/md_theme_surfaceContainerLow</color>
+<color name="chip_background_default">#1A233266</color>
 <color name="chip_background_selected">@color/md_theme_primary</color>
-<color name="chip_background_focused">@color/md_theme_surfaceContainerHigh</color>
+<color name="chip_background_focused">#2F3B4C99</color>
 
 <color name="chip_text_default">@color/md_theme_onSurfaceVariant</color>
-<color name="chip_text_selected">@color/md_theme_onPrimary</color>
+<color name="chip_text_selected">#003544</color>
 <color name="chip_text_focused">@color/md_theme_onSurface</color>
 
-<color name="chip_stroke_default">@color/md_theme_outline</color>
+<color name="chip_stroke_default">#40464F80</color>
 <color name="chip_stroke_selected">@color/md_theme_primary</color>
-<color name="chip_stroke_focused">@color/md_theme_primary</color>
+<color name="chip_stroke_focused">@color/focus_primary</color>
 
-<!-- Poster stroke -->
+<!-- Poster stroke - Vibrant focus effect -->
 <color name="poster_stroke_default">#00000000</color>
-<color name="poster_stroke_focused">@color/md_theme_primary</color>
-<color name="poster_stroke_selected">#FF6B6B</color>
+<color name="poster_stroke_focused">@color/focus_primary</color>
+<color name="poster_stroke_selected">@color/md_theme_tertiary</color>
 
 <!-- Button backgrounds -->
 <color name="button_background_default">@color/md_theme_surfaceContainerHigh</color>

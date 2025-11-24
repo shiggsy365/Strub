@@ -1,52 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modern card background with sophisticated states and depth -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Focused/Pressed State -->
+    <!-- Focused State - Enhanced with glow -->
     <item android:state_focused="true">
         <layer-list>
-            <!-- Shadow Layer -->
+            <!-- Outer glow shadow -->
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="#40000000" />
-                    <corners android:radius="18dp" />
+                    <solid android:color="#6000D9FF" />
+                    <corners android:radius="20dp" />
                 </shape>
             </item>
-            <!-- Main Card -->
-            <item android:bottom="2dp" android:right="2dp">
-                <shape android:shape="rectangle">
-                    <solid android:color="@color/md_theme_surfaceContainerHigh" />
-                    <stroke android:width="2dp" android:color="@color/md_theme_primary" />
-                    <corners android:radius="16dp" />
-                </shape>
+
+            <!-- Main Card with gradient -->
+            <item android:bottom="3dp" android:right="3dp" android:left="2dp" android:top="2dp">
+                <layer-list>
+                    <!-- Gradient background -->
+                    <item>
+                        <shape android:shape="rectangle">
+                            <gradient
+                                android:angle="135"
+                                android:startColor="@color/md_theme_dark_surfaceContainerHigh"
+                                android:endColor="@color/md_theme_dark_surfaceContainer"
+                                android:type="linear" />
+                            <corners android:radius="16dp" />
+                        </shape>
+                    </item>
+
+                    <!-- Glowing border -->
+                    <item>
+                        <shape android:shape="rectangle">
+                            <stroke android:width="2dp" android:color="@color/focus_primary" />
+                            <solid android:color="@android:color/transparent" />
+                            <corners android:radius="16dp" />
+                        </shape>
+                    </item>
+
+                    <!-- Subtle top highlight -->
+                    <item android:height="2dp">
+                        <shape android:shape="rectangle">
+                            <solid android:color="#2000F0FF" />
+                            <corners android:radius="16dp" />
+                        </shape>
+                    </item>
+                </layer-list>
             </item>
         </layer-list>
     </item>
-    
-    <!-- Elevated State -->
+
+    <!-- Pressed State - Deeper press effect -->
     <item android:state_pressed="true">
         <layer-list>
-            <!-- Shadow Layer -->
+            <!-- Inner shadow -->
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="#60000000" />
+                    <solid android:color="#80000000" />
                     <corners android:radius="18dp" />
                 </shape>
             </item>
-            <!-- Main Card -->
-            <item android:bottom="4dp" android:right="4dp">
+
+            <!-- Pressed Card -->
+            <item android:bottom="6dp" android:right="6dp" android:left="1dp" android:top="1dp">
                 <shape android:shape="rectangle">
-                    <solid android:color="@color/md_theme_surfaceContainer" />
-                    <stroke android:width="1dp" android:color="@color/md_theme_outline" />
+                    <gradient
+                        android:angle="135"
+                        android:startColor="@color/md_theme_dark_surfaceContainer"
+                        android:endColor="@color/md_theme_dark_surfaceContainerLow"
+                        android:type="linear" />
+                    <stroke android:width="1dp" android:color="@color/md_theme_dark_primary" />
                     <corners android:radius="16dp" />
                 </shape>
             </item>
         </layer-list>
     </item>
-    
-    <!-- Default State -->
+
+    <!-- Default State - Subtle gradient -->
     <item>
-        <shape android:shape="rectangle">
-            <solid android:color="@color/md_theme_surfaceContainer" />
-            <corners android:radius="16dp" />
-        </shape>
+        <layer-list>
+            <!-- Base gradient -->
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="135"
+                        android:startColor="@color/md_theme_dark_surfaceContainerLow"
+                        android:centerColor="@color/md_theme_dark_surfaceContainer"
+                        android:endColor="@color/md_theme_dark_surfaceContainerHigh"
+                        android:type="linear" />
+                    <corners android:radius="16dp" />
+                </shape>
+            </item>
+
+            <!-- Subtle border -->
+            <item>
+                <shape android:shape="rectangle">
+                    <stroke android:width="1dp" android:color="#2040464F" />
+                    <solid android:color="@android:color/transparent" />
+                    <corners android:radius="16dp" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
 </selector>
