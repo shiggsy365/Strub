@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="0dp"
+        android:focusable="true"
+        android:clickable="true"
+        style="@style/Widget.App.Poster"
+        app:cardCornerRadius="@dimen/corner_radius_small"
+        app:cardElevation="@dimen/elevation_medium"
+        app:cardBackgroundColor="@color/card_elevated"
+        app:strokeWidth="@dimen/stroke_thick"
+        app:strokeColor="@color/poster_stroke_selector"
+        app:contentPadding="2dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Poster Container with ImageView and Status Icons -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/poster_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <!-- Main Poster ImageView -->
+                <ImageView
+                    android:id="@+id/poster"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Poster"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintDimensionRatio="H,2:3"
+                    tools:src="@drawable/movie" />
+
+                <!-- Watched Icon (Green Checkmark) -->
+                <ImageView
+                    android:id="@+id/iconWatched"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_check_circle"
+                    android:visibility="gone"
+                    android:padding="4dp"
+                    android:background="@drawable/modern_icon_background"
+                    app:tint="@color/success_green"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_margin="8dp"
+                    android:contentDescription="Watched"
+                    tools:visibility="visible" />
+
+                <!-- In Progress Icon (Orange Circle) -->
+                <ImageView
+                    android:id="@+id/iconInProgress"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_play_circle"
+                    android:visibility="gone"
+                    android:padding="4dp"
+                    android:background="@drawable/modern_icon_background"
+                    app:tint="@color/warning_orange"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_margin="8dp"
+                    android:contentDescription="In Progress"
+                    tools:visibility="gone" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Navigation Button Container -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/nav_button_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"
+                android:background="@color/md_theme_surfaceContainer">
+
+                <ImageView
+                    android:id="@+id/nav_icon"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_exit_to_app"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toTopOf="@+id/nav_text"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintVertical_chainStyle="packed"
+                    android:layout_marginBottom="8dp"
+                    app:tint="@color/md_theme_primary"
+                    android:contentDescription="Navigation" />
+
+                <TextView
+                    android:id="@+id/nav_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Next Page"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textColor="?attr/colorPrimary"
+                    app:layout_constraintTop_toBottomOf="@+id/nav_icon"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+</layout>
