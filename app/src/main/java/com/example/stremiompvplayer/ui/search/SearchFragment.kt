@@ -161,7 +161,6 @@ class SearchFragment : Fragment() {
         binding.detailDescription.text = item.description ?: "No description available."
 
         binding.detailTitle.text = item.name
-        // [CHANGE] Initial state hidden
         binding.detailTitle.visibility = View.GONE
         binding.detailLogo.visibility = View.GONE
 
@@ -173,48 +172,48 @@ class SearchFragment : Fragment() {
             android.R.style.Theme_DeviceDefault_Light_NoActionBar)
         val popup = PopupMenu(wrapper, view)
 
-        // NEW: Check if item is in library
-        viewModel.checkLibraryStatus(item.id)
+        // Use lifecycleScope for synchronous library check
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isInLibrary = viewModel.isItemInLibrarySync(item.id)
 
-        val isInLibrary = viewModel.isItemInLibrary.value ?: false
-
-        if (isInLibrary) {
-            popup.menu.add("Remove from Library")
-        } else {
-            popup.menu.add("Add to Library")
-        }
-
-        popup.menu.add("Mark as Watched")
-        popup.menu.add("Clear Watched Status")
-
-        popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.title) {
-                "Add to Library" -> {
-                    viewModel.addToLibrary(item)
-                    true
-                }
-                "Remove from Library" -> {
-                    viewModel.removeFromLibrary(item.id)
-                    true
-                }
-                "Mark as Watched" -> {
-                    viewModel.markAsWatched(item)
-                    item.isWatched = true
-                    item.progress = item.duration
-                    refreshItem(item)
-                    true
-                }
-                "Clear Watched Status" -> {
-                    viewModel.clearWatchedStatus(item)
-                    item.isWatched = false
-                    item.progress = 0
-                    refreshItem(item)
-                    true
-                }
-                else -> false
+            if (isInLibrary) {
+                popup.menu.add("Remove from Library")
+            } else {
+                popup.menu.add("Add to Library")
             }
+
+            popup.menu.add("Mark as Watched")
+            popup.menu.add("Clear Watched Status")
+
+            popup.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.title) {
+                    "Add to Library" -> {
+                        viewModel.addToLibrary(item)
+                        true
+                    }
+                    "Remove from Library" -> {
+                        viewModel.removeFromLibrary(item.id)
+                        true
+                    }
+                    "Mark as Watched" -> {
+                        viewModel.markAsWatched(item)
+                        item.isWatched = true
+                        item.progress = item.duration
+                        refreshItem(item)
+                        true
+                    }
+                    "Clear Watched Status" -> {
+                        viewModel.clearWatchedStatus(item)
+                        item.isWatched = false
+                        item.progress = 0
+                        refreshItem(item)
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
         }
-        popup.show()
     }
 
     private fun refreshItem(item: MetaItem) {
@@ -223,8 +222,6 @@ class SearchFragment : Fragment() {
             contentAdapter.notifyItemChanged(position)
         }
     }
-
-
 
     private fun performSearch(query: String) {
         if (query.isBlank()) return
@@ -270,7 +267,6 @@ class SearchFragment : Fragment() {
             }
         }
 
-        // [CHANGE] Updated observer
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
             when (logoUrl) {
                 "" -> {

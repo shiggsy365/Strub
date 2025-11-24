@@ -69,9 +69,24 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    public override fun onPause() {
+        super.onPause()
+        saveProgress() // Save whenever we pause or leave
+        if (android.os.Build.VERSION.SDK_INT <= 23) {
+            releasePlayer()
+        }
+    }
 
+    public override fun onStop() {
+        super.onStop()
+        if (android.os.Build.VERSION.SDK_INT > 23) {
+            releasePlayer()
+        }
+    }
 
     @OptIn(UnstableApi::class) private fun initializePlayer() {
+        if (player != null) return
+
         // 1. Create the player
         player = ExoPlayer.Builder(this)
             .setSeekForwardIncrementMs(10000)
@@ -126,7 +141,9 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun releasePlayer() {
         player?.let { exoPlayer ->
-            // ... existing code ...
+            playbackPosition = exoPlayer.currentPosition
+            currentItem = exoPlayer.currentMediaItemIndex
+            playWhenReady = exoPlayer.playWhenReady
 
             // Scrobble Stop
             currentMeta?.let { meta ->
@@ -134,6 +151,7 @@ class PlayerActivity : AppCompatActivity() {
                 val position = exoPlayer.currentPosition
                 if (duration > 0) {
                     val progress = (position.toFloat() / duration.toFloat()) * 100f
+                    // [FIX] Ensure final stop scrobble is sent
                     viewModel.scrobble("stop", meta, progress)
                 }
             }
@@ -148,17 +166,8 @@ class PlayerActivity : AppCompatActivity() {
             val duration = exoPlayer.duration
 
             if (currentMeta != null && duration > 0) {
-                // This call is correct based on the MainViewModel signature
                 viewModel.saveWatchProgress(currentMeta!!, position, duration)
             }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        saveProgress() // Save whenever we pause or leave
-        if (android.os.Build.VERSION.SDK_INT <= 23) {
-            releasePlayer()
         }
     }
 
@@ -170,38 +179,5 @@ class PlayerActivity : AppCompatActivity() {
                 or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
-    }
-    private fun setupScrobbling(meta: MetaItem) {
-        player?.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                when (playbackState) {
-                    Player.STATE_READY -> {
-                        val progress = (player?.currentPosition ?: 0).toFloat() /
-                                (player?.duration ?: 1).toFloat() * 100
-                        viewModel.scrobble("start", meta, progress)
-                    }
-                }
-            }
-
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                val progress = (player?.currentPosition ?: 0).toFloat() /
-                        (player?.duration ?: 1).toFloat() * 100
-                if (isPlaying) {
-                    viewModel.scrobble("start", meta, progress)
-                } else {
-                    viewModel.scrobble("pause", meta, progress)
-                }
-            }
-        })
-    }
-
-    override fun onStop() {
-        super.onStop()
-        // Scrobble stop when leaving player
-        currentMeta?.let { meta ->
-            val progress = (player?.currentPosition ?: 0).toFloat() /
-                    (player?.duration ?: 1).toFloat() * 100
-            viewModel.scrobble("stop", meta, progress)
-        }
     }
 }

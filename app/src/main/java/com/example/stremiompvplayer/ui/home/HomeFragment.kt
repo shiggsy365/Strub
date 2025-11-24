@@ -2,12 +2,18 @@ package com.example.stremiompvplayer.ui.home
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.R
@@ -15,20 +21,18 @@ import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentHomeBinding
 import com.example.stremiompvplayer.models.MetaItem
+import com.example.stremiompvplayer.models.UserCatalog
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-
-    private lateinit var nextUpAdapter: PosterAdapter
-    private lateinit var continueEpisodesAdapter: PosterAdapter
-    private lateinit var continueMoviesAdapter: PosterAdapter
 
     private val viewModel: MainViewModel by activityViewModels {
         MainViewModelFactory(
@@ -37,245 +41,185 @@ class HomeFragment : Fragment() {
         )
     }
 
-    // Track currently focused items for each section
-    private var currentNextUpItem: MetaItem? = null
-    private var currentContinueEpisodeItem: MetaItem? = null
-    private var currentContinueMovieItem: MetaItem? = null
+    private lateinit var sidebarAdapter: SidebarAdapter
+    private lateinit var contentAdapter: PosterAdapter
+    private var currentSelectedItem: MetaItem? = null
+    private var detailsUpdateJob: Job? = null
 
     companion object {
         fun newInstance(): HomeFragment {
             return HomeFragment()
         }
     }
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        setupRecyclerViewHeights()
-        setupNextUpSection()
-        setupContinueEpisodesSection()
-        setupContinueMoviesSection()
-        setupObservers()
-
-        // Load home content
-        viewModel.loadHomeContent()
-    }
-
-    private fun setupRecyclerViewHeights() {
-        // UPDATED: Set max height to 27% of screen height
-        val displayMetrics = resources.displayMetrics
-        val maxHeight = (displayMetrics.heightPixels * 0.27).toInt()
-
-        binding.rvNextUp.layoutParams.height = maxHeight
-        binding.rvContinueEpisodes.layoutParams.height = maxHeight
-        binding.rvContinueMovies.layoutParams.height = maxHeight
-    }
-
-    private fun setupNextUpSection() {
-        nextUpAdapter = PosterAdapter(
-            items = emptyList(),
-            onClick = { item -> openDetails(item) },
-            // NEW: Long Press Listener
-            onLongClick = { item -> showRemoveDialog(item) }
-        )
-        // ... existing apply ...
-    }
-
-    private fun setupContinueEpisodesSection() {
-        continueEpisodesAdapter = PosterAdapter(
-            items = emptyList(),
-            onClick = { item -> openDetails(item) },
-            // NEW: Long Press Listener
-            onLongClick = { item -> showRemoveDialog(item) }
-        )
-        // ... existing apply ...
-    }
-
-    private fun setupContinueMoviesSection() {
-        continueMoviesAdapter = PosterAdapter(
-            items = emptyList(),
-            onClick = { item -> openDetails(item) },
-            // NEW: Long Press Listener
-            onLongClick = { item -> showRemoveDialog(item) }
-        )
-        // ... existing apply ...
-    }
-
-    private fun showRemoveDialog(item: MetaItem) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Remove from Library?")
-            .setMessage("This will remove '${item.name}' from your local library and Trakt collection.")
-            .setPositiveButton("Remove") { _, _ ->
-                viewModel.removeFromLibrary(item)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
-    private fun setupObservers() {
-        viewModel.homeNextUp.observe(viewLifecycleOwner) { items ->
-            nextUpAdapter.updateData(items)
-            if (items.isNotEmpty() && currentNextUpItem == null) {
-                updateNextUpSidecar(items[0])
-            }
-        }
 
-        viewModel.actionResult.observe(viewLifecycleOwner) { result ->
-            when (result) {
-                is MainViewModel.ActionResult.Success ->
-                    Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
-                is MainViewModel.ActionResult.Error ->
-                    Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
-            }
-        }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupAdapters()
+        setupObservers()
+        loadHomeCatalogs()
+    }
 
-        viewModel.homeContinueEpisodes.observe(viewLifecycleOwner) { items ->
-            continueEpisodesAdapter.updateData(items)
-            if (items.isNotEmpty() && currentContinueEpisodeItem == null) {
-                updateContinueEpisodesSidecar(items[0])
-            }
-        }
+    override fun onResume() {
+        super.onResume()
+        currentSelectedItem?.let { updateDetailsPane(it) }
+    }
 
-        viewModel.homeContinueMovies.observe(viewLifecycleOwner) { items ->
-            continueMoviesAdapter.updateData(items)
-            if (items.isNotEmpty() && currentContinueMovieItem == null) {
-                updateContinueMoviesSidecar(items[0])
-            }
+    private fun setupAdapters() {
+        // Sidebar Setup
+        sidebarAdapter = SidebarAdapter { catalog ->
+            viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
         }
+        binding.rvSidebar.layoutManager = LinearLayoutManager(context)
+        binding.rvSidebar.adapter = sidebarAdapter
 
-        viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
-            // Update logos for the currently focused sections
-            currentNextUpItem?.let { item ->
-                if (logoUrl != null && logoUrl.isNotEmpty()) {
-                    binding.nextUpLogo.visibility = View.VISIBLE
-                    binding.nextUpTitle.visibility = View.GONE
-                    Glide.with(this).load(logoUrl).into(binding.nextUpLogo)
-                } else {
-                    binding.nextUpLogo.visibility = View.GONE
-                    binding.nextUpTitle.visibility = View.VISIBLE
+        // Content Grid Setup
+        contentAdapter = PosterAdapter(
+            items = emptyList(),
+            onClick = { item -> openDetails(item) },
+            onLongClick = { item ->
+                val pos = contentAdapter.getItemPosition(item)
+                val holder = binding.rvContent.findViewHolderForAdapterPosition(pos)
+                if (holder != null) showItemMenu(holder.itemView, item)
+            }
+        )
+
+        binding.rvContent.layoutManager = GridLayoutManager(context, 10)
+        binding.rvContent.adapter = contentAdapter
+
+        // Focus listener for sidecar updates
+        binding.rvContent.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
+            override fun onChildViewAttachedToWindow(view: View) {
+                view.setOnFocusChangeListener { v, hasFocus ->
+                    if (hasFocus) {
+                        val position = binding.rvContent.getChildAdapterPosition(v)
+                        if (position != RecyclerView.NO_POSITION) {
+                            val item = contentAdapter.getItem(position)
+                            if (item != null) {
+                                detailsUpdateJob?.cancel()
+                                detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
+                                    delay(500) // Short delay to prevent flashing
+                                    if (isAdded) {
+                                        updateDetailsPane(item)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
-
-            currentContinueEpisodeItem?.let { item ->
-                if (logoUrl != null && logoUrl.isNotEmpty()) {
-                    binding.continueEpisodesLogo.visibility = View.VISIBLE
-                    binding.continueEpisodesTitle.visibility = View.GONE
-                    Glide.with(this).load(logoUrl).into(binding.continueEpisodesLogo)
-                } else {
-                    binding.continueEpisodesLogo.visibility = View.GONE
-                    binding.continueEpisodesTitle.visibility = View.VISIBLE
-                }
+            override fun onChildViewDetachedFromWindow(view: View) {
+                view.setOnFocusChangeListener(null)
             }
+        })
+    }
 
-            currentContinueMovieItem?.let { item ->
-                if (logoUrl != null && logoUrl.isNotEmpty()) {
-                    binding.continueMoviesLogo.visibility = View.VISIBLE
-                    binding.continueMoviesTitle.visibility = View.GONE
-                    Glide.with(this).load(logoUrl).into(binding.continueMoviesLogo)
-                } else {
-                    binding.continueMoviesLogo.visibility = View.GONE
-                    binding.continueMoviesTitle.visibility = View.VISIBLE
-                }
-            }
+    private fun loadHomeCatalogs() {
+        // Construct the 3 required Home catalogs
+        val catalogs = viewModel.getHomeCatalogs()
+        sidebarAdapter.submitList(catalogs)
+
+        // Auto-load the first catalog (Next Up)
+        if (catalogs.isNotEmpty()) {
+            viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
         }
     }
 
-    private fun updateNextUpSidecar(item: MetaItem) {
-        // Update title/logo
-        binding.nextUpTitle.text = item.name
+    private fun updateDetailsPane(item: MetaItem) {
+        currentSelectedItem = item
 
-        // Extract episode info if available
+        // Background
+        Glide.with(this)
+            .load(item.background ?: item.poster)
+            .into(binding.pageBackground)
+
+        // Text Info
+        binding.detailTitle.text = item.name
+        binding.detailTitle.visibility = View.GONE // Hide until logo check
+        binding.detailLogo.visibility = View.GONE
+
+        binding.detailDescription.text = item.description ?: "No description available."
+
+        // Episode Info (Specific to Next Up / Continue Episodes)
         if (item.type == "episode") {
             val parts = item.id.split(":")
             if (parts.size >= 4) {
                 val season = parts[2]
                 val episode = parts[3]
-                binding.nextUpEpisode.text = "S${season.padStart(2, '0')}E${episode.padStart(2, '0')}"
-                binding.nextUpEpisode.visibility = View.VISIBLE
+                binding.detailEpisode.text = "S${season.padStart(2, '0')}E${episode.padStart(2, '0')}"
+                binding.detailEpisode.visibility = View.VISIBLE
+            } else {
+                binding.detailEpisode.visibility = View.GONE
             }
         } else {
-            binding.nextUpEpisode.visibility = View.GONE
+            binding.detailEpisode.visibility = View.GONE
         }
 
         // Rating
-        if (item.rating != null && item.rating.isNotEmpty()) {
-            binding.nextUpRating.text = "★ ${item.rating}"
-            binding.nextUpRating.visibility = View.VISIBLE
+        if (item.rating != null) {
+            binding.detailRating.text = "★ ${item.rating}"
+            binding.detailRating.visibility = View.VISIBLE
         } else {
-            binding.nextUpRating.visibility = View.GONE
+            binding.detailRating.visibility = View.GONE
         }
 
-        // Fetch logo
+        // Fetch Logo
         viewModel.fetchItemLogo(item)
-
-        // Update background
-        Glide.with(this)
-            .load(item.background ?: item.poster)
-            .into(binding.pageBackground)
     }
 
-    private fun updateContinueEpisodesSidecar(item: MetaItem) {
-        // Update title/logo
-        binding.continueEpisodesTitle.text = item.name
+    private fun showItemMenu(view: View, item: MetaItem) {
+        val wrapper = ContextThemeWrapper(requireContext(), android.R.style.Theme_DeviceDefault_Light_NoActionBar)
+        val popup = PopupMenu(wrapper, view)
 
-        // Extract episode info if available
-        if (item.type == "episode") {
-            val parts = item.id.split(":")
-            if (parts.size >= 4) {
-                val season = parts[2]
-                val episode = parts[3]
-                binding.continueEpisodesEpisode.text = "S${season.padStart(2, '0')}E${episode.padStart(2, '0')}"
-                binding.continueEpisodesEpisode.visibility = View.VISIBLE
+        // Load Library Status Synchronously
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isInLibrary = viewModel.isItemInLibrarySync(item.id)
+
+            if (isInLibrary) {
+                popup.menu.add("Remove from Library")
+            } else {
+                popup.menu.add("Add to Library")
             }
-        } else {
-            binding.continueEpisodesEpisode.visibility = View.GONE
+
+            popup.menu.add("Mark as Watched")
+            popup.menu.add("Clear Watched Status")
+
+            popup.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.title) {
+                    "Add to Library" -> {
+                        viewModel.addToLibrary(item)
+                        true
+                    }
+                    "Remove from Library" -> {
+                        viewModel.removeFromLibrary(item.id)
+                        true
+                    }
+                    "Mark as Watched" -> {
+                        viewModel.markAsWatched(item)
+                        item.isWatched = true
+                        contentAdapter.notifyDataSetChanged()
+                        true
+                    }
+                    "Clear Watched Status" -> {
+                        viewModel.clearWatchedStatus(item)
+                        item.isWatched = false
+                        contentAdapter.notifyDataSetChanged()
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
         }
-
-        // Rating
-        if (item.rating != null && item.rating.isNotEmpty()) {
-            binding.continueEpisodesRating.text = "★ ${item.rating}"
-            binding.continueEpisodesRating.visibility = View.VISIBLE
-        } else {
-            binding.continueEpisodesRating.visibility = View.GONE
-        }
-
-        // Fetch logo
-        viewModel.fetchItemLogo(item)
-
-        // Update background
-        Glide.with(this)
-            .load(item.background ?: item.poster)
-            .into(binding.pageBackground)
-    }
-
-    private fun updateContinueMoviesSidecar(item: MetaItem) {
-        // Update title/logo
-        binding.continueMoviesTitle.text = item.name
-
-        // Rating
-        if (item.rating != null && item.rating.isNotEmpty()) {
-            binding.continueMoviesRating.text = "★ ${item.rating}"
-            binding.continueMoviesRating.visibility = View.VISIBLE
-        } else {
-            binding.continueMoviesRating.visibility = View.GONE
-        }
-
-        // Fetch logo
-        viewModel.fetchItemLogo(item)
-
-        // Update background
-        Glide.with(this)
-            .load(item.background ?: item.poster)
-            .into(binding.pageBackground)
     }
 
     private fun openDetails(item: MetaItem) {
         val type = when {
             item.type == "episode" -> {
-                // Extract show ID and navigate to series details
                 val parts = item.id.split(":")
                 if (parts.size >= 2) "series" else item.type
             }
@@ -293,8 +237,82 @@ class HomeFragment : Fragment() {
         startActivity(intent)
     }
 
+    private fun setupObservers() {
+        viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
+            contentAdapter.updateData(items)
+            if (items.isNotEmpty()) {
+                updateDetailsPane(items[0])
+            } else {
+                currentSelectedItem = null
+            }
+        }
+
+        // Logo Logic
+        viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
+            when (logoUrl) {
+                "" -> { // Loading
+                    binding.detailTitle.visibility = View.GONE
+                    binding.detailLogo.visibility = View.GONE
+                }
+                null -> { // No Logo
+                    binding.detailTitle.visibility = View.VISIBLE
+                    binding.detailLogo.visibility = View.GONE
+                }
+                else -> { // Has Logo
+                    binding.detailTitle.visibility = View.GONE
+                    binding.detailLogo.visibility = View.VISIBLE
+                    Glide.with(this).load(logoUrl).fitCenter().into(binding.detailLogo)
+                }
+            }
+        }
+
+        // Loading Logic (RESTORED)
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.loadingCard.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+
+        viewModel.error.observe(viewLifecycleOwner) { error ->
+            if (error.isNotEmpty()) {
+                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        detailsUpdateJob?.cancel()
+    }
+
+    // Sidebar Adapter Class (Inner)
+    inner class SidebarAdapter(
+        private val onClick: (UserCatalog) -> Unit
+    ) : androidx.recyclerview.widget.ListAdapter<UserCatalog, SidebarAdapter.ViewHolder>(
+        com.example.stremiompvplayer.adapters.CatalogConfigAdapter.DiffCallback()
+    ) {
+        private var selectedPosition = 0
+
+        inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+            val name: android.widget.TextView = view.findViewById(R.id.catalogName)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_discover_sidebar, parent, false)
+            return ViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val item = getItem(position)
+            holder.name.text = item.displayName
+            holder.view.isSelected = position == selectedPosition
+            holder.view.setOnClickListener {
+                val oldPosition = selectedPosition
+                selectedPosition = position
+                notifyItemChanged(oldPosition)
+                notifyItemChanged(selectedPosition)
+                onClick(item)
+            }
+        }
     }
 }

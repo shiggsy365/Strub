@@ -23,341 +23,199 @@
             android:layout_height="match_parent"
             android:background="@drawable/gradient_overlay_modern" />
 
-        <androidx.core.widget.NestedScrollView
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:scrollbars="none"
-            android:fadeScrollbars="true"
-            android:overScrollMode="never">
+            android:paddingRight="16dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/sidebarCard"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="@dimen/spacing_xs"
+                android:layout_marginEnd="@dimen/spacing_xs"
+                android:layout_marginBottom="@dimen/spacing_xs"
+                app:layout_constraintWidth_percent="0.25"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/contentGrid"
+                app:cardBackgroundColor="#00000000"
+                app:cardCornerRadius="@dimen/corner_radius_small"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/md_theme_outline"
+                app:contentPadding="4dp">
 
-                <!-- Container 1: Next Up -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/nextUpContainer"
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvSidebar"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_md"
-                    app:cardBackgroundColor="@color/glass_surface_light"
-                    app:cardCornerRadius="@dimen/corner_radius_small"
-                    app:cardElevation="@dimen/elevation_medium"
-                    app:strokeWidth="0dp"
-                    app:contentPadding="0dp">
+                    android:layout_height="match_parent"
+                    android:scrollbars="none"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/heroCard"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="@dimen/spacing_xs"
+                android:layout_marginEnd="@dimen/spacing_sm"
+                android:layout_marginBottom="@dimen/spacing_xs"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/sidebarCard"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/contentGrid"
+                app:cardBackgroundColor="#00000000"
+                app:cardCornerRadius="@dimen/corner_radius_small"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/md_theme_outline"
+                app:contentPadding="0dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="0dp">
 
                     <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:id="@+id/metaColumn"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:gravity="top"
+                        android:orientation="vertical"
+                        android:padding="4dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintWidth_percent="0.4">
 
-                        <!-- Sidecar for Next Up -->
-                        <androidx.constraintlayout.widget.ConstraintLayout
-                            android:id="@+id/nextUpSidecar"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="0.3"
-                            android:padding="@dimen/spacing_sm"
-                            android:minHeight="150dp">
+                        <FrameLayout
+                            android:id="@+id/logoContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="4dp"
+                            android:layout_marginBottom="@dimen/spacing_sm">
 
-                            <FrameLayout
-                                android:id="@+id/nextUpLogoContainer"
+                            <ImageView
+                                android:id="@+id/detailLogo"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:padding="4dp"
-                                android:layout_marginBottom="@dimen/spacing_sm"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent">
-
-                                <ImageView
-                                    android:id="@+id/nextUpLogo"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="60dp"
-                                    android:adjustViewBounds="true"
-                                    android:contentDescription="Logo"
-                                    android:scaleType="fitCenter"
-                                    android:visibility="gone"
-                                    tools:src="@drawable/movie" />
-
-                                <TextView
-                                    android:id="@+id/nextUpTitle"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:ellipsize="end"
-                                    android:gravity="center"
-                                    android:maxLines="2"
-                                    android:textAppearance="?attr/textAppearanceTitleLarge"
-                                    android:textColor="@color/text_primary"
-                                    tools:text="Breaking Bad" />
-
-                            </FrameLayout>
-
-                            <TextView
-                                android:id="@+id/nextUpEpisode"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/spacing_xs"
-                                android:textAppearance="?attr/textAppearanceBodyMedium"
-                                android:textColor="@color/text_secondary"
+                                android:layout_height="100dp"
+                                android:adjustViewBounds="true"
+                                android:contentDescription="Content Logo"
+                                android:scaleType="fitCenter"
                                 android:visibility="gone"
-                                app:layout_constraintTop_toBottomOf="@id/nextUpLogoContainer"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                tools:text="S01E01"
-                                tools:visibility="visible" />
+                                tools:src="@drawable/movie" />
 
                             <TextView
-                                android:id="@+id/nextUpRating"
+                                android:id="@+id/detailTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:lineSpacingExtra="@dimen/spacing_xs"
+                                android:maxLines="2"
+                                android:textAppearance="?attr/textAppearanceDisplaySmall"
+                                android:textColor="@color/text_primary"
+                                tools:text="Breaking Bad" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="@dimen/spacing_sm"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/detailEpisode"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/spacing_xs"
+                                android:layout_marginEnd="@dimen/spacing_sm"
+                                android:textAppearance="?attr/textAppearanceBodyLarge"
+                                android:textColor="@color/text_secondary"
+                                tools:text="S01E01" />
+
+                            <View
+                                android:layout_width="4dp"
+                                android:layout_height="4dp"
+                                android:layout_marginEnd="@dimen/spacing_sm"
+                                android:background="@drawable/dot_separator" />
+
+                            <TextView
+                                android:id="@+id/detailRating"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:drawablePadding="@dimen/spacing_xs"
                                 android:textAppearance="?attr/textAppearanceBodyMedium"
                                 android:textColor="@color/warning_orange"
                                 android:textStyle="bold"
                                 android:visibility="gone"
-                                app:layout_constraintTop_toBottomOf="@id/nextUpEpisode"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
                                 tools:text="9.5"
                                 tools:visibility="visible" />
-
-
-                        </androidx.constraintlayout.widget.ConstraintLayout>
-
-                        <!-- Horizontal RecyclerView for Next Up -->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/rvNextUp"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="0.7"
-                            android:clipToPadding="false"
-                            android:clipChildren="false"
-                            android:paddingStart="@dimen/spacing_sm"
-                            android:paddingEnd="@dimen/spacing_sm"
-                            android:scrollbars="none"
-                            android:overScrollMode="never"
-                            tools:listitem="@layout/item_poster" />
-
+                        </LinearLayout>
                     </LinearLayout>
 
-                </com.google.android.material.card.MaterialCardView>
+                    <androidx.core.widget.NestedScrollView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:padding="4dp"
+                        android:fadeScrollbars="true"
+                        android:overScrollMode="never"
+                        android:scrollbars="none"
+                        app:layout_constraintStart_toEndOf="@id/metaColumn"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintWidth_percent="0.6">
 
-                <!-- Container 2: Continue Watching Episodes -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/continueEpisodesContainer"
+                        <TextView
+                            android:id="@+id/detailDescription"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:justificationMode="inter_word"
+                            android:lineSpacingExtra="@dimen/spacing_xs"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="@color/text_secondary"
+                            android:paddingRight="8dp"
+                            tools:text="Description goes here..." />
+
+                    </androidx.core.widget.NestedScrollView>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/contentGrid"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="@dimen/spacing_xs"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintHeight_percent="0.6"
+                app:cardBackgroundColor="@color/glass_surface_light"
+                app:cardCornerRadius="@dimen/corner_radius_small"
+                app:cardElevation="@dimen/elevation_medium"
+                app:strokeWidth="0dp"
+                app:contentPadding="0dp">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvContent"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_md"
-                    app:cardBackgroundColor="@color/glass_surface_light"
-                    app:cardCornerRadius="@dimen/corner_radius_small"
-                    app:cardElevation="@dimen/elevation_medium"
-                    app:strokeWidth="0dp"
-                    app:contentPadding="0dp">
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:clipChildren="false"
+                    android:padding="0dp"
+                    android:layout_margin="0dp"
+                    android:scrollbars="none"
+                    android:overScrollMode="never"
+                    android:focusable="true"
+                    android:nextFocusUp="@id/rvSidebar"
+                    tools:listitem="@layout/item_poster" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+            </com.google.android.material.card.MaterialCardView>
 
-                        <!-- Sidecar for Continue Episodes -->
-                        <androidx.constraintlayout.widget.ConstraintLayout
-                            android:id="@+id/continueEpisodesSidecar"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="0.3"
-                            android:padding="@dimen/spacing_sm"
-                            android:minHeight="150dp">
-
-                            <FrameLayout
-                                android:id="@+id/continueEpisodesLogoContainer"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:padding="4dp"
-                                android:layout_marginBottom="@dimen/spacing_sm"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent">
-
-                                <ImageView
-                                    android:id="@+id/continueEpisodesLogo"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="60dp"
-                                    android:adjustViewBounds="true"
-                                    android:contentDescription="Logo"
-                                    android:scaleType="fitCenter"
-                                    android:visibility="gone"
-                                    tools:src="@drawable/movie" />
-
-                                <TextView
-                                    android:id="@+id/continueEpisodesTitle"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:ellipsize="end"
-                                    android:gravity="center"
-                                    android:maxLines="2"
-                                    android:textAppearance="?attr/textAppearanceTitleLarge"
-                                    android:textColor="@color/text_primary"
-                                    tools:text="The Office" />
-
-                            </FrameLayout>
-
-                            <TextView
-                                android:id="@+id/continueEpisodesEpisode"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/spacing_xs"
-                                android:textAppearance="?attr/textAppearanceBodyMedium"
-                                android:textColor="@color/text_secondary"
-                                android:visibility="gone"
-                                app:layout_constraintTop_toBottomOf="@id/continueEpisodesLogoContainer"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                tools:text="S02E05"
-                                tools:visibility="visible" />
-
-                            <TextView
-                                android:id="@+id/continueEpisodesRating"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/spacing_xs"
-                                android:drawablePadding="@dimen/spacing_xs"
-                                android:textAppearance="?attr/textAppearanceBodyMedium"
-                                android:textColor="@color/warning_orange"
-                                android:textStyle="bold"
-                                android:visibility="gone"
-                                app:layout_constraintTop_toBottomOf="@id/continueEpisodesEpisode"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                tools:text="8.7"
-                                tools:visibility="visible" />
-
-
-                        </androidx.constraintlayout.widget.ConstraintLayout>
-
-                        <!-- Horizontal RecyclerView for Continue Episodes -->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/rvContinueEpisodes"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="0.7"
-                            android:clipToPadding="false"
-                            android:clipChildren="false"
-                            android:paddingStart="@dimen/spacing_sm"
-                            android:paddingEnd="@dimen/spacing_sm"
-                            android:scrollbars="none"
-                            android:overScrollMode="never"
-                            tools:listitem="@layout/item_poster" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Container 3: Continue Watching Movies -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/continueMoviesContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_md"
-                    app:cardBackgroundColor="@color/glass_surface_light"
-                    app:cardCornerRadius="@dimen/corner_radius_small"
-                    app:cardElevation="@dimen/elevation_medium"
-                    app:strokeWidth="0dp"
-                    app:contentPadding="0dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <!-- Sidecar for Continue Movies -->
-                        <androidx.constraintlayout.widget.ConstraintLayout
-                            android:id="@+id/continueMoviesSidecar"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="0.3"
-                            android:padding="@dimen/spacing_sm"
-                            android:minHeight="150dp">
-
-                            <FrameLayout
-                                android:id="@+id/continueMoviesLogoContainer"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:padding="4dp"
-                                android:layout_marginBottom="@dimen/spacing_sm"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent">
-
-                                <ImageView
-                                    android:id="@+id/continueMoviesLogo"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="60dp"
-                                    android:adjustViewBounds="true"
-                                    android:contentDescription="Logo"
-                                    android:scaleType="fitCenter"
-                                    android:visibility="gone"
-                                    tools:src="@drawable/movie" />
-
-                                <TextView
-                                    android:id="@+id/continueMoviesTitle"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:ellipsize="end"
-                                    android:gravity="center"
-                                    android:maxLines="2"
-                                    android:textAppearance="?attr/textAppearanceTitleLarge"
-                                    android:textColor="@color/text_primary"
-                                    tools:text="Inception" />
-
-                            </FrameLayout>
-
-                            <TextView
-                                android:id="@+id/continueMoviesRating"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/spacing_xs"
-                                android:drawablePadding="@dimen/spacing_xs"
-                                android:textAppearance="?attr/textAppearanceBodyMedium"
-                                android:textColor="@color/warning_orange"
-                                android:textStyle="bold"
-                                android:visibility="gone"
-                                app:layout_constraintTop_toBottomOf="@id/continueMoviesLogoContainer"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                tools:text="8.8"
-                                tools:visibility="visible" />
-
-
-                        </androidx.constraintlayout.widget.ConstraintLayout>
-
-                        <!-- Horizontal RecyclerView for Continue Movies -->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/rvContinueMovies"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="0.7"
-                            android:clipToPadding="false"
-                            android:clipChildren="false"
-                            android:paddingStart="@dimen/spacing_sm"
-                            android:paddingEnd="@dimen/spacing_sm"
-                            android:scrollbars="none"
-                            android:overScrollMode="never"
-                            tools:listitem="@layout/item_poster" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-            </LinearLayout>
-
-        </androidx.core.widget.NestedScrollView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/loadingCard"
@@ -388,10 +246,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Loading home content..."
+                    android:text="Loading..."
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="@color/text_secondary" />
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

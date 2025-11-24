@@ -201,7 +201,6 @@ class LibraryFragment : Fragment() {
         binding.detailDescription.text = item.description ?: "No description available."
 
         binding.detailTitle.text = item.name
-        // [CHANGE] Initial state hidden
         binding.detailTitle.visibility = View.GONE
         binding.detailLogo.visibility = View.GONE
 
@@ -213,48 +212,48 @@ class LibraryFragment : Fragment() {
             android.R.style.Theme_DeviceDefault_Light_NoActionBar)
         val popup = PopupMenu(wrapper, view)
 
-        // NEW: Check if item is in library
-        viewModel.checkLibraryStatus(item.id)
+        // Use lifecycleScope to get library status synchronously before showing menu
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isInLibrary = viewModel.isItemInLibrarySync(item.id)
 
-        val isInLibrary = viewModel.isItemInLibrary.value ?: false
-
-        if (isInLibrary) {
-            popup.menu.add("Remove from Library")
-        } else {
-            popup.menu.add("Add to Library")
-        }
-
-        popup.menu.add("Mark as Watched")
-        popup.menu.add("Clear Watched Status")
-
-        popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.title) {
-                "Add to Library" -> {
-                    viewModel.addToLibrary(item)
-                    true
-                }
-                "Remove from Library" -> {
-                    viewModel.removeFromLibrary(item.id)
-                    true
-                }
-                "Mark as Watched" -> {
-                    viewModel.markAsWatched(item)
-                    item.isWatched = true
-                    item.progress = item.duration
-                    refreshItem(item)
-                    true
-                }
-                "Clear Watched Status" -> {
-                    viewModel.clearWatchedStatus(item)
-                    item.isWatched = false
-                    item.progress = 0
-                    refreshItem(item)
-                    true
-                }
-                else -> false
+            if (isInLibrary) {
+                popup.menu.add("Remove from Library")
+            } else {
+                popup.menu.add("Add to Library")
             }
+
+            popup.menu.add("Mark as Watched")
+            popup.menu.add("Clear Watched Status")
+
+            popup.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.title) {
+                    "Add to Library" -> {
+                        viewModel.addToLibrary(item)
+                        true
+                    }
+                    "Remove from Library" -> {
+                        viewModel.removeFromLibrary(item.id)
+                        true
+                    }
+                    "Mark as Watched" -> {
+                        viewModel.markAsWatched(item)
+                        item.isWatched = true
+                        item.progress = item.duration
+                        refreshItem(item)
+                        true
+                    }
+                    "Clear Watched Status" -> {
+                        viewModel.clearWatchedStatus(item)
+                        item.isWatched = false
+                        item.progress = 0
+                        refreshItem(item)
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
         }
-        popup.show()
     }
 
     private fun refreshItem(item: MetaItem) {
@@ -278,30 +277,21 @@ class LibraryFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        viewModel.libraryMovies.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            // Keep this empty, we just need to keep the LiveData active
-        })
-        viewModel.librarySeries.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            // Keep this empty
-        })
+        viewModel.libraryMovies.observe(viewLifecycleOwner, androidx.lifecycle.Observer {})
+        viewModel.librarySeries.observe(viewLifecycleOwner, androidx.lifecycle.Observer {})
+
         viewModel.actionResult.observe(viewLifecycleOwner) { result ->
             when (result) {
                 is MainViewModel.ActionResult.Success -> {
-                    Toast.makeText(requireContext(), result.message,
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
                 }
                 is MainViewModel.ActionResult.Error -> {
-                    Toast.makeText(requireContext(), result.message,
-                        Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
                 }
             }
         }
-        val liveData = if (currentType == "movie") {
 
-            viewModel.filteredLibraryMovies
-        } else {
-            viewModel.filteredLibrarySeries
-        }
+        val liveData = if (currentType == "movie") viewModel.filteredLibraryMovies else viewModel.filteredLibrarySeries
 
         liveData.observe(viewLifecycleOwner) { items ->
             contentAdapter.updateData(items)
@@ -318,7 +308,6 @@ class LibraryFragment : Fragment() {
             }
         }
 
-        // [CHANGE] Updated observer
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
             when (logoUrl) {
                 "" -> {

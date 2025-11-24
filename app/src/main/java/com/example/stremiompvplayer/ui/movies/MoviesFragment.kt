@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.DetailsActivity2
@@ -20,6 +21,7 @@ import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
+import kotlinx.coroutines.launch
 
 class MoviesFragment : Fragment() {
 
@@ -33,16 +35,6 @@ class MoviesFragment : Fragment() {
             ServiceLocator.getInstance(requireContext()),
             SharedPreferencesManager.getInstance(requireContext())
         )
-    }
-
-    private fun updateItemUI(item: MetaItem, isWatched: Boolean) {
-        item.isWatched = isWatched
-        item.progress = if (isWatched) item.duration else 0
-
-        val position = contentAdapter.getItemPosition(item)
-        if (position != -1) {
-            contentAdapter.notifyItemChanged(position)
-        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -65,7 +57,8 @@ class MoviesFragment : Fragment() {
                 }
                 startActivity(intent)
             },
-            onFocus = { item -> updateDetails(item) }
+            onFocus = { item -> updateDetails(item) },
+            onLongClick = { view, item -> showItemMenu(view, item) }
         )
 
         binding.rvContent.layoutManager = GridLayoutManager(context, 5)
@@ -84,55 +77,44 @@ class MoviesFragment : Fragment() {
             android.R.style.Theme_DeviceDefault_Light_NoActionBar)
         val popup = PopupMenu(wrapper, view)
 
-        // NEW: Check if item is in library
-        viewModel.checkLibraryStatus(item.id)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isInLibrary = viewModel.isItemInLibrarySync(item.id)
 
-        val isInLibrary = viewModel.isItemInLibrary.value ?: false
-
-        if (isInLibrary) {
-            popup.menu.add("Remove from Library")
-        } else {
-            popup.menu.add("Add to Library")
-        }
-
-        popup.menu.add("Mark as Watched")
-        popup.menu.add("Clear Watched Status")
-
-        popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.title) {
-                "Add to Library" -> {
-                    viewModel.addToLibrary(item)
-                    true
-                }
-                "Remove from Library" -> {
-                    viewModel.removeFromLibrary(item.id)
-                    true
-                }
-                "Mark as Watched" -> {
-                    viewModel.markAsWatched(item)
-                    item.isWatched = true
-                    item.progress = item.duration
-                    refreshItem(item)
-                    true
-                }
-                "Clear Watched Status" -> {
-                    viewModel.clearWatchedStatus(item)
-                    item.isWatched = false
-                    item.progress = 0
-                    refreshItem(item)
-                    true
-                }
-                else -> false
+            if (isInLibrary) {
+                popup.menu.add("Remove from Library")
+            } else {
+                popup.menu.add("Add to Library")
             }
+
+            popup.menu.add("Mark as Watched")
+            popup.menu.add("Clear Watched Status")
+
+            popup.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.title) {
+                    "Add to Library" -> {
+                        viewModel.addToLibrary(item)
+                        true
+                    }
+                    "Remove from Library" -> {
+                        viewModel.removeFromLibrary(item.id)
+                        true
+                    }
+                    "Mark as Watched" -> {
+                        viewModel.markAsWatched(item)
+                        // Refresh is handled by LiveData observer
+                        true
+                    }
+                    "Clear Watched Status" -> {
+                        viewModel.clearWatchedStatus(item)
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
         }
-        popup.show()
     }
-    private fun refreshItem(item: MetaItem) {
-        val position = contentAdapter.getItemPosition(item)
-        if (position != -1) {
-            contentAdapter.notifyItemChanged(position)
-        }
-    }
+
     private fun updateDetails(item: MetaItem) {
         binding.detailTitle.text = item.name
         binding.detailDescription.text = item.description ?: "No description available."
@@ -146,7 +128,8 @@ class MoviesFragment : Fragment() {
 
     inner class LibraryAdapter(
         private val onClick: (MetaItem) -> Unit,
-        private val onFocus: (MetaItem) -> Unit
+        private val onFocus: (MetaItem) -> Unit,
+        private val onLongClick: (View, MetaItem) -> Unit
     ) : androidx.recyclerview.widget.RecyclerView.Adapter<LibraryAdapter.ViewHolder>() {
         private var items = listOf<MetaItem>()
         inner class ViewHolder(val view: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
@@ -166,6 +149,10 @@ class MoviesFragment : Fragment() {
             holder.poster.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
             Glide.with(holder.view).load(item.poster).placeholder(R.drawable.movie).into(holder.poster)
             holder.view.setOnClickListener { onClick(item) }
+            holder.view.setOnLongClickListener {
+                onLongClick(holder.view, item)
+                true
+            }
             holder.view.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) onFocus(item) }
             holder.view.isFocusable = true
             holder.view.isFocusableInTouchMode = true

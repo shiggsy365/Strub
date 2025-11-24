@@ -188,48 +188,46 @@ class DiscoverFragment : Fragment() {
             android.R.style.Theme_DeviceDefault_Light_NoActionBar)
         val popup = PopupMenu(wrapper, view)
 
-        // NEW: Check if item is in library
-        viewModel.checkLibraryStatus(item.id)
+        // [FIX] Use lifecycleScope to check library status properly before showing menu
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isInLibrary = viewModel.isItemInLibrarySync(item.id)
 
-        val isInLibrary = viewModel.isItemInLibrary.value ?: false
-
-        if (isInLibrary) {
-            popup.menu.add("Remove from Library")
-        } else {
-            popup.menu.add("Add to Library")
-        }
-
-        popup.menu.add("Mark as Watched")
-        popup.menu.add("Clear Watched Status")
-
-        popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.title) {
-                "Add to Library" -> {
-                    viewModel.addToLibrary(item)
-                    true
-                }
-                "Remove from Library" -> {
-                    viewModel.removeFromLibrary(item.id)
-                    true
-                }
-                "Mark as Watched" -> {
-                    viewModel.markAsWatched(item)
-                    item.isWatched = true
-                    item.progress = item.duration
-                    refreshItem(item)
-                    true
-                }
-                "Clear Watched Status" -> {
-                    viewModel.clearWatchedStatus(item)
-                    item.isWatched = false
-                    item.progress = 0
-                    refreshItem(item)
-                    true
-                }
-                else -> false
+            if (isInLibrary) {
+                popup.menu.add("Remove from Library")
+            } else {
+                popup.menu.add("Add to Library")
             }
+
+            popup.menu.add("Mark as Watched")
+            popup.menu.add("Clear Watched Status")
+
+            popup.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.title) {
+                    "Add to Library" -> {
+                        viewModel.addToLibrary(item)
+                        true
+                    }
+                    "Remove from Library" -> {
+                        viewModel.removeFromLibrary(item.id)
+                        true
+                    }
+                    "Mark as Watched" -> {
+                        viewModel.markAsWatched(item)
+                        item.isWatched = true
+                        refreshItem(item)
+                        true
+                    }
+                    "Clear Watched Status" -> {
+                        viewModel.clearWatchedStatus(item)
+                        item.isWatched = false
+                        refreshItem(item)
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
         }
-        popup.show()
     }
 
 

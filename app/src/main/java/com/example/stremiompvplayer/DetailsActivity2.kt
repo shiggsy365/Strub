@@ -7,11 +7,13 @@ import android.view.View
 import android.widget.PopupMenu
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.adapters.StreamAdapter
 import com.example.stremiompvplayer.adapters.TextItem
 import com.example.stremiompvplayer.adapters.TextListAdapter
+import com.example.stremiompvplayer.MainActivity
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivityDetails2Binding
 import com.example.stremiompvplayer.models.Meta
@@ -20,6 +22,7 @@ import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.google.android.material.chip.Chip
+import kotlinx.coroutines.launch
 
 class DetailsActivity2 : AppCompatActivity() {
 
@@ -309,8 +312,6 @@ class DetailsActivity2 : AppCompatActivity() {
         }
     }
 
-
-
     private fun navigateUp() {
         if (binding.rvNavigation.adapter == streamAdapter) {
             binding.rvNavigation.adapter = textListAdapter
@@ -364,10 +365,8 @@ class DetailsActivity2 : AppCompatActivity() {
 
     private fun onTextItemLongClicked(view: View, item: TextItem) {
         val popup = PopupMenu(this, view)
-        popup.menu.add("Mark as Watched")
-        popup.menu.add("Clear Watched Status")
 
-        // NEW: Check library status
+        // Create temp meta object to represent this episode
         val tempMeta = if (item.type == "episode") {
             MetaItem(
                 id = item.id,
@@ -381,43 +380,47 @@ class DetailsActivity2 : AppCompatActivity() {
             null
         }
 
-        if (tempMeta != null) {
-            viewModel.checkLibraryStatus(tempMeta.id)
-            val isInLibrary = viewModel.isItemInLibrary.value ?: false
-
-            if (isInLibrary) {
-                popup.menu.add("Remove from Library")
-            } else {
-                popup.menu.add("Add to Library")
-            }
-        }
-
-        popup.setOnMenuItemClickListener { menuItem ->
+        // [FIX] Use lifecycleScope for synchronous library check
+        lifecycleScope.launch {
             if (tempMeta != null) {
-                when (menuItem.title) {
-                    "Mark as Watched" -> {
-                        viewModel.markAsWatched(tempMeta)
-                        true
-                    }
-                    "Clear Watched Status" -> {
-                        viewModel.clearWatchedStatus(tempMeta)
-                        true
-                    }
-                    "Add to Library" -> {
-                        viewModel.addToLibrary(tempMeta)
-                        true
-                    }
-                    "Remove from Library" -> {
-                        viewModel.removeFromLibrary(tempMeta.id)
-                        true
-                    }
-                    else -> false
+                val isInLibrary = viewModel.isItemInLibrarySync(tempMeta.id)
+                if (isInLibrary) {
+                    popup.menu.add("Remove from Library")
+                } else {
+                    popup.menu.add("Add to Library")
                 }
-            } else {
-                false
             }
+
+            popup.menu.add("Mark as Watched")
+            popup.menu.add("Clear Watched Status")
+
+            popup.setOnMenuItemClickListener { menuItem ->
+                if (tempMeta != null) {
+                    when (menuItem.title) {
+                        "Mark as Watched" -> {
+                            viewModel.markAsWatched(tempMeta)
+                            true
+                        }
+                        "Clear Watched Status" -> {
+                            viewModel.clearWatchedStatus(tempMeta)
+                            true
+                        }
+                        "Add to Library" -> {
+                            viewModel.addToLibrary(tempMeta)
+                            true
+                        }
+                        "Remove from Library" -> {
+                            viewModel.removeFromLibrary(tempMeta.id)
+                            true
+                        }
+                        else -> false
+                    }
+                } else {
+                    false
+                }
+            }
+            popup.show()
         }
-        popup.show()
     }
 
     override fun onBackPressed() {
