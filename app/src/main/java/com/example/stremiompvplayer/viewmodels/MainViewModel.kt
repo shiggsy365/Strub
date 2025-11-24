@@ -969,16 +969,31 @@ class MainViewModel(
         _isLoading.postValue(true)
         viewModelScope.launch {
             val allStreams = mutableListOf<Stream>()
-            val aioUsername = prefsManager.getAIOStreamsUsername()
-            val aioPassword = prefsManager.getAIOStreamsPassword()
-            val aioUrl = prefsManager.getAIOStreamsUrl() ?: "https://aiostreams.shiggsy.co.uk"
+            val manifestUrl = prefsManager.getAIOStreamsManifestUrl()
 
-            if (!aioUsername.isNullOrEmpty() && !aioPassword.isNullOrEmpty()) {
+            if (!manifestUrl.isNullOrEmpty()) {
                 try {
-                    val aioApi = AIOStreamsClient.getApi(aioUrl, aioUsername, aioPassword)
-                    val aioResponse = aioApi.searchStreams(type, itemId)
-                    if (aioResponse.success && aioResponse.data != null) {
-                        allStreams.addAll(aioResponse.data.results)
+                    val aioApi = AIOStreamsClient.getApi(manifestUrl)
+                    val streamUrl = when (type) {
+                        "movie" -> AIOStreamsClient.buildMovieStreamUrl(manifestUrl, itemId)
+                        "series" -> {
+                            // itemId format for series: "imdbId:season:episode"
+                            val parts = itemId.split(":")
+                            if (parts.size == 3) {
+                                val imdbId = parts[0]
+                                val season = parts[1].toIntOrNull() ?: 1
+                                val episode = parts[2].toIntOrNull() ?: 1
+                                AIOStreamsClient.buildSeriesStreamUrl(manifestUrl, imdbId, season, episode)
+                            } else {
+                                null
+                            }
+                        }
+                        else -> null
+                    }
+
+                    if (streamUrl != null) {
+                        val aioResponse = aioApi.getStreams(streamUrl)
+                        allStreams.addAll(aioResponse.streams)
                     }
                 } catch (e: Exception) { Log.e("MainViewModel", "AIOStreams error", e) }
             }

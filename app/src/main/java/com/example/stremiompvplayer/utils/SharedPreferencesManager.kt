@@ -78,35 +78,21 @@ class SharedPreferencesManager private constructor(context: Context) {
     }
 
     // --- AIOStreams ---
-    fun saveAIOStreamsUsername(username: String) {
-        prefs.edit().putString("aiostreams_username", username).apply()
+    fun saveAIOStreamsManifestUrl(manifestUrl: String) {
+        prefs.edit().putString("aiostreams_manifest_url", manifestUrl).apply()
     }
 
-    fun getAIOStreamsUsername(): String? {
-        return prefs.getString("aiostreams_username", null)
-    }
-
-    fun saveAIOStreamsPassword(password: String) {
-        prefs.edit().putString("aiostreams_password", password).apply()
-    }
-
-    fun getAIOStreamsPassword(): String? {
-        return prefs.getString("aiostreams_password", null)
-    }
-
-    fun saveAIOStreamsUrl(url: String) {
-        prefs.edit().putString("aiostreams_url", url).apply()
-    }
-
-    fun getAIOStreamsUrl(): String? {
-        // Default to Viren's server if not set
-        return prefs.getString("aiostreams_url", "https://aiostreams.viren070.me")
+    fun getAIOStreamsManifestUrl(): String? {
+        return prefs.getString("aiostreams_manifest_url", null)
     }
 
     fun clearAIOStreamsCredentials() {
         prefs.edit()
+            .remove("aiostreams_manifest_url")
+            // Also remove old keys for migration
             .remove("aiostreams_username")
             .remove("aiostreams_password")
+            .remove("aiostreams_url")
             .apply()
     }
 
