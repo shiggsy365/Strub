@@ -89,6 +89,14 @@ interface TraktApi {
         @Query("type") type: String? = null
     ): List<TraktListItem>
 
+    // --- USER LISTS ---
+    @GET("users/{username}/lists/{list_id}/items")
+    suspend fun getUserListItems(
+        @Header("trakt-api-key") clientId: String,
+        @retrofit2.http.Path("username") username: String,
+        @retrofit2.http.Path("list_id") listId: String
+    ): List<TraktListItem>
+
     // --- ACTIONS ---
     @POST("sync/history")
     suspend fun addToHistory(

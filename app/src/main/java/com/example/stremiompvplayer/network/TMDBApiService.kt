@@ -23,6 +23,7 @@ import com.example.stremiompvplayer.models.TMDBSeriesListResponse
 import com.example.stremiompvplayer.models.TMDBSessionResponse
 import com.example.stremiompvplayer.models.TMDBTVDetails
 import com.example.stremiompvplayer.models.TMDBWatchlistBody
+import com.example.stremiompvplayer.models.TMDBListDetailsResponse
 
 interface TMDBApiService {
 
@@ -279,4 +280,12 @@ interface TMDBApiService {
         @Query("include_adult") includeAdult: Boolean = false,
         @Query("first_air_date.lte") airDate: String? = null
     ): TMDBSeriesListResponse
+
+    // --- CUSTOM LISTS ---
+    @GET("list/{list_id}")
+    suspend fun getList(
+        @Path("list_id") listId: String,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBListDetailsResponse
 }

@@ -319,3 +319,43 @@ data class TMDBPersonCastItem(
         )
     }
 }
+
+// --- TMDB LIST MODELS ---
+data class TMDBListDetailsResponse(
+    val id: String,
+    val name: String,
+    val description: String?,
+    @Json(name = "item_count") val itemCount: Int,
+    val items: List<TMDBListItem>
+) : Serializable
+
+data class TMDBListItem(
+    val id: Int,
+    @Json(name = "media_type") val mediaType: String,
+    val title: String?,
+    val name: String?,
+    @Json(name = "poster_path") val posterPath: String?,
+    @Json(name = "backdrop_path") val backdropPath: String?,
+    val overview: String?,
+    @Json(name = "release_date") val releaseDate: String?,
+    @Json(name = "first_air_date") val firstAirDate: String?,
+    @Json(name = "vote_average") val voteAverage: Double?
+) : Serializable {
+    fun toMetaItem(): MetaItem {
+        val type = when (mediaType) {
+            "tv" -> "series"
+            "movie" -> "movie"
+            else -> "movie"
+        }
+        return MetaItem(
+            id = "tmdb:$id",
+            type = type,
+            name = title ?: name ?: "Unknown",
+            poster = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+            background = backdropPath?.let { "https://image.tmdb.org/t/p/original$it" },
+            description = overview,
+            releaseDate = releaseDate ?: firstAirDate,
+            rating = voteAverage?.let { String.format("%.1f", it) }
+        )
+    }
+}

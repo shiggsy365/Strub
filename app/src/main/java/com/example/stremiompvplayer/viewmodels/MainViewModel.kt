@@ -477,11 +477,95 @@ class MainViewModel(
                     "trakt_trending_movies" -> TraktClient.api.getTrendingMovies(clientId).mapNotNull { it.movie }.map { MetaItem("tmdb:${it.ids.tmdb}", "movie", it.title, null, null, null) }
                     "trakt_trending_shows" -> TraktClient.api.getTrendingShows(clientId).mapNotNull { it.show }.map { MetaItem("tmdb:${it.ids.tmdb}", "series", it.title, null, null, null) }
 
-                    else -> emptyList()
+                    else -> {
+                        // Custom Trakt list: format is "username/listname" or full URL
+                        val listPath = catalog.manifestId
+                        try {
+                            // Parse username and list name from the path
+                            val cleanPath = listPath.replace("https://trakt.tv/users/", "")
+                                .replace("http://trakt.tv/users/", "")
+                                .replace("trakt.tv/users/", "")
+                                .replace("/lists/", "/")
+                                .trim('/')
+
+                            val parts = cleanPath.split("/")
+                            if (parts.size >= 2) {
+                                val username = parts[0]
+                                val listName = parts[1]
+
+                                val listItems = TraktClient.api.getUserListItems(clientId, username, listName)
+                                listItems.mapNotNull { item ->
+                                    when (item.type) {
+                                        "movie" -> item.movie?.let {
+                                            MetaItem("tmdb:${it.ids.tmdb}", "movie", it.title, null, null, null)
+                                        }
+                                        "show" -> item.show?.let {
+                                            MetaItem("tmdb:${it.ids.tmdb}", "series", it.title, null, null, null)
+                                        }
+                                        else -> null
+                                    }
+                                }
+                            } else {
+                                emptyList()
+                            }
+                        } catch (e: Exception) {
+                            emptyList()
+                        }
+                    }
                 }
 
                 return enrichWithTmdbMetadata(items, catalog.catalogId)
             } else {
+                return emptyList()
+            }
+
+        } else if (catalog.addonUrl == "tmdb") {
+            // Custom TMDB list
+            val listId = catalog.manifestId
+            try {
+                val response = TMDBClient.api.getList(listId, apiKey)
+                return response.items.map { it.toMetaItem() }
+            } catch (e: Exception) {
+                return emptyList()
+            }
+
+        } else if (catalog.addonUrl == "mdblist") {
+            // mdblist integration
+            val listUrl = catalog.manifestId
+            // Extract list ID from URL (e.g., "https://mdblist.com/lists/username/listname" or just "username/listname")
+            val listId = listUrl.replace("https://mdblist.com/lists/", "")
+                .replace("http://mdblist.com/lists/", "")
+                .replace("mdblist.com/lists/", "")
+                .trim('/')
+
+            try {
+                // mdblist API: GET https://mdblist.com/api/lists/{username}/{listname}/items
+                val url = "https://mdblist.com/api/lists/$listId/items?apikey=&m=movie,show"
+
+                // For now, return empty list - mdblist requires API key which user needs to configure
+                // TODO: Add mdblist API key to settings
+                return emptyList()
+            } catch (e: Exception) {
+                return emptyList()
+            }
+
+        } else if (catalog.addonUrl == "imdb") {
+            // IMDB list integration (via web scraping or third-party API)
+            val listId = catalog.manifestId.replace("https://www.imdb.com/list/", "")
+                .replace("http://www.imdb.com/list/", "")
+                .replace("www.imdb.com/list/", "")
+                .trim('/')
+
+            try {
+                // IMDB doesn't have a public API, so we would need to:
+                // 1. Use a third-party service
+                // 2. Web scrape (not recommended)
+                // 3. Use TMDB's "external_source" feature if available
+
+                // For now, return empty list
+                // TODO: Implement IMDB list fetching via third-party service
+                return emptyList()
+            } catch (e: Exception) {
                 return emptyList()
             }
 
@@ -1297,7 +1381,7 @@ class MainViewModel(
                 displayOrder = maxOrder + 1,
                 pageType = pageType,
                 addonUrl = listType,
-                manifestId = listType,
+                manifestId = urlOrId, // Store the actual URL/ID here
                 showInDiscover = true,
                 showInUser = true
             )
