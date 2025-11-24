@@ -39,7 +39,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.withContext
 
-
 class MainViewModel(
     private val catalogRepository: CatalogRepository,
     private val prefsManager: SharedPreferencesManager
@@ -418,12 +417,16 @@ class MainViewModel(
                     "trakt_continue_movies" -> {
                         val list = TraktClient.api.getPausedMovies(bearer, clientId)
                         list.mapNotNull { it.movie }
-                            // [FIX] Filter out items that are watched OR have progress > 90%
-                            .filter {
-                                val progress = it.ids.tmdb?.let { id -> catalogRepository.getWatchProgress(prefsManager.getCurrentUserId()?:"default", "tmdb:$id") }
-                                val isWatched = progress?.isWatched == true
-                                val isAlmostDone = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } ?: false
-                                !isWatched && !isAlmostDone
+                            // [FIX] Filter out items that are watched OR have progress > 90% in LOCAL DB
+                            .filter { movie ->
+                                val tmdbId = movie.ids.tmdb
+                                if (tmdbId == null) return@filter true 
+
+                                val progress = catalogRepository.getWatchProgress(prefsManager.getCurrentUserId() ?: "default", "tmdb:$tmdbId")
+                                val isLocallyWatched = progress?.isWatched == true
+                                val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
+                                
+                                !isLocallyWatched && !isLocallyFinished
                             }
                             .map { movie ->
                                 MetaItem(id = "tmdb:${movie.ids.tmdb}", type = "movie", name = movie.title, description = "Paused", poster = null, background = null)
@@ -435,14 +438,19 @@ class MainViewModel(
                         list.mapNotNull { item ->
                             val show = item.show
                             val ep = item.episode
-                            if (show != null && ep != null) {
-                                val epTmdbId = ep.ids?.tmdb
-                                if (epTmdbId != null) {
-                                    // Also check local progress for 90% rule on episodes
-                                    val epId = "tmdb:${show.ids.tmdb}:${ep.ids?.tmdb}" // Rough ID match if possible, otherwise rely on Trakt status
+                            if (show != null && ep != null && ep.ids?.tmdb != null) {
+                                val showTmdbId = show.ids.tmdb
+                                val epTmdbId = ep.ids.tmdb
+                                val epId = "tmdb:$showTmdbId:${ep.season}:${ep.number}" // Construct standard local ID
 
+                                // CHECK LOCAL DB
+                                val progress = catalogRepository.getWatchProgress(prefsManager.getCurrentUserId() ?: "default", epId)
+                                val isLocallyWatched = progress?.isWatched == true
+                                val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
+
+                                if (!isLocallyWatched && !isLocallyFinished) {
                                     MetaItem(
-                                        id = "trakt_ep:${show.ids.tmdb}:$epTmdbId",
+                                        id = "trakt_ep:${showTmdbId}:$epTmdbId",
                                         type = "episode",
                                         name = "${show.title} - ${ep.number}",
                                         description = "Paused at ${(item.progress ?: 0f).toInt()}%",
@@ -516,7 +524,6 @@ class MainViewModel(
                 "continue_movies" -> {
                     val currentUserId = prefsManager.getCurrentUserId() ?: "default"
                     catalogRepository.getContinueWatching(currentUserId, "movie")
-                        // [FIX] Filter items that are watched OR have progress > 90%
                         .filter { !it.isWatched && (it.duration == 0L || (it.progress.toFloat() / it.duration.toFloat()) < 0.9f) }
                         .map { progress ->
                             MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
@@ -525,7 +532,6 @@ class MainViewModel(
                 "continue_episodes" -> {
                     val currentUserId = prefsManager.getCurrentUserId() ?: "default"
                     catalogRepository.getContinueWatching(currentUserId, "episode")
-                        // [FIX] Filter items that are watched OR have progress > 90%
                         .filter { !it.isWatched && (it.duration == 0L || (it.progress.toFloat() / it.duration.toFloat()) < 0.9f) }
                         .map { progress ->
                             MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
@@ -711,6 +717,25 @@ class MainViewModel(
                         }
                     }
 
+                    // NEW: Sync Paused Content to Local DB
+                    _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Syncing playback progress..."))
+                    try {
+                        val pausedMovies = TraktClient.api.getPausedMovies(bearer, clientId)
+                        pausedMovies.forEach { item ->
+                            item.movie?.ids?.tmdb?.let { tmdbId ->
+                                val progressVal = ((item.progress ?: 0f) / 100f * 10000).toLong()
+                                catalogRepository.saveWatchProgress(
+                                    WatchProgress(userId, "tmdb:$tmdbId", "movie",
+                                        progress = progressVal,
+                                        duration = 10000,
+                                        isWatched = false,
+                                        lastUpdated = System.currentTimeMillis(),
+                                        name = item.movie.title, poster = null, background = null, parentId = null, season = null, episode = null)
+                                )
+                            }
+                        }
+                    } catch (e: Exception) { Log.e("TraktSync", "Error syncing paused content", e) }
+
                     if (fetchMetadata && apiKey.isNotEmpty()) {
                         _traktSyncStatus.postValue(TraktSyncStatus.Syncing("Refreshing metadata from TMDB..."))
                         importedMovieIds.forEach { tmdbId ->
@@ -860,11 +885,12 @@ class MainViewModel(
                     catalogRepository.saveWatchProgress(WatchProgress(currentUserId, item.id, item.type, 0, 0, true, System.currentTimeMillis(), item.name, item.poster, item.background, null, null, null))
                 }
 
-                // Refresh
+                // Refresh: Explicitly clear cache and force reload
+                loadedContentCache.clear()
                 lastRequestedCatalog?.let {
-                    loadContentForCatalog(it, isInitialLoad = false)
+                    loadContentForCatalog(it, isInitialLoad = true)
                 }
-                // Also reload home
+                // Also reload home to update Next Up
                 loadHomeContent()
 
                 _isItemWatched.postValue(true)
@@ -895,8 +921,10 @@ class MainViewModel(
                 }
 
                 catalogRepository.updateWatchedStatus(currentUserId, item.id, false)
-                lastRequestedCatalog?.let { loadContentForCatalog(it, isInitialLoad = false) }
-                // Reload home to remove from list
+                
+                // Refresh: Explicitly clear cache and force reload
+                loadedContentCache.clear()
+                lastRequestedCatalog?.let { loadContentForCatalog(it, isInitialLoad = true) }
                 loadHomeContent()
 
                 _isItemWatched.postValue(false)
