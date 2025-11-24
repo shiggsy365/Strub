@@ -41,10 +41,6 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var seriesAdapter: CatalogConfigAdapter
     private lateinit var prefsManager: SharedPreferencesManager
 
-    // Define URLs
-    private val VIREN_URL = "https://aiostreams.viren070.me"
-    private val NHYIRA_URL = "https://aiostreamsfortheweak.nhyira.dev/"
-
     private var userInteracted = false
     // Track active Trakt dialog to dismiss it on success
     private var traktAuthDialog: androidx.appcompat.app.AlertDialog? = null
@@ -367,149 +363,49 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupAIOStreamsSection() {
         updateAIOStreamsDisplay()
 
-        val options = listOf("Viren's Server", "Nhyira's Server", "Other Server")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spinnerAioStreamsUrl.adapter = adapter
-
-        val currentUrl = prefsManager.getAIOStreamsUrl()
-        val selectionIndex = when {
-            currentUrl?.contains("viren070.me") == true -> 0
-            currentUrl?.contains("nhyira.dev") == true -> 1
-            else -> 2
-        }
-
-        binding.spinnerAioStreamsUrl.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                if (!userInteracted) {
-                    // First time setup - allow it to complete
-                    userInteracted = true
-                    return
-                }
-
-                when (position) {
-                    0 -> {
-                        prefsManager.saveAIOStreamsUrl(VIREN_URL)
-                        updateAIOStreamsDisplay()
-                    }
-                    1 -> {
-                        prefsManager.saveAIOStreamsUrl(NHYIRA_URL)
-                        updateAIOStreamsDisplay()
-                    }
-                    2 -> {
-                        showAIOStreamsUrlDialog()
-                    }
-                }
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {}
-        }
-
-        binding.spinnerAioStreamsUrl.setSelection(selectionIndex)
-
         binding.btnConfigureAIOStreams.setOnClickListener {
             showAIOStreamsDialog()
         }
     }
 
     private fun updateAIOStreamsDisplay() {
-        val username = prefsManager.getAIOStreamsUsername()
-        val password = prefsManager.getAIOStreamsPassword()
-        val url = prefsManager.getAIOStreamsUrl() ?: VIREN_URL
+        val manifestUrl = prefsManager.getAIOStreamsManifestUrl()
 
-        // Update URL display
-        binding.tvAIOStreamsUrl.text = "URL: $url"
-
-        if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
+        if (manifestUrl.isNullOrEmpty()) {
+            binding.tvAIOStreamsUrl.text = "Not configured"
             binding.tvAIOStreamsStatus.text = "AIOStreams: Not configured"
             binding.tvAIOStreamsStatus.setTextColor(getColor(android.R.color.holo_red_light))
         } else {
-            binding.tvAIOStreamsStatus.text = "AIOStreams: Configured (${username.take(8)}...)"
+            // Show truncated URL for display
+            val displayUrl = if (manifestUrl.length > 50) {
+                manifestUrl.take(47) + "..."
+            } else {
+                manifestUrl
+            }
+            binding.tvAIOStreamsUrl.text = "Manifest: $displayUrl"
+            binding.tvAIOStreamsStatus.text = "AIOStreams: Configured"
             binding.tvAIOStreamsStatus.setTextColor(getColor(android.R.color.holo_green_light))
         }
     }
 
-    private fun showAIOStreamsUrlDialog() {
-        val input = TextInputEditText(this).apply {
-            hint = "AIOStreams Base URL"
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
-            val current = prefsManager.getAIOStreamsUrl()
-            if (current != VIREN_URL && current != NHYIRA_URL) {
-                setText(current)
-            }
-            setPadding(48, 32, 48, 32)
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Set Custom Server URL")
-            .setMessage("Enter the base URL for your AIOStreams instance")
-            .setView(input)
-            .setPositiveButton("Save") { _, _ ->
-                val url = input.text.toString().trim()
-                if (url.isNotEmpty()) {
-                    prefsManager.saveAIOStreamsUrl(url)
-                    updateAIOStreamsDisplay()
-                }
-            }
-            .setNegativeButton("Cancel") { _, _ ->
-                val currentUrl = prefsManager.getAIOStreamsUrl()
-                val selectionIndex = when {
-                    currentUrl?.contains("viren070.me") == true -> 0
-                    currentUrl?.contains("nhyira.dev") == true -> 1
-                    else -> 2
-                }
-                binding.spinnerAioStreamsUrl.setSelection(selectionIndex)
-            }
-            .show()
-    }
-
     private fun showAIOStreamsDialog() {
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(48, 16, 48, 16)
-        }
-
-        val passwordInput = TextInputEditText(this).apply {
-            id = 200
-            hint = "Password"
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            setText(prefsManager.getAIOStreamsPassword() ?: "")
+        val input = TextInputEditText(this).apply {
+            hint = "Manifest URL"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            setText(prefsManager.getAIOStreamsManifestUrl() ?: "")
+            setPadding(48, 32, 48, 32)
             imeOptions = EditorInfo.IME_ACTION_DONE
             setSingleLine(true)
         }
 
-        val usernameInput = TextInputEditText(this).apply {
-            id = 100
-            hint = "Username (UUID)"
-            inputType = InputType.TYPE_CLASS_TEXT
-            setText(prefsManager.getAIOStreamsUsername() ?: "")
-            imeOptions = EditorInfo.IME_ACTION_NEXT
-            setSingleLine(true)
-            nextFocusDownId = 200
-
-            setOnEditorActionListener { _, actionId, _ ->
-                if (actionId == EditorInfo.IME_ACTION_NEXT) {
-                    passwordInput.requestFocus()
-                    true
-                } else {
-                    false
-                }
-            }
-        }
-
-        container.addView(usernameInput)
-        container.addView(passwordInput)
-
         MaterialAlertDialogBuilder(this)
             .setTitle("Configure AIOStreams")
-            .setMessage("Enter your AIOStreams credentials")
-            .setView(container)
+            .setMessage("Enter your AIOStreams manifest.json URL\n\nExample:\nhttps://aiostreams.shiggsy.co.uk/stremio/[uuid]/[token]/manifest.json")
+            .setView(input)
             .setPositiveButton("Save") { _, _ ->
-                val username = usernameInput.text.toString().trim()
-                val password = passwordInput.text.toString().trim()
-                if (username.isNotEmpty() && password.isNotEmpty()) {
-                    prefsManager.saveAIOStreamsUsername(username)
-                    prefsManager.saveAIOStreamsPassword(password)
+                val url = input.text.toString().trim()
+                if (url.isNotEmpty()) {
+                    prefsManager.saveAIOStreamsManifestUrl(url)
                     updateAIOStreamsDisplay()
                 }
             }

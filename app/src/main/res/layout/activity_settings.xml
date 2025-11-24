@@ -186,22 +186,6 @@
                     android:layout_marginBottom="8dp" />
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Select Server"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
-                    android:layout_marginBottom="4dp"/>
-
-                <Spinner
-                    android:id="@+id/spinnerAioStreamsUrl"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/selector_focus_border"
-                    android:overlapAnchor="false" />
-
-                <TextView
                     android:id="@+id/tvAIOStreamsUrl"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -209,7 +193,7 @@
                     android:textColor="@color/text_secondary"
                     android:layout_marginBottom="8dp"
                     android:textStyle="italic"
-                    tools:text="URL: https://aiostreams.viren070.me" />
+                    tools:text="Manifest: Not configured" />
 
                 <TextView
                     android:id="@+id/tvAIOStreamsStatus"
@@ -225,7 +209,7 @@
                     style="@style/Widget.App.Button.Outlined"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Configure Credentials"
+                    android:text="Configure Manifest URL"
                     android:textColor="@android:color/white"
                     android:focusable="true" />
 

@@ -1,35 +1,24 @@
 package com.example.stremiompvplayer.network
 
 import com.example.stremiompvplayer.models.Stream
-import com.squareup.moshi.Json
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import okhttp3.Credentials
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.Query
+import retrofit2.http.Url
 import java.util.concurrent.TimeUnit
 
-// Response wrappers based on AIOStreams Wiki
+// Response wrapper for new AIOStreams API
 data class AIOStreamsResponse(
-    val success: Boolean,
-    val data: AIOStreamsData?
-)
-
-data class AIOStreamsData(
-    val results: List<Stream>
+    val streams: List<Stream>
 )
 
 interface AIOStreamsApiService {
 
-    @GET("api/v1/search")
-    suspend fun searchStreams(
-        @Query("type") type: String,
-        @Query("id") id: String
-    ): AIOStreamsResponse
+    @GET
+    suspend fun getStreams(@Url url: String): AIOStreamsResponse
 }
 
 object AIOStreamsClient {
@@ -38,22 +27,9 @@ object AIOStreamsClient {
         .add(KotlinJsonAdapterFactory())
         .build()
 
-    private fun createClient(username: String, password: String): OkHttpClient {
-        val authInterceptor = Interceptor { chain ->
-            val original = chain.request()
-            // Wiki: "Authorization: Basic <base64(uuid:password)>"
-            val credentials = Credentials.basic(username, password)
-
-            val request = original.newBuilder()
-                .header("Authorization", credentials)
-                .build()
-
-            chain.proceed(request)
-        }
-
+    private fun createClient(): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(authInterceptor)
-            .connectTimeout(30, TimeUnit.SECONDS) // Increased timeout for searches
+            .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
     }
@@ -61,7 +37,7 @@ object AIOStreamsClient {
     private fun createRetrofit(baseUrl: String, client: OkHttpClient): Retrofit {
         // Ensure base URL ends with /
         val normalizedUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
-        
+
         return Retrofit.Builder()
             .baseUrl(normalizedUrl)
             .client(client)
@@ -69,9 +45,37 @@ object AIOStreamsClient {
             .build()
     }
 
-    fun getApi(baseUrl: String, username: String, password: String): AIOStreamsApiService {
-        val client = createClient(username, password)
-        val retrofit = createRetrofit(baseUrl, client)
+    /**
+     * Extract base URL from manifest URL
+     * Example: https://aiostreams.shiggsy.co.uk/stremio/.../manifest.json
+     * Returns: https://aiostreams.shiggsy.co.uk/stremio/...
+     */
+    private fun extractBaseUrl(manifestUrl: String): String {
+        return manifestUrl.removeSuffix("/manifest.json").removeSuffix("manifest.json")
+    }
+
+    /**
+     * Build stream URL for movies
+     * Format: {base_url}/stream/movie/{imdb_id}.json
+     */
+    fun buildMovieStreamUrl(manifestUrl: String, imdbId: String): String {
+        val baseUrl = extractBaseUrl(manifestUrl)
+        return "$baseUrl/stream/movie/$imdbId.json"
+    }
+
+    /**
+     * Build stream URL for series
+     * Format: {base_url}/stream/series/{imdb_id}:{season}:{episode}.json
+     */
+    fun buildSeriesStreamUrl(manifestUrl: String, imdbId: String, season: Int, episode: Int): String {
+        val baseUrl = extractBaseUrl(manifestUrl)
+        return "$baseUrl/stream/series/$imdbId:$season:$episode.json"
+    }
+
+    fun getApi(manifestUrl: String): AIOStreamsApiService {
+        val client = createClient()
+        // Use a dummy base URL since we'll be using full URLs with @Url
+        val retrofit = createRetrofit("https://dummy.base/", client)
         return retrofit.create(AIOStreamsApiService::class.java)
     }
 }
