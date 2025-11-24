@@ -850,8 +850,9 @@ class MainViewModel(
                         } else if (item.type == "episode") {
                             val parts = item.id.split(":")
                             if (parts.size >= 4) {
+                                val s = parts[2].toIntOrNull()
                                 val e = parts[3].toIntOrNull()
-                                if (e != null) TraktHistoryBody(episodes = listOf(TraktEpisode(e, 1, null, null))) else null
+                                if (s != null && e != null) TraktHistoryBody(episodes = listOf(TraktEpisode(s, e, 0, null, null))) else null
                             } else null
                         } else null
 
