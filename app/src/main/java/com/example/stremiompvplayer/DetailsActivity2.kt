@@ -81,6 +81,8 @@ class DetailsActivity2 : AppCompatActivity() {
                 }
             }
         }
+
+        setupAdapters()
     }
 
     private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {
