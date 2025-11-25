@@ -1,6 +1,7 @@
 package com.example.stremiompvplayer.network
 
 import com.example.stremiompvplayer.models.Stream
+import com.example.stremiompvplayer.models.SubtitleResponse
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
@@ -19,6 +20,9 @@ interface AIOStreamsApiService {
 
     @GET
     suspend fun getStreams(@Url url: String): AIOStreamsResponse
+
+    @GET
+    suspend fun getSubtitles(@Url url: String): SubtitleResponse
 }
 
 object AIOStreamsClient {
@@ -70,6 +74,24 @@ object AIOStreamsClient {
     fun buildSeriesStreamUrl(manifestUrl: String, imdbId: String, season: Int, episode: Int): String {
         val baseUrl = extractBaseUrl(manifestUrl)
         return "$baseUrl/stream/series/$imdbId:$season:$episode.json"
+    }
+
+    /**
+     * Build subtitle URL for movies
+     * Format: {base_url}/subtitles/movie/{imdb_id}.json
+     */
+    fun buildMovieSubtitleUrl(manifestUrl: String, imdbId: String): String {
+        val baseUrl = extractBaseUrl(manifestUrl)
+        return "$baseUrl/subtitles/movie/$imdbId.json"
+    }
+
+    /**
+     * Build subtitle URL for series
+     * Format: {base_url}/subtitles/series/{imdb_id}:{season}:{episode}.json
+     */
+    fun buildSeriesSubtitleUrl(manifestUrl: String, imdbId: String, season: Int, episode: Int): String {
+        val baseUrl = extractBaseUrl(manifestUrl)
+        return "$baseUrl/subtitles/series/$imdbId:$season:$episode.json"
     }
 
     fun getApi(manifestUrl: String): AIOStreamsApiService {

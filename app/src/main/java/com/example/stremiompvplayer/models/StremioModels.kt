@@ -75,3 +75,21 @@ data class MetaItem(
 data class Manifest(val id: String, val version: String, val name: String, val description: String?, val types: List<String>, val catalogs: List<Catalog>) : Serializable
 data class Catalog(val type: String, val id: String, val name: String, @Json(name = "extra") val extraProps: List<ExtraProp>?) : Serializable { data class ExtraProp(val name: String, val isRequired: Boolean? = false) : Serializable }
 data class CatalogResponse(val metas: List<MetaItem>) : Serializable
+
+// Subtitle models for AIOStreams
+data class SubtitleResponse(val subtitles: List<Subtitle>) : Serializable
+
+data class Subtitle(
+    val id: String,
+    val url: String,
+    val lang: String,
+    @Json(name = "sub_id") val subId: Int,
+    @Json(name = "ai_translated") val aiTranslated: Boolean,
+    @Json(name = "from_trusted") val fromTrusted: Boolean,
+    @Json(name = "uploader_id") val uploaderId: Int?,
+    @Json(name = "lang_code") val langCode: String,
+    val title: String,
+    val moviehash: String?
+) : Serializable {
+    val formattedTitle: String get() = "AIO - $title"
+}

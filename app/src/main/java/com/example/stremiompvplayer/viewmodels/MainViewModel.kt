@@ -1523,6 +1523,70 @@ class MainViewModel(
         loadStreams("series", episodeId)
     }
 
+    /**
+     * Fetch English subtitles from AIOStreams for the given meta item
+     */
+    suspend fun fetchSubtitles(meta: MetaItem): List<com.example.stremiompvplayer.models.Subtitle> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val manifestUrl = prefsManager.getAIOStreamsManifestUrl()
+                if (manifestUrl.isNullOrEmpty()) {
+                    Log.d("MainViewModel", "No AIOStreams manifest URL configured")
+                    return@withContext emptyList()
+                }
+
+                val aioApi = AIOStreamsClient.getApi(manifestUrl)
+                val subtitleUrl = when (meta.type) {
+                    "movie" -> {
+                        val imdbId = getImdbIdForMovie(meta.id)
+                        if (imdbId != null) {
+                            AIOStreamsClient.buildMovieSubtitleUrl(manifestUrl, imdbId)
+                        } else {
+                            Log.e("MainViewModel", "Could not get IMDb ID for movie: ${meta.id}")
+                            null
+                        }
+                    }
+                    "episode" -> {
+                        // Parse episode ID: tmdb:12345:season:episode
+                        val parts = meta.id.split(":")
+                        if (parts.size >= 4) {
+                            val tmdbId = parts[1].toIntOrNull()
+                            val season = parts[2].toIntOrNull() ?: 1
+                            val episode = parts[3].toIntOrNull() ?: 1
+                            val imdbId = getImdbIdForSeries(tmdbId)
+                            if (imdbId != null) {
+                                AIOStreamsClient.buildSeriesSubtitleUrl(manifestUrl, imdbId, season, episode)
+                            } else {
+                                Log.e("MainViewModel", "Could not get IMDb ID for series: ${meta.id}")
+                                null
+                            }
+                        } else {
+                            Log.e("MainViewModel", "Invalid episode ID format: ${meta.id}")
+                            null
+                        }
+                    }
+                    else -> {
+                        Log.d("MainViewModel", "Subtitles not supported for type: ${meta.type}")
+                        null
+                    }
+                }
+
+                if (subtitleUrl != null) {
+                    val response = aioApi.getSubtitles(subtitleUrl)
+                    // Filter for English subtitles only
+                    val englishSubtitles = response.subtitles.filter { it.lang == "eng" }
+                    Log.d("MainViewModel", "Found ${englishSubtitles.size} English subtitles")
+                    englishSubtitles
+                } else {
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error fetching subtitles", e)
+                emptyList()
+            }
+        }
+    }
+
     fun loadSeriesMeta(itemId: String) {
         if (apiKey.isEmpty()) return
         viewModelScope.launch {
