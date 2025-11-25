@@ -2150,6 +2150,34 @@ class MainViewModel(
         }
     }
 
+    // Fetch popular content filtered by genre
+    suspend fun fetchPopularByGenre(type: String, genreId: Int): List<MetaItem> {
+        if (apiKey.isEmpty()) return emptyList()
+        return try {
+            val results = if (type == "movie") {
+                val response = TMDBClient.api.discoverMovies(
+                    apiKey = apiKey,
+                    withGenres = genreId.toString(),
+                    sortBy = "popularity.desc",
+                    page = 1
+                )
+                response.results.map { it.toMetaItem() }
+            } else {
+                val response = TMDBClient.api.discoverTV(
+                    apiKey = apiKey,
+                    withGenres = genreId.toString(),
+                    sortBy = "popularity.desc",
+                    page = 1
+                )
+                response.results.map { it.toMetaItem() }
+            }
+            results
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to fetch content by genre", e)
+            emptyList()
+        }
+    }
+
     fun refreshTVGuide() {
         viewModelScope.launch {
             val epgUrl = prefsManager.getLiveTVEPGUrl()

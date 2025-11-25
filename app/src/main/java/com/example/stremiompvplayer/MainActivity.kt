@@ -148,12 +148,14 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
-        // Setup top bar dropdowns
+        // Setup top bar
         val dropdownMediaType = topBar.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
-        val dropdownList = topBar.findViewById<android.widget.TextView>(R.id.dropdownList)
-        val dropdownGenre = topBar.findViewById<android.widget.TextView>(R.id.dropdownGenre)
+        val currentListLabel = topBar.findViewById<android.widget.TextView>(R.id.currentListLabel)
         val searchField = topBar.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.searchField)
         val btnUserProfile = topBar.findViewById<View>(R.id.btnUserProfile)
+
+        // Store reference to currentListLabel for DiscoverFragment to update
+        currentListLabel.tag = "currentListLabel"
 
         // Media Type dropdown (Movies/Series)
         dropdownMediaType.setOnClickListener { view ->
@@ -169,51 +171,6 @@ class MainActivity : AppCompatActivity() {
                     is LibraryFragment -> {
                         val type = if (selection == "Series") "series" else "movie"
                         loadFragment(LibraryFragment.newInstance(type))
-                    }
-                }
-            }
-        }
-
-        // List dropdown (Popular, Latest, Trending, etc.)
-        dropdownList.setOnClickListener { view ->
-            // This will be populated dynamically based on user catalogs
-            lifecycleScope.launch {
-                val currentType = if (dropdownMediaType.text.toString().contains("Series", ignoreCase = true)) "series" else "movie"
-                val catalogs = viewModel.getDiscoverCatalogs(currentType).value ?: emptyList()
-                val catalogNames = catalogs.map { it.displayName }
-
-                if (catalogNames.isNotEmpty()) {
-                    showMenu(view, catalogNames) { selection ->
-                        dropdownList.text = selection
-                        val selectedCatalog = catalogs.find { it.displayName == selection }
-                        selectedCatalog?.let { catalog ->
-                            viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Genre dropdown
-        dropdownGenre.setOnClickListener { view ->
-            val currentType = if (dropdownMediaType.text.toString().contains("Series", ignoreCase = true)) "series" else "movie"
-            val genres = if (currentType == "movie") {
-                viewModel.movieGenres.value
-            } else {
-                viewModel.tvGenres.value
-            }
-
-            if (genres != null && genres.isNotEmpty()) {
-                val genreNames = mutableListOf("All Genres")
-                genreNames.addAll(genres.map { it.name })
-
-                showMenu(view, genreNames) { selection ->
-                    dropdownGenre.text = selection
-                    if (selection == "All Genres") {
-                        viewModel.clearGenreSelection()
-                    } else {
-                        val selectedGenre = genres.find { it.name == selection }
-                        selectedGenre?.let { viewModel.selectGenre(it) }
                     }
                 }
             }

@@ -47,6 +47,9 @@ class DiscoverFragment : Fragment() {
     private lateinit var contentAdapter: PosterAdapter
     private var currentType = "movie"
     private var currentSelectedItem: MetaItem? = null
+    private var currentCatalogs = listOf<UserCatalog>()
+    private var currentCatalogIndex = 0
+    private var isShowingGenre = false
 
     private var detailsUpdateJob: Job? = null
     private val focusMemoryManager = FocusMemoryManager.getInstance()
@@ -75,6 +78,29 @@ class DiscoverFragment : Fragment() {
         setupAdapters()
         setupObservers()
         loadCatalogs()
+        setupKeyHandling()
+    }
+
+    private fun setupKeyHandling() {
+        binding.rvContent.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        // Cycle to next list
+                        cycleToNextList()
+                        true
+                    }
+                    KeyEvent.KEYCODE_DPAD_UP -> {
+                        // Focus on Play button
+                        binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                        true
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
     }
 
     override fun onResume() {
@@ -265,8 +291,45 @@ class DiscoverFragment : Fragment() {
         viewModel.fetchGenres(currentType)
 
         viewModel.getDiscoverCatalogs(currentType).observe(viewLifecycleOwner) { catalogs ->
+            currentCatalogs = catalogs
+            currentCatalogIndex = 0
             if (catalogs.isNotEmpty()) {
+                updateCurrentListLabel(catalogs[0].displayName)
                 viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
+            }
+        }
+    }
+
+    private fun updateCurrentListLabel(labelText: String) {
+        val topBar = activity?.findViewById<View>(R.id.netflixTopBar)
+        val label = topBar?.findViewById<android.widget.TextView>(R.id.currentListLabel)
+        label?.text = labelText
+    }
+
+    private fun cycleToNextList() {
+        if (currentCatalogs.isEmpty()) return
+
+        currentCatalogIndex = (currentCatalogIndex + 1) % currentCatalogs.size
+        val nextCatalog = currentCatalogs[currentCatalogIndex]
+        updateCurrentListLabel(nextCatalog.displayName)
+        viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
+        isShowingGenre = false
+    }
+
+    private fun loadGenreList(genreId: Int, genreName: String) {
+        isShowingGenre = true
+        updateCurrentListLabel("Genre: $genreName")
+
+        // Fetch popular movies/series for this genre
+        lifecycleScope.launch {
+            try {
+                val content = viewModel.fetchPopularByGenre(currentType, genreId)
+                contentAdapter.updateData(content)
+                if (content.isNotEmpty()) {
+                    updateDetailsPane(content[0])
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error loading genre content", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -338,6 +401,12 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun onContentClicked(item: MetaItem) {
+        // Check if this is the genre browser item
+        if (item.type == "genre_browser") {
+            showGenreSelectionDialog()
+            return
+        }
+
         updateDetailsPane(item)
         val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
             putExtra("metaId", item.id)
@@ -348,6 +417,29 @@ class DiscoverFragment : Fragment() {
             putExtra("type", item.type)
         }
         startActivity(intent)
+    }
+
+    private fun showGenreSelectionDialog() {
+        val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
+        if (genres == null || genres.isEmpty()) {
+            Toast.makeText(requireContext(), "Loading genres...", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val popupMenu = PopupMenu(requireContext(), binding.rvContent)
+        genres.forEach { genre ->
+            popupMenu.menu.add(genre.name)
+        }
+
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+            val selectedGenre = genres.find { it.name == menuItem.title.toString() }
+            selectedGenre?.let {
+                loadGenreList(it.id, it.name)
+            }
+            true
+        }
+
+        popupMenu.show()
     }
 
     private fun setupObservers() {
@@ -371,13 +463,30 @@ class DiscoverFragment : Fragment() {
         }
 
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
-            contentAdapter.updateData(items)
-
-            if (items.isNotEmpty()) {
-                updateDetailsPane(items[0])
+            // Add genre selector as the last item in the carousel
+            val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
+            val itemsWithGenres = if (genres != null && genres.isNotEmpty() && !isShowingGenre) {
+                // Create a special "Browse Genres" item
+                val genreBrowserItem = MetaItem(
+                    id = "genre_browser",
+                    type = "genre_browser",
+                    name = "Browse by Genre",
+                    poster = null,
+                    background = null,
+                    description = "Select a genre to explore"
+                )
+                items + genreBrowserItem
+            } else {
+                items
             }
 
-            if (items.isEmpty()) {
+            contentAdapter.updateData(itemsWithGenres)
+
+            if (itemsWithGenres.isNotEmpty()) {
+                updateDetailsPane(itemsWithGenres[0])
+            }
+
+            if (itemsWithGenres.isEmpty()) {
                 currentSelectedItem = null
             }
         }

@@ -28,45 +28,20 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_percent="0.15" />
 
-    <!-- List Dropdown -->
+    <!-- Current List Label (non-interactive) -->
     <TextView
-        android:id="@+id/dropdownList"
+        android:id="@+id/currentListLabel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Popular"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textAppearance="?attr/textAppearanceTitleLarge"
         android:textColor="@color/text_primary"
         android:padding="12dp"
-        android:focusable="true"
-        android:clickable="true"
-        android:background="?attr/selectableItemBackground"
-        android:drawableEnd="@drawable/ic_arrow_drop_down"
-        android:drawableTint="@color/text_secondary"
         android:gravity="start|center_vertical"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="16dp"
         app:layout_constraintStart_toEndOf="@id/dropdownMediaType"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.20" />
-
-    <!-- Genre Dropdown -->
-    <TextView
-        android:id="@+id/dropdownGenre"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="All Genres"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
-        android:textColor="@color/text_primary"
-        android:padding="12dp"
-        android:focusable="true"
-        android:clickable="true"
-        android:background="?attr/selectableItemBackground"
-        android:drawableEnd="@drawable/ic_arrow_drop_down"
-        android:drawableTint="@color/text_secondary"
-        android:gravity="start|center_vertical"
-        android:layout_marginStart="8dp"
-        app:layout_constraintStart_toEndOf="@id/dropdownList"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.20" />
+        app:layout_constraintWidth_percent="0.25" />
 
     <!-- Search Field -->
     <com.google.android.material.textfield.TextInputLayout
@@ -75,7 +50,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        app:layout_constraintStart_toEndOf="@id/dropdownGenre"
+        app:layout_constraintStart_toEndOf="@id/currentListLabel"
         app:layout_constraintEnd_toStartOf="@id/btnUserProfile"
         app:layout_constraintTop_toTopOf="parent"
         app:boxBackgroundMode="outline"
