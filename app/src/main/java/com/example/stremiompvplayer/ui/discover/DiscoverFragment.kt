@@ -308,6 +308,21 @@ class DiscoverFragment : Fragment() {
 
         binding.detailDescription.text = item.description ?: "No description available."
 
+        // Episode Info (Specific to episodes)
+        if (item.type == "episode") {
+            val parts = item.id.split(":")
+            if (parts.size >= 4) {
+                val season = parts[2]
+                val episode = parts[3]
+                binding.detailEpisode.text = "S${season.padStart(2, '0')}E${episode.padStart(2, '0')}"
+                binding.detailEpisode.visibility = View.VISIBLE
+            } else {
+                binding.detailEpisode.visibility = View.GONE
+            }
+        } else {
+            binding.detailEpisode.visibility = View.GONE
+        }
+
         binding.detailTitle.text = item.name
         // [CHANGE] Initial state is hidden for both to prevent flash
         binding.detailTitle.visibility = View.GONE
