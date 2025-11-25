@@ -422,7 +422,87 @@ class MainViewModel(
 
     // Reusable suspended function
     private suspend fun fetchCatalogItems(catalog: UserCatalog): List<MetaItem> {
-        if (catalog.addonUrl == "trakt") {
+        // Check for popular/latest/trending FIRST (before checking addonUrl)
+        if (catalog.catalogId in listOf("popular", "latest", "trending")) {
+            Log.d("CatalogLoad", "Fetching TMDB ${catalog.catalogId} ${catalog.catalogType}")
+            val pagesToLoad = listOf(1, 2)
+            val allItems = mutableListOf<MetaItem>()
+
+            // Check if current user is a kids profile
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val isKidsProfile = currentUser?.isKidsProfile == true
+            Log.d("CatalogLoad", "isKidsProfile: $isKidsProfile, userId: $currentUserId")
+
+            val deferredResults = pagesToLoad.map { page ->
+                viewModelScope.async {
+                    try {
+                        Log.d("CatalogLoad", "Loading page $page for ${catalog.catalogId}")
+                        val response = if (isKidsProfile) {
+                            // Use discover endpoints with kids filtering
+                            if (catalog.catalogType == "movie") {
+                                TMDBClient.api.discoverMovies(
+                                    apiKey = apiKey,
+                                    page = page,
+                                    sortBy = "popularity.desc",
+                                    certificationCountry = "GB",
+                                    certificationLte = "PG",
+                                    includeAdult = false
+                                )
+                            } else {
+                                TMDBClient.api.discoverTV(
+                                    apiKey = apiKey,
+                                    page = page,
+                                    sortBy = "popularity.desc",
+                                    withGenres = "10762", // Kids genre
+                                    includeAdult = false
+                                )
+                            }
+                        } else {
+                            // Use regular endpoints for non-kids profiles
+                            if (catalog.catalogType == "movie") {
+                                when (catalog.catalogId) {
+                                    "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
+                                    "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
+                                    else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                                }
+                            } else {
+                                when (catalog.catalogId) {
+                                    "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
+                                    "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
+                                    else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                                }
+                            }
+                        }
+                        Log.d("CatalogLoad", "Page $page loaded successfully: ${response}")
+                        response
+                    } catch (e: Exception) {
+                        Log.e("CatalogLoad", "Error fetching TMDB ${catalog.catalogId} ${catalog.catalogType} page $page", e)
+                        _error.postValue("Failed to load ${catalog.catalogId} ${catalog.catalogType}: ${e.message}")
+                        null
+                    }
+                }
+            }
+            val results = deferredResults.awaitAll()
+            Log.d("CatalogLoad", "Got ${results.filterNotNull().size} non-null responses")
+            results.filterNotNull().forEach { response ->
+                val fetchedItems = if (response is TMDBMovieListResponse) {
+                    Log.d("CatalogLoad", "MovieListResponse has ${response.results.size} results")
+                    response.results.map { it.toMetaItem() }
+                } else if (response is TMDBSeriesListResponse) {
+                    Log.d("CatalogLoad", "SeriesListResponse has ${response.results.size} results")
+                    response.results.map { it.toMetaItem() }
+                } else {
+                    Log.w("CatalogLoad", "Unknown response type: ${response::class.simpleName}")
+                    emptyList()
+                }
+                Log.d("CatalogLoad", "Adding ${fetchedItems.size} items to allItems")
+                allItems.addAll(fetchedItems)
+            }
+            Log.d("CatalogLoad", "Returning ${allItems.size} total items")
+            return allItems
+
+        } else if (catalog.addonUrl == "trakt") {
             val token = prefsManager.getTraktAccessToken()
             val clientId = Secrets.TRAKT_CLIENT_ID
 
