@@ -266,14 +266,62 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun showStreamDialog(item: MetaItem) {
-        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-            putExtra("metaId", item.id)
-            putExtra("title", item.name)
-            putExtra("poster", item.poster)
-            putExtra("background", item.background)
-            putExtra("description", item.description)
-            putExtra("type", item.type)
-            putExtra("autoShowStreams", true) // Flag to auto-show stream selection
+        // Create dialog
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_stream_selection, null)
+        val dialog = android.app.AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        // Get views from dialog
+        val rvStreams = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvStreams)
+        val progressBar = dialogView.findViewById<android.widget.ProgressBar>(R.id.progressBar)
+        val btnCancel = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
+        val dialogTitle = dialogView.findViewById<android.widget.TextView>(R.id.dialogTitle)
+
+        dialogTitle.text = "Select Stream - ${item.name}"
+
+        // Setup RecyclerView
+        val streamAdapter = com.example.stremiompvplayer.adapters.StreamAdapter { stream ->
+            dialog.dismiss()
+            playStream(stream)
+        }
+        rvStreams.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
+        rvStreams.adapter = streamAdapter
+
+        // Setup cancel button
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        // Load streams
+        progressBar.visibility = View.VISIBLE
+        rvStreams.visibility = View.GONE
+
+        viewModel.loadStreams(item.type, item.id)
+
+        // Observe streams
+        val streamObserver = androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.Stream>> { streams ->
+            progressBar.visibility = View.GONE
+            rvStreams.visibility = View.VISIBLE
+            if (streams.isEmpty()) {
+                Toast.makeText(requireContext(), "No streams available", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            } else {
+                streamAdapter.submitList(streams)
+            }
+        }
+        viewModel.streams.observe(viewLifecycleOwner, streamObserver)
+
+        dialog.setOnDismissListener {
+            viewModel.streams.removeObserver(streamObserver)
+        }
+
+        dialog.show()
+    }
+
+    private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {
+        val intent = Intent(requireContext(), com.example.stremiompvplayer.VideoPlayerActivity::class.java).apply {
+            putExtra("stream", stream)
+            putExtra("title", currentSelectedItem?.name ?: "Unknown")
+            putExtra("metaId", currentSelectedItem?.id)
         }
         startActivity(intent)
     }
