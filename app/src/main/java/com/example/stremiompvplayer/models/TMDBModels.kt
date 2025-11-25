@@ -378,3 +378,13 @@ data class TMDBVideo(
     val official: Boolean,
     @Json(name = "published_at") val publishedAt: String?
 ) : Serializable
+
+// --- GENRES ---
+data class TMDBGenreListResponse(
+    val genres: List<TMDBGenre>
+)
+
+data class TMDBGenre(
+    val id: Int,
+    val name: String
+)

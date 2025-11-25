@@ -25,6 +25,7 @@ import com.example.stremiompvplayer.models.TMDBTVDetails
 import com.example.stremiompvplayer.models.TMDBWatchlistBody
 import com.example.stremiompvplayer.models.TMDBListDetailsResponse
 import com.example.stremiompvplayer.models.TMDBVideosResponse
+import com.example.stremiompvplayer.models.TMDBGenreListResponse
 
 interface TMDBApiService {
 
@@ -258,6 +259,19 @@ interface TMDBApiService {
         @Query("language") language: String = "en-US"
     ): TMDBPersonCreditsResponse
 
+    // --- GENRES ---
+    @GET("genre/movie/list")
+    suspend fun getMovieGenres(
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBGenreListResponse
+
+    @GET("genre/tv/list")
+    suspend fun getTVGenres(
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBGenreListResponse
+
     // --- DISCOVER (Kids Filtering) ---
     @GET("discover/movie")
     suspend fun discoverMovies(
@@ -267,6 +281,7 @@ interface TMDBApiService {
         @Query("sort_by") sortBy: String = "popularity.desc",
         @Query("certification_country") certificationCountry: String? = null,
         @Query("certification.lte") certificationLte: String? = null,
+        @Query("with_genres") withGenres: String? = null,
         @Query("include_adult") includeAdult: Boolean = false,
         @Query("primary_release_date.lte") releaseDate: String? = null
     ): TMDBMovieListResponse

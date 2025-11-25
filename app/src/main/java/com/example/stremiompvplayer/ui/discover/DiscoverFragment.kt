@@ -123,6 +123,11 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun setupAdapters() {
+        // Setup genre selector
+        binding.genreSelector.setOnClickListener {
+            showGenreSelector()
+        }
+
         sidebarAdapter = SidebarAdapter { catalog ->
             viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
         }
@@ -218,12 +223,55 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun loadCatalogs() {
+        // Fetch genres for the current type
+        viewModel.fetchGenres(currentType)
+
         viewModel.getDiscoverCatalogs(currentType).observe(viewLifecycleOwner) { catalogs ->
             sidebarAdapter.submitList(catalogs)
             if (catalogs.isNotEmpty()) {
                 viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
             }
         }
+    }
+
+    private fun showGenreSelector() {
+        val genres = if (currentType == "movie") {
+            viewModel.movieGenres.value
+        } else {
+            viewModel.tvGenres.value
+        }
+
+        if (genres == null || genres.isEmpty()) {
+            Toast.makeText(requireContext(), "Loading genres...", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val wrapper = ContextThemeWrapper(requireContext(), R.style.PopupMenuStyle)
+        val popupMenu = PopupMenu(wrapper, binding.genreSelector)
+
+        // Add "All" option at the top
+        popupMenu.menu.add(0, -1, 0, "All")
+
+        // Add all genres
+        genres.forEachIndexed { index, genre ->
+            popupMenu.menu.add(0, genre.id, index + 1, genre.name)
+        }
+
+        popupMenu.setOnMenuItemClickListener { item ->
+            if (item.itemId == -1) {
+                // "All" selected - clear genre filter
+                viewModel.clearGenreSelection()
+            } else {
+                // Specific genre selected
+                val selectedGenre = genres.find { it.id == item.itemId }
+                selectedGenre?.let {
+                    viewModel.selectGenre(it)
+                }
+            }
+            true
+        }
+
+        popupMenu.show()
     }
 
     private fun showItemMenu(view: View, item: MetaItem) {
@@ -296,6 +344,25 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun setupObservers() {
+        // Observe genre selection changes
+        viewModel.selectedGenre.observe(viewLifecycleOwner) { genre ->
+            if (genre != null) {
+                binding.genreSelector.text = "Genre: ${genre.name}"
+            } else {
+                binding.genreSelector.text = "Genre: All"
+            }
+
+            // Reload content when genre changes
+            val currentCatalogs = if (currentType == "movie") {
+                viewModel.movieCatalogs.value
+            } else {
+                viewModel.seriesCatalogs.value
+            }
+            currentCatalogs?.firstOrNull()?.let { catalog ->
+                viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
+            }
+        }
+
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
             contentAdapter.updateData(items)
 

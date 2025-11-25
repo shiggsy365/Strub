@@ -52,6 +52,16 @@ class MainViewModel(
     val currentLogo: LiveData<String?> = _currentLogo
     private var logoFetchJob: Job? = null
 
+    // --- Genre Selection ---
+    private val _movieGenres = MutableLiveData<List<com.example.stremiompvplayer.models.TMDBGenre>>()
+    val movieGenres: LiveData<List<com.example.stremiompvplayer.models.TMDBGenre>> = _movieGenres
+
+    private val _tvGenres = MutableLiveData<List<com.example.stremiompvplayer.models.TMDBGenre>>()
+    val tvGenres: LiveData<List<com.example.stremiompvplayer.models.TMDBGenre>> = _tvGenres
+
+    private val _selectedGenre = MutableLiveData<com.example.stremiompvplayer.models.TMDBGenre?>()
+    val selectedGenre: LiveData<com.example.stremiompvplayer.models.TMDBGenre?> = _selectedGenre
+
     private val apiKey: String get() = prefsManager.getTMDBApiKey() ?: ""
 
     // Session cache for performance optimization (5-min TTL)
@@ -337,6 +347,45 @@ class MainViewModel(
         }
     }
 
+    // === GENRE MANAGEMENT ===
+
+    fun fetchGenres(catalogType: String) {
+        if (apiKey.isEmpty()) {
+            Log.e("GenreFetch", "API key is empty!")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val response = if (catalogType == "movie") {
+                    TMDBClient.api.getMovieGenres(apiKey)
+                } else {
+                    TMDBClient.api.getTVGenres(apiKey)
+                }
+
+                if (catalogType == "movie") {
+                    _movieGenres.postValue(response.genres)
+                    Log.d("GenreFetch", "Loaded ${response.genres.size} movie genres")
+                } else {
+                    _tvGenres.postValue(response.genres)
+                    Log.d("GenreFetch", "Loaded ${response.genres.size} TV genres")
+                }
+            } catch (e: Exception) {
+                Log.e("GenreFetch", "Error fetching $catalogType genres", e)
+            }
+        }
+    }
+
+    fun selectGenre(genre: com.example.stremiompvplayer.models.TMDBGenre?) {
+        _selectedGenre.postValue(genre)
+        Log.d("GenreSelection", "Selected genre: ${genre?.name ?: "None"}")
+    }
+
+    fun clearGenreSelection() {
+        _selectedGenre.postValue(null)
+        Log.d("GenreSelection", "Cleared genre selection")
+    }
+
     // === CONTENT LOADING (Refactored) ===
 
     // Original method used by DiscoverFragment
@@ -437,6 +486,12 @@ class MainViewModel(
             val ageRating = currentUser?.ageRating ?: "18" // Default to 18 (no filtering) if not set
             Log.d("CatalogLoad", "Age Rating: $ageRating, userId: $currentUserId")
 
+            // Get selected genre ID if any
+            val selectedGenreId = _selectedGenre.value?.id?.toString()
+            if (selectedGenreId != null) {
+                Log.d("CatalogLoad", "Using genre filter: $selectedGenreId (${_selectedGenre.value?.name})")
+            }
+
             val deferredResults = pagesToLoad.map { page ->
                 viewModelScope.async {
                     try {
@@ -451,11 +506,12 @@ class MainViewModel(
                                         sortBy = "popularity.desc",
                                         certificationCountry = "GB",
                                         certificationLte = ageRating,
+                                        withGenres = selectedGenreId,
                                         includeAdult = false
                                     )
                                 } else {
-                                    // For TV, use genre filtering based on age rating
-                                    val genres = when (ageRating) {
+                                    // For TV, use genre filtering based on age rating or user selection
+                                    val genres = selectedGenreId ?: when (ageRating) {
                                         "U", "PG" -> "10762" // Kids genre
                                         else -> null // No genre filter for 12, 15
                                     }
@@ -469,18 +525,40 @@ class MainViewModel(
                                 }
                             }
                             else -> {
-                                // Age rating 18 or not set - no filtering
-                                if (catalog.catalogType == "movie") {
-                                    when (catalog.catalogId) {
-                                        "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
-                                        "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
-                                        else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                                // Age rating 18 or not set - check if genre filter is applied
+                                if (selectedGenreId != null) {
+                                    // Use discover endpoints with genre filtering
+                                    if (catalog.catalogType == "movie") {
+                                        TMDBClient.api.discoverMovies(
+                                            apiKey = apiKey,
+                                            page = page,
+                                            sortBy = "popularity.desc",
+                                            withGenres = selectedGenreId,
+                                            includeAdult = false
+                                        )
+                                    } else {
+                                        TMDBClient.api.discoverTV(
+                                            apiKey = apiKey,
+                                            page = page,
+                                            sortBy = "popularity.desc",
+                                            withGenres = selectedGenreId,
+                                            includeAdult = false
+                                        )
                                     }
                                 } else {
-                                    when (catalog.catalogId) {
-                                        "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
-                                        "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
-                                        else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                                    // No genre filter - use standard endpoints
+                                    if (catalog.catalogType == "movie") {
+                                        when (catalog.catalogId) {
+                                            "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
+                                            "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
+                                            else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                                        }
+                                    } else {
+                                        when (catalog.catalogId) {
+                                            "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
+                                            "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
+                                            else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                                        }
                                     }
                                 }
                             }
@@ -700,6 +778,12 @@ class MainViewModel(
             val ageRating = currentUser?.ageRating ?: "18" // Default to 18 (no filtering) if not set
             Log.d("CatalogLoad", "Age Rating: $ageRating, userId: $currentUserId")
 
+            // Get selected genre ID if any
+            val selectedGenreId = _selectedGenre.value?.id?.toString()
+            if (selectedGenreId != null) {
+                Log.d("CatalogLoad", "Using genre filter: $selectedGenreId (${_selectedGenre.value?.name})")
+            }
+
             val deferredResults = pagesToLoad.map { page ->
                 viewModelScope.async {
                     try {
@@ -714,11 +798,12 @@ class MainViewModel(
                                         sortBy = "popularity.desc",
                                         certificationCountry = "GB",
                                         certificationLte = ageRating,
+                                        withGenres = selectedGenreId,
                                         includeAdult = false
                                     )
                                 } else {
-                                    // For TV, use genre filtering based on age rating
-                                    val genres = when (ageRating) {
+                                    // For TV, use genre filtering based on age rating or user selection
+                                    val genres = selectedGenreId ?: when (ageRating) {
                                         "U", "PG" -> "10762" // Kids genre
                                         else -> null // No genre filter for 12, 15
                                     }
@@ -732,18 +817,40 @@ class MainViewModel(
                                 }
                             }
                             else -> {
-                                // Age rating 18 or not set - no filtering
-                                if (catalog.catalogType == "movie") {
-                                    when (catalog.catalogId) {
-                                        "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
-                                        "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
-                                        else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                                // Age rating 18 or not set - check if genre filter is applied
+                                if (selectedGenreId != null) {
+                                    // Use discover endpoints with genre filtering
+                                    if (catalog.catalogType == "movie") {
+                                        TMDBClient.api.discoverMovies(
+                                            apiKey = apiKey,
+                                            page = page,
+                                            sortBy = "popularity.desc",
+                                            withGenres = selectedGenreId,
+                                            includeAdult = false
+                                        )
+                                    } else {
+                                        TMDBClient.api.discoverTV(
+                                            apiKey = apiKey,
+                                            page = page,
+                                            sortBy = "popularity.desc",
+                                            withGenres = selectedGenreId,
+                                            includeAdult = false
+                                        )
                                     }
                                 } else {
-                                    when (catalog.catalogId) {
-                                        "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
-                                        "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
-                                        else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                                    // No genre filter - use standard endpoints
+                                    if (catalog.catalogType == "movie") {
+                                        when (catalog.catalogId) {
+                                            "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
+                                            "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
+                                            else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                                        }
+                                    } else {
+                                        when (catalog.catalogId) {
+                                            "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
+                                            "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
+                                            else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                                        }
                                     }
                                 }
                             }
