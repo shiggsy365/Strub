@@ -3,6 +3,7 @@ package com.example.stremiompvplayer.ui.discover
 import android.content.Intent
 import android.os.Bundle
 import android.view.ContextThemeWrapper
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -443,25 +444,6 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        // Observe genre selection changes
-        viewModel.selectedGenre.observe(viewLifecycleOwner) { genre ->
-            if (genre != null) {
-                binding.genreSelector.text = "Genre: ${genre.name}"
-            } else {
-                binding.genreSelector.text = "Genre: All"
-            }
-
-            // Reload content when genre changes
-            val currentCatalogs = if (currentType == "movie") {
-                viewModel.movieCatalogs.value
-            } else {
-                viewModel.seriesCatalogs.value
-            }
-            currentCatalogs?.firstOrNull()?.let { catalog ->
-                viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
-            }
-        }
-
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
             // Add genre selector as the last item in the carousel
             val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
