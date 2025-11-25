@@ -181,10 +181,27 @@ class MainActivity : AppCompatActivity() {
             if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
                 val query = searchField.text.toString()
                 if (query.isNotEmpty()) {
-                    viewModel.searchTMDB(query)
-                    val searchFragment = SearchFragment()
-                    loadFragment(searchFragment)
-                    searchFragment.setSearchText(query)
+                    // Find current fragment and if it's DiscoverFragment, perform search there
+                    val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+                    when (currentFragment) {
+                        is DiscoverFragment -> {
+                            currentFragment.performSearch(query)
+                        }
+                        else -> {
+                            // If not on Discover, switch to it and perform search
+                            val type = if (dropdownMediaType.text == "Series") "series" else "movie"
+                            val discoverFragment = DiscoverFragment.newInstance(type)
+                            loadFragment(discoverFragment)
+                            // Perform search after fragment is loaded
+                            discoverFragment.view?.post {
+                                discoverFragment.performSearch(query)
+                            }
+                        }
+                    }
+                    // Clear search field and hide keyboard
+                    searchField.text?.clear()
+                    val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                    imm.hideSoftInputFromWindow(searchField.windowToken, 0)
                 }
                 true
             } else {

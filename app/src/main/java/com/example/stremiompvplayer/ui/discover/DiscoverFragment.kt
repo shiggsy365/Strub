@@ -57,6 +57,12 @@ class DiscoverFragment : Fragment() {
     private val fragmentKey: String
         get() = focusMemoryManager.getFragmentKey("discover", currentType)
 
+    // Drill-down navigation state
+    private enum class DrillDownLevel { CATALOG, SERIES, SEASON }
+    private var currentDrillDownLevel = DrillDownLevel.CATALOG
+    private var currentSeriesId: String? = null
+    private var currentSeasonNumber: Int? = null
+
     companion object {
         private const val ARG_TYPE = "media_type"
         fun newInstance(type: String): DiscoverFragment {
@@ -83,18 +89,33 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun setupKeyHandling() {
-        val keyListener = View.OnKeyListener { _, keyCode, event ->
+        // Make posterCarousel focusable to receive key events
+        binding.posterCarousel.isFocusable = true
+        binding.posterCarousel.isFocusableInTouchMode = true
+
+        // Set unhandled key event listener on the fragment root to catch down/up before RecyclerView consumes them
+        binding.root.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN) {
                 when (keyCode) {
                     KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        // Cycle to next list
-                        cycleToNextList()
-                        true
+                        // Check if a poster item has focus in the carousel
+                        val focusedChild = binding.rvContent.focusedChild
+                        if (focusedChild != null) {
+                            // Cycle to next list when down is pressed on carousel
+                            cycleToNextList()
+                            return@setOnKeyListener true
+                        }
+                        false
                     }
                     KeyEvent.KEYCODE_DPAD_UP -> {
-                        // Focus on Play button
-                        binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
-                        true
+                        // Check if a poster item has focus
+                        val focusedChild = binding.rvContent.focusedChild
+                        if (focusedChild != null) {
+                            // Focus on Play button when up is pressed on carousel
+                            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                            return@setOnKeyListener true
+                        }
+                        false
                     }
                     else -> false
                 }
@@ -102,10 +123,6 @@ class DiscoverFragment : Fragment() {
                 false
             }
         }
-
-        // Set key listener on both the RecyclerView and its container
-        binding.rvContent.setOnKeyListener(keyListener)
-        binding.posterCarousel?.setOnKeyListener(keyListener)
     }
 
     override fun onResume() {
@@ -136,7 +153,40 @@ class DiscoverFragment : Fragment() {
         }
     }
 
-    fun handleBackPress(): Boolean { return false }
+    fun handleBackPress(): Boolean {
+        // Handle drill-down navigation back
+        when (currentDrillDownLevel) {
+            DrillDownLevel.SEASON -> {
+                // Go back to seasons view
+                currentSeriesId?.let { seriesId ->
+                    currentDrillDownLevel = DrillDownLevel.SERIES
+                    currentSeasonNumber = null
+                    viewModel.loadSeriesMeta(seriesId)
+                    updatePlayButtonVisibility()
+                    return true
+                }
+            }
+            DrillDownLevel.SERIES -> {
+                // Go back to catalog view
+                currentDrillDownLevel = DrillDownLevel.CATALOG
+                currentSeriesId = null
+                currentSeasonNumber = null
+                // Reload the current catalog
+                if (currentCatalogs.isNotEmpty() && currentCatalogIndex < currentCatalogs.size) {
+                    val currentCatalog = currentCatalogs[currentCatalogIndex]
+                    updateCurrentListLabel(currentCatalog.displayName)
+                    viewModel.loadContentForCatalog(currentCatalog, isInitialLoad = false)
+                }
+                updatePlayButtonVisibility()
+                return true
+            }
+            DrillDownLevel.CATALOG -> {
+                // At top level, don't consume back press
+                return false
+            }
+        }
+        return false
+    }
     fun focusSidebar(): Boolean {
         binding.root.post {
             // Focus on Play button or poster carousel
@@ -144,6 +194,26 @@ class DiscoverFragment : Fragment() {
                 ?: binding.rvContent.requestFocus()
         }
         return true
+    }
+
+    fun performSearch(query: String) {
+        if (query.isBlank()) return
+
+        // Reset drill-down state
+        currentDrillDownLevel = DrillDownLevel.CATALOG
+        currentSeriesId = null
+        currentSeasonNumber = null
+
+        // Perform search based on current media type
+        when (currentType) {
+            "movie" -> viewModel.searchMovies(query)
+            "series" -> viewModel.searchSeries(query)
+            else -> viewModel.searchTMDB(query)
+        }
+
+        // Update label to show search query
+        updateCurrentListLabel("Search: $query")
+        updatePlayButtonVisibility()
     }
 
     private fun setupAdapters() {
@@ -193,7 +263,12 @@ class DiscoverFragment : Fragment() {
         // Setup Play button
         binding.root.findViewById<View>(R.id.btnPlay)?.setOnClickListener {
             currentSelectedItem?.let { item ->
-                showStreamDialog(item)
+                // For episodes, we need to load streams using the episode ID format
+                if (item.type == "episode") {
+                    showStreamDialog(item)
+                } else {
+                    showStreamDialog(item)
+                }
             }
         }
 
@@ -254,15 +329,76 @@ class DiscoverFragment : Fragment() {
         viewModel.fetchCast(item.id, item.type)
     }
 
+    private fun updatePlayButtonVisibility() {
+        val playButton = binding.root.findViewById<View>(R.id.btnPlay)
+        val shouldShowPlay = when {
+            // Always show for movies at catalog level
+            currentDrillDownLevel == DrillDownLevel.CATALOG && currentType == "movie" -> true
+            // Show for episodes (when drilled down to season level)
+            currentDrillDownLevel == DrillDownLevel.SEASON -> true
+            // Hide for series and seasons (not yet at playable level)
+            else -> false
+        }
+        playButton?.visibility = if (shouldShowPlay) View.VISIBLE else View.GONE
+    }
+
     private fun showStreamDialog(item: MetaItem) {
-        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-            putExtra("metaId", item.id)
-            putExtra("title", item.name)
-            putExtra("poster", item.poster)
-            putExtra("background", item.background)
-            putExtra("description", item.description)
-            putExtra("type", item.type)
-            putExtra("autoShowStreams", true) // Flag to auto-show stream selection
+        // Create dialog
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_stream_selection, null)
+        val dialog = android.app.AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        // Get views from dialog
+        val rvStreams = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvStreams)
+        val progressBar = dialogView.findViewById<android.widget.ProgressBar>(R.id.progressBar)
+        val btnCancel = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
+        val dialogTitle = dialogView.findViewById<android.widget.TextView>(R.id.dialogTitle)
+
+        dialogTitle.text = "Select Stream - ${item.name}"
+
+        // Setup RecyclerView
+        val streamAdapter = com.example.stremiompvplayer.adapters.StreamAdapter { stream ->
+            dialog.dismiss()
+            playStream(stream)
+        }
+        rvStreams.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
+        rvStreams.adapter = streamAdapter
+
+        // Setup cancel button
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        // Load streams
+        progressBar.visibility = View.VISIBLE
+        rvStreams.visibility = View.GONE
+
+        viewModel.loadStreams(item.type, item.id)
+
+        // Observe streams
+        val streamObserver = androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.Stream>> { streams ->
+            progressBar.visibility = View.GONE
+            rvStreams.visibility = View.VISIBLE
+            if (streams.isEmpty()) {
+                Toast.makeText(requireContext(), "No streams available", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            } else {
+                streamAdapter.submitList(streams)
+            }
+        }
+        viewModel.streams.observe(viewLifecycleOwner, streamObserver)
+
+        dialog.setOnDismissListener {
+            viewModel.streams.removeObserver(streamObserver)
+        }
+
+        dialog.show()
+    }
+
+    private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {
+        val intent = Intent(requireContext(), com.example.stremiompvplayer.VideoPlayerActivity::class.java).apply {
+            putExtra("stream", stream)
+            putExtra("title", currentSelectedItem?.name ?: "Unknown")
+            putExtra("metaId", currentSelectedItem?.id)
         }
         startActivity(intent)
     }
@@ -314,14 +450,25 @@ class DiscoverFragment : Fragment() {
     private fun cycleToNextList() {
         if (currentCatalogs.isEmpty()) return
 
+        // Reset drill-down state when cycling lists
+        currentDrillDownLevel = DrillDownLevel.CATALOG
+        currentSeriesId = null
+        currentSeasonNumber = null
+
         currentCatalogIndex = (currentCatalogIndex + 1) % currentCatalogs.size
         val nextCatalog = currentCatalogs[currentCatalogIndex]
         updateCurrentListLabel(nextCatalog.displayName)
         viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
         isShowingGenre = false
+        updatePlayButtonVisibility()
     }
 
     private fun loadGenreList(genreId: Int, genreName: String) {
+        // Reset drill-down state when loading genre
+        currentDrillDownLevel = DrillDownLevel.CATALOG
+        currentSeriesId = null
+        currentSeasonNumber = null
+
         isShowingGenre = true
         updateCurrentListLabel("Genre: $genreName")
 
@@ -333,6 +480,7 @@ class DiscoverFragment : Fragment() {
                 if (content.isNotEmpty()) {
                     updateDetailsPane(content[0])
                 }
+                updatePlayButtonVisibility()
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error loading genre content", Toast.LENGTH_SHORT).show()
             }
@@ -381,12 +529,27 @@ class DiscoverFragment : Fragment() {
                         true
                     }
                     "View Related" -> {
-                        val intent = Intent(requireContext(), com.example.stremiompvplayer.SimilarActivity::class.java).apply {
-                            putExtra("metaId", item.id)
-                            putExtra("title", item.name)
-                            putExtra("type", item.type)
+                        // Reset drill-down state
+                        currentDrillDownLevel = DrillDownLevel.CATALOG
+                        currentSeriesId = null
+                        currentSeasonNumber = null
+
+                        // Load similar content in Discover layout
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            try {
+                                val similarContent = viewModel.fetchSimilarContent(item.id, item.type)
+                                if (similarContent.isNotEmpty()) {
+                                    contentAdapter.updateData(similarContent)
+                                    updateDetailsPane(similarContent[0])
+                                    updateCurrentListLabel("Related to ${item.name}")
+                                    updatePlayButtonVisibility()
+                                } else {
+                                    Toast.makeText(requireContext(), "No related content found", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(requireContext(), "Error loading related content", Toast.LENGTH_SHORT).show()
+                            }
                         }
-                        startActivity(intent)
                         true
                     }
                     else -> false
@@ -413,15 +576,42 @@ class DiscoverFragment : Fragment() {
         }
 
         updateDetailsPane(item)
-        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-            putExtra("metaId", item.id)
-            putExtra("title", item.name)
-            putExtra("poster", item.poster)
-            putExtra("background", item.background)
-            putExtra("description", item.description)
-            putExtra("type", item.type)
+
+        when (item.type) {
+            "series" -> {
+                // Drill down into series to show seasons
+                currentDrillDownLevel = DrillDownLevel.SERIES
+                currentSeriesId = item.id
+                currentSeasonNumber = null
+                viewModel.loadSeriesMeta(item.id)
+                updatePlayButtonVisibility()
+            }
+            "season" -> {
+                // Drill down into season to show episodes
+                val parts = item.id.split(":")
+                if (parts.size >= 2) {
+                    val seriesId = parts.dropLast(1).joinToString(":")
+                    val seasonNum = parts.last().toIntOrNull() ?: 1
+                    currentDrillDownLevel = DrillDownLevel.SEASON
+                    currentSeriesId = seriesId
+                    currentSeasonNumber = seasonNum
+                    viewModel.loadSeasonEpisodes(seriesId, seasonNum)
+                    updatePlayButtonVisibility()
+                }
+            }
+            "episode" -> {
+                // Show stream selection dialog for episode
+                showStreamDialog(item)
+            }
+            "movie" -> {
+                // Show stream selection dialog for movie
+                showStreamDialog(item)
+            }
+            else -> {
+                // Fallback - show stream dialog if possible
+                showStreamDialog(item)
+            }
         }
-        startActivity(intent)
     }
 
     private fun showGenreSelectionDialog() {
@@ -449,31 +639,35 @@ class DiscoverFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
-            // Add genre selector as the last item in the carousel
-            val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
-            val itemsWithGenres = if (genres != null && genres.isNotEmpty() && !isShowingGenre) {
-                // Create a special "Browse Genres" item
-                val genreBrowserItem = MetaItem(
-                    id = "genre_browser",
-                    type = "genre_browser",
-                    name = "Browse by Genre",
-                    poster = null,
-                    background = null,
-                    description = "Select a genre to explore"
-                )
-                items + genreBrowserItem
-            } else {
-                items
-            }
+            // Only update content if we're at catalog level (not drilled down)
+            if (currentDrillDownLevel == DrillDownLevel.CATALOG) {
+                // Add genre selector as the last item in the carousel
+                val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
+                val itemsWithGenres = if (genres != null && genres.isNotEmpty() && !isShowingGenre) {
+                    // Create a special "Browse Genres" item
+                    val genreBrowserItem = MetaItem(
+                        id = "genre_browser",
+                        type = "genre_browser",
+                        name = "Browse by Genre",
+                        poster = null,
+                        background = null,
+                        description = "Select a genre to explore"
+                    )
+                    items + genreBrowserItem
+                } else {
+                    items
+                }
 
-            contentAdapter.updateData(itemsWithGenres)
+                contentAdapter.updateData(itemsWithGenres)
 
-            if (itemsWithGenres.isNotEmpty()) {
-                updateDetailsPane(itemsWithGenres[0])
-            }
+                if (itemsWithGenres.isNotEmpty()) {
+                    updateDetailsPane(itemsWithGenres[0])
+                }
 
-            if (itemsWithGenres.isEmpty()) {
-                currentSelectedItem = null
+                if (itemsWithGenres.isEmpty()) {
+                    currentSelectedItem = null
+                }
+                updatePlayButtonVisibility()
             }
         }
 
@@ -540,16 +734,69 @@ class DiscoverFragment : Fragment() {
                 chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
                 chip.setTextColor(resources.getColor(R.color.text_primary, null))
 
-                // Navigate to person details when clicked
+                // Show actor's content in Discover layout
                 chip.setOnClickListener {
-                    val intent = Intent(requireContext(), com.example.stremiompvplayer.MainActivity::class.java).apply {
-                        putExtra("SEARCH_PERSON_ID", actor.id.removePrefix("tmdb:").toIntOrNull() ?: -1)
-                        putExtra("SEARCH_QUERY", actor.name)
+                    val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
+                    if (personId != null) {
+                        // Reset drill-down state
+                        currentDrillDownLevel = DrillDownLevel.CATALOG
+                        currentSeriesId = null
+                        currentSeasonNumber = null
+
+                        // Load person's credits (movies/shows they appeared in)
+                        viewModel.loadPersonCredits(personId)
+                        updateCurrentListLabel("${actor.name} - Filmography")
+                        updatePlayButtonVisibility()
                     }
-                    startActivity(intent)
                 }
 
                 actorChipGroup?.addView(chip)
+            }
+        }
+
+        // Observe series meta details for drill-down navigation
+        viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
+            if (meta != null && meta.type == "series" && currentDrillDownLevel == DrillDownLevel.SERIES) {
+                // Display seasons in the carousel
+                val seasons = meta.videos?.mapNotNull { video ->
+                    video.season?.let { seasonNum ->
+                        MetaItem(
+                            id = "${meta.id}:$seasonNum",
+                            type = "season",
+                            name = video.title,
+                            poster = video.thumbnail,
+                            background = meta.background,
+                            description = "Season $seasonNum"
+                        )
+                    }
+                } ?: emptyList()
+
+                contentAdapter.updateData(seasons)
+                if (seasons.isNotEmpty()) {
+                    updateDetailsPane(seasons[0])
+                }
+                updateCurrentListLabel("${meta.name} - Seasons")
+            }
+        }
+
+        // Observe season episodes for drill-down navigation
+        viewModel.seasonEpisodes.observe(viewLifecycleOwner) { episodes ->
+            if (currentDrillDownLevel == DrillDownLevel.SEASON && episodes.isNotEmpty()) {
+                contentAdapter.updateData(episodes)
+                updateDetailsPane(episodes[0])
+                currentSeriesId?.let { seriesId ->
+                    currentSeasonNumber?.let { seasonNum ->
+                        updateCurrentListLabel("Season $seasonNum - Episodes")
+                    }
+                }
+            }
+        }
+
+        // Observe search results for actor/person content and search
+        viewModel.searchResults.observe(viewLifecycleOwner) { results ->
+            if (results.isNotEmpty() && currentDrillDownLevel == DrillDownLevel.CATALOG) {
+                contentAdapter.updateData(results)
+                updateDetailsPane(results[0])
             }
         }
     }
