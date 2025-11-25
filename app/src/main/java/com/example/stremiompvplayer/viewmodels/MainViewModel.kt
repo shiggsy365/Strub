@@ -16,6 +16,7 @@ import com.example.stremiompvplayer.network.TMDBClient
 import com.example.stremiompvplayer.network.TraktClient
 import com.example.stremiompvplayer.network.TraktDeviceCodeResponse
 import com.example.stremiompvplayer.utils.Secrets
+import com.example.stremiompvplayer.utils.SessionCache
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -52,6 +53,9 @@ class MainViewModel(
     private var logoFetchJob: Job? = null
 
     private val apiKey: String get() = prefsManager.getTMDBApiKey() ?: ""
+
+    // Session cache for performance optimization (5-min TTL)
+    private val sessionCache = SessionCache.getInstance()
 
     // Track current catalog to allow refreshing
     private var lastRequestedCatalog: UserCatalog? = null
@@ -894,6 +898,14 @@ class MainViewModel(
     // === NEXT UP GENERATION ===
     private suspend fun generateNextUpList(): List<MetaItem> = withContext(Dispatchers.IO) {
         val currentUserId = prefsManager.getCurrentUserId() ?: return@withContext emptyList()
+
+        // PERFORMANCE: Check cache first (5-min TTL)
+        val cached = sessionCache.getNextUp(currentUserId)
+        if (cached != null) {
+            Log.d("NextUp", "Using cached Next Up list")
+            return@withContext cached
+        }
+
         val watchedEpisodes = catalogRepository.getNextUpCandidates(currentUserId)
         val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
         val today = dateFormat.format(java.util.Date())
@@ -975,7 +987,12 @@ class MainViewModel(
         }.awaitAll().filterNotNull()
 
         // Sort by lastUpdated (most recent first) and return only the MetaItems
-        nextUpItems.sortedByDescending { it.second }.map { it.first }
+        val result = nextUpItems.sortedByDescending { it.second }.map { it.first }
+
+        // PERFORMANCE: Cache the result
+        sessionCache.putNextUp(currentUserId, result)
+
+        result
     }
 
     // === TRAKT SYNC ===
@@ -1265,6 +1282,8 @@ class MainViewModel(
 
                 // Refresh: Explicitly clear cache and force reload
                 loadedContentCache.clear()
+                // PERFORMANCE: Invalidate session cache since watch status changed
+                sessionCache.invalidateAll(currentUserId)
                 lastRequestedCatalog?.let {
                     loadContentForCatalog(it, isInitialLoad = true)
                 }

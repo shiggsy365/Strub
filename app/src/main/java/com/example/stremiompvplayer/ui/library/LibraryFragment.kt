@@ -109,7 +109,7 @@ class LibraryFragment : Fragment() {
                             if (item != null) {
                                 detailsUpdateJob?.cancel()
                                 detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
-                                    delay(1000)
+                                    delay(300) // PERFORMANCE: Reduced from 1000ms for snappier UX
                                     if (isAdded) {
                                         updateDetailsPane(item)
                                     }

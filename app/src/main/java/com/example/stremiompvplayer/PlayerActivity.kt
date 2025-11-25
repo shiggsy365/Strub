@@ -102,21 +102,33 @@ class PlayerActivity : AppCompatActivity() {
     private fun startPlaybackMonitoring() {
         monitorJob?.cancel()
         monitorJob = lifecycleScope.launch {
-            while (true) {
-                delay(1000) // Check every second
+            // PERFORMANCE: Only check intensively near the end to reduce CPU usage
+            while (isActive) {
                 player?.let { exoPlayer ->
                     val duration = exoPlayer.duration
                     val position = exoPlayer.currentPosition
 
                     if (duration > 0 && !playNextShown) {
                         val remainingTime = duration - position
-                        // Show popup in last 30 seconds
-                        if (remainingTime in 1..30000 && nextEpisode != null) {
-                            showPlayNextPopup()
-                            playNextShown = true
+
+                        // Only check frequently in the last 2 minutes
+                        if (remainingTime <= 120000) { // 2 minutes
+                            // Check every second when near the end
+                            if (remainingTime in 1..30000 && nextEpisode != null) {
+                                showPlayNextPopup()
+                                playNextShown = true
+                                return@launch // Exit monitoring after showing popup
+                            }
+                            delay(1000)
+                        } else {
+                            // Check every 30 seconds when not near the end
+                            delay(30000)
                         }
+                    } else {
+                        // No duration yet or popup already shown
+                        delay(5000)
                     }
-                }
+                } ?: return@launch // Exit if no player
             }
         }
     }
