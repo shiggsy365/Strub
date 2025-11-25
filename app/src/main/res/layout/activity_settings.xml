@@ -296,6 +296,16 @@
                     android:textColor="@android:color/white"
                     android:focusable="true" />
 
+                <Button
+                    android:id="@+id/btnTVSettings"
+                    style="@style/Widget.App.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="TV Settings"
+                    android:textColor="@android:color/white"
+                    android:focusable="true" />
+
                 <TextView
                     android:id="@+id/tvEPGParsingStatus"
                     android:layout_width="match_parent"

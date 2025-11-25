@@ -138,4 +138,61 @@ object EPGParser {
             .sortedBy { it.startTime }
             .take(limit)
     }
+
+    data class EPGChannelInfo(
+        val id: String,
+        val displayName: String
+    )
+
+    suspend fun parseEPGChannelList(url: String): List<EPGChannelInfo> {
+        val channels = mutableListOf<EPGChannelInfo>()
+
+        try {
+            val connection = URL(url).openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 15000
+            connection.readTimeout = 15000
+
+            val factory = XmlPullParserFactory.newInstance()
+            val parser = factory.newPullParser()
+            parser.setInput(BufferedReader(InputStreamReader(connection.inputStream)))
+
+            var eventType = parser.eventType
+            var currentChannelId: String? = null
+            var currentDisplayName: String? = null
+
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                when (eventType) {
+                    XmlPullParser.START_TAG -> {
+                        when (parser.name) {
+                            "channel" -> {
+                                currentChannelId = parser.getAttributeValue(null, "id")
+                            }
+                            "display-name" -> {
+                                if (currentChannelId != null && currentDisplayName == null) {
+                                    currentDisplayName = parser.nextText()
+                                }
+                            }
+                        }
+                    }
+                    XmlPullParser.END_TAG -> {
+                        if (parser.name == "channel") {
+                            if (currentChannelId != null && currentDisplayName != null) {
+                                channels.add(EPGChannelInfo(currentChannelId, currentDisplayName))
+                            }
+                            currentChannelId = null
+                            currentDisplayName = null
+                        }
+                    }
+                }
+                eventType = parser.next()
+            }
+
+            connection.disconnect()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return channels
+    }
 }
