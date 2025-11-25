@@ -150,9 +150,15 @@ class MainActivity : AppCompatActivity() {
             loadFragment(SearchFragment())
         }
 
-        // LIVE TV
-        binding.chipLiveTV.setOnClickListener {
-            loadFragment(LiveTVFragment.newInstance())
+        // LIVE TV - only show if configured
+        val liveTvConfigured = SharedPreferencesManager.getInstance(this).getLiveTVM3UUrl()?.isNotEmpty() == true
+        if (liveTvConfigured) {
+            binding.chipLiveTV.visibility = View.VISIBLE
+            binding.chipLiveTV.setOnClickListener {
+                loadFragment(LiveTVFragment.newInstance())
+            }
+        } else {
+            binding.chipLiveTV.visibility = View.GONE
         }
 
         binding.chipMore.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }

@@ -45,35 +45,48 @@ class SharedPreferencesManager private constructor(context: Context) {
         return getTMDBApiKey().isNotEmpty()
     }
 
-    // --- TMDB SESSION ---
+    // --- TMDB SESSION (Per User) ---
     fun saveTMDBSessionId(sessionId: String) {
-        prefs.edit().putString("tmdb_session_id", sessionId).apply()
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putString("tmdb_session_id_$userId", sessionId).apply()
     }
 
     fun getTMDBSessionId(): String? {
-        return prefs.getString("tmdb_session_id", null)
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getString("tmdb_session_id_$userId", null)
     }
+
+    // --- TRAKT (Per User) ---
     fun saveTraktTokens(accessToken: String, refreshToken: String) {
+        val userId = getCurrentUserId() ?: "default"
         prefs.edit()
-            .putString("trakt_access_token", accessToken)
-            .putString("trakt_refresh_token", refreshToken)
-            .putBoolean("trakt_enabled", true)
+            .putString("trakt_access_token_$userId", accessToken)
+            .putString("trakt_refresh_token_$userId", refreshToken)
+            .putBoolean("trakt_enabled_$userId", true)
             .apply()
     }
 
-    fun getTraktAccessToken(): String? = prefs.getString("trakt_access_token", null)
+    fun getTraktAccessToken(): String? {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getString("trakt_access_token_$userId", null)
+    }
 
-    fun isTraktEnabled(): Boolean = prefs.getBoolean("trakt_enabled", false)
+    fun isTraktEnabled(): Boolean {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getBoolean("trakt_enabled_$userId", false)
+    }
 
     fun setTraktEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean("trakt_enabled", enabled).apply()
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putBoolean("trakt_enabled_$userId", enabled).apply()
     }
 
     fun clearTraktData() {
+        val userId = getCurrentUserId() ?: "default"
         prefs.edit()
-            .remove("trakt_access_token")
-            .remove("trakt_refresh_token")
-            .remove("trakt_enabled")
+            .remove("trakt_access_token_$userId")
+            .remove("trakt_refresh_token_$userId")
+            .remove("trakt_enabled_$userId")
             .apply()
     }
 
@@ -96,27 +109,32 @@ class SharedPreferencesManager private constructor(context: Context) {
             .apply()
     }
 
-    // --- Live TV ---
+    // --- Live TV (Per User) ---
     fun saveLiveTVM3UUrl(m3uUrl: String) {
-        prefs.edit().putString("livetv_m3u_url", m3uUrl).apply()
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putString("livetv_m3u_url_$userId", m3uUrl).apply()
     }
 
     fun getLiveTVM3UUrl(): String? {
-        return prefs.getString("livetv_m3u_url", null)
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getString("livetv_m3u_url_$userId", null)
     }
 
     fun saveLiveTVEPGUrl(epgUrl: String) {
-        prefs.edit().putString("livetv_epg_url", epgUrl).apply()
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putString("livetv_epg_url_$userId", epgUrl).apply()
     }
 
     fun getLiveTVEPGUrl(): String? {
-        return prefs.getString("livetv_epg_url", null)
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getString("livetv_epg_url_$userId", null)
     }
 
     fun clearLiveTVCredentials() {
+        val userId = getCurrentUserId() ?: "default"
         prefs.edit()
-            .remove("livetv_m3u_url")
-            .remove("livetv_epg_url")
+            .remove("livetv_m3u_url_$userId")
+            .remove("livetv_epg_url_$userId")
             .apply()
     }
 
