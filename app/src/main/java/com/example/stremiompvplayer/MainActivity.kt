@@ -102,20 +102,137 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             // Default to Home
-            binding.chipHome.isChecked = true
             loadFragment(HomeFragment.newInstance())
         }
 
         handleIntent(intent)
 
-        binding.btnAppLogo.setOnClickListener {
+        setupNetflixNavigation()
+        setupLegacyNavigation()
+    }
+
+    private fun setupNetflixNavigation() {
+        // Get the included layouts
+        val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
+        val topBar = binding.root.findViewById<View>(R.id.netflixTopBar)
+
+        // Setup sidebar navigation
+        sidebar.findViewById<View>(R.id.sidebarHome).setOnClickListener {
+            loadFragment(HomeFragment.newInstance())
+        }
+
+        sidebar.findViewById<View>(R.id.sidebarDiscover).setOnClickListener {
+            val currentType = topBar.findViewById<android.widget.TextView>(R.id.dropdownMediaType).text.toString()
+            val type = if (currentType.contains("Series", ignoreCase = true)) "series" else "movie"
+            loadFragment(DiscoverFragment.newInstance(type))
+        }
+
+        sidebar.findViewById<View>(R.id.sidebarLibrary).setOnClickListener {
+            val currentType = topBar.findViewById<android.widget.TextView>(R.id.dropdownMediaType).text.toString()
+            val type = if (currentType.contains("Series", ignoreCase = true)) "series" else "movie"
+            loadFragment(LibraryFragment.newInstance(type))
+        }
+
+        // LIVE TV - only show if configured
+        val liveTvConfigured = SharedPreferencesManager.getInstance(this).getLiveTVM3UUrl()?.isNotEmpty() == true
+        if (liveTvConfigured) {
+            sidebar.findViewById<View>(R.id.sidebarLiveTV).visibility = View.VISIBLE
+            sidebar.findViewById<View>(R.id.sidebarLiveTV).setOnClickListener {
+                loadFragment(LiveTVFragment.newInstance())
+            }
+        } else {
+            sidebar.findViewById<View>(R.id.sidebarLiveTV).visibility = View.GONE
+        }
+
+        sidebar.findViewById<View>(R.id.sidebarSettings).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        // Setup top bar
+        val dropdownMediaType = topBar.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
+        val currentListLabel = topBar.findViewById<android.widget.TextView>(R.id.currentListLabel)
+        val searchField = topBar.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.searchField)
+        val btnUserProfile = topBar.findViewById<View>(R.id.btnUserProfile)
+
+        // Store reference to currentListLabel for DiscoverFragment to update
+        currentListLabel.tag = "currentListLabel"
+
+        // Media Type dropdown (Movies/Series)
+        dropdownMediaType.setOnClickListener { view ->
+            showMenu(view, listOf("Movies", "Series")) { selection ->
+                dropdownMediaType.text = selection
+                // Refresh current fragment with new media type
+                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+                when (currentFragment) {
+                    is DiscoverFragment -> {
+                        val type = if (selection == "Series") "series" else "movie"
+                        loadFragment(DiscoverFragment.newInstance(type))
+                    }
+                    is LibraryFragment -> {
+                        val type = if (selection == "Series") "series" else "movie"
+                        loadFragment(LibraryFragment.newInstance(type))
+                    }
+                }
+            }
+        }
+
+        // Search field
+        searchField.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+                val query = searchField.text.toString()
+                if (query.isNotEmpty()) {
+                    viewModel.searchTMDB(query)
+                    val searchFragment = SearchFragment()
+                    loadFragment(searchFragment)
+                    searchFragment.setSearchText(query)
+                }
+                true
+            } else {
+                false
+            }
+        }
+
+        // User profile button
+        btnUserProfile.setOnClickListener {
             startActivity(Intent(this, UserSelectionActivity::class.java))
         }
 
-        setupNavigation()
+        // Implement sidebar auto-hide behavior
+        setupSidebarAutoHide(sidebar)
     }
 
-    private fun setupNavigation() {
+    private fun setupSidebarAutoHide(sidebar: View) {
+        // Auto-hide sidebar when focus leaves it
+        sidebar.setOnFocusChangeListener { v, hasFocus ->
+            lifecycleScope.launch {
+                if (!hasFocus) {
+                    delay(3000) // Wait 3 seconds before hiding
+                    if (!sidebar.hasFocus()) {
+                        // Animate sidebar width to icon-only mode
+                        sidebar.animate().translationX(-sidebar.width.toFloat() + 80).setDuration(300).start()
+                    }
+                } else {
+                    // Show full sidebar when focused
+                    sidebar.animate().translationX(0f).setDuration(300).start()
+                }
+            }
+        }
+
+        // Also check for focus on child views
+        val childViews = listOf(
+            R.id.sidebarHome, R.id.sidebarDiscover, R.id.sidebarLibrary,
+            R.id.sidebarLiveTV, R.id.sidebarSettings
+        )
+        childViews.forEach { viewId ->
+            sidebar.findViewById<View>(viewId)?.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    sidebar.animate().translationX(0f).setDuration(300).start()
+                }
+            }
+        }
+    }
+
+    private fun setupLegacyNavigation() {
         // HOME
         binding.chipHome.setOnClickListener {
             loadFragment(HomeFragment.newInstance())

@@ -44,10 +44,12 @@ class DiscoverFragment : Fragment() {
         )
     }
 
-    private lateinit var sidebarAdapter: SidebarAdapter
     private lateinit var contentAdapter: PosterAdapter
     private var currentType = "movie"
     private var currentSelectedItem: MetaItem? = null
+    private var currentCatalogs = listOf<UserCatalog>()
+    private var currentCatalogIndex = 0
+    private var isShowingGenre = false
 
     private var detailsUpdateJob: Job? = null
     private val focusMemoryManager = FocusMemoryManager.getInstance()
@@ -76,6 +78,29 @@ class DiscoverFragment : Fragment() {
         setupAdapters()
         setupObservers()
         loadCatalogs()
+        setupKeyHandling()
+    }
+
+    private fun setupKeyHandling() {
+        binding.rvContent.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        // Cycle to next list
+                        cycleToNextList()
+                        true
+                    }
+                    KeyEvent.KEYCODE_DPAD_UP -> {
+                        // Focus on Play button
+                        binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                        true
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
     }
 
     override fun onResume() {
@@ -109,36 +134,14 @@ class DiscoverFragment : Fragment() {
     fun handleBackPress(): Boolean { return false }
     fun focusSidebar(): Boolean {
         binding.root.post {
-            val firstView = binding.rvSidebar.layoutManager?.findViewByPosition(0)
-            if (firstView != null && firstView.isFocusable) {
-                firstView.requestFocus()
-            } else if (binding.rvSidebar.isFocusable) {
-                binding.rvSidebar.requestFocus()
-            } else if (binding.genreSelector.isFocusable) {
-                binding.genreSelector.requestFocus()
-            } else {
-                // Try again after a delay if views aren't ready
-                binding.root.postDelayed({
-                    binding.rvSidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
-                        ?: binding.rvContent.requestFocus()
-                }, 100)
-            }
+            // Focus on Play button or poster carousel
+            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                ?: binding.rvContent.requestFocus()
         }
-        return true  // Always return true as we've initiated focus attempt
+        return true
     }
 
     private fun setupAdapters() {
-        // Setup genre selector
-        binding.genreSelector.setOnClickListener {
-            showGenreSelector()
-        }
-
-        sidebarAdapter = SidebarAdapter { catalog ->
-            viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
-        }
-        binding.rvSidebar.layoutManager = LinearLayoutManager(context)
-        binding.rvSidebar.adapter = sidebarAdapter
-
         contentAdapter = PosterAdapter(
             items = emptyList(),
             onClick = { item -> onContentClicked(item) },
@@ -149,7 +152,8 @@ class DiscoverFragment : Fragment() {
             }
         )
 
-        binding.rvContent.layoutManager = GridLayoutManager(context, 10)
+        // Horizontal scrolling for Netflix-style poster carousel
+        binding.rvContent.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         binding.rvContent.adapter = contentAdapter
 
         binding.rvContent.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
@@ -180,6 +184,20 @@ class DiscoverFragment : Fragment() {
                 view.setOnFocusChangeListener(null)
             }
         })
+
+        // Setup Play button
+        binding.root.findViewById<View>(R.id.btnPlay)?.setOnClickListener {
+            currentSelectedItem?.let { item ->
+                showStreamDialog(item)
+            }
+        }
+
+        // Setup Trailer button
+        binding.root.findViewById<View>(R.id.btnTrailer)?.setOnClickListener {
+            currentSelectedItem?.let { item ->
+                playTrailer(item)
+            }
+        }
     }
 
     private fun updateDetailsPane(item: MetaItem) {
@@ -192,7 +210,7 @@ class DiscoverFragment : Fragment() {
         val formattedDate = try {
             item.releaseDate?.let { dateStr ->
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val outputFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+                val outputFormat = SimpleDateFormat("yyyy", Locale.getDefault())
                 val date = inputFormat.parse(dateStr)
                 date?.let { outputFormat.format(it) }
             }
@@ -217,7 +235,48 @@ class DiscoverFragment : Fragment() {
 
         viewModel.fetchItemLogo(item)
 
+        // Update actor chips
+        updateActorChips(item)
+
         refreshWatchStatus(item)
+    }
+
+    private fun updateActorChips(item: MetaItem) {
+        val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
+        actorChipGroup?.removeAllViews()
+
+        // Fetch cast information from TMDB
+        viewModel.fetchCast(item.id, item.type)
+    }
+
+    private fun showStreamDialog(item: MetaItem) {
+        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
+            putExtra("metaId", item.id)
+            putExtra("title", item.name)
+            putExtra("poster", item.poster)
+            putExtra("background", item.background)
+            putExtra("description", item.description)
+            putExtra("type", item.type)
+            putExtra("autoShowStreams", true) // Flag to auto-show stream selection
+        }
+        startActivity(intent)
+    }
+
+    private fun playTrailer(item: MetaItem) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val trailerUrl = viewModel.fetchTrailer(item.id, item.type)
+                if (trailerUrl != null) {
+                    // Open YouTube trailer in browser or YouTube app
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(trailerUrl))
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(requireContext(), "No trailer available", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error loading trailer", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun refreshWatchStatus(item: MetaItem) {
@@ -232,50 +291,47 @@ class DiscoverFragment : Fragment() {
         viewModel.fetchGenres(currentType)
 
         viewModel.getDiscoverCatalogs(currentType).observe(viewLifecycleOwner) { catalogs ->
-            sidebarAdapter.submitList(catalogs)
+            currentCatalogs = catalogs
+            currentCatalogIndex = 0
             if (catalogs.isNotEmpty()) {
+                updateCurrentListLabel(catalogs[0].displayName)
                 viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
             }
         }
     }
 
-    private fun showGenreSelector() {
-        val genres = if (currentType == "movie") {
-            viewModel.movieGenres.value
-        } else {
-            viewModel.tvGenres.value
-        }
+    private fun updateCurrentListLabel(labelText: String) {
+        val topBar = activity?.findViewById<View>(R.id.netflixTopBar)
+        val label = topBar?.findViewById<android.widget.TextView>(R.id.currentListLabel)
+        label?.text = labelText
+    }
 
-        if (genres == null || genres.isEmpty()) {
-            Toast.makeText(requireContext(), "Loading genres...", Toast.LENGTH_SHORT).show()
-            return
-        }
+    private fun cycleToNextList() {
+        if (currentCatalogs.isEmpty()) return
 
-        val popupMenu = PopupMenu(requireContext(), binding.genreSelector)
+        currentCatalogIndex = (currentCatalogIndex + 1) % currentCatalogs.size
+        val nextCatalog = currentCatalogs[currentCatalogIndex]
+        updateCurrentListLabel(nextCatalog.displayName)
+        viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
+        isShowingGenre = false
+    }
 
-        // Add "All" option at the top
-        popupMenu.menu.add(0, -1, 0, "All")
+    private fun loadGenreList(genreId: Int, genreName: String) {
+        isShowingGenre = true
+        updateCurrentListLabel("Genre: $genreName")
 
-        // Add all genres
-        genres.forEachIndexed { index, genre ->
-            popupMenu.menu.add(0, genre.id, index + 1, genre.name)
-        }
-
-        popupMenu.setOnMenuItemClickListener { item ->
-            if (item.itemId == -1) {
-                // "All" selected - clear genre filter
-                viewModel.clearGenreSelection()
-            } else {
-                // Specific genre selected
-                val selectedGenre = genres.find { it.id == item.itemId }
-                selectedGenre?.let {
-                    viewModel.selectGenre(it)
+        // Fetch popular movies/series for this genre
+        lifecycleScope.launch {
+            try {
+                val content = viewModel.fetchPopularByGenre(currentType, genreId)
+                contentAdapter.updateData(content)
+                if (content.isNotEmpty()) {
+                    updateDetailsPane(content[0])
                 }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error loading genre content", Toast.LENGTH_SHORT).show()
             }
-            true
         }
-
-        popupMenu.show()
     }
 
     private fun showItemMenu(view: View, item: MetaItem) {
@@ -295,6 +351,7 @@ class DiscoverFragment : Fragment() {
 
             popup.menu.add("Mark as Watched")
             popup.menu.add("Clear Watched Status")
+            popup.menu.add("View Related")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -318,6 +375,15 @@ class DiscoverFragment : Fragment() {
                         refreshItem(item)
                         true
                     }
+                    "View Related" -> {
+                        val intent = Intent(requireContext(), com.example.stremiompvplayer.SimilarActivity::class.java).apply {
+                            putExtra("metaId", item.id)
+                            putExtra("title", item.name)
+                            putExtra("type", item.type)
+                        }
+                        startActivity(intent)
+                        true
+                    }
                     else -> false
                 }
             }
@@ -335,6 +401,12 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun onContentClicked(item: MetaItem) {
+        // Check if this is the genre browser item
+        if (item.type == "genre_browser") {
+            showGenreSelectionDialog()
+            return
+        }
+
         updateDetailsPane(item)
         val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
             putExtra("metaId", item.id)
@@ -345,6 +417,29 @@ class DiscoverFragment : Fragment() {
             putExtra("type", item.type)
         }
         startActivity(intent)
+    }
+
+    private fun showGenreSelectionDialog() {
+        val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
+        if (genres == null || genres.isEmpty()) {
+            Toast.makeText(requireContext(), "Loading genres...", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val popupMenu = PopupMenu(requireContext(), binding.rvContent)
+        genres.forEach { genre ->
+            popupMenu.menu.add(genre.name)
+        }
+
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+            val selectedGenre = genres.find { it.name == menuItem.title.toString() }
+            selectedGenre?.let {
+                loadGenreList(it.id, it.name)
+            }
+            true
+        }
+
+        popupMenu.show()
     }
 
     private fun setupObservers() {
@@ -368,13 +463,30 @@ class DiscoverFragment : Fragment() {
         }
 
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
-            contentAdapter.updateData(items)
-
-            if (items.isNotEmpty()) {
-                updateDetailsPane(items[0])
+            // Add genre selector as the last item in the carousel
+            val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
+            val itemsWithGenres = if (genres != null && genres.isNotEmpty() && !isShowingGenre) {
+                // Create a special "Browse Genres" item
+                val genreBrowserItem = MetaItem(
+                    id = "genre_browser",
+                    type = "genre_browser",
+                    name = "Browse by Genre",
+                    poster = null,
+                    background = null,
+                    description = "Select a genre to explore"
+                )
+                items + genreBrowserItem
+            } else {
+                items
             }
 
-            if (items.isEmpty()) {
+            contentAdapter.updateData(itemsWithGenres)
+
+            if (itemsWithGenres.isNotEmpty()) {
+                updateDetailsPane(itemsWithGenres[0])
+            }
+
+            if (itemsWithGenres.isEmpty()) {
                 currentSelectedItem = null
             }
         }
@@ -428,6 +540,32 @@ class DiscoverFragment : Fragment() {
                 item.isWatched = isWatched
             }
         }
+
+        // Observe cast list and update actor chips
+        viewModel.castList.observe(viewLifecycleOwner) { castList ->
+            val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
+            actorChipGroup?.removeAllViews()
+
+            castList.take(5).forEach { actor ->
+                val chip = com.google.android.material.chip.Chip(requireContext())
+                chip.text = actor.name
+                chip.isClickable = true
+                chip.isFocusable = true
+                chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+                chip.setTextColor(resources.getColor(R.color.text_primary, null))
+
+                // Navigate to person details when clicked
+                chip.setOnClickListener {
+                    val intent = Intent(requireContext(), com.example.stremiompvplayer.MainActivity::class.java).apply {
+                        putExtra("SEARCH_PERSON_ID", actor.id.removePrefix("tmdb:").toIntOrNull() ?: -1)
+                        putExtra("SEARCH_QUERY", actor.name)
+                    }
+                    startActivity(intent)
+                }
+
+                actorChipGroup?.addView(chip)
+            }
+        }
     }
 
 
@@ -437,35 +575,4 @@ class DiscoverFragment : Fragment() {
         detailsUpdateJob?.cancel()
     }
 
-    inner class SidebarAdapter(
-        private val onClick: (UserCatalog) -> Unit
-    ) : androidx.recyclerview.widget.ListAdapter<UserCatalog, SidebarAdapter.ViewHolder>(
-        com.example.stremiompvplayer.adapters.CatalogConfigAdapter.DiffCallback()
-    ) {
-
-        private var selectedPosition = 0
-
-        inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
-            val name: android.widget.TextView = view.findViewById(R.id.catalogName)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_discover_sidebar, parent, false)
-            return ViewHolder(view)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = getItem(position)
-            holder.name.text = item.displayName
-            holder.view.isSelected = position == selectedPosition
-            holder.view.setOnClickListener {
-                val oldPosition = selectedPosition
-                selectedPosition = position
-                notifyItemChanged(oldPosition)
-                notifyItemChanged(selectedPosition)
-                onClick(item)
-            }
-        }
-    }
 }
