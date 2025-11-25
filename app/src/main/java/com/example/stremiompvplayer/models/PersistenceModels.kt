@@ -6,7 +6,14 @@ import com.example.stremiompvplayer.models.MetaItem // Ensure this is imported f
 import java.io.Serializable
 
 // All models in this file are used for Room persistence
-@Entity(tableName = "watch_progress", primaryKeys = ["userId", "itemId"])
+@Entity(
+    tableName = "watch_progress",
+    primaryKeys = ["userId", "itemId"],
+    indices = [
+        androidx.room.Index(value = ["userId", "type", "isWatched", "progress"]),
+        androidx.room.Index(value = ["userId", "lastUpdated"])
+    ]
+)
 data class WatchProgress(
     val userId: String,
     val itemId: String, // tmdb:123 or tmdb:123:1:5
@@ -82,4 +89,15 @@ data class LibraryItem(
 data class NextUpItem(
     @PrimaryKey
     val id: String
+) : Serializable
+
+@Entity(tableName = "tmdb_metadata_cache")
+data class TMDBMetadataCache(
+    @PrimaryKey
+    val cacheKey: String, // Format: "movie:123" or "tv:456" or "season:456:1" or "episode:456:1:1"
+    val type: String, // "movie", "tv", "season", "episode"
+    val tmdbId: Int,
+    val jsonData: String, // Serialized TMDB API response
+    val lastFetched: Long = System.currentTimeMillis(),
+    val expiresAt: Long = System.currentTimeMillis() + (24 * 60 * 60 * 1000L) // 24 hours default
 ) : Serializable
