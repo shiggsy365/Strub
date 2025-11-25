@@ -39,7 +39,7 @@ class TVGuideAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_tv_channel, parent, false)
+            .inflate(R.layout.item_tv_guide, parent, false)
         return ViewHolder(view)
     }
 
@@ -52,11 +52,11 @@ class TVGuideAdapter(
         if (!item.channel.logo.isNullOrEmpty()) {
             Glide.with(holder.itemView.context)
                 .load(item.channel.logo)
-                .placeholder(R.mipmap.ic_launcher_foreground)
-                .error(R.mipmap.ic_launcher_foreground)
+                .placeholder(R.drawable.ic_tv)
+                .error(R.drawable.ic_tv)
                 .into(holder.channelLogo)
         } else {
-            holder.channelLogo.setImageResource(R.mipmap.ic_launcher_foreground)
+            holder.channelLogo.setImageResource(R.drawable.ic_tv)
         }
 
         // Display current program
