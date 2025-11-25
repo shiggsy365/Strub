@@ -83,7 +83,7 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun setupKeyHandling() {
-        binding.rvContent.setOnKeyListener { _, keyCode, event ->
+        val keyListener = View.OnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN) {
                 when (keyCode) {
                     KeyEvent.KEYCODE_DPAD_DOWN -> {
@@ -102,6 +102,10 @@ class DiscoverFragment : Fragment() {
                 false
             }
         }
+
+        // Set key listener on both the RecyclerView and its container
+        binding.rvContent.setOnKeyListener(keyListener)
+        binding.posterCarousel?.setOnKeyListener(keyListener)
     }
 
     override fun onResume() {

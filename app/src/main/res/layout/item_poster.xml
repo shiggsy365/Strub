@@ -6,17 +6,16 @@
     <data />
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="0dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_margin="4dp"
         android:focusable="true"
         android:clickable="true"
         style="@style/Widget.App.Poster"
         app:cardCornerRadius="@dimen/corner_radius_small"
-        app:cardElevation="@dimen/elevation_medium"
+        app:cardElevation="0dp"
         app:cardBackgroundColor="@color/card_elevated"
-        app:strokeWidth="@dimen/stroke_thick"
-        app:strokeColor="@color/poster_stroke_selector"
+        app:strokeWidth="0dp"
         app:contentPadding="2dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -40,7 +39,7 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintDimensionRatio="H,58:96"
+                    app:layout_constraintDimensionRatio="W,2:3"
                     tools:src="@drawable/movie" />
 
                 <!-- Watched Icon (Green Checkmark) -->
