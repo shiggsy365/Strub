@@ -395,7 +395,7 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {
-        val intent = Intent(requireContext(), com.example.stremiompvplayer.VideoPlayerActivity::class.java).apply {
+        val intent = Intent(requireContext(), com.example.stremiompvplayer.PlayerActivity::class.java).apply {
             putExtra("stream", stream)
             putExtra("title", currentSelectedItem?.name ?: "Unknown")
             putExtra("metaId", currentSelectedItem?.id)
