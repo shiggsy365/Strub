@@ -72,6 +72,57 @@ class LiveTVFragment : Fragment() {
             cachedChannelsWithPrograms = emptyList()
             lastLoadTime = 0
         }
+
+        // Load EPG in background at app startup
+        suspend fun loadEPGInBackground(context: android.content.Context) {
+            val prefsManager = SharedPreferencesManager.getInstance(context)
+            val m3uUrl = prefsManager.getLiveTVM3UUrl()
+            val epgUrl = prefsManager.getLiveTVEPGUrl()
+
+            if (m3uUrl.isNullOrEmpty()) {
+                android.util.Log.d("LiveTV", "No M3U URL configured, skipping EPG load")
+                return
+            }
+
+            try {
+                // Load M3U and EPG in background
+                cachedChannels = withContext(Dispatchers.IO) {
+                    M3UParser.parseM3U(m3uUrl)
+                }
+
+                if (!epgUrl.isNullOrEmpty()) {
+                    cachedPrograms = withContext(Dispatchers.IO) {
+                        EPGParser.parseEPG(epgUrl) { status ->
+                            android.util.Log.d("LiveTV", "EPG parsing: $status")
+                        }
+                    }
+                }
+
+                // Build channels with programs
+                val currentTime = System.currentTimeMillis()
+                cachedChannelsWithPrograms = cachedChannels.map { channel ->
+                    val channelPrograms = cachedPrograms.filter {
+                        it.channelId == channel.id || it.channelId == channel.tvgId
+                    }
+
+                    val currentProgram = channelPrograms.find {
+                        currentTime >= it.startTime && currentTime <= it.endTime
+                    }
+
+                    val upcomingPrograms = channelPrograms
+                        .filter { it.startTime >= currentTime }
+                        .sortedBy { it.startTime }
+                        .take(5)
+
+                    ChannelWithPrograms(channel, currentProgram, upcomingPrograms)
+                }
+
+                lastLoadTime = System.currentTimeMillis()
+                android.util.Log.d("LiveTV", "EPG loaded in background: ${cachedChannels.size} channels")
+            } catch (e: Exception) {
+                android.util.Log.e("LiveTV", "Error loading EPG in background", e)
+            }
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {

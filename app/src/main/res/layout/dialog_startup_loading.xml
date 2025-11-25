@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="@color/md_theme_surface">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Loading App..."
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginBottom="24dp" />
+
+        <!-- User Lists -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/iconUserLists"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_play_circle"
+                app:tint="@color/md_theme_onSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/textUserLists"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Loading User Lists"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginStart="16dp" />
+
+            <ProgressBar
+                android:id="@+id/progressUserLists"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:visibility="gone"
+                style="?android:attr/progressBarStyleSmall" />
+        </LinearLayout>
+
+        <!-- Metadata -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/iconMetadata"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_play_circle"
+                app:tint="@color/md_theme_onSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/textMetadata"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Loading Missing Metadata"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginStart="16dp" />
+
+            <ProgressBar
+                android:id="@+id/progressMetadata"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:visibility="gone"
+                style="?android:attr/progressBarStyleSmall" />
+        </LinearLayout>
+
+        <!-- TV Channels -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/iconTvChannels"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_play_circle"
+                app:tint="@color/md_theme_onSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/textTvChannels"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Parsing TV Channels"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginStart="16dp" />
+
+            <ProgressBar
+                android:id="@+id/progressTvChannels"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:visibility="gone"
+                style="?android:attr/progressBarStyleSmall" />
+        </LinearLayout>
+
+    </LinearLayout>
+</layout>
