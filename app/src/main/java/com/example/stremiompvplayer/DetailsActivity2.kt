@@ -139,11 +139,26 @@ class DetailsActivity2 : AppCompatActivity() {
             if (!title.contains("S$season")) binding.tvTitle.text = "$title (S$season E$episode)"
             else binding.tvTitle.text = title
 
+            // Initialize logo/title visibility to prevent flash
+            binding.tvTitle.visibility = View.GONE
+            binding.imgLogo.visibility = View.GONE
+
             binding.tvDescription.text = desc ?: "Resuming Episode..."
             if (!poster.isNullOrEmpty()) Glide.with(this).load(poster).into(binding.imgPoster)
             if (!bg.isNullOrEmpty()) Glide.with(this).load(bg).into(binding.imgBackground)
 
             viewModel.fetchCast(parentId, "series")
+
+            // Fetch logo for the parent series
+            val parentSeriesMeta = MetaItem(
+                id = parentId,
+                type = "series",
+                name = title,
+                poster = poster,
+                background = bg,
+                description = desc
+            )
+            viewModel.fetchItemLogo(parentSeriesMeta)
 
             focusFirstNavigationItem()
 
