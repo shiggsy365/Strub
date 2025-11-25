@@ -21,7 +21,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/gradient_overlay_modern" />
+            android:background="@drawable/gradient_netflix_overlay" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -36,6 +36,7 @@
                 android:layout_marginTop="@dimen/spacing_xs"
                 android:layout_marginEnd="@dimen/spacing_xs"
                 android:layout_marginBottom="@dimen/spacing_xs"
+                android:visibility="gone"
                 app:layout_constraintWidth_percent="0.25"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -65,14 +66,13 @@
                 android:layout_marginEnd="@dimen/spacing_sm"
                 android:layout_marginBottom="@dimen/spacing_xs"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/filterCard"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/contentGrid"
                 app:cardBackgroundColor="#00000000"
                 app:cardCornerRadius="@dimen/corner_radius_small"
                 app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/md_theme_outline"
+                app:strokeWidth="0dp"
                 app:contentPadding="0dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -198,12 +198,12 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintHeight_percent="0.6"
+                app:layout_constraintHeight_percent="0.3"
                 app:cardBackgroundColor="@color/glass_surface_light"
-                app:cardCornerRadius="@dimen/corner_radius_small"
+                app:cardCornerRadius="0dp"
                 app:cardElevation="@dimen/elevation_medium"
                 app:strokeWidth="0dp"
-                app:contentPadding="0dp">
+                app:contentPadding="16dp">
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvContent"

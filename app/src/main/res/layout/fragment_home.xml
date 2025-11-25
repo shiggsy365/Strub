@@ -21,7 +21,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/gradient_overlay_modern" />
+            android:background="@drawable/gradient_netflix_overlay" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -36,6 +36,7 @@
                 android:layout_marginTop="@dimen/spacing_xs"
                 android:layout_marginEnd="@dimen/spacing_xs"
                 android:layout_marginBottom="@dimen/spacing_xs"
+                android:visibility="gone"
                 app:layout_constraintWidth_percent="0.25"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -65,32 +66,32 @@
                 android:layout_marginEnd="@dimen/spacing_sm"
                 android:layout_marginBottom="@dimen/spacing_xs"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/sidebarCard"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/contentGrid"
                 app:cardBackgroundColor="#00000000"
                 app:cardCornerRadius="@dimen/corner_radius_small"
                 app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/md_theme_outline"
+                app:strokeWidth="0dp"
                 app:contentPadding="0dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:padding="0dp">
+                    android:paddingStart="32dp"
+                    android:paddingEnd="32dp"
+                    android:paddingTop="16dp">
 
                     <LinearLayout
                         android:id="@+id/metaColumn"
                         android:layout_width="0dp"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:gravity="top"
                         android:orientation="vertical"
                         android:padding="4dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintWidth_percent="0.4">
+                        app:layout_constraintWidth_percent="0.5">
 
                         <FrameLayout
                             android:id="@+id/logoContainer"
@@ -114,7 +115,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:ellipsize="end"
-                                android:gravity="center"
+                                android:gravity="start"
                                 android:lineSpacingExtra="@dimen/spacing_xs"
                                 android:maxLines="2"
                                 android:textAppearance="?attr/textAppearanceDisplaySmall"
@@ -126,7 +127,6 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="@dimen/spacing_sm"
-                            android:gravity="center"
                             android:orientation="horizontal">
 
                             <TextView
@@ -141,6 +141,7 @@
                             <View
                                 android:layout_width="4dp"
                                 android:layout_height="4dp"
+                                android:layout_gravity="center"
                                 android:layout_marginEnd="@dimen/spacing_sm"
                                 android:background="@drawable/dot_separator" />
 
@@ -156,18 +157,6 @@
                                 tools:text="9.5"
                                 tools:visibility="visible" />
                         </LinearLayout>
-                    </LinearLayout>
-
-                    <androidx.core.widget.NestedScrollView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:padding="4dp"
-                        android:fadeScrollbars="true"
-                        android:overScrollMode="never"
-                        android:scrollbars="none"
-                        app:layout_constraintStart_toEndOf="@id/metaColumn"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintWidth_percent="0.6">
 
                         <TextView
                             android:id="@+id/detailDescription"
@@ -175,12 +164,13 @@
                             android:layout_height="wrap_content"
                             android:justificationMode="inter_word"
                             android:lineSpacingExtra="@dimen/spacing_xs"
+                            android:maxLines="4"
+                            android:ellipsize="end"
                             android:textAppearance="?attr/textAppearanceBodyMedium"
                             android:textColor="@color/text_secondary"
-                            android:paddingRight="8dp"
                             tools:text="Description goes here..." />
+                    </LinearLayout>
 
-                    </androidx.core.widget.NestedScrollView>
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -192,12 +182,12 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintHeight_percent="0.6"
+                app:layout_constraintHeight_percent="0.3"
                 app:cardBackgroundColor="@color/glass_surface_light"
-                app:cardCornerRadius="@dimen/corner_radius_small"
+                app:cardCornerRadius="0dp"
                 app:cardElevation="@dimen/elevation_medium"
                 app:strokeWidth="0dp"
-                app:contentPadding="0dp">
+                app:contentPadding="16dp">
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvContent"

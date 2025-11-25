@@ -21,7 +21,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/gradient_overlay_modern" />
+            android:background="@drawable/gradient_netflix_overlay" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -302,12 +302,12 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintHeight_percent="0.6"
+                app:layout_constraintHeight_percent="0.3"
                 app:cardBackgroundColor="@color/glass_surface_light"
-                app:cardCornerRadius="@dimen/corner_radius_small"
+                app:cardCornerRadius="0dp"
                 app:cardElevation="@dimen/elevation_medium"
                 app:strokeWidth="0dp"
-                app:contentPadding="0dp">
+                app:contentPadding="16dp">
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/resultsRecycler"

@@ -169,8 +169,7 @@ class DiscoverFragment : Fragment() {
         // Setup Trailer button
         binding.root.findViewById<View>(R.id.btnTrailer)?.setOnClickListener {
             currentSelectedItem?.let { item ->
-                // TODO: Implement trailer playback
-                android.widget.Toast.makeText(requireContext(), "Trailer playback coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                playTrailer(item)
             }
         }
     }
@@ -220,19 +219,8 @@ class DiscoverFragment : Fragment() {
         val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
         actorChipGroup?.removeAllViews()
 
-        // TODO: Fetch actual cast information from TMDB
-        // For now, this is a placeholder. You'll need to add cast fetching to your viewModel
-        // Example actors (this would come from the API):
-        val actors = listOf("Actor 1", "Actor 2", "Actor 3", "Actor 4", "Actor 5")
-
-        actors.take(5).forEach { actorName ->
-            val chip = com.google.android.material.chip.Chip(requireContext())
-            chip.text = actorName
-            chip.isClickable = false
-            chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
-            chip.setTextColor(resources.getColor(R.color.text_primary, null))
-            actorChipGroup?.addView(chip)
-        }
+        // Fetch cast information from TMDB
+        viewModel.fetchCast(item.id, item.type)
     }
 
     private fun showStreamDialog(item: MetaItem) {
@@ -246,6 +234,23 @@ class DiscoverFragment : Fragment() {
             putExtra("autoShowStreams", true) // Flag to auto-show stream selection
         }
         startActivity(intent)
+    }
+
+    private fun playTrailer(item: MetaItem) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val trailerUrl = viewModel.fetchTrailer(item.id, item.type)
+                if (trailerUrl != null) {
+                    // Open YouTube trailer in browser or YouTube app
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(trailerUrl))
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(requireContext(), "No trailer available", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error loading trailer", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun refreshWatchStatus(item: MetaItem) {
@@ -424,6 +429,32 @@ class DiscoverFragment : Fragment() {
         viewModel.isItemWatched.observe(viewLifecycleOwner) { isWatched ->
             currentSelectedItem?.let { item ->
                 item.isWatched = isWatched
+            }
+        }
+
+        // Observe cast list and update actor chips
+        viewModel.castList.observe(viewLifecycleOwner) { castList ->
+            val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
+            actorChipGroup?.removeAllViews()
+
+            castList.take(5).forEach { actor ->
+                val chip = com.google.android.material.chip.Chip(requireContext())
+                chip.text = actor.name
+                chip.isClickable = true
+                chip.isFocusable = true
+                chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+                chip.setTextColor(resources.getColor(R.color.text_primary, null))
+
+                // Navigate to person details when clicked
+                chip.setOnClickListener {
+                    val intent = Intent(requireContext(), com.example.stremiompvplayer.MainActivity::class.java).apply {
+                        putExtra("SEARCH_PERSON_ID", actor.id.removePrefix("tmdb:").toIntOrNull() ?: -1)
+                        putExtra("SEARCH_QUERY", actor.name)
+                    }
+                    startActivity(intent)
+                }
+
+                actorChipGroup?.addView(chip)
             }
         }
     }
