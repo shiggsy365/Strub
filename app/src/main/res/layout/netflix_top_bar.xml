@@ -44,21 +44,29 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_percent="0.25" />
 
-    <!-- Search Field -->
+    <!-- Spacer to push search to the right -->
+    <Space
+        android:id="@+id/spacer"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        app:layout_constraintStart_toEndOf="@id/currentListLabel"
+        app:layout_constraintEnd_toStartOf="@id/searchInputLayout"
+        app:layout_constraintHorizontal_weight="1" />
+
+    <!-- Search Field (50% smaller) -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/searchInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        app:layout_constraintStart_toEndOf="@id/currentListLabel"
         app:layout_constraintEnd_toStartOf="@id/btnUserProfile"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.12"
         app:boxBackgroundMode="outline"
-        app:boxCornerRadiusTopStart="8dp"
-        app:boxCornerRadiusTopEnd="8dp"
-        app:boxCornerRadiusBottomStart="8dp"
-        app:boxCornerRadiusBottomEnd="8dp"
+        app:boxCornerRadiusTopStart="6dp"
+        app:boxCornerRadiusTopEnd="6dp"
+        app:boxCornerRadiusBottomStart="6dp"
+        app:boxCornerRadiusBottomEnd="6dp"
         app:startIconDrawable="@drawable/ic_search"
         app:startIconTint="@color/text_secondary"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
@@ -66,8 +74,9 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/searchField"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="32dp"
             android:hint="Search"
+            android:textSize="12sp"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_secondary"
             android:inputType="text"

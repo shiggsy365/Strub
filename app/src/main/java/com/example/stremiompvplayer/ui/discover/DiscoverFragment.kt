@@ -83,18 +83,33 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun setupKeyHandling() {
-        val keyListener = View.OnKeyListener { _, keyCode, event ->
+        // Make posterCarousel focusable to receive key events
+        binding.posterCarousel.isFocusable = true
+        binding.posterCarousel.isFocusableInTouchMode = true
+
+        // Set unhandled key event listener on the fragment root to catch down/up before RecyclerView consumes them
+        binding.root.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN) {
                 when (keyCode) {
                     KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        // Cycle to next list
-                        cycleToNextList()
-                        true
+                        // Check if a poster item has focus in the carousel
+                        val focusedChild = binding.rvContent.focusedChild
+                        if (focusedChild != null) {
+                            // Cycle to next list when down is pressed on carousel
+                            cycleToNextList()
+                            return@setOnKeyListener true
+                        }
+                        false
                     }
                     KeyEvent.KEYCODE_DPAD_UP -> {
-                        // Focus on Play button
-                        binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
-                        true
+                        // Check if a poster item has focus
+                        val focusedChild = binding.rvContent.focusedChild
+                        if (focusedChild != null) {
+                            // Focus on Play button when up is pressed on carousel
+                            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                            return@setOnKeyListener true
+                        }
+                        false
                     }
                     else -> false
                 }
@@ -102,10 +117,6 @@ class DiscoverFragment : Fragment() {
                 false
             }
         }
-
-        // Set key listener on both the RecyclerView and its container
-        binding.rvContent.setOnKeyListener(keyListener)
-        binding.posterCarousel?.setOnKeyListener(keyListener)
     }
 
     override fun onResume() {
