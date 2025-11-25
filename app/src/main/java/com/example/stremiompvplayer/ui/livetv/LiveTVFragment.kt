@@ -178,6 +178,26 @@ class LiveTVFragment : Fragment() {
         binding.rvTVGuide.layoutManager = LinearLayoutManager(context)
         binding.rvTVGuide.adapter = tvGuideAdapter
 
+        // Add focus listener to update details pane when channel is focused
+        binding.rvTVGuide.addOnChildAttachStateChangeListener(object : androidx.recyclerview.widget.RecyclerView.OnChildAttachStateChangeListener {
+            override fun onChildViewAttachedToWindow(view: View) {
+                view.setOnFocusChangeListener { v, hasFocus ->
+                    if (hasFocus) {
+                        val position = binding.rvTVGuide.getChildAdapterPosition(v)
+                        if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION && position < channelsWithPrograms.size) {
+                            val channel = channelsWithPrograms[position]
+                            selectedChannel = channel
+                            updateDetailsPane(channel)
+                        }
+                    }
+                }
+            }
+
+            override fun onChildViewDetachedFromWindow(view: View) {
+                view.setOnFocusChangeListener(null)
+            }
+        })
+
         // Upcoming Programs Adapter
         upcomingAdapter = UpcomingProgramAdapter()
         binding.rvUpcoming.layoutManager = LinearLayoutManager(context)
