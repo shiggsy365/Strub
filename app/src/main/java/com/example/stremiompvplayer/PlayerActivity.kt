@@ -8,19 +8,24 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.stremiompvplayer.databinding.ActivityPlayerBinding
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.models.Stream
+import com.example.stremiompvplayer.models.Subtitle
 import androidx.activity.viewModels
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import com.example.stremiompvplayer.network.AIOStreamsClient
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import android.util.Log
 
 class PlayerActivity : AppCompatActivity() {
@@ -264,20 +269,54 @@ class PlayerActivity : AppCompatActivity() {
             .also { exoPlayer ->
                 binding.playerView.player = exoPlayer
 
-                // 2. Build the MediaItem
+                // 2. Build the MediaItem with subtitles
                 val url = currentStream?.url ?: ""
-                val mediaItem = MediaItem.fromUri(url)
 
-                // 3. Set media and prepare
-                exoPlayer.setMediaItem(mediaItem)
-                exoPlayer.playWhenReady = playWhenReady
-                if (playbackPosition > 0) {
-                    exoPlayer.seekTo(currentItem, playbackPosition)
-                } else if (currentMeta != null && currentMeta!!.progress > 0 && !currentMeta!!.isWatched) {
-                    // Resume from database history if not already watched
-                    exoPlayer.seekTo(currentItem, currentMeta!!.progress)
+                // Fetch and add subtitles asynchronously
+                lifecycleScope.launch {
+                    val subtitles = currentMeta?.let { meta ->
+                        try {
+                            viewModel.fetchSubtitles(meta)
+                        } catch (e: Exception) {
+                            Log.e("PlayerActivity", "Error fetching subtitles", e)
+                            emptyList()
+                        }
+                    } ?: emptyList()
+
+                    // Build MediaItem with subtitles
+                    val subtitleConfigurations = subtitles.map { subtitle ->
+                        MediaItem.SubtitleConfiguration.Builder(
+                            android.net.Uri.parse(subtitle.url)
+                        )
+                            .setMimeType(MimeTypes.TEXT_VTT)  // VTT format
+                            .setLanguage("eng")
+                            .setLabel(subtitle.formattedTitle)  // "AIO - [Title]"
+                            .setSelectionFlags(0)  // Not forced, user can select
+                            .build()
+                    }
+
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(url)
+                        .setSubtitleConfigurations(subtitleConfigurations)
+                        .build()
+
+                    if (subtitles.isNotEmpty()) {
+                        Log.d("PlayerActivity", "Added ${subtitles.size} English subtitles to player")
+                    }
+
+                    // 3. Set media and prepare (on main thread)
+                    withContext(Dispatchers.Main) {
+                        exoPlayer.setMediaItem(mediaItem)
+                        exoPlayer.playWhenReady = playWhenReady
+                        if (playbackPosition > 0) {
+                            exoPlayer.seekTo(currentItem, playbackPosition)
+                        } else if (currentMeta != null && currentMeta!!.progress > 0 && !currentMeta!!.isWatched) {
+                            // Resume from database history if not already watched
+                            exoPlayer.seekTo(currentItem, currentMeta!!.progress)
+                        }
+                        exoPlayer.prepare()
+                    }
                 }
-                exoPlayer.prepare()
 
                 // 4. Add Listeners for buffering/errors
                 exoPlayer.addListener(object : Player.Listener {
