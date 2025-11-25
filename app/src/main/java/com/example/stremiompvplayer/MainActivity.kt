@@ -9,6 +9,7 @@ import android.widget.PopupMenu
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.stremiompvplayer.ui.home.HomeFragment
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivityMainBinding
@@ -23,6 +24,8 @@ import com.example.stremiompvplayer.utils.FocusMemoryManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.google.android.material.chip.Chip
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -50,18 +53,45 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel.checkTMDBAuthAndSync()
+        // Show startup loading dialog
+        val loadingDialog = StartupLoadingDialog(this)
+        loadingDialog.show()
 
-        // Sync Trakt on app startup if enabled
-        if (SharedPreferencesManager.getInstance(this).isTraktEnabled()) {
-            viewModel.syncTraktLibrary()
+        // Load everything in parallel
+        lifecycleScope.launch {
+            // Task 1: Load user lists
+            loadingDialog.setUserListsLoading()
+            launch {
+                viewModel.checkTMDBAuthAndSync()
+
+                // Sync Trakt on app startup if enabled
+                if (SharedPreferencesManager.getInstance(this@MainActivity).isTraktEnabled()) {
+                    viewModel.syncTraktLibrary()
+                }
+
+                // Refresh home content (discover lists) on app startup
+                viewModel.loadHomeContent()
+
+                loadingDialog.setUserListsComplete()
+            }
+
+            // Task 2: Load missing metadata (placeholder for now)
+            loadingDialog.setMetadataLoading()
+            launch {
+                // TODO: Implement metadata checking for library items
+                delay(500) // Simulate work
+                loadingDialog.setMetadataComplete()
+            }
+
+            // Task 3: Parse TV channels
+            loadingDialog.setTvChannelsLoading()
+            launch {
+                // Load Live TV EPG in background
+                LiveTVFragment.clearCache() // Clear to force fresh load
+                LiveTVFragment.loadEPGInBackground(this@MainActivity)
+                loadingDialog.setTvChannelsComplete()
+            }
         }
-
-        // Refresh home content (discover lists) on app startup
-        viewModel.loadHomeContent()
-
-        // Clear Live TV cache to force refresh on first load after app restart
-        LiveTVFragment.clearCache()
 
         if (savedInstanceState == null) {
             // Default to Home
