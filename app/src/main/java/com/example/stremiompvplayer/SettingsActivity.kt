@@ -17,9 +17,11 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.adapters.CatalogConfigAdapter
+import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
 import com.example.stremiompvplayer.models.UserCatalog
@@ -29,6 +31,9 @@ import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -477,6 +482,10 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnRefreshTVGuide.setOnClickListener {
             viewModel.refreshTVGuide()
         }
+
+        binding.btnTVSettings.setOnClickListener {
+            startActivity(Intent(this, TVSettingsActivity::class.java))
+        }
     }
 
     private fun updateLiveTVDisplay() {
@@ -504,6 +513,10 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun showLiveTVDialog() {
+        // Store old URLs to detect changes
+        val oldM3u = prefsManager.getLiveTVM3UUrl() ?: ""
+        val oldEpg = prefsManager.getLiveTVEPGUrl() ?: ""
+
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48, 16, 48, 16)
@@ -512,7 +525,7 @@ class SettingsActivity : AppCompatActivity() {
         val m3uInput = TextInputEditText(this).apply {
             hint = "M3U Playlist URL"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
-            setText(prefsManager.getLiveTVM3UUrl() ?: "")
+            setText(oldM3u)
             setSingleLine(true)
             isFocusable = true
             isFocusableInTouchMode = true
@@ -522,7 +535,7 @@ class SettingsActivity : AppCompatActivity() {
         val epgInput = TextInputEditText(this).apply {
             hint = "EPG XML URL"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
-            setText(prefsManager.getLiveTVEPGUrl() ?: "")
+            setText(oldEpg)
             setSingleLine(true)
             isFocusable = true
             isFocusableInTouchMode = true
@@ -540,6 +553,9 @@ class SettingsActivity : AppCompatActivity() {
                 val m3u = m3uInput.text.toString().trim()
                 val epg = epgInput.text.toString().trim()
 
+                // Check if URLs changed
+                val urlsChanged = (m3u != oldM3u) || (epg != oldEpg)
+
                 if (m3u.isNotEmpty()) {
                     prefsManager.saveLiveTVM3UUrl(m3u)
                 }
@@ -549,6 +565,12 @@ class SettingsActivity : AppCompatActivity() {
 
                 if (m3u.isNotEmpty() || epg.isNotEmpty()) {
                     updateLiveTVDisplay()
+
+                    // Clear database mappings if TV guide source changed
+                    if (urlsChanged) {
+                        clearTVSettingsMappings()
+                    }
+
                     Toast.makeText(this, "Live TV configured", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -556,8 +578,26 @@ class SettingsActivity : AppCompatActivity() {
             .setNeutralButton("Clear") { _, _ ->
                 prefsManager.clearLiveTVCredentials()
                 updateLiveTVDisplay()
+                // Clear all TV settings when clearing URLs
+                clearTVSettingsMappings()
             }
             .show()
+    }
+
+    private fun clearTVSettingsMappings() {
+        lifecycleScope.launch {
+            try {
+                val userId = prefsManager.getCurrentUserId()
+                withContext(Dispatchers.IO) {
+                    val database = AppDatabase.getInstance(this@SettingsActivity)
+                    database.channelGroupDao().deleteByUser(userId)
+                    database.channelMappingDao().deleteByUser(userId)
+                }
+                android.util.Log.d("Settings", "Cleared TV settings mappings due to source change")
+            } catch (e: Exception) {
+                android.util.Log.e("Settings", "Error clearing TV settings mappings", e)
+            }
+        }
     }
 
     // ==============================

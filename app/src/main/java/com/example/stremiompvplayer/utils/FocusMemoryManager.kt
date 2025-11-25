@@ -51,9 +51,30 @@ class FocusMemoryManager private constructor() {
     /**
      * Restore focus for a specific fragment/screen
      * @param key Unique identifier for the fragment
+     * @return True if focus was successfully restored, false otherwise
+     */
+    fun restoreFocus(key: String): Boolean {
+        val focusState = focusMemory[key] ?: return false
+
+        // Try to restore focus to the actual view
+        focusState.viewRef?.get()?.let { view ->
+            if (view.isFocusable && view.isAttachedToWindow) {
+                view.post {
+                    view.requestFocus()
+                }
+                return true
+            }
+        }
+
+        return false
+    }
+
+    /**
+     * Get the saved position for a specific fragment/screen
+     * @param key Unique identifier for the fragment
      * @return The position that was saved, or -1 if none
      */
-    fun restoreFocus(key: String): Int {
+    fun restoreFocusPosition(key: String): Int {
         val focusState = focusMemory[key] ?: return -1
 
         // Try to restore focus to the actual view

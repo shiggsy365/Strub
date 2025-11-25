@@ -301,33 +301,43 @@ class MainActivity : AppCompatActivity() {
                 // Check if we have saved focus to restore
                 currentFragmentKey?.let { key ->
                     if (focusMemoryManager.hasFocusMemory(key)) {
-                        focusMemoryManager.restoreFocus(key)
-                        return true
+                        val restored = focusMemoryManager.restoreFocus(key)
+                        if (restored) return true
                     }
                 }
 
                 // Otherwise use default fragment-specific focus
-                when (currentFragment) {
+                val focusedSuccessfully = when (currentFragment) {
                     is SearchFragment -> {
                         currentFragment.focusSearch()
-                        return true
+                        true
                     }
                     is DiscoverFragment -> {
                         currentFragment.focusSidebar()
-                        return true
                     }
                     is HomeFragment -> {
                         currentFragment.focusSidebar()
-                        return true
                     }
                     is LibraryFragment -> {
                         currentFragment.focusSidebar()
-                        return true
                     }
                     is LiveTVFragment -> {
                         currentFragment.focusSidebar()
-                        return true
                     }
+                    else -> false
+                }
+
+                // If focus was successfully moved, consume the event
+                if (focusedSuccessfully) {
+                    return true
+                }
+
+                // Fallback: try to find any focusable view in the fragment
+                val fragmentContainer = findViewById<View>(R.id.fragmentContainer)
+                val focusableView = fragmentContainer?.findFocus() ?: fragmentContainer?.focusSearch(View.FOCUS_DOWN)
+                if (focusableView != null && focusableView != focus) {
+                    focusableView.requestFocus()
+                    return true
                 }
             }
         }

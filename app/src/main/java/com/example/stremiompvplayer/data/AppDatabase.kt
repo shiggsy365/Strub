@@ -11,6 +11,10 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 // Explicit imports instead of wildcard to fix kapt NullPointerException
+import com.example.stremiompvplayer.models.ChannelGroup
+import com.example.stremiompvplayer.models.ChannelGroupDao
+import com.example.stremiompvplayer.models.ChannelMapping
+import com.example.stremiompvplayer.models.ChannelMappingDao
 import com.example.stremiompvplayer.models.CollectedItem
 import com.example.stremiompvplayer.models.CollectedItemDao
 import com.example.stremiompvplayer.models.Converters
@@ -32,9 +36,11 @@ import com.example.stremiompvplayer.models.WatchProgress
         NextUpItem::class,
         UserCatalog::class,
         CollectedItem::class,
-        TMDBMetadataCache::class
+        TMDBMetadataCache::class,
+        ChannelGroup::class,
+        ChannelMapping::class
     ],
-    version = 5, // Incremented version for TMDB cache table
+    version = 6, // Incremented version for TV settings tables
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -47,6 +53,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userCatalogDao(): UserCatalogDao
     abstract fun collectedItemDao(): CollectedItemDao
     abstract fun tmdbMetadataCacheDao(): TMDBMetadataCacheDao
+    abstract fun channelGroupDao(): ChannelGroupDao
+    abstract fun channelMappingDao(): ChannelMappingDao
 
     companion object {
         @Volatile
@@ -79,6 +87,8 @@ abstract class AppDatabase : RoomDatabase() {
         userCatalogDao().deleteByUser(userId)
         collectedItemDao().deleteByUser(userId)
         watchProgressDao().deleteByUser(userId)
+        channelGroupDao().deleteByUser(userId)
+        channelMappingDao().deleteByUser(userId)
     }
 }
 

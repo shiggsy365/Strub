@@ -334,19 +334,22 @@ class LibraryFragment : Fragment() {
         }
     }
 
-    fun focusSidebar() {
-        binding.root.postDelayed({
+    fun focusSidebar(): Boolean {
+        binding.root.post {
             val firstView = binding.rvLibrarySidebar.layoutManager?.findViewByPosition(0)
             if (firstView != null && firstView.isFocusable) {
                 firstView.requestFocus()
-            } else {
+            } else if (binding.rvLibrarySidebar.isFocusable) {
                 binding.rvLibrarySidebar.requestFocus()
-                // Try again after another delay if view wasn't ready
+            } else {
+                // Try again after a delay if views aren't ready
                 binding.root.postDelayed({
                     binding.rvLibrarySidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
+                        ?: binding.rvLibraryContent.requestFocus()
                 }, 100)
             }
-        }, 50)
+        }
+        return true  // Always return true as we've initiated focus attempt
     }
 
     override fun onDestroyView() {

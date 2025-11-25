@@ -58,6 +58,13 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer" />
 
+        <!-- TV Settings -->
+        <activity
+            android:name=".TVSettingsActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.StremioMPVPlayer" />
+
         <!-- Media Player -->
         <activity
             android:name=".PlayerActivity"

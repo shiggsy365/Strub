@@ -15,9 +15,12 @@ import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.adapters.TVGuideAdapter
 import com.example.stremiompvplayer.adapters.UpcomingProgramAdapter
+import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentLivetvBinding
 import com.example.stremiompvplayer.models.Channel
+import com.example.stremiompvplayer.models.ChannelGroup
+import com.example.stremiompvplayer.models.ChannelMapping
 import com.example.stremiompvplayer.models.ChannelWithPrograms
 import com.example.stremiompvplayer.models.EPGProgram
 import com.example.stremiompvplayer.utils.EPGParser
@@ -29,6 +32,7 @@ import com.google.android.material.chip.Chip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -53,6 +57,9 @@ class LiveTVFragment : Fragment() {
     private var channelsWithPrograms = listOf<ChannelWithPrograms>()
     private var selectedChannel: ChannelWithPrograms? = null
     private var selectedGroup: String? = null
+
+    private var channelMappings = listOf<ChannelMapping>()
+    private var groupsOrdering = listOf<ChannelGroup>()
 
     companion object {
         // Cache EPG data to avoid reloading on every tab switch
@@ -206,6 +213,21 @@ class LiveTVFragment : Fragment() {
                     return@launch
                 }
 
+                // Load database mappings
+                val userId = prefsManager.getCurrentUserId()
+                val tvGuideSource = getTVGuideSource()
+                channelMappings = withContext(Dispatchers.IO) {
+                    AppDatabase.getInstance(requireContext()).channelMappingDao()
+                        .getMappingsForUser(userId, tvGuideSource)
+                }
+                groupsOrdering = withContext(Dispatchers.IO) {
+                    AppDatabase.getInstance(requireContext()).channelGroupDao()
+                        .getVisibleGroupsForUser(userId, tvGuideSource)
+                }
+
+                // Apply database mappings to channels
+                allChannels = applyChannelMappings(allChannels)
+
                 // Load EPG if configured
                 if (!epgUrl.isNullOrEmpty()) {
                     allPrograms = withContext(Dispatchers.IO) {
@@ -250,6 +272,49 @@ class LiveTVFragment : Fragment() {
         }
     }
 
+    private fun applyChannelMappings(channels: List<Channel>): List<Channel> {
+        if (channelMappings.isEmpty()) return channels
+
+        return channels.mapNotNull { channel ->
+            val mapping = channelMappings.find { it.channelId == channel.id }
+
+            // Filter out hidden channels
+            if (mapping != null && mapping.isHidden) {
+                return@mapNotNull null
+            }
+
+            // Apply custom name, group, and EPG link if mapping exists
+            if (mapping != null) {
+                val customGroup = groupsOrdering.find { it.id == mapping.groupId }
+                channel.copy(
+                    name = mapping.customName ?: channel.name,
+                    group = customGroup?.name ?: channel.group,
+                    tvgId = mapping.tvgId ?: channel.tvgId
+                )
+            } else {
+                // Filter out channels in hidden groups
+                val groupIsHidden = channel.group?.let { channelGroup ->
+                    groupsOrdering.none { it.name == channelGroup }
+                } ?: false
+
+                if (groupIsHidden) null else channel
+            }
+        }
+    }
+
+    private fun getTVGuideSource(): String {
+        val prefsManager = SharedPreferencesManager.getInstance(requireContext())
+        val m3uUrl = prefsManager.getLiveTVM3UUrl() ?: ""
+        val epgUrl = prefsManager.getLiveTVEPGUrl() ?: ""
+        return hashString("$m3uUrl|$epgUrl")
+    }
+
+    private fun hashString(input: String): String {
+        return MessageDigest.getInstance("SHA-256")
+            .digest(input.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+    }
+
     private fun buildChannelsWithPrograms(): List<ChannelWithPrograms> {
         val currentTime = System.currentTimeMillis()
 
@@ -270,7 +335,12 @@ class LiveTVFragment : Fragment() {
     }
 
     private fun setupGroupFilters() {
-        val groups = allChannels.mapNotNull { it.group }.distinct().sorted()
+        // Use database ordering if available, otherwise fall back to alphabetical
+        val groups = if (groupsOrdering.isNotEmpty()) {
+            groupsOrdering.map { it.name }
+        } else {
+            allChannels.mapNotNull { it.group }.distinct().sorted()
+        }
 
         binding.groupChips.removeAllViews()
 
@@ -286,7 +356,7 @@ class LiveTVFragment : Fragment() {
         }
         binding.groupChips.addView(allChip)
 
-        // Add group chips
+        // Add group chips in database order
         groups.forEach { group ->
             val chip = Chip(requireContext()).apply {
                 text = group
@@ -416,19 +486,24 @@ class LiveTVFragment : Fragment() {
         return ((elapsed.toFloat() / duration.toFloat()) * 100).toInt()
     }
 
-    fun focusSidebar() {
-        binding.root.postDelayed({
+    fun focusSidebar(): Boolean {
+        binding.root.post {
             val firstView = binding.rvTVGuide.layoutManager?.findViewByPosition(0)
             if (firstView != null && firstView.isFocusable) {
                 firstView.requestFocus()
-            } else {
+            } else if (binding.rvTVGuide.isFocusable) {
                 binding.rvTVGuide.requestFocus()
-                // Try again after another delay if view wasn't ready
+            } else if (binding.chipGroupFilter.childCount > 0) {
+                // Try to focus on the first chip in the filter group
+                binding.chipGroupFilter.getChildAt(0)?.requestFocus()
+            } else {
+                // Try again after a delay if views aren't ready
                 binding.root.postDelayed({
                     binding.rvTVGuide.layoutManager?.findViewByPosition(0)?.requestFocus()
                 }, 100)
             }
-        }, 50)
+        }
+        return true  // Always return true as we've initiated focus attempt
     }
 
     override fun onDestroyView() {
