@@ -780,11 +780,11 @@ class TVSettingsActivity : AppCompatActivity() {
                 if (!channel.logo.isNullOrEmpty()) {
                     Glide.with(binding.ivChannelLogo.context)
                         .load(channel.logo)
-                        .placeholder(R.drawable.ic_launcher_foreground)
-                        .error(R.drawable.ic_launcher_foreground)
+                        .placeholder(R.drawable.ic_tv)
+                        .error(R.drawable.ic_tv)
                         .into(binding.ivChannelLogo)
                 } else {
-                    binding.ivChannelLogo.setImageResource(R.drawable.ic_launcher_foreground)
+                    binding.ivChannelLogo.setImageResource(R.drawable.ic_tv)
                 }
 
                 binding.cardChannel.setOnClickListener { onClick(channelWithMapping) }

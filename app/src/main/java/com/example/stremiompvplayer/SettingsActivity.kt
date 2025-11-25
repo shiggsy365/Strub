@@ -587,7 +587,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun clearTVSettingsMappings() {
         lifecycleScope.launch {
             try {
-                val userId = prefsManager.getCurrentUserId()
+                val userId = prefsManager.getCurrentUserId() ?: ""
                 withContext(Dispatchers.IO) {
                     val database = AppDatabase.getInstance(this@SettingsActivity)
                     database.channelGroupDao().deleteByUser(userId)

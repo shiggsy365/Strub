@@ -251,8 +251,7 @@ class DiscoverFragment : Fragment() {
             return
         }
 
-        val wrapper = ContextThemeWrapper(requireContext(), R.style.PopupMenuStyle)
-        val popupMenu = PopupMenu(wrapper, binding.genreSelector)
+        val popupMenu = PopupMenu(requireContext(), binding.genreSelector)
 
         // Add "All" option at the top
         popupMenu.menu.add(0, -1, 0, "All")

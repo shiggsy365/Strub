@@ -345,7 +345,7 @@ class LibraryFragment : Fragment() {
                 // Try again after a delay if views aren't ready
                 binding.root.postDelayed({
                     binding.rvLibrarySidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
-                        ?: binding.rvLibraryContent.requestFocus()
+                        ?: binding.rvContent.requestFocus()
                 }, 100)
             }
         }

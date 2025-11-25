@@ -214,7 +214,7 @@ class LiveTVFragment : Fragment() {
                 }
 
                 // Load database mappings
-                val userId = prefsManager.getCurrentUserId()
+                val userId = prefsManager.getCurrentUserId() ?: ""
                 val tvGuideSource = getTVGuideSource()
                 channelMappings = withContext(Dispatchers.IO) {
                     AppDatabase.getInstance(requireContext()).channelMappingDao()
@@ -493,9 +493,9 @@ class LiveTVFragment : Fragment() {
                 firstView.requestFocus()
             } else if (binding.rvTVGuide.isFocusable) {
                 binding.rvTVGuide.requestFocus()
-            } else if (binding.chipGroupFilter.childCount > 0) {
+            } else if (binding.groupChips.childCount > 0) {
                 // Try to focus on the first chip in the filter group
-                binding.chipGroupFilter.getChildAt(0)?.requestFocus()
+                binding.groupChips.getChildAt(0)?.requestFocus()
             } else {
                 // Try again after a delay if views aren't ready
                 binding.root.postDelayed({
