@@ -112,6 +112,10 @@ interface WatchProgressDao {
     // For Next Up: Get all watched episodes to calculate next
     @Query("SELECT * FROM watch_progress WHERE userId = :userId AND type = 'episode' AND isWatched = 1 ORDER BY lastUpdated DESC")
     suspend fun getWatchedEpisodes(userId: String): List<WatchProgress>
+
+    // Batch fetch all progress for user (performance optimization)
+    @Query("SELECT * FROM watch_progress WHERE userId = :userId")
+    suspend fun getAllProgressForUser(userId: String): List<WatchProgress>
 }
 // Add DAO interfaces that were missing
 @Dao

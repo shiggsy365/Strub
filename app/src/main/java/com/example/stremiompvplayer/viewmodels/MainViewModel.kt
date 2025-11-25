@@ -36,7 +36,6 @@ import com.example.stremiompvplayer.models.Video
 import com.example.stremiompvplayer.models.TMDBWatchlistBody
 import com.example.stremiompvplayer.network.AIOStreamsClient
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.withContext
 
 class MainViewModel(
@@ -520,17 +519,22 @@ class MainViewModel(
                     "trakt_next_up" -> generateNextUpList()
 
                     "trakt_continue_movies" -> {
+                        // PERFORMANCE: Fetch all progress once instead of querying in loop
+                        val userId = prefsManager.getCurrentUserId() ?: "default"
+                        val allProgress = catalogRepository.getAllWatchProgress(userId)
+                        val progressMap = allProgress.associateBy { it.itemId }
+
                         val list = TraktClient.api.getPausedMovies(bearer, clientId)
                         list.mapNotNull { it.movie }
                             // [FIX] Filter out items that are watched OR have progress > 90% in LOCAL DB
                             .filter { movie ->
                                 val tmdbId = movie.ids.tmdb
-                                if (tmdbId == null) return@filter true 
+                                if (tmdbId == null) return@filter true
 
-                                val progress = catalogRepository.getWatchProgress(prefsManager.getCurrentUserId() ?: "default", "tmdb:$tmdbId")
+                                val progress = progressMap["tmdb:$tmdbId"]
                                 val isLocallyWatched = progress?.isWatched == true
                                 val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
-                                
+
                                 !isLocallyWatched && !isLocallyFinished
                             }
                             .map { movie ->
@@ -539,6 +543,11 @@ class MainViewModel(
                     }
 
                     "trakt_continue_shows" -> {
+                        // PERFORMANCE: Fetch all progress once instead of querying in loop
+                        val userId = prefsManager.getCurrentUserId() ?: "default"
+                        val allProgress = catalogRepository.getAllWatchProgress(userId)
+                        val progressMap = allProgress.associateBy { it.itemId }
+
                         val list = TraktClient.api.getPausedEpisodes(bearer, clientId)
                         list.mapNotNull { item ->
                             val show = item.show
@@ -550,8 +559,8 @@ class MainViewModel(
                                 val episode = ep.number ?: 1
                                 val epId = "tmdb:$showTmdbId:$season:$episode" // Construct standard local ID
 
-                                // CHECK LOCAL DB
-                                val progress = catalogRepository.getWatchProgress(prefsManager.getCurrentUserId() ?: "default", epId)
+                                // CHECK LOCAL DB using map lookup
+                                val progress = progressMap[epId]
                                 val isLocallyWatched = progress?.isWatched == true
                                 val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
 
@@ -889,6 +898,10 @@ class MainViewModel(
         val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
         val today = dateFormat.format(java.util.Date())
 
+        // PERFORMANCE: Fetch all progress once to avoid queries in async loop
+        val allProgress = catalogRepository.getAllWatchProgress(currentUserId)
+        val progressMap = allProgress.associateBy { it.itemId }
+
         val latestEpisodesByShow = watchedEpisodes
             .filter { it.parentId != null && it.season != null && it.episode != null }
             .groupBy { it.parentId!! }
@@ -933,7 +946,7 @@ class MainViewModel(
 
                                 if (isReleased) {
                                     val nextEpisodeId = "$showId:$nextSeasonNum:$nextEpisodeNum"
-                                    val nextEpisodeProgress = catalogRepository.getWatchProgress(currentUserId, nextEpisodeId)
+                                    val nextEpisodeProgress = progressMap[nextEpisodeId]
 
                                     if (nextEpisodeProgress == null || !nextEpisodeProgress.isWatched) {
                                         val poster = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/w500$it" }
@@ -1829,12 +1842,12 @@ class MainViewModel(
         }
     }
 
-    // [FIX] Use GlobalScope for scrobbling to survive activity death
+    // PERFORMANCE FIX: Use viewModelScope instead of GlobalScope to prevent leaks
     fun scrobble(action: String, meta: MetaItem, progress: Float) {
         if (!prefsManager.isTraktEnabled()) return
         val token = prefsManager.getTraktAccessToken() ?: return
         val clientId = Secrets.TRAKT_CLIENT_ID
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val body: TraktScrobbleBody? = if (meta.type == "movie") {
                     val idStr = meta.id.removePrefix("tmdb:")

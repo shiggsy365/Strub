@@ -150,27 +150,33 @@ class PlayerActivity : AppCompatActivity() {
                     // Load streams for next episode
                     viewModel.loadEpisodeStreams(parentId, season, episode)
 
-                    // Observe streams and play first available
-                    viewModel.streams.observe(this@PlayerActivity) { streams ->
-                        if (streams.isNotEmpty()) {
-                            val firstStream = streams[0]
-                            // Update current meta to next episode
-                            currentMeta = next
-                            currentStream = firstStream
+                    // Observe streams and play first available (FIXED: remove observer after use to prevent leak)
+                    val observer = object : androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.Stream>> {
+                        override fun onChanged(streams: List<com.example.stremiompvplayer.models.Stream>) {
+                            if (streams.isNotEmpty()) {
+                                val firstStream = streams[0]
+                                // Update current meta to next episode
+                                currentMeta = next
+                                currentStream = firstStream
 
-                            // Release current player and start new one
-                            releasePlayer()
-                            playbackPosition = 0L
-                            initializePlayer()
+                                // Release current player and start new one
+                                releasePlayer()
+                                playbackPosition = 0L
+                                initializePlayer()
 
-                            // Hide the popup
-                            binding.playNextCard.visibility = View.GONE
-                            playNextShown = false
+                                // Hide the popup
+                                binding.playNextCard.visibility = View.GONE
+                                playNextShown = false
 
-                            // Check for next episode again
-                            checkForNextEpisode()
+                                // Check for next episode again
+                                checkForNextEpisode()
+
+                                // CRITICAL: Remove this observer to prevent memory leak
+                                viewModel.streams.removeObserver(this)
+                            }
                         }
                     }
+                    viewModel.streams.observe(this@PlayerActivity, observer)
                 }
             } catch (e: Exception) {
                 Log.e("PlayerActivity", "Error playing next episode", e)

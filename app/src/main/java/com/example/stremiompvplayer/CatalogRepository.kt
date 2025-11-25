@@ -180,4 +180,11 @@ class CatalogRepository(
             watchProgressDao.getWatchedEpisodes(userId)
         }
     }
+
+    // Batch fetch all watch progress (performance optimization to avoid queries in loops)
+    suspend fun getAllWatchProgress(userId: String): List<WatchProgress> {
+        return withContext(Dispatchers.IO) {
+            watchProgressDao.getAllProgressForUser(userId)
+        }
+    }
 }
