@@ -17,6 +17,11 @@ import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import android.util.Log
 
 class PlayerActivity : AppCompatActivity() {
 
@@ -37,6 +42,11 @@ class PlayerActivity : AppCompatActivity() {
     private var currentItem = 0
     private var playbackPosition = 0L
 
+    // Play Next functionality
+    private var nextEpisode: MetaItem? = null
+    private var playNextShown = false
+    private var monitorJob: Job? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityPlayerBinding.inflate(layoutInflater)
@@ -51,6 +61,120 @@ class PlayerActivity : AppCompatActivity() {
         if (currentStream == null) {
             finish()
             return
+        }
+
+        setupPlayNextButtons()
+        checkForNextEpisode()
+    }
+
+    private fun setupPlayNextButtons() {
+        binding.btnPlayNext.setOnClickListener {
+            playNextEpisode()
+        }
+
+        binding.btnPlayNextHide.setOnClickListener {
+            binding.playNextCard.visibility = View.GONE
+        }
+    }
+
+    private fun checkForNextEpisode() {
+        val metaId = currentMeta?.id ?: return
+        val type = currentMeta?.type ?: return
+
+        // Only check for next episode if current is an episode
+        if (type == "episode") {
+            lifecycleScope.launch {
+                try {
+                    nextEpisode = viewModel.getNextEpisode(metaId)
+                    if (nextEpisode != null) {
+                        Log.d("PlayerActivity", "Found next episode: ${nextEpisode?.name}")
+                        startPlaybackMonitoring()
+                    } else {
+                        Log.d("PlayerActivity", "No next episode available")
+                    }
+                } catch (e: Exception) {
+                    Log.e("PlayerActivity", "Error checking for next episode", e)
+                }
+            }
+        }
+    }
+
+    private fun startPlaybackMonitoring() {
+        monitorJob?.cancel()
+        monitorJob = lifecycleScope.launch {
+            while (true) {
+                delay(1000) // Check every second
+                player?.let { exoPlayer ->
+                    val duration = exoPlayer.duration
+                    val position = exoPlayer.currentPosition
+
+                    if (duration > 0 && !playNextShown) {
+                        val remainingTime = duration - position
+                        // Show popup in last 30 seconds
+                        if (remainingTime in 1..30000 && nextEpisode != null) {
+                            showPlayNextPopup()
+                            playNextShown = true
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showPlayNextPopup() {
+        runOnUiThread {
+            nextEpisode?.let { episode ->
+                binding.playNextEpisodeName.text = episode.name
+                binding.playNextCard.visibility = View.VISIBLE
+                Log.d("PlayerActivity", "Showing Play Next popup for: ${episode.name}")
+            }
+        }
+    }
+
+    private fun playNextEpisode() {
+        val next = nextEpisode ?: return
+
+        // Update UI to show "Playing Next"
+        binding.playNextTitle.text = "Playing Next"
+        binding.btnPlayNext.isEnabled = false
+
+        lifecycleScope.launch {
+            try {
+                // Get the parent ID for loading streams
+                val parts = next.id.split(":")
+                if (parts.size >= 4) {
+                    val parentId = "${parts[0]}:${parts[1]}"
+                    val season = parts[2].toIntOrNull() ?: 1
+                    val episode = parts[3].toIntOrNull() ?: 1
+
+                    // Load streams for next episode
+                    viewModel.loadEpisodeStreams(parentId, season, episode)
+
+                    // Observe streams and play first available
+                    viewModel.streams.observe(this@PlayerActivity) { streams ->
+                        if (streams.isNotEmpty()) {
+                            val firstStream = streams[0]
+                            // Update current meta to next episode
+                            currentMeta = next
+                            currentStream = firstStream
+
+                            // Release current player and start new one
+                            releasePlayer()
+                            playbackPosition = 0L
+                            initializePlayer()
+
+                            // Hide the popup
+                            binding.playNextCard.visibility = View.GONE
+                            playNextShown = false
+
+                            // Check for next episode again
+                            checkForNextEpisode()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("PlayerActivity", "Error playing next episode", e)
+            }
         }
     }
 
@@ -69,6 +193,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onStop() {
     super.onStop()
+    monitorJob?.cancel()
     if (player != null) {
         saveProgress() // Ensure we save locally
         releasePlayer() // Ensure we scrobble 'stop' to Trakt
@@ -77,6 +202,7 @@ class PlayerActivity : AppCompatActivity() {
 
     public override fun onPause() {
         super.onPause()
+        monitorJob?.cancel()
         saveProgress()
         // [FIX] Release player immediately on pause to stop audio when pressing back
         releasePlayer()

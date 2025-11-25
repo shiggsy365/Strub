@@ -155,6 +155,8 @@ class LiveTVFragment : Fragment() {
     fun refreshEPG() {
         clearCache()
         loadLiveTVData()
+        // Update last refresh time
+        SharedPreferencesManager.getInstance(requireContext()).setLastTVRefreshTime(System.currentTimeMillis())
     }
 
     private fun setupAdapters() {

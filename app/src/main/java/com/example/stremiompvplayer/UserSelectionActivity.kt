@@ -104,15 +104,40 @@ class UserSelectionActivity : AppCompatActivity() {
             setPadding(48, 32, 48, 32)
         }
 
-        val kidsCheckBox = CheckBox(this).apply {
-            text = "Kids Profile (PG content only)"
+        // Age Rating Selector
+        val ageRatingLabel = TextView(this).apply {
+            text = "Age Rating"
+            setPadding(48, 16, 48, 8)
+            textSize = 16f
+        }
+
+        val ageRatingGroup = com.google.android.material.chip.ChipGroup(this).apply {
+            setPadding(48, 0, 48, 16)
+            isSingleSelection = true
+        }
+
+        val ageRatings = listOf("U", "PG", "12", "15", "18")
+        val ageChips = ageRatings.map { rating ->
+            com.google.android.material.chip.Chip(this).apply {
+                text = rating
+                isCheckable = true
+                isChecked = (rating == "PG") // Default to PG
+            }
+        }
+        ageChips.forEach { ageRatingGroup.addView(it) }
+
+        // Passcode Protection Checkbox
+        val passcodeCheckBox = CheckBox(this).apply {
+            text = "Enable Passcode Protection"
             setPadding(48, 16, 48, 32)
         }
 
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             addView(input)
-            addView(kidsCheckBox)
+            addView(ageRatingLabel)
+            addView(ageRatingGroup)
+            addView(passcodeCheckBox)
         }
 
         MaterialAlertDialogBuilder(this)
@@ -121,7 +146,23 @@ class UserSelectionActivity : AppCompatActivity() {
             .setPositiveButton("Create") { _, _ ->
                 val name = input.text.toString().trim()
                 if (name.isNotEmpty()) {
-                    createUser(name, kidsCheckBox.isChecked)
+                    val selectedRating = ageChips.find { it.isChecked }?.text?.toString() ?: "PG"
+                    val enablePasscode = passcodeCheckBox.isChecked
+
+                    if (enablePasscode) {
+                        // Show passcode setup dialog
+                        com.example.stremiompvplayer.utils.PasscodeDialog.showSetPasscodeDialog(
+                            this,
+                            onPasscodeSet = { passcode ->
+                                createUser(name, selectedRating, passcode)
+                            },
+                            onCancel = {
+                                createUser(name, selectedRating, null)
+                            }
+                        )
+                    } else {
+                        createUser(name, selectedRating, null)
+                    }
                 }
             }
             .apply {
@@ -133,9 +174,15 @@ class UserSelectionActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun createUser(name: String, isKidsProfile: Boolean = false) {
+    private fun createUser(name: String, ageRating: String, passcode: String?) {
         val avatarColor = generateAvatarColor()
-        val user = prefsManager.createUser(name, avatarColor, isKidsProfile)
+        val user = prefsManager.createUser(
+            name = name,
+            avatarColor = avatarColor,
+            isKidsProfile = false, // Deprecated, using ageRating now
+            ageRating = ageRating,
+            passcode = passcode
+        )
         loadUsers()
 
         if (prefsManager.getAllUsers().size == 1) {
@@ -144,8 +191,38 @@ class UserSelectionActivity : AppCompatActivity() {
     }
 
     private fun selectUser(user: User) {
+        // Check if passcode is required
+        if (!user.passcode.isNullOrEmpty()) {
+            com.example.stremiompvplayer.utils.PasscodeDialog.showVerifyPasscodeDialog(
+                this,
+                expectedPasscode = user.passcode,
+                onSuccess = {
+                    proceedToMain(user)
+                },
+                onCancel = {
+                    // Stay on user selection screen
+                }
+            )
+        } else {
+            proceedToMain(user)
+        }
+    }
+
+    private fun proceedToMain(user: User) {
         prefsManager.setCurrentUser(user.id)
-        val intent = Intent(this, MainActivity::class.java)
+
+        // Check if this is a new user and navigate accordingly
+        val intent = if (user.isNewUser) {
+            // New user: go to settings
+            prefsManager.markUserAsExisting(user.id)
+            Intent(this, SettingsActivity::class.java).apply {
+                putExtra("isNewUser", true)
+            }
+        } else {
+            // Existing user: go to main activity
+            Intent(this, MainActivity::class.java)
+        }
+
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
