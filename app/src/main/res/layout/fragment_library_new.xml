@@ -205,8 +205,7 @@
                                 app:icon="@drawable/ic_play_circle"
                                 app:iconSize="20dp"
                                 app:iconPadding="6dp"
-                                android:layout_marginEnd="8dp"
-                                style="@style/Widget.Material3.Button.Elevated" />
+                                android:layout_marginEnd="8dp" />
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/btnTrailer"
@@ -220,7 +219,7 @@
                                 app:icon="@drawable/ic_play_circle"
                                 app:iconSize="20dp"
                                 app:iconPadding="6dp"
-                                style="@style/Widget.Material3.Button.OutlinedButton" />
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
                         </LinearLayout>
 
