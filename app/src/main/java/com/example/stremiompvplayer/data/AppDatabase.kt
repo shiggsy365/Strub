@@ -18,6 +18,7 @@ import com.example.stremiompvplayer.models.FeedList
 import com.example.stremiompvplayer.models.HubSlot
 import com.example.stremiompvplayer.models.LibraryItem
 import com.example.stremiompvplayer.models.NextUpItem
+import com.example.stremiompvplayer.models.TMDBMetadataCache
 import com.example.stremiompvplayer.models.UserCatalog
 import com.example.stremiompvplayer.models.UserCatalogDao
 import com.example.stremiompvplayer.models.WatchProgress
@@ -30,9 +31,10 @@ import com.example.stremiompvplayer.models.WatchProgress
         FeedList::class,
         NextUpItem::class,
         UserCatalog::class,
-        CollectedItem::class
+        CollectedItem::class,
+        TMDBMetadataCache::class
     ],
-    version = 4, // Incremented version for schema change
+    version = 5, // Incremented version for TMDB cache table
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -44,6 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun nextUpItemDao(): NextUpItemDao
     abstract fun userCatalogDao(): UserCatalogDao
     abstract fun collectedItemDao(): CollectedItemDao
+    abstract fun tmdbMetadataCacheDao(): TMDBMetadataCacheDao
 
     companion object {
         @Volatile
@@ -109,6 +112,10 @@ interface WatchProgressDao {
     // For Next Up: Get all watched episodes to calculate next
     @Query("SELECT * FROM watch_progress WHERE userId = :userId AND type = 'episode' AND isWatched = 1 ORDER BY lastUpdated DESC")
     suspend fun getWatchedEpisodes(userId: String): List<WatchProgress>
+
+    // Batch fetch all progress for user (performance optimization)
+    @Query("SELECT * FROM watch_progress WHERE userId = :userId")
+    suspend fun getAllProgressForUser(userId: String): List<WatchProgress>
 }
 // Add DAO interfaces that were missing
 @Dao
@@ -145,4 +152,19 @@ interface FeedListDao {
 interface NextUpItemDao {
     @Query("SELECT * FROM NextUpItem")
     suspend fun getAllNextUpItems(): List<NextUpItem>
+}
+
+@Dao
+interface TMDBMetadataCacheDao {
+    @Query("SELECT * FROM tmdb_metadata_cache WHERE cacheKey = :key AND expiresAt > :currentTime")
+    suspend fun getCached(key: String, currentTime: Long = System.currentTimeMillis()): TMDBMetadataCache?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun cache(metadata: TMDBMetadataCache)
+
+    @Query("DELETE FROM tmdb_metadata_cache WHERE expiresAt < :currentTime")
+    suspend fun cleanupExpired(currentTime: Long = System.currentTimeMillis())
+
+    @Query("DELETE FROM tmdb_metadata_cache")
+    suspend fun clearAll()
 }

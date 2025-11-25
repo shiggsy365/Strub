@@ -52,13 +52,46 @@ class DetailsActivity2 : AppCompatActivity() {
         binding.rvNavigation.layoutManager = LinearLayoutManager(this)
 
         streamAdapter = StreamAdapter { stream ->
-            val intent = Intent(this, PlayerActivity::class.java).apply {
-                putExtra("stream", stream)
-                putExtra("meta", currentMetaItem)
-            }
-            startActivity(intent)
-        }
+            // Check for watch progress and show resume/restart dialog if needed
+            lifecycleScope.launch {
+                val watchProgress = currentMetaItem?.id?.let { viewModel.getWatchProgressSync(it) }
 
+                if (watchProgress != null &&
+                    watchProgress.progress > 0 &&
+                    !watchProgress.isWatched &&
+                    watchProgress.duration > 0) {
+                    // Show resume/restart dialog
+                    com.example.stremiompvplayer.utils.ResumeRestartDialog.show(
+                        this@DetailsActivity2,
+                        itemTitle = currentMetaItem?.name ?: "Content",
+                        progress = watchProgress.progress,
+                        duration = watchProgress.duration,
+                        onResume = {
+                            playStream(stream)
+                        },
+                        onRestart = {
+                            // Clear progress and play from beginning
+                            currentMetaItem?.let { viewModel.clearWatchedStatus(it, syncToTrakt = false) }
+                            playStream(stream)
+                        }
+                    )
+                } else {
+                    // No progress or already watched - play directly
+                    playStream(stream)
+                }
+            }
+        }
+    }
+
+    private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {
+        val intent = Intent(this, PlayerActivity::class.java).apply {
+            putExtra("stream", stream)
+            putExtra("meta", currentMetaItem)
+        }
+        startActivity(intent)
+    }
+
+    private fun setupAdapters() {
         textListAdapter = TextListAdapter(
             items = emptyList(),
             onClick = { item -> onTextItemClicked(item) },

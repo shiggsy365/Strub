@@ -141,23 +141,59 @@ class SharedPreferencesManager private constructor(context: Context) {
     fun getTMDBAccessToken(): String? { return prefs.getString("tmdb_access_token", null) }
     fun saveTMDBAccessToken(token: String) { prefs.edit().putString("tmdb_access_token", token).apply() }
 
+    // TV Channels refresh tracking (24-hour cycle)
+    fun getLastTVRefreshTime(): Long {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getLong("last_tv_refresh_$userId", 0L)
+    }
+
+    fun setLastTVRefreshTime(time: Long) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putLong("last_tv_refresh_$userId", time).apply()
+    }
+
+    fun shouldRefreshTV(): Boolean {
+        val lastRefresh = getLastTVRefreshTime()
+        val currentTime = System.currentTimeMillis()
+        val twentyFourHours = 24 * 60 * 60 * 1000L // 24 hours in milliseconds
+        return (currentTime - lastRefresh) >= twentyFourHours
+    }
+
     fun getAllUsers(): List<User> {
         val json = prefs.getString("users_list", "[]")
         val type = object : TypeToken<List<User>>() {}.type
         return gson.fromJson(json, type) ?: emptyList()
     }
 
-    fun createUser(name: String, avatarColor: Int, isKidsProfile: Boolean = false): User {
+    fun createUser(
+        name: String,
+        avatarColor: Int,
+        isKidsProfile: Boolean = false,
+        ageRating: String = "PG",
+        passcode: String? = null
+    ): User {
         val users = getAllUsers().toMutableList()
         val newUser = User(
             id = System.currentTimeMillis().toString(),
             name = name,
             avatarColor = avatarColor,
-            isKidsProfile = isKidsProfile
+            isKidsProfile = isKidsProfile,
+            ageRating = ageRating,
+            passcode = passcode,
+            isNewUser = true // Mark as new user
         )
         users.add(newUser)
         saveUsers(users)
         return newUser
+    }
+
+    fun markUserAsExisting(userId: String) {
+        val users = getAllUsers().toMutableList()
+        val userIndex = users.indexOfFirst { it.id == userId }
+        if (userIndex != -1) {
+            users[userIndex] = users[userIndex].copy(isNewUser = false)
+            saveUsers(users)
+        }
     }
 
 
@@ -314,7 +350,29 @@ class SharedPreferencesManager private constructor(context: Context) {
     }
 }
 
-data class User(val id: String, val name: String, val avatarColor: Int, val isKidsProfile: Boolean = false)
+enum class AgeRating(val displayName: String, val value: String) {
+    U("U", "U"),
+    PG("PG", "PG"),
+    TWELVE("12", "12"),
+    FIFTEEN("15", "15"),
+    EIGHTEEN("18", "18");
+
+    companion object {
+        fun fromString(value: String): AgeRating {
+            return values().find { it.value == value } ?: PG
+        }
+    }
+}
+
+data class User(
+    val id: String,
+    val name: String,
+    val avatarColor: Int,
+    val isKidsProfile: Boolean = false, // Deprecated, kept for backwards compatibility
+    val ageRating: String = "PG", // U, PG, 12, 15, 18
+    val passcode: String? = null, // Optional 4-digit passcode
+    val isNewUser: Boolean = false // Flag for first-time user
+)
 data class UserSettings(var autoPlayFirstStream: Boolean = false, var subtitlesEnabled: Boolean = true, var subtitleSize: Int = 20, var subtitleColor: Int = android.graphics.Color.WHITE)
 
 // Data model for exporting/importing profile settings

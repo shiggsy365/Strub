@@ -16,6 +16,7 @@ import com.example.stremiompvplayer.network.TMDBClient
 import com.example.stremiompvplayer.network.TraktClient
 import com.example.stremiompvplayer.network.TraktDeviceCodeResponse
 import com.example.stremiompvplayer.utils.Secrets
+import com.example.stremiompvplayer.utils.SessionCache
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -36,7 +37,6 @@ import com.example.stremiompvplayer.models.Video
 import com.example.stremiompvplayer.models.TMDBWatchlistBody
 import com.example.stremiompvplayer.network.AIOStreamsClient
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.withContext
 
 class MainViewModel(
@@ -53,6 +53,9 @@ class MainViewModel(
     private var logoFetchJob: Job? = null
 
     private val apiKey: String get() = prefsManager.getTMDBApiKey() ?: ""
+
+    // Session cache for performance optimization (5-min TTL)
+    private val sessionCache = SessionCache.getInstance()
 
     // Track current catalog to allow refreshing
     private var lastRequestedCatalog: UserCatalog? = null
@@ -428,49 +431,57 @@ class MainViewModel(
             val pagesToLoad = listOf(1, 2)
             val allItems = mutableListOf<MetaItem>()
 
-            // Check if current user is a kids profile
+            // Get current user's age rating
             val currentUserId = prefsManager.getCurrentUserId()
             val currentUser = currentUserId?.let { prefsManager.getUser(it) }
-            val isKidsProfile = currentUser?.isKidsProfile == true
-            Log.d("CatalogLoad", "isKidsProfile: $isKidsProfile, userId: $currentUserId")
+            val ageRating = currentUser?.ageRating ?: "18" // Default to 18 (no filtering) if not set
+            Log.d("CatalogLoad", "Age Rating: $ageRating, userId: $currentUserId")
 
             val deferredResults = pagesToLoad.map { page ->
                 viewModelScope.async {
                     try {
                         Log.d("CatalogLoad", "Loading page $page for ${catalog.catalogId}")
-                        val response = if (isKidsProfile) {
-                            // Use discover endpoints with kids filtering
-                            if (catalog.catalogType == "movie") {
-                                TMDBClient.api.discoverMovies(
-                                    apiKey = apiKey,
-                                    page = page,
-                                    sortBy = "popularity.desc",
-                                    certificationCountry = "GB",
-                                    certificationLte = "PG",
-                                    includeAdult = false
-                                )
-                            } else {
-                                TMDBClient.api.discoverTV(
-                                    apiKey = apiKey,
-                                    page = page,
-                                    sortBy = "popularity.desc",
-                                    withGenres = "10762", // Kids genre
-                                    includeAdult = false
-                                )
-                            }
-                        } else {
-                            // Use regular endpoints for non-kids profiles
-                            if (catalog.catalogType == "movie") {
-                                when (catalog.catalogId) {
-                                    "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
-                                    "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
-                                    else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                        val response = when (ageRating) {
+                            "U", "PG", "12", "15" -> {
+                                // Use discover endpoints with age rating filtering
+                                if (catalog.catalogType == "movie") {
+                                    TMDBClient.api.discoverMovies(
+                                        apiKey = apiKey,
+                                        page = page,
+                                        sortBy = "popularity.desc",
+                                        certificationCountry = "GB",
+                                        certificationLte = ageRating,
+                                        includeAdult = false
+                                    )
+                                } else {
+                                    // For TV, use genre filtering based on age rating
+                                    val genres = when (ageRating) {
+                                        "U", "PG" -> "10762" // Kids genre
+                                        else -> null // No genre filter for 12, 15
+                                    }
+                                    TMDBClient.api.discoverTV(
+                                        apiKey = apiKey,
+                                        page = page,
+                                        sortBy = "popularity.desc",
+                                        withGenres = genres,
+                                        includeAdult = false
+                                    )
                                 }
-                            } else {
-                                when (catalog.catalogId) {
-                                    "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
-                                    "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
-                                    else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                            }
+                            else -> {
+                                // Age rating 18 or not set - no filtering
+                                if (catalog.catalogType == "movie") {
+                                    when (catalog.catalogId) {
+                                        "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
+                                        "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
+                                        else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                                    }
+                                } else {
+                                    when (catalog.catalogId) {
+                                        "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
+                                        "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
+                                        else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                                    }
                                 }
                             }
                         }
@@ -512,17 +523,22 @@ class MainViewModel(
                     "trakt_next_up" -> generateNextUpList()
 
                     "trakt_continue_movies" -> {
+                        // PERFORMANCE: Fetch all progress once instead of querying in loop
+                        val userId = prefsManager.getCurrentUserId() ?: "default"
+                        val allProgress = catalogRepository.getAllWatchProgress(userId)
+                        val progressMap = allProgress.associateBy { it.itemId }
+
                         val list = TraktClient.api.getPausedMovies(bearer, clientId)
                         list.mapNotNull { it.movie }
                             // [FIX] Filter out items that are watched OR have progress > 90% in LOCAL DB
                             .filter { movie ->
                                 val tmdbId = movie.ids.tmdb
-                                if (tmdbId == null) return@filter true 
+                                if (tmdbId == null) return@filter true
 
-                                val progress = catalogRepository.getWatchProgress(prefsManager.getCurrentUserId() ?: "default", "tmdb:$tmdbId")
+                                val progress = progressMap["tmdb:$tmdbId"]
                                 val isLocallyWatched = progress?.isWatched == true
                                 val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
-                                
+
                                 !isLocallyWatched && !isLocallyFinished
                             }
                             .map { movie ->
@@ -531,6 +547,11 @@ class MainViewModel(
                     }
 
                     "trakt_continue_shows" -> {
+                        // PERFORMANCE: Fetch all progress once instead of querying in loop
+                        val userId = prefsManager.getCurrentUserId() ?: "default"
+                        val allProgress = catalogRepository.getAllWatchProgress(userId)
+                        val progressMap = allProgress.associateBy { it.itemId }
+
                         val list = TraktClient.api.getPausedEpisodes(bearer, clientId)
                         list.mapNotNull { item ->
                             val show = item.show
@@ -542,8 +563,8 @@ class MainViewModel(
                                 val episode = ep.number ?: 1
                                 val epId = "tmdb:$showTmdbId:$season:$episode" // Construct standard local ID
 
-                                // CHECK LOCAL DB
-                                val progress = catalogRepository.getWatchProgress(prefsManager.getCurrentUserId() ?: "default", epId)
+                                // CHECK LOCAL DB using map lookup
+                                val progress = progressMap[epId]
                                 val isLocallyWatched = progress?.isWatched == true
                                 val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
 
@@ -673,49 +694,57 @@ class MainViewModel(
             val pagesToLoad = listOf(1, 2)
             val allItems = mutableListOf<MetaItem>()
 
-            // Check if current user is a kids profile
+            // Get current user's age rating
             val currentUserId = prefsManager.getCurrentUserId()
             val currentUser = currentUserId?.let { prefsManager.getUser(it) }
-            val isKidsProfile = currentUser?.isKidsProfile == true
-            Log.d("CatalogLoad", "isKidsProfile: $isKidsProfile, userId: $currentUserId")
+            val ageRating = currentUser?.ageRating ?: "18" // Default to 18 (no filtering) if not set
+            Log.d("CatalogLoad", "Age Rating: $ageRating, userId: $currentUserId")
 
             val deferredResults = pagesToLoad.map { page ->
                 viewModelScope.async {
                     try {
                         Log.d("CatalogLoad", "Loading page $page for ${catalog.catalogId}")
-                        val response = if (isKidsProfile) {
-                            // Use discover endpoints with kids filtering
-                            if (catalog.catalogType == "movie") {
-                                TMDBClient.api.discoverMovies(
-                                    apiKey = apiKey,
-                                    page = page,
-                                    sortBy = "popularity.desc",
-                                    certificationCountry = "GB",
-                                    certificationLte = "PG",
-                                    includeAdult = false
-                                )
-                            } else {
-                                TMDBClient.api.discoverTV(
-                                    apiKey = apiKey,
-                                    page = page,
-                                    sortBy = "popularity.desc",
-                                    withGenres = "10762", // Kids genre
-                                    includeAdult = false
-                                )
-                            }
-                        } else {
-                            // Use regular endpoints for non-kids profiles
-                            if (catalog.catalogType == "movie") {
-                                when (catalog.catalogId) {
-                                    "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
-                                    "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
-                                    else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                        val response = when (ageRating) {
+                            "U", "PG", "12", "15" -> {
+                                // Use discover endpoints with age rating filtering
+                                if (catalog.catalogType == "movie") {
+                                    TMDBClient.api.discoverMovies(
+                                        apiKey = apiKey,
+                                        page = page,
+                                        sortBy = "popularity.desc",
+                                        certificationCountry = "GB",
+                                        certificationLte = ageRating,
+                                        includeAdult = false
+                                    )
+                                } else {
+                                    // For TV, use genre filtering based on age rating
+                                    val genres = when (ageRating) {
+                                        "U", "PG" -> "10762" // Kids genre
+                                        else -> null // No genre filter for 12, 15
+                                    }
+                                    TMDBClient.api.discoverTV(
+                                        apiKey = apiKey,
+                                        page = page,
+                                        sortBy = "popularity.desc",
+                                        withGenres = genres,
+                                        includeAdult = false
+                                    )
                                 }
-                            } else {
-                                when (catalog.catalogId) {
-                                    "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
-                                    "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
-                                    else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                            }
+                            else -> {
+                                // Age rating 18 or not set - no filtering
+                                if (catalog.catalogType == "movie") {
+                                    when (catalog.catalogId) {
+                                        "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
+                                        "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
+                                        else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
+                                    }
+                                } else {
+                                    when (catalog.catalogId) {
+                                        "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
+                                        "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
+                                        else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
+                                    }
                                 }
                             }
                         }
@@ -869,9 +898,21 @@ class MainViewModel(
     // === NEXT UP GENERATION ===
     private suspend fun generateNextUpList(): List<MetaItem> = withContext(Dispatchers.IO) {
         val currentUserId = prefsManager.getCurrentUserId() ?: return@withContext emptyList()
+
+        // PERFORMANCE: Check cache first (5-min TTL)
+        val cached = sessionCache.getNextUp(currentUserId)
+        if (cached != null) {
+            Log.d("NextUp", "Using cached Next Up list")
+            return@withContext cached
+        }
+
         val watchedEpisodes = catalogRepository.getNextUpCandidates(currentUserId)
         val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
         val today = dateFormat.format(java.util.Date())
+
+        // PERFORMANCE: Fetch all progress once to avoid queries in async loop
+        val allProgress = catalogRepository.getAllWatchProgress(currentUserId)
+        val progressMap = allProgress.associateBy { it.itemId }
 
         val latestEpisodesByShow = watchedEpisodes
             .filter { it.parentId != null && it.season != null && it.episode != null }
@@ -917,7 +958,7 @@ class MainViewModel(
 
                                 if (isReleased) {
                                     val nextEpisodeId = "$showId:$nextSeasonNum:$nextEpisodeNum"
-                                    val nextEpisodeProgress = catalogRepository.getWatchProgress(currentUserId, nextEpisodeId)
+                                    val nextEpisodeProgress = progressMap[nextEpisodeId]
 
                                     if (nextEpisodeProgress == null || !nextEpisodeProgress.isWatched) {
                                         val poster = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/w500$it" }
@@ -946,7 +987,12 @@ class MainViewModel(
         }.awaitAll().filterNotNull()
 
         // Sort by lastUpdated (most recent first) and return only the MetaItems
-        nextUpItems.sortedByDescending { it.second }.map { it.first }
+        val result = nextUpItems.sortedByDescending { it.second }.map { it.first }
+
+        // PERFORMANCE: Cache the result
+        sessionCache.putNextUp(currentUserId, result)
+
+        result
     }
 
     // === TRAKT SYNC ===
@@ -1236,6 +1282,8 @@ class MainViewModel(
 
                 // Refresh: Explicitly clear cache and force reload
                 loadedContentCache.clear()
+                // PERFORMANCE: Invalidate session cache since watch status changed
+                sessionCache.invalidateAll(currentUserId)
                 lastRequestedCatalog?.let {
                     loadContentForCatalog(it, isInitialLoad = true)
                 }
@@ -1435,6 +1483,77 @@ class MainViewModel(
             val progress = catalogRepository.getWatchProgress(currentUserId, itemId)
             _isItemWatched.postValue(progress?.isWatched ?: false)
         }
+    }
+
+    suspend fun getWatchProgressSync(itemId: String): WatchProgress? {
+        val currentUserId = prefsManager.getCurrentUserId() ?: return null
+        return catalogRepository.getWatchProgress(currentUserId, itemId)
+    }
+
+    /**
+     * Get the next episode for a given episode ID
+     * Returns MetaItem for the next episode if it exists and is released
+     */
+    suspend fun getNextEpisode(currentEpisodeId: String): MetaItem? = withContext(Dispatchers.IO) {
+        val parts = currentEpisodeId.split(":")
+        if (parts.size < 4 || apiKey.isEmpty()) return@withContext null
+
+        val showId = "${parts[0]}:${parts[1]}"
+        val tmdbId = parts[1].toIntOrNull() ?: return@withContext null
+        val currentSeason = parts[2].toIntOrNull() ?: return@withContext null
+        val currentEpisode = parts[3].toIntOrNull() ?: return@withContext null
+
+        try {
+            val showDetails = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+            var nextSeasonNum = currentSeason
+            var nextEpisodeNum = currentEpisode + 1
+            var potentialNextFound = false
+
+            // Check if next episode is in current season
+            val currentSeasonSpec = showDetails.seasons?.find { it.season_number == currentSeason }
+            if (currentSeasonSpec != null && currentEpisode < currentSeasonSpec.episode_count) {
+                potentialNextFound = true
+            } else {
+                // Check if there's a next season
+                val nextSeasonSpec = showDetails.seasons?.find { it.season_number == currentSeason + 1 }
+                if (nextSeasonSpec != null && nextSeasonSpec.episode_count > 0) {
+                    nextSeasonNum = currentSeason + 1
+                    nextEpisodeNum = 1
+                    potentialNextFound = true
+                }
+            }
+
+            if (potentialNextFound) {
+                val seasonDetails = TMDBClient.api.getTVSeasonDetails(tmdbId, nextSeasonNum, apiKey)
+                val nextEpDetails = seasonDetails.episodes.find { it.episode_number == nextEpisodeNum }
+
+                if (nextEpDetails != null) {
+                    val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    val today = dateFormat.format(java.util.Date())
+                    val isReleased = nextEpDetails.airDate == null || nextEpDetails.airDate <= today
+
+                    if (isReleased) {
+                        val nextEpisodeId = "$showId:$nextSeasonNum:$nextEpisodeNum"
+                        val poster = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                            ?: showDetails.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                        val background = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                            ?: showDetails.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+
+                        return@withContext MetaItem(
+                            id = nextEpisodeId,
+                            type = "episode",
+                            name = "S${nextSeasonNum}E${nextEpisodeNum}: ${nextEpDetails.name}",
+                            poster = poster,
+                            background = background,
+                            description = nextEpDetails.overview ?: "Next episode"
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("NextEpisode", "Error getting next episode for $currentEpisodeId", e)
+        }
+        return@withContext null
     }
 
     fun saveWatchProgress(meta: MetaItem, currentPos: Long, duration: Long) {
@@ -1742,12 +1861,12 @@ class MainViewModel(
         }
     }
 
-    // [FIX] Use GlobalScope for scrobbling to survive activity death
+    // PERFORMANCE FIX: Use viewModelScope instead of GlobalScope to prevent leaks
     fun scrobble(action: String, meta: MetaItem, progress: Float) {
         if (!prefsManager.isTraktEnabled()) return
         val token = prefsManager.getTraktAccessToken() ?: return
         val clientId = Secrets.TRAKT_CLIENT_ID
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val body: TraktScrobbleBody? = if (meta.type == "movie") {
                     val idStr = meta.id.removePrefix("tmdb:")

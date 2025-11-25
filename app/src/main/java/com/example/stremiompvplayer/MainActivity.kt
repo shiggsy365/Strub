@@ -83,13 +83,21 @@ class MainActivity : AppCompatActivity() {
                 loadingDialog.setMetadataComplete()
             }
 
-            // Task 3: Parse TV channels
-            loadingDialog.setTvChannelsLoading()
+            // Task 3: Parse TV channels (only if 24 hours have passed)
             launch {
-                // Load Live TV EPG in background
-                LiveTVFragment.clearCache() // Clear to force fresh load
-                LiveTVFragment.loadEPGInBackground(this@MainActivity)
-                loadingDialog.setTvChannelsComplete()
+                val prefsManager = SharedPreferencesManager.getInstance(this@MainActivity)
+                if (prefsManager.shouldRefreshTV()) {
+                    loadingDialog.setTvChannelsLoading()
+                    // Clear cache and refresh TV channels
+                    LiveTVFragment.clearCache()
+                    LiveTVFragment.loadEPGInBackground(this@MainActivity)
+                    // Update last refresh time
+                    prefsManager.setLastTVRefreshTime(System.currentTimeMillis())
+                    loadingDialog.setTvChannelsComplete()
+                } else {
+                    // Skip refresh - using cached data
+                    loadingDialog.setTvChannelsComplete()
+                }
             }
         }
 
