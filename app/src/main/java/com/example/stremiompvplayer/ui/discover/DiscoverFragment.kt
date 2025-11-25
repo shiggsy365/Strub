@@ -196,6 +196,26 @@ class DiscoverFragment : Fragment() {
         return true
     }
 
+    fun performSearch(query: String) {
+        if (query.isBlank()) return
+
+        // Reset drill-down state
+        currentDrillDownLevel = DrillDownLevel.CATALOG
+        currentSeriesId = null
+        currentSeasonNumber = null
+
+        // Perform search based on current media type
+        when (currentType) {
+            "movie" -> viewModel.searchMovies(query)
+            "series" -> viewModel.searchSeries(query)
+            else -> viewModel.searchTMDB(query)
+        }
+
+        // Update label to show search query
+        updateCurrentListLabel("Search: $query")
+        updatePlayButtonVisibility()
+    }
+
     private fun setupAdapters() {
         contentAdapter = PosterAdapter(
             items = emptyList(),
