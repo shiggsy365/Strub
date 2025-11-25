@@ -44,7 +44,6 @@ class DiscoverFragment : Fragment() {
         )
     }
 
-    private lateinit var sidebarAdapter: SidebarAdapter
     private lateinit var contentAdapter: PosterAdapter
     private var currentType = "movie"
     private var currentSelectedItem: MetaItem? = null
@@ -109,36 +108,14 @@ class DiscoverFragment : Fragment() {
     fun handleBackPress(): Boolean { return false }
     fun focusSidebar(): Boolean {
         binding.root.post {
-            val firstView = binding.rvSidebar.layoutManager?.findViewByPosition(0)
-            if (firstView != null && firstView.isFocusable) {
-                firstView.requestFocus()
-            } else if (binding.rvSidebar.isFocusable) {
-                binding.rvSidebar.requestFocus()
-            } else if (binding.genreSelector.isFocusable) {
-                binding.genreSelector.requestFocus()
-            } else {
-                // Try again after a delay if views aren't ready
-                binding.root.postDelayed({
-                    binding.rvSidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
-                        ?: binding.rvContent.requestFocus()
-                }, 100)
-            }
+            // Focus on Play button or poster carousel
+            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                ?: binding.rvContent.requestFocus()
         }
-        return true  // Always return true as we've initiated focus attempt
+        return true
     }
 
     private fun setupAdapters() {
-        // Setup genre selector
-        binding.genreSelector.setOnClickListener {
-            showGenreSelector()
-        }
-
-        sidebarAdapter = SidebarAdapter { catalog ->
-            viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
-        }
-        binding.rvSidebar.layoutManager = LinearLayoutManager(context)
-        binding.rvSidebar.adapter = sidebarAdapter
-
         contentAdapter = PosterAdapter(
             items = emptyList(),
             onClick = { item -> onContentClicked(item) },
@@ -149,7 +126,8 @@ class DiscoverFragment : Fragment() {
             }
         )
 
-        binding.rvContent.layoutManager = GridLayoutManager(context, 10)
+        // Horizontal scrolling for Netflix-style poster carousel
+        binding.rvContent.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         binding.rvContent.adapter = contentAdapter
 
         binding.rvContent.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
@@ -180,6 +158,21 @@ class DiscoverFragment : Fragment() {
                 view.setOnFocusChangeListener(null)
             }
         })
+
+        // Setup Play button
+        binding.root.findViewById<View>(R.id.btnPlay)?.setOnClickListener {
+            currentSelectedItem?.let { item ->
+                showStreamDialog(item)
+            }
+        }
+
+        // Setup Trailer button
+        binding.root.findViewById<View>(R.id.btnTrailer)?.setOnClickListener {
+            currentSelectedItem?.let { item ->
+                // TODO: Implement trailer playback
+                android.widget.Toast.makeText(requireContext(), "Trailer playback coming soon", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun updateDetailsPane(item: MetaItem) {
@@ -192,7 +185,7 @@ class DiscoverFragment : Fragment() {
         val formattedDate = try {
             item.releaseDate?.let { dateStr ->
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val outputFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+                val outputFormat = SimpleDateFormat("yyyy", Locale.getDefault())
                 val date = inputFormat.parse(dateStr)
                 date?.let { outputFormat.format(it) }
             }
@@ -217,7 +210,42 @@ class DiscoverFragment : Fragment() {
 
         viewModel.fetchItemLogo(item)
 
+        // Update actor chips
+        updateActorChips(item)
+
         refreshWatchStatus(item)
+    }
+
+    private fun updateActorChips(item: MetaItem) {
+        val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
+        actorChipGroup?.removeAllViews()
+
+        // TODO: Fetch actual cast information from TMDB
+        // For now, this is a placeholder. You'll need to add cast fetching to your viewModel
+        // Example actors (this would come from the API):
+        val actors = listOf("Actor 1", "Actor 2", "Actor 3", "Actor 4", "Actor 5")
+
+        actors.take(5).forEach { actorName ->
+            val chip = com.google.android.material.chip.Chip(requireContext())
+            chip.text = actorName
+            chip.isClickable = false
+            chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+            chip.setTextColor(resources.getColor(R.color.text_primary, null))
+            actorChipGroup?.addView(chip)
+        }
+    }
+
+    private fun showStreamDialog(item: MetaItem) {
+        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
+            putExtra("metaId", item.id)
+            putExtra("title", item.name)
+            putExtra("poster", item.poster)
+            putExtra("background", item.background)
+            putExtra("description", item.description)
+            putExtra("type", item.type)
+            putExtra("autoShowStreams", true) // Flag to auto-show stream selection
+        }
+        startActivity(intent)
     }
 
     private fun refreshWatchStatus(item: MetaItem) {
@@ -232,50 +260,10 @@ class DiscoverFragment : Fragment() {
         viewModel.fetchGenres(currentType)
 
         viewModel.getDiscoverCatalogs(currentType).observe(viewLifecycleOwner) { catalogs ->
-            sidebarAdapter.submitList(catalogs)
             if (catalogs.isNotEmpty()) {
                 viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
             }
         }
-    }
-
-    private fun showGenreSelector() {
-        val genres = if (currentType == "movie") {
-            viewModel.movieGenres.value
-        } else {
-            viewModel.tvGenres.value
-        }
-
-        if (genres == null || genres.isEmpty()) {
-            Toast.makeText(requireContext(), "Loading genres...", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val popupMenu = PopupMenu(requireContext(), binding.genreSelector)
-
-        // Add "All" option at the top
-        popupMenu.menu.add(0, -1, 0, "All")
-
-        // Add all genres
-        genres.forEachIndexed { index, genre ->
-            popupMenu.menu.add(0, genre.id, index + 1, genre.name)
-        }
-
-        popupMenu.setOnMenuItemClickListener { item ->
-            if (item.itemId == -1) {
-                // "All" selected - clear genre filter
-                viewModel.clearGenreSelection()
-            } else {
-                // Specific genre selected
-                val selectedGenre = genres.find { it.id == item.itemId }
-                selectedGenre?.let {
-                    viewModel.selectGenre(it)
-                }
-            }
-            true
-        }
-
-        popupMenu.show()
     }
 
     private fun showItemMenu(view: View, item: MetaItem) {
@@ -295,6 +283,7 @@ class DiscoverFragment : Fragment() {
 
             popup.menu.add("Mark as Watched")
             popup.menu.add("Clear Watched Status")
+            popup.menu.add("View Related")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -316,6 +305,15 @@ class DiscoverFragment : Fragment() {
                         viewModel.clearWatchedStatus(item)
                         item.isWatched = false
                         refreshItem(item)
+                        true
+                    }
+                    "View Related" -> {
+                        val intent = Intent(requireContext(), com.example.stremiompvplayer.SimilarActivity::class.java).apply {
+                            putExtra("metaId", item.id)
+                            putExtra("title", item.name)
+                            putExtra("type", item.type)
+                        }
+                        startActivity(intent)
                         true
                     }
                     else -> false
@@ -437,35 +435,4 @@ class DiscoverFragment : Fragment() {
         detailsUpdateJob?.cancel()
     }
 
-    inner class SidebarAdapter(
-        private val onClick: (UserCatalog) -> Unit
-    ) : androidx.recyclerview.widget.ListAdapter<UserCatalog, SidebarAdapter.ViewHolder>(
-        com.example.stremiompvplayer.adapters.CatalogConfigAdapter.DiffCallback()
-    ) {
-
-        private var selectedPosition = 0
-
-        inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
-            val name: android.widget.TextView = view.findViewById(R.id.catalogName)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_discover_sidebar, parent, false)
-            return ViewHolder(view)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = getItem(position)
-            holder.name.text = item.displayName
-            holder.view.isSelected = position == selectedPosition
-            holder.view.setOnClickListener {
-                val oldPosition = selectedPosition
-                selectedPosition = position
-                notifyItemChanged(oldPosition)
-                notifyItemChanged(selectedPosition)
-                onClick(item)
-            }
-        }
-    }
 }
