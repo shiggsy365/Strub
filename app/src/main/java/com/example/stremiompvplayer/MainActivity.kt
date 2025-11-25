@@ -75,11 +75,10 @@ class MainActivity : AppCompatActivity() {
                 loadingDialog.setUserListsComplete()
             }
 
-            // Task 2: Load missing metadata (placeholder for now)
+            // Task 2: Load missing metadata
             loadingDialog.setMetadataLoading()
             launch {
-                // TODO: Implement metadata checking for library items
-                delay(500) // Simulate work
+                viewModel.ensureLibraryMetadata()
                 loadingDialog.setMetadataComplete()
             }
 
@@ -356,7 +355,10 @@ class MainActivity : AppCompatActivity() {
                     focus == binding.chipMore
 
             if (isFocusOnMenu) {
-                return super.onKeyDown(keyCode, event)
+                // Navigate to user selection instead of exiting app
+                startActivity(Intent(this, UserSelectionActivity::class.java))
+                finish()
+                return true
             } else {
                 // Save current focus before returning to menu
                 currentFragmentKey?.let { key ->

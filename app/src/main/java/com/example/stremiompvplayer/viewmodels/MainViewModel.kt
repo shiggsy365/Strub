@@ -1237,6 +1237,13 @@ class MainViewModel(
         }
     }
 
+    // Public wrapper for metadata check - can be called from MainActivity on startup
+    fun ensureLibraryMetadata() {
+        viewModelScope.launch {
+            ensureAllLibraryItemsHaveMetadata()
+        }
+    }
+
     private suspend fun ensureAllLibraryItemsHaveMetadata() {
         val userId = prefsManager.getCurrentUserId() ?: return
         if (apiKey.isEmpty()) {
