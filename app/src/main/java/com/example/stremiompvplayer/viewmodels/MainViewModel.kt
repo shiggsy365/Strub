@@ -589,6 +589,7 @@ class MainViewModel(
             }
 
         } else if (catalog.catalogId in listOf("popular", "latest", "trending")) {
+            Log.d("CatalogLoad", "Fetching TMDB ${catalog.catalogId} ${catalog.catalogType}")
             val pagesToLoad = listOf(1, 2)
             val allItems = mutableListOf<MetaItem>()
 
@@ -596,11 +597,13 @@ class MainViewModel(
             val currentUserId = prefsManager.getCurrentUserId()
             val currentUser = currentUserId?.let { prefsManager.getUser(it) }
             val isKidsProfile = currentUser?.isKidsProfile == true
+            Log.d("CatalogLoad", "isKidsProfile: $isKidsProfile, userId: $currentUserId")
 
             val deferredResults = pagesToLoad.map { page ->
                 viewModelScope.async {
                     try {
-                        if (isKidsProfile) {
+                        Log.d("CatalogLoad", "Loading page $page for ${catalog.catalogId}")
+                        val response = if (isKidsProfile) {
                             // Use discover endpoints with kids filtering
                             if (catalog.catalogType == "movie") {
                                 TMDBClient.api.discoverMovies(
@@ -636,22 +639,32 @@ class MainViewModel(
                                 }
                             }
                         }
+                        Log.d("CatalogLoad", "Page $page loaded successfully: ${response}")
+                        response
                     } catch (e: Exception) {
-                        Log.e("MainViewModel", "Error fetching TMDB ${catalog.catalogId} ${catalog.catalogType} page $page", e)
+                        Log.e("CatalogLoad", "Error fetching TMDB ${catalog.catalogId} ${catalog.catalogType} page $page", e)
                         _error.postValue("Failed to load ${catalog.catalogId} ${catalog.catalogType}: ${e.message}")
                         null
                     }
                 }
             }
             val results = deferredResults.awaitAll()
+            Log.d("CatalogLoad", "Got ${results.filterNotNull().size} non-null responses")
             results.filterNotNull().forEach { response ->
                 val fetchedItems = if (response is TMDBMovieListResponse) {
+                    Log.d("CatalogLoad", "MovieListResponse has ${response.results.size} results")
                     response.results.map { it.toMetaItem() }
                 } else if (response is TMDBSeriesListResponse) {
+                    Log.d("CatalogLoad", "SeriesListResponse has ${response.results.size} results")
                     response.results.map { it.toMetaItem() }
-                } else { emptyList() }
+                } else {
+                    Log.w("CatalogLoad", "Unknown response type: ${response::class.simpleName}")
+                    emptyList()
+                }
+                Log.d("CatalogLoad", "Adding ${fetchedItems.size} items to allItems")
                 allItems.addAll(fetchedItems)
             }
+            Log.d("CatalogLoad", "Returning ${allItems.size} total items")
             return allItems
 
         } else {
