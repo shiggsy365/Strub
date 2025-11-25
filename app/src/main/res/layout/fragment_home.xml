@@ -167,7 +167,61 @@
                             android:ellipsize="end"
                             android:textAppearance="?attr/textAppearanceBodyMedium"
                             android:textColor="@color/text_secondary"
+                            android:layout_marginBottom="12dp"
                             tools:text="Description goes here..." />
+
+                        <!-- Actor Chips - Horizontal Scroll -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:scrollbars="none">
+
+                            <com.google.android.material.chip.ChipGroup
+                                android:id="@+id/actorChips"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                app:chipSpacing="4dp"
+                                app:singleLine="true" />
+                        </HorizontalScrollView>
+
+                        <!-- Action Buttons -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="start">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnPlay"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Play"
+                                android:textSize="16sp"
+                                android:paddingHorizontal="32dp"
+                                android:paddingVertical="12dp"
+                                android:focusable="true"
+                                app:icon="@drawable/ic_play_circle"
+                                app:iconSize="24dp"
+                                app:iconPadding="8dp"
+                                android:layout_marginEnd="12dp"
+                                style="@style/Widget.Material3.Button.Elevated" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnTrailer"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Trailer"
+                                android:textSize="16sp"
+                                android:paddingHorizontal="24dp"
+                                android:paddingVertical="12dp"
+                                android:focusable="true"
+                                app:icon="@drawable/ic_play_circle"
+                                app:iconSize="24dp"
+                                app:iconPadding="8dp"
+                                style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                        </LinearLayout>
                     </LinearLayout>
 
                 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -153,7 +153,7 @@ class LiveTVFragment : Fragment() {
             updateChannelList()
             if (channelsWithPrograms.isNotEmpty()) {
                 selectedChannel = channelsWithPrograms[0]
-                updateDetailsPane(channelsWithPrograms[0])
+                updateDetailsPane(channelsWithPrograms[0], expanded = false)
             }
         }
     }
@@ -170,7 +170,7 @@ class LiveTVFragment : Fragment() {
         // TV Guide Adapter - play channel on click
         tvGuideAdapter = TVGuideAdapter { channelWithPrograms ->
             selectedChannel = channelWithPrograms
-            updateDetailsPane(channelWithPrograms)
+            updateDetailsPane(channelWithPrograms, expanded = false)
             // Play channel directly on click
             playChannel(channelWithPrograms.channel)
         }
@@ -187,7 +187,7 @@ class LiveTVFragment : Fragment() {
                         if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION && position < channelsWithPrograms.size) {
                             val channel = channelsWithPrograms[position]
                             selectedChannel = channel
-                            updateDetailsPane(channel)
+                            updateDetailsPane(channel, expanded = false)
                         }
                     }
                 }
@@ -197,6 +197,16 @@ class LiveTVFragment : Fragment() {
                 view.setOnFocusChangeListener(null)
             }
         })
+
+        // Make details card focusable to show expanded TV guide
+        binding.detailsCard.isFocusable = true
+        binding.detailsCard.isFocusableInTouchMode = true
+        binding.detailsCard.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus && selectedChannel != null) {
+                // Expand to show full TV guide when details pane is focused
+                updateDetailsPane(selectedChannel!!, expanded = true)
+            }
+        }
 
         // Upcoming Programs Adapter
         upcomingAdapter = UpcomingProgramAdapter()
@@ -276,7 +286,7 @@ class LiveTVFragment : Fragment() {
 
                     if (channelsWithPrograms.isNotEmpty()) {
                         selectedChannel = channelsWithPrograms[0]
-                        updateDetailsPane(channelsWithPrograms[0])
+                        updateDetailsPane(channelsWithPrograms[0], expanded = false)
                     }
 
                     Toast.makeText(context, "Loaded ${allChannels.size} channels", Toast.LENGTH_SHORT).show()
@@ -400,7 +410,7 @@ class LiveTVFragment : Fragment() {
         tvGuideAdapter.updateChannels(filteredChannels)
     }
 
-    private fun updateDetailsPane(channelWithPrograms: ChannelWithPrograms) {
+    private fun updateDetailsPane(channelWithPrograms: ChannelWithPrograms, expanded: Boolean = false) {
         val channel = channelWithPrograms.channel
 
         // Channel Name
@@ -443,8 +453,19 @@ class LiveTVFragment : Fragment() {
             binding.detailProgressBar.visibility = View.GONE
         }
 
-        // Upcoming Programs
-        upcomingAdapter.updatePrograms(channelWithPrograms.nextPrograms)
+        // Upcoming Programs - show more when expanded (TV guide mode)
+        if (expanded) {
+            // Fetch extended program list for TV guide view
+            val currentTime = System.currentTimeMillis()
+            val channelPrograms = allPrograms.filter { program ->
+                program.channelId == channel.tvgId || program.channelId == channel.id
+            }
+            val extendedPrograms = EPGParser.getUpcomingPrograms(channelPrograms, currentTime, 20)
+            upcomingAdapter.updatePrograms(extendedPrograms)
+        } else {
+            // Show compact list (5 programs)
+            upcomingAdapter.updatePrograms(channelWithPrograms.nextPrograms)
+        }
     }
 
     private fun playChannel(channel: Channel) {

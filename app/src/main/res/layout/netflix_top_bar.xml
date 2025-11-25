@@ -53,7 +53,7 @@
         app:layout_constraintEnd_toStartOf="@id/searchInputLayout"
         app:layout_constraintHorizontal_weight="1" />
 
-    <!-- Search Field (50% smaller) -->
+    <!-- Search Field -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/searchInputLayout"
         android:layout_width="0dp"
@@ -61,7 +61,7 @@
         android:layout_marginEnd="8dp"
         app:layout_constraintEnd_toStartOf="@id/btnUserProfile"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.12"
+        app:layout_constraintWidth_percent="0.18"
         app:boxBackgroundMode="outline"
         app:boxCornerRadiusTopStart="6dp"
         app:boxCornerRadiusTopEnd="6dp"
