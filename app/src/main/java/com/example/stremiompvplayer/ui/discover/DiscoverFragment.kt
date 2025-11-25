@@ -57,6 +57,12 @@ class DiscoverFragment : Fragment() {
     private val fragmentKey: String
         get() = focusMemoryManager.getFragmentKey("discover", currentType)
 
+    // Drill-down navigation state
+    private enum class DrillDownLevel { CATALOG, SERIES, SEASON }
+    private var currentDrillDownLevel = DrillDownLevel.CATALOG
+    private var currentSeriesId: String? = null
+    private var currentSeasonNumber: Int? = null
+
     companion object {
         private const val ARG_TYPE = "media_type"
         fun newInstance(type: String): DiscoverFragment {
@@ -147,7 +153,40 @@ class DiscoverFragment : Fragment() {
         }
     }
 
-    fun handleBackPress(): Boolean { return false }
+    fun handleBackPress(): Boolean {
+        // Handle drill-down navigation back
+        when (currentDrillDownLevel) {
+            DrillDownLevel.SEASON -> {
+                // Go back to seasons view
+                currentSeriesId?.let { seriesId ->
+                    currentDrillDownLevel = DrillDownLevel.SERIES
+                    currentSeasonNumber = null
+                    viewModel.loadSeriesMeta(seriesId)
+                    updatePlayButtonVisibility()
+                    return true
+                }
+            }
+            DrillDownLevel.SERIES -> {
+                // Go back to catalog view
+                currentDrillDownLevel = DrillDownLevel.CATALOG
+                currentSeriesId = null
+                currentSeasonNumber = null
+                // Reload the current catalog
+                if (currentCatalogs.isNotEmpty() && currentCatalogIndex < currentCatalogs.size) {
+                    val currentCatalog = currentCatalogs[currentCatalogIndex]
+                    updateCurrentListLabel(currentCatalog.displayName)
+                    viewModel.loadContentForCatalog(currentCatalog, isInitialLoad = false)
+                }
+                updatePlayButtonVisibility()
+                return true
+            }
+            DrillDownLevel.CATALOG -> {
+                // At top level, don't consume back press
+                return false
+            }
+        }
+        return false
+    }
     fun focusSidebar(): Boolean {
         binding.root.post {
             // Focus on Play button or poster carousel
@@ -204,7 +243,12 @@ class DiscoverFragment : Fragment() {
         // Setup Play button
         binding.root.findViewById<View>(R.id.btnPlay)?.setOnClickListener {
             currentSelectedItem?.let { item ->
-                showStreamDialog(item)
+                // For episodes, we need to load streams using the episode ID format
+                if (item.type == "episode") {
+                    showStreamDialog(item)
+                } else {
+                    showStreamDialog(item)
+                }
             }
         }
 
@@ -263,6 +307,19 @@ class DiscoverFragment : Fragment() {
 
         // Fetch cast information from TMDB
         viewModel.fetchCast(item.id, item.type)
+    }
+
+    private fun updatePlayButtonVisibility() {
+        val playButton = binding.root.findViewById<View>(R.id.btnPlay)
+        val shouldShowPlay = when {
+            // Always show for movies at catalog level
+            currentDrillDownLevel == DrillDownLevel.CATALOG && currentType == "movie" -> true
+            // Show for episodes (when drilled down to season level)
+            currentDrillDownLevel == DrillDownLevel.SEASON -> true
+            // Hide for series and seasons (not yet at playable level)
+            else -> false
+        }
+        playButton?.visibility = if (shouldShowPlay) View.VISIBLE else View.GONE
     }
 
     private fun showStreamDialog(item: MetaItem) {
@@ -373,14 +430,25 @@ class DiscoverFragment : Fragment() {
     private fun cycleToNextList() {
         if (currentCatalogs.isEmpty()) return
 
+        // Reset drill-down state when cycling lists
+        currentDrillDownLevel = DrillDownLevel.CATALOG
+        currentSeriesId = null
+        currentSeasonNumber = null
+
         currentCatalogIndex = (currentCatalogIndex + 1) % currentCatalogs.size
         val nextCatalog = currentCatalogs[currentCatalogIndex]
         updateCurrentListLabel(nextCatalog.displayName)
         viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
         isShowingGenre = false
+        updatePlayButtonVisibility()
     }
 
     private fun loadGenreList(genreId: Int, genreName: String) {
+        // Reset drill-down state when loading genre
+        currentDrillDownLevel = DrillDownLevel.CATALOG
+        currentSeriesId = null
+        currentSeasonNumber = null
+
         isShowingGenre = true
         updateCurrentListLabel("Genre: $genreName")
 
@@ -392,6 +460,7 @@ class DiscoverFragment : Fragment() {
                 if (content.isNotEmpty()) {
                     updateDetailsPane(content[0])
                 }
+                updatePlayButtonVisibility()
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error loading genre content", Toast.LENGTH_SHORT).show()
             }
@@ -472,15 +541,42 @@ class DiscoverFragment : Fragment() {
         }
 
         updateDetailsPane(item)
-        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-            putExtra("metaId", item.id)
-            putExtra("title", item.name)
-            putExtra("poster", item.poster)
-            putExtra("background", item.background)
-            putExtra("description", item.description)
-            putExtra("type", item.type)
+
+        when (item.type) {
+            "series" -> {
+                // Drill down into series to show seasons
+                currentDrillDownLevel = DrillDownLevel.SERIES
+                currentSeriesId = item.id
+                currentSeasonNumber = null
+                viewModel.loadSeriesMeta(item.id)
+                updatePlayButtonVisibility()
+            }
+            "season" -> {
+                // Drill down into season to show episodes
+                val parts = item.id.split(":")
+                if (parts.size >= 2) {
+                    val seriesId = parts.dropLast(1).joinToString(":")
+                    val seasonNum = parts.last().toIntOrNull() ?: 1
+                    currentDrillDownLevel = DrillDownLevel.SEASON
+                    currentSeriesId = seriesId
+                    currentSeasonNumber = seasonNum
+                    viewModel.loadSeasonEpisodes(seriesId, seasonNum)
+                    updatePlayButtonVisibility()
+                }
+            }
+            "episode" -> {
+                // Show stream selection dialog for episode
+                showStreamDialog(item)
+            }
+            "movie" -> {
+                // Show stream selection dialog for movie
+                showStreamDialog(item)
+            }
+            else -> {
+                // Fallback - show stream dialog if possible
+                showStreamDialog(item)
+            }
         }
-        startActivity(intent)
     }
 
     private fun showGenreSelectionDialog() {
@@ -508,31 +604,35 @@ class DiscoverFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
-            // Add genre selector as the last item in the carousel
-            val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
-            val itemsWithGenres = if (genres != null && genres.isNotEmpty() && !isShowingGenre) {
-                // Create a special "Browse Genres" item
-                val genreBrowserItem = MetaItem(
-                    id = "genre_browser",
-                    type = "genre_browser",
-                    name = "Browse by Genre",
-                    poster = null,
-                    background = null,
-                    description = "Select a genre to explore"
-                )
-                items + genreBrowserItem
-            } else {
-                items
-            }
+            // Only update content if we're at catalog level (not drilled down)
+            if (currentDrillDownLevel == DrillDownLevel.CATALOG) {
+                // Add genre selector as the last item in the carousel
+                val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
+                val itemsWithGenres = if (genres != null && genres.isNotEmpty() && !isShowingGenre) {
+                    // Create a special "Browse Genres" item
+                    val genreBrowserItem = MetaItem(
+                        id = "genre_browser",
+                        type = "genre_browser",
+                        name = "Browse by Genre",
+                        poster = null,
+                        background = null,
+                        description = "Select a genre to explore"
+                    )
+                    items + genreBrowserItem
+                } else {
+                    items
+                }
 
-            contentAdapter.updateData(itemsWithGenres)
+                contentAdapter.updateData(itemsWithGenres)
 
-            if (itemsWithGenres.isNotEmpty()) {
-                updateDetailsPane(itemsWithGenres[0])
-            }
+                if (itemsWithGenres.isNotEmpty()) {
+                    updateDetailsPane(itemsWithGenres[0])
+                }
 
-            if (itemsWithGenres.isEmpty()) {
-                currentSelectedItem = null
+                if (itemsWithGenres.isEmpty()) {
+                    currentSelectedItem = null
+                }
+                updatePlayButtonVisibility()
             }
         }
 
@@ -609,6 +709,44 @@ class DiscoverFragment : Fragment() {
                 }
 
                 actorChipGroup?.addView(chip)
+            }
+        }
+
+        // Observe series meta details for drill-down navigation
+        viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
+            if (meta != null && meta.type == "series" && currentDrillDownLevel == DrillDownLevel.SERIES) {
+                // Display seasons in the carousel
+                val seasons = meta.videos?.mapNotNull { video ->
+                    video.season?.let { seasonNum ->
+                        MetaItem(
+                            id = "${meta.id}:$seasonNum",
+                            type = "season",
+                            name = video.title,
+                            poster = video.thumbnail,
+                            background = meta.background,
+                            description = "Season $seasonNum"
+                        )
+                    }
+                } ?: emptyList()
+
+                contentAdapter.updateData(seasons)
+                if (seasons.isNotEmpty()) {
+                    updateDetailsPane(seasons[0])
+                }
+                updateCurrentListLabel("${meta.name} - Seasons")
+            }
+        }
+
+        // Observe season episodes for drill-down navigation
+        viewModel.seasonEpisodes.observe(viewLifecycleOwner) { episodes ->
+            if (currentDrillDownLevel == DrillDownLevel.SEASON && episodes.isNotEmpty()) {
+                contentAdapter.updateData(episodes)
+                updateDetailsPane(episodes[0])
+                currentSeriesId?.let { seriesId ->
+                    currentSeasonNumber?.let { seasonNum ->
+                        updateCurrentListLabel("Season $seasonNum - Episodes")
+                    }
+                }
             }
         }
     }
