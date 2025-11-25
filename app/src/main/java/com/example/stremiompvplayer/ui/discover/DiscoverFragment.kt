@@ -509,12 +509,27 @@ class DiscoverFragment : Fragment() {
                         true
                     }
                     "View Related" -> {
-                        val intent = Intent(requireContext(), com.example.stremiompvplayer.SimilarActivity::class.java).apply {
-                            putExtra("metaId", item.id)
-                            putExtra("title", item.name)
-                            putExtra("type", item.type)
+                        // Reset drill-down state
+                        currentDrillDownLevel = DrillDownLevel.CATALOG
+                        currentSeriesId = null
+                        currentSeasonNumber = null
+
+                        // Load similar content in Discover layout
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            try {
+                                val similarContent = viewModel.fetchSimilarContent(item.id, item.type)
+                                if (similarContent.isNotEmpty()) {
+                                    contentAdapter.updateData(similarContent)
+                                    updateDetailsPane(similarContent[0])
+                                    updateCurrentListLabel("Related to ${item.name}")
+                                    updatePlayButtonVisibility()
+                                } else {
+                                    Toast.makeText(requireContext(), "No related content found", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(requireContext(), "Error loading related content", Toast.LENGTH_SHORT).show()
+                            }
                         }
-                        startActivity(intent)
                         true
                     }
                     else -> false
@@ -699,13 +714,20 @@ class DiscoverFragment : Fragment() {
                 chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
                 chip.setTextColor(resources.getColor(R.color.text_primary, null))
 
-                // Navigate to person details when clicked
+                // Show actor's content in Discover layout
                 chip.setOnClickListener {
-                    val intent = Intent(requireContext(), com.example.stremiompvplayer.MainActivity::class.java).apply {
-                        putExtra("SEARCH_PERSON_ID", actor.id.removePrefix("tmdb:").toIntOrNull() ?: -1)
-                        putExtra("SEARCH_QUERY", actor.name)
+                    val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
+                    if (personId != null) {
+                        // Reset drill-down state
+                        currentDrillDownLevel = DrillDownLevel.CATALOG
+                        currentSeriesId = null
+                        currentSeasonNumber = null
+
+                        // Load person's credits (movies/shows they appeared in)
+                        viewModel.loadPersonCredits(personId)
+                        updateCurrentListLabel("${actor.name} - Filmography")
+                        updatePlayButtonVisibility()
                     }
-                    startActivity(intent)
                 }
 
                 actorChipGroup?.addView(chip)
@@ -747,6 +769,14 @@ class DiscoverFragment : Fragment() {
                         updateCurrentListLabel("Season $seasonNum - Episodes")
                     }
                 }
+            }
+        }
+
+        // Observe search results for actor/person content and search
+        viewModel.searchResults.observe(viewLifecycleOwner) { results ->
+            if (results.isNotEmpty() && currentDrillDownLevel == DrillDownLevel.CATALOG) {
+                contentAdapter.updateData(results)
+                updateDetailsPane(results[0])
             }
         }
     }
