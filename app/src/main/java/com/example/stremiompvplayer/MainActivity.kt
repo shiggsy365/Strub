@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val focusMemoryManager = FocusMemoryManager.getInstance()
     private var currentFragmentKey: String? = null
+    private val navigationStack = mutableListOf<Pair<String, Fragment>>() // Stack of (fragmentKey, fragment) pairs
 
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(
@@ -359,11 +360,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadFragment(fragment: Fragment, fragmentKey: String? = null) {
+    private fun loadFragment(fragment: Fragment, fragmentKey: String? = null, addToStack: Boolean = true) {
         // Save focus state before loading new fragment
         currentFragmentKey?.let { key ->
             currentFocus?.let { view ->
                 focusMemoryManager.saveFocus(key, view)
+            }
+
+            // Push current fragment to navigation stack
+            if (addToStack) {
+                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+                if (currentFragment != null) {
+                    navigationStack.add(Pair(key, currentFragment))
+                    // Keep stack size reasonable (max 10 items)
+                    if (navigationStack.size > 10) {
+                        navigationStack.removeAt(0)
+                    }
+                }
             }
         }
 
@@ -476,9 +489,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
+            // First, check if fragment has internal navigation (drill-down)
             if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
 
+            // Check if focus is on menu
             val focus = currentFocus
             val isFocusOnMenu = focus == binding.btnAppLogo ||
                     focus == binding.chipHome ||
@@ -493,24 +508,54 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, UserSelectionActivity::class.java))
                 finish()
                 return true
-            } else {
-                // Save current focus before returning to menu
-                currentFragmentKey?.let { key ->
-                    currentFocus?.let { view ->
-                        focusMemoryManager.saveFocus(key, view)
+            }
+
+            // Check if there's a previous fragment in navigation stack
+            if (navigationStack.isNotEmpty()) {
+                val (previousKey, previousFragment) = navigationStack.removeLast()
+                currentFragmentKey = previousKey
+
+                // Load previous fragment without adding to stack
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainer, previousFragment)
+                    .commit()
+
+                // Restore focus after fragment is loaded
+                binding.root.postDelayed({
+                    if (focusMemoryManager.hasFocusMemory(previousKey)) {
+                        focusMemoryManager.restoreFocus(previousKey)
                     }
+                }, 150)
+
+                // Update sidebar selection to match previous fragment
+                when (previousFragment) {
+                    is HomeFragment -> binding.chipHome.isChecked = true
+                    is DiscoverFragment -> binding.chipDiscover.isChecked = true
+                    is LibraryFragment -> binding.chipLibrary.isChecked = true
+                    is SearchFragment -> binding.chipSearch.isChecked = true
+                    is LiveTVFragment -> binding.chipLiveTV.isChecked = true
                 }
 
-                when {
-                    binding.chipHome.isChecked -> binding.chipHome.requestFocus()
-                    binding.chipDiscover.isChecked -> binding.chipDiscover.requestFocus()
-                    binding.chipLibrary.isChecked -> binding.chipLibrary.requestFocus()
-                    binding.chipSearch.isChecked -> binding.chipSearch.requestFocus()
-                    binding.chipLiveTV.isChecked -> binding.chipLiveTV.requestFocus()
-                    else -> binding.navigationScroll.requestFocus()
-                }
                 return true
             }
+
+            // No navigation history - focus sidebar menu
+            // Save current focus before returning to menu
+            currentFragmentKey?.let { key ->
+                currentFocus?.let { view ->
+                    focusMemoryManager.saveFocus(key, view)
+                }
+            }
+
+            when {
+                binding.chipHome.isChecked -> binding.chipHome.requestFocus()
+                binding.chipDiscover.isChecked -> binding.chipDiscover.requestFocus()
+                binding.chipLibrary.isChecked -> binding.chipLibrary.requestFocus()
+                binding.chipSearch.isChecked -> binding.chipSearch.requestFocus()
+                binding.chipLiveTV.isChecked -> binding.chipLiveTV.requestFocus()
+                else -> binding.navigationScroll.requestFocus()
+            }
+            return true
         }
         return super.onKeyDown(keyCode, event)
     }
