@@ -37,7 +37,10 @@ data class Stream(
         if (resDisplay.isNotEmpty()) parts.add(resDisplay)
         if ((size ?: 0) > 0) parts.add(formatBytes(size!!))
         val addonName = addon ?: name?.replace(resolutionRegex, "")?.replace(cachedRegex, "")?.trim() ?: ""
-        if (addonName.isNotEmpty()) parts.add(if (addonName.length > 20) addonName.take(17) + "..." else addonName)
+        // Filter out very short addon names (like "PTP") and meaningless strings
+        if (addonName.isNotEmpty() && addonName.length > 3 && !addonName.matches(Regex("^[A-Z]{2,4}$"))) {
+            parts.add(if (addonName.length > 20) addonName.take(17) + "..." else addonName)
+        }
         return parts.filter { it.isNotEmpty() }.joinToString(" | ")
     }
     private fun formatBytes(bytes: Long): String {
