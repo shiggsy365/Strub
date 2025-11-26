@@ -388,6 +388,10 @@ class LibraryFragment : Fragment() {
                 dialog.dismiss()
             } else {
                 streamAdapter.submitList(streams)
+                // Focus first item after list is populated
+                rvStreams.post {
+                    rvStreams.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }
             }
         }
         viewModel.streams.observe(viewLifecycleOwner, streamObserver)

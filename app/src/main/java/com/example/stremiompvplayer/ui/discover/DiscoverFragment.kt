@@ -152,6 +152,26 @@ class DiscoverFragment : Fragment() {
         }
     }
 
+    fun handleKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (event?.action == KeyEvent.ACTION_DOWN) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    if (binding.rvContent.hasFocus() || binding.rvContent.focusedChild != null) {
+                        cycleToNextList()
+                        return true
+                    }
+                }
+                KeyEvent.KEYCODE_DPAD_UP -> {
+                    if (binding.rvContent.hasFocus() || binding.rvContent.focusedChild != null) {
+                        binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                        return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
     fun handleBackPress(): Boolean {
         // Handle drill-down navigation back
         when (currentDrillDownLevel) {
@@ -404,6 +424,10 @@ class DiscoverFragment : Fragment() {
                 dialog.dismiss()
             } else {
                 streamAdapter.submitList(streams)
+                // Focus first item after list is populated
+                rvStreams.post {
+                    rvStreams.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }
             }
         }
         viewModel.streams.observe(viewLifecycleOwner, streamObserver)
