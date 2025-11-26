@@ -171,8 +171,8 @@ class DiscoverFragment : Fragment() {
                 currentSeriesId = null
                 currentSeasonNumber = null
                 // Reload the current catalog
-                if (currentCatalogs.isNotEmpty() && currentCatalogIndex < currentCatalogs.size) {
-                    val currentCatalog = currentCatalogs[currentCatalogIndex]
+                if (allCatalogs.isNotEmpty() && currentCatalogIndex < allCatalogs.size) {
+                    val currentCatalog = allCatalogs[currentCatalogIndex]
                     updateCurrentListLabel(currentCatalog.displayName)
                     viewModel.loadContentForCatalog(currentCatalog, isInitialLoad = false)
                 }
