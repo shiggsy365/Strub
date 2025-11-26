@@ -100,7 +100,7 @@ class SearchFragment : Fragment() {
             }
         )
         binding.resultsRecycler.apply {
-            layoutManager = GridLayoutManager(context, 10)
+            layoutManager = com.example.stremiompvplayer.utils.AutoFitGridLayoutManager(requireContext(), 140)
             adapter = searchAdapter
         }
 

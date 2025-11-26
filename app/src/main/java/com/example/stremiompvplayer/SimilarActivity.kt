@@ -56,7 +56,7 @@ class SimilarActivity : AppCompatActivity() {
             onClick = { item -> onItemClicked(item) }
         )
 
-        binding.rvContent.layoutManager = GridLayoutManager(this, 10)
+        binding.rvContent.layoutManager = com.example.stremiompvplayer.utils.AutoFitGridLayoutManager(this, 140)
         binding.rvContent.adapter = posterAdapter
 
         // Load similar content

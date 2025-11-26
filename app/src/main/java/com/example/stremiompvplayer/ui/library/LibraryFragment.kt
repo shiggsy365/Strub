@@ -104,7 +104,7 @@ class LibraryFragment : Fragment() {
             }
         )
 
-        binding.rvContent.layoutManager = GridLayoutManager(context, 10)
+        binding.rvContent.layoutManager = com.example.stremiompvplayer.utils.AutoFitGridLayoutManager(requireContext(), 140)
         binding.rvContent.adapter = contentAdapter
 
         binding.rvContent.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
