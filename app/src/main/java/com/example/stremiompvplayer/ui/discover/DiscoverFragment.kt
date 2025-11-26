@@ -82,10 +82,47 @@ class DiscoverFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         currentType = arguments?.getString(ARG_TYPE) ?: "movie"
+        setupUI()
         setupAdapters()
         setupObservers()
         loadCatalogs()
         setupKeyHandling()
+    }
+
+    private fun setupUI() {
+        // Setup Movies/Series dropdown
+        val dropdownMediaType = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
+        dropdownMediaType?.apply {
+            // Set initial text based on current type
+            text = if (currentType == "series") "Series" else "Movies"
+
+            // Handle dropdown clicks
+            setOnClickListener { view ->
+                val contextWrapper = android.view.ContextThemeWrapper(
+                    requireContext(),
+                    android.R.style.Theme_DeviceDefault_Light_NoActionBar
+                )
+                val popup = android.widget.PopupMenu(contextWrapper, view)
+                popup.menu.add("Movies")
+                popup.menu.add("Series")
+
+                popup.setOnMenuItemClickListener { menuItem ->
+                    val newType = if (menuItem.title == "Series") "series" else "movie"
+                    if (newType != currentType) {
+                        currentType = newType
+                        dropdownMediaType.text = menuItem.title
+
+                        // Reset state and reload catalogs
+                        currentDrillDownLevel = DrillDownLevel.CATALOG
+                        currentSeriesId = null
+                        currentSeasonNumber = null
+                        loadCatalogs()
+                    }
+                    true
+                }
+                popup.show()
+            }
+        }
     }
 
     private fun setupKeyHandling() {
@@ -488,8 +525,7 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun updateCurrentListLabel(labelText: String) {
-        val topBar = activity?.findViewById<View>(R.id.netflixTopBar)
-        val label = topBar?.findViewById<android.widget.TextView>(R.id.currentListLabel)
+        val label = binding.root.findViewById<android.widget.TextView>(R.id.currentListLabel)
         label?.text = labelText
     }
 
