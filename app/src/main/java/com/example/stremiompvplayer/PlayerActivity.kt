@@ -27,6 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.util.Log
+import kotlinx.coroutines.isActive
 
 class PlayerActivity : AppCompatActivity() {
 
