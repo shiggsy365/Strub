@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupNetflixNavigation() {
         // Get the included layouts
         val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
-        val topBar = binding.root.findViewById<View>(R.id.netflixTopBar)
+        val dropdownMediaType = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
 
         // Setup sidebar navigation
         sidebar.findViewById<View>(R.id.sidebarHome).setOnClickListener {
@@ -123,15 +123,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         sidebar.findViewById<View>(R.id.sidebarDiscover).setOnClickListener {
-            val currentType = topBar.findViewById<android.widget.TextView>(R.id.dropdownMediaType).text.toString()
+            val currentType = dropdownMediaType.text.toString()
             val type = if (currentType.contains("Series", ignoreCase = true)) "series" else "movie"
             loadFragment(DiscoverFragment.newInstance(type))
         }
 
         sidebar.findViewById<View>(R.id.sidebarLibrary).setOnClickListener {
-            val currentType = topBar.findViewById<android.widget.TextView>(R.id.dropdownMediaType).text.toString()
+            val currentType = dropdownMediaType.text.toString()
             val type = if (currentType.contains("Series", ignoreCase = true)) "series" else "movie"
             loadFragment(LibraryFragment.newInstance(type))
+        }
+
+        // Search - show dialog
+        sidebar.findViewById<View>(R.id.sidebarSearch).setOnClickListener {
+            showSearchDialog()
         }
 
         // LIVE TV - only show if configured
@@ -149,16 +154,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
-        // Setup top bar
-        val dropdownMediaType = topBar.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
-        val currentListLabel = topBar.findViewById<android.widget.TextView>(R.id.currentListLabel)
-        val searchField = topBar.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.searchField)
-        val btnUserProfile = topBar.findViewById<View>(R.id.btnUserProfile)
-
-        // Store reference to currentListLabel for DiscoverFragment to update
-        currentListLabel.tag = "currentListLabel"
-
-        // Media Type dropdown (Movies/Series)
+        // Media Type dropdown (Movies/Series) - now in main layout
         dropdownMediaType.setOnClickListener { view ->
             showMenu(view, listOf("Movies", "Series")) { selection ->
                 dropdownMediaType.text = selection
@@ -177,46 +173,52 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Search field
-        searchField.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
-                val query = searchField.text.toString()
-                if (query.isNotEmpty()) {
-                    // Find current fragment and if it's DiscoverFragment, perform search there
-                    val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-                    when (currentFragment) {
-                        is DiscoverFragment -> {
-                            currentFragment.performSearch(query)
-                        }
-                        else -> {
-                            // If not on Discover, switch to it and perform search
-                            val type = if (dropdownMediaType.text == "Series") "series" else "movie"
-                            val discoverFragment = DiscoverFragment.newInstance(type)
-                            loadFragment(discoverFragment)
-                            // Perform search after fragment is loaded
-                            discoverFragment.view?.post {
-                                discoverFragment.performSearch(query)
-                            }
-                        }
-                    }
-                    // Clear search field and hide keyboard
-                    searchField.text?.clear()
-                    val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-                    imm.hideSoftInputFromWindow(searchField.windowToken, 0)
-                }
-                true
-            } else {
-                false
-            }
-        }
-
-        // User profile button
-        btnUserProfile.setOnClickListener {
-            startActivity(Intent(this, UserSelectionActivity::class.java))
-        }
-
         // Implement sidebar auto-hide behavior
         setupSidebarAutoHide(sidebar)
+    }
+
+    private fun showSearchDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_search, null)
+        val searchInput = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.searchInput)
+
+        val dialog = android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle("Search")
+            .setView(dialogView)
+            .setPositiveButton("Search") { _, _ ->
+                val query = searchInput.text.toString()
+                if (query.isNotEmpty()) {
+                    performSearch(query)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+
+        // Focus search input and show keyboard
+        searchInput.requestFocus()
+        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.showSoftInput(searchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+    }
+
+    private fun performSearch(query: String) {
+        val dropdownMediaType = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+        when (currentFragment) {
+            is DiscoverFragment -> {
+                currentFragment.performSearch(query)
+            }
+            else -> {
+                // If not on Discover, switch to it and perform search
+                val type = if (dropdownMediaType.text == "Series") "series" else "movie"
+                val discoverFragment = DiscoverFragment.newInstance(type)
+                loadFragment(discoverFragment)
+                // Perform search after fragment is loaded
+                discoverFragment.view?.post {
+                    discoverFragment.performSearch(query)
+                }
+            }
+        }
     }
 
     private fun setupSidebarAutoHide(sidebar: View) {
@@ -239,7 +241,7 @@ class MainActivity : AppCompatActivity() {
         // Also check for focus on child views
         val childViews = listOf(
             R.id.sidebarHome, R.id.sidebarDiscover, R.id.sidebarLibrary,
-            R.id.sidebarLiveTV, R.id.sidebarSettings
+            R.id.sidebarSearch, R.id.sidebarLiveTV, R.id.sidebarSettings
         )
         childViews.forEach { viewId ->
             sidebar.findViewById<View>(viewId)?.setOnFocusChangeListener { _, hasFocus ->
