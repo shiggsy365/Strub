@@ -308,12 +308,16 @@ class HomeFragment : Fragment() {
 
         val streamAdapter = com.example.stremiompvplayer.adapters.StreamAdapter { stream ->
             dialog.dismiss()
+            viewModel.clearStreams()
             playStream(stream)
         }
         rvStreams.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
         rvStreams.adapter = streamAdapter
 
-        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+            viewModel.clearStreams()
+        }
 
         progressBar.visibility = View.VISIBLE
         rvStreams.visibility = View.GONE
@@ -334,6 +338,7 @@ class HomeFragment : Fragment() {
 
         dialog.setOnDismissListener {
             viewModel.streams.removeObserver(streamObserver)
+            viewModel.clearStreams()
         }
 
         dialog.show()

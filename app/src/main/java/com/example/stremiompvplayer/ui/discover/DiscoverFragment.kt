@@ -377,13 +377,17 @@ class DiscoverFragment : Fragment() {
         // Setup RecyclerView
         val streamAdapter = com.example.stremiompvplayer.adapters.StreamAdapter { stream ->
             dialog.dismiss()
+            viewModel.clearStreams()
             playStream(stream)
         }
         rvStreams.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
         rvStreams.adapter = streamAdapter
 
         // Setup cancel button
-        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+            viewModel.clearStreams()
+        }
 
         // Load streams
         progressBar.visibility = View.VISIBLE
@@ -406,6 +410,7 @@ class DiscoverFragment : Fragment() {
 
         dialog.setOnDismissListener {
             viewModel.streams.removeObserver(streamObserver)
+            viewModel.clearStreams()
         }
 
         dialog.show()
