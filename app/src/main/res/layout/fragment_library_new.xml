@@ -18,10 +18,6 @@
             android:alpha="0.70"
             android:contentDescription="Background" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/gradient_netflix_overlay" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -212,6 +208,21 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Trailer"
+                                android:textSize="14sp"
+                                android:paddingHorizontal="20dp"
+                                android:paddingVertical="10dp"
+                                android:focusable="true"
+                                app:icon="@drawable/ic_play_circle"
+                                app:iconSize="20dp"
+                                app:iconPadding="6dp"
+                                android:layout_marginEnd="8dp"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnRelated"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Related"
                                 android:textSize="14sp"
                                 android:paddingHorizontal="20dp"
                                 android:paddingVertical="10dp"

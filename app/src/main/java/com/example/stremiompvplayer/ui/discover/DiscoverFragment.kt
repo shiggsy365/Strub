@@ -278,6 +278,13 @@ class DiscoverFragment : Fragment() {
                 playTrailer(item)
             }
         }
+
+        // Setup Related button
+        binding.root.findViewById<View>(R.id.btnRelated)?.setOnClickListener {
+            currentSelectedItem?.let { item ->
+                showRelatedContent(item)
+            }
+        }
     }
 
     private fun updateDetailsPane(item: MetaItem) {
@@ -435,6 +442,30 @@ class DiscoverFragment : Fragment() {
         }
     }
 
+    private fun showRelatedContent(item: MetaItem) {
+        // Reset drill-down state
+        currentDrillDownLevel = DrillDownLevel.CATALOG
+        currentSeriesId = null
+        currentSeasonNumber = null
+
+        // Load similar content in Discover layout
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val similarContent = viewModel.fetchSimilarContent(item.id, item.type)
+                if (similarContent.isNotEmpty()) {
+                    contentAdapter.updateData(similarContent)
+                    updateDetailsPane(similarContent[0])
+                    updateCurrentListLabel("Related to ${item.name}")
+                    updatePlayButtonVisibility()
+                } else {
+                    Toast.makeText(requireContext(), "No related content found", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error loading related content", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun refreshWatchStatus(item: MetaItem) {
         val userId = SharedPreferencesManager.getInstance(requireContext()).getCurrentUserId()
         if (userId != null) {
@@ -518,8 +549,7 @@ class DiscoverFragment : Fragment() {
             }
 
             popup.menu.add("Mark as Watched")
-            popup.menu.add("Clear Watched Status")
-            popup.menu.add("View Related")
+            popup.menu.add("Clear Progress")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -537,34 +567,10 @@ class DiscoverFragment : Fragment() {
                         refreshItem(item)
                         true
                     }
-                    "Clear Watched Status" -> {
+                    "Clear Progress" -> {
                         viewModel.clearWatchedStatus(item)
                         item.isWatched = false
                         refreshItem(item)
-                        true
-                    }
-                    "View Related" -> {
-                        // Reset drill-down state
-                        currentDrillDownLevel = DrillDownLevel.CATALOG
-                        currentSeriesId = null
-                        currentSeasonNumber = null
-
-                        // Load similar content in Discover layout
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            try {
-                                val similarContent = viewModel.fetchSimilarContent(item.id, item.type)
-                                if (similarContent.isNotEmpty()) {
-                                    contentAdapter.updateData(similarContent)
-                                    updateDetailsPane(similarContent[0])
-                                    updateCurrentListLabel("Related to ${item.name}")
-                                    updatePlayButtonVisibility()
-                                } else {
-                                    Toast.makeText(requireContext(), "No related content found", Toast.LENGTH_SHORT).show()
-                                }
-                            } catch (e: Exception) {
-                                Toast.makeText(requireContext(), "Error loading related content", Toast.LENGTH_SHORT).show()
-                            }
-                        }
                         true
                     }
                     else -> false
@@ -615,16 +621,16 @@ class DiscoverFragment : Fragment() {
                 }
             }
             "episode" -> {
-                // Show stream selection dialog for episode
-                showStreamDialog(item)
+                // Focus play button for playable episode
+                binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
             }
             "movie" -> {
-                // Show stream selection dialog for movie
-                showStreamDialog(item)
+                // Focus play button for playable movie
+                binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
             }
             else -> {
-                // Fallback - show stream dialog if possible
-                showStreamDialog(item)
+                // Fallback - focus play button if possible
+                binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
             }
         }
     }

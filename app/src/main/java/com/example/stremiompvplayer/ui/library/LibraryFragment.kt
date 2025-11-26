@@ -88,7 +88,15 @@ class LibraryFragment : Fragment() {
     private fun setupAdapters() {
         contentAdapter = PosterAdapter(
             items = emptyList(),
-            onClick = { item -> onContentClicked(item) },
+            onClick = { item ->
+                // For playable items, focus play button; for non-playable, open details
+                if (item.type == "movie" || item.type == "episode") {
+                    updateDetailsPane(item)
+                    binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                } else {
+                    onContentClicked(item)
+                }
+            },
             onLongClick = { item ->
                 val pos = contentAdapter.getItemPosition(item)
                 val holder = binding.rvContent.findViewHolderForAdapterPosition(pos)
@@ -136,6 +144,13 @@ class LibraryFragment : Fragment() {
         binding.root.findViewById<View>(R.id.btnTrailer)?.setOnClickListener {
             currentSelectedItem?.let { item ->
                 playTrailer(item)
+            }
+        }
+
+        // Setup Related button
+        binding.root.findViewById<View>(R.id.btnRelated)?.setOnClickListener {
+            currentSelectedItem?.let { item ->
+                showRelatedContent(item)
             }
         }
     }
@@ -255,7 +270,7 @@ class LibraryFragment : Fragment() {
             }
 
             popup.menu.add("Mark as Watched")
-            popup.menu.add("Clear Watched Status")
+            popup.menu.add("Clear Progress")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -274,7 +289,7 @@ class LibraryFragment : Fragment() {
                         refreshItem(item)
                         true
                     }
-                    "Clear Watched Status" -> {
+                    "Clear Progress" -> {
                         viewModel.clearWatchedStatus(item)
                         item.isWatched = false
                         item.progress = 0
@@ -375,6 +390,17 @@ class LibraryFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error loading trailer", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showRelatedContent(item: MetaItem) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                viewModel.fetchSimilarContent(item.id, item.type)
+                Toast.makeText(requireContext(), "Loading related content...", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error loading related content", Toast.LENGTH_SHORT).show()
             }
         }
     }
