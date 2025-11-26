@@ -165,6 +165,13 @@ class CatalogRepository(
         }
     }
 
+    suspend fun deleteAllEpisodesOfShow(userId: String, showId: String) {
+        withContext(Dispatchers.IO) {
+            // Delete all episodes matching the show ID pattern (e.g., "tmdb:12345:%")
+            watchProgressDao.deleteAllEpisodesOfShow(userId, "$showId:%")
+        }
+    }
+
     suspend fun getContinueWatching(userId: String, type: String): List<WatchProgress> {
         return withContext(Dispatchers.IO) {
             if (type == "movie") {
