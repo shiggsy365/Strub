@@ -82,10 +82,39 @@ class DiscoverFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         currentType = arguments?.getString(ARG_TYPE) ?: "movie"
+        setupMediaTypeToggle()
         setupAdapters()
         setupObservers()
         loadCatalogs()
         setupKeyHandling()
+    }
+
+    private fun setupMediaTypeToggle() {
+        val dropdown = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
+        dropdown?.text = if (currentType == "movie") "Movies" else "Series"
+        dropdown?.setOnClickListener {
+            val popup = PopupMenu(requireContext(), it)
+            popup.menu.add("Movies")
+            popup.menu.add("Series")
+            popup.setOnMenuItemClickListener { menuItem ->
+                val newType = if (menuItem.title == "Movies") "movie" else "series"
+                if (newType != currentType) {
+                    currentType = newType
+                    dropdown.text = menuItem.title
+
+                    // Reset drill-down state
+                    currentDrillDownLevel = DrillDownLevel.CATALOG
+                    currentSeriesId = null
+                    currentSeasonNumber = null
+
+                    // Reload catalogs for new type
+                    loadCatalogs()
+                    updatePlayButtonVisibility()
+                }
+                true
+            }
+            popup.show()
+        }
     }
 
     private fun setupKeyHandling() {
@@ -549,6 +578,7 @@ class DiscoverFragment : Fragment() {
 
             popup.menu.add("Mark as Watched")
             popup.menu.add("Clear Progress")
+            popup.menu.add("Not Watching")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -566,9 +596,14 @@ class DiscoverFragment : Fragment() {
                         refreshItem(item)
                         true
                     }
-
+                    "Clear Progress" -> {
+                        viewModel.clearWatchedStatus(item)
+                        item.isWatched = false
+                        item.progress = 0
+                        refreshItem(item)
+                        true
+                    }
                     "Not Watching" -> {
-                        // CHANGED to call markAsNotWatching
                         viewModel.markAsNotWatching(item)
                         true
                     }

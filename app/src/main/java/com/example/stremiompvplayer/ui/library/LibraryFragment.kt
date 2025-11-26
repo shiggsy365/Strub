@@ -71,6 +71,7 @@ class LibraryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         currentType = arguments?.getString(ARG_TYPE) ?: "movie"
 
+        setupMediaTypeToggle()
         setupAdapters()
         setupObservers()
         setupKeyHandling()
@@ -80,6 +81,28 @@ class LibraryFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         currentSelectedItem?.let { updateDetailsPane(it) }
+    }
+
+    private fun setupMediaTypeToggle() {
+        val dropdown = binding.root.findViewById<TextView>(R.id.dropdownMediaType)
+        dropdown?.text = if (currentType == "movie") "Movies" else "Series"
+        dropdown?.setOnClickListener {
+            val popup = PopupMenu(requireContext(), it)
+            popup.menu.add("Movies")
+            popup.menu.add("Series")
+            popup.setOnMenuItemClickListener { menuItem ->
+                val newType = if (menuItem.title == "Movies") "movie" else "series"
+                if (newType != currentType) {
+                    currentType = newType
+                    dropdown.text = menuItem.title
+
+                    // Reload library for new type
+                    loadLibrary()
+                }
+                true
+            }
+            popup.show()
+        }
     }
 
     private fun setupKeyHandling() {
@@ -208,7 +231,7 @@ class LibraryFragment : Fragment() {
         val formattedDate = try {
             item.releaseDate?.let { dateStr ->
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val outputFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+                val outputFormat = SimpleDateFormat("yyyy", Locale.getDefault())
                 val date = inputFormat.parse(dateStr)
                 date?.let { outputFormat.format(it) }
             }
@@ -217,6 +240,7 @@ class LibraryFragment : Fragment() {
         }
 
         binding.detailDate.text = formattedDate ?: ""
+        binding.detailDate.visibility = if (formattedDate.isNullOrEmpty()) View.GONE else View.VISIBLE
         binding.detailRating.visibility = if (item.rating != null) {
             binding.detailRating.text = "★ ${item.rating}"
             View.VISIBLE
@@ -268,6 +292,7 @@ class LibraryFragment : Fragment() {
 
             popup.menu.add("Mark as Watched")
             popup.menu.add("Clear Progress")
+            popup.menu.add("Not Watching")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -291,6 +316,10 @@ class LibraryFragment : Fragment() {
                         item.isWatched = false
                         item.progress = 0
                         refreshItem(item)
+                        true
+                    }
+                    "Not Watching" -> {
+                        viewModel.markAsNotWatching(item)
                         true
                     }
                     else -> false
