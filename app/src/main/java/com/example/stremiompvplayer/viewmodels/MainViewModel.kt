@@ -33,6 +33,7 @@ import com.example.stremiompvplayer.network.TraktHistoryBody
 import com.example.stremiompvplayer.network.TraktShow
 import com.example.stremiompvplayer.network.TraktScrobbleBody
 import com.example.stremiompvplayer.network.TraktEpisode
+import com.example.stremiompvplayer.network.TraktSeason
 import com.example.stremiompvplayer.models.Video
 import com.example.stremiompvplayer.models.TMDBWatchlistBody
 import com.example.stremiompvplayer.network.AIOStreamsClient
@@ -188,7 +189,7 @@ class MainViewModel(
     private fun toMetaItem(item: CollectedItem): MetaItem {
         return MetaItem(item.itemId, item.itemType, item.name, item.poster, item.background, item.description)
     }
-
+    
     fun getHomeCatalogs(): List<UserCatalog> {
         val userId = prefsManager.getCurrentUserId() ?: "default"
         val isTrakt = prefsManager.isTraktEnabled()
@@ -207,7 +208,7 @@ class MainViewModel(
             else UserCatalog(0, userId, "continue_episodes", "series", "Continue Series", null, 2, "series", "local", "local", true, true)
         )
     }
-
+    
     suspend fun isItemInLibrarySync(itemId: String): Boolean {
         val currentUserId = prefsManager.getCurrentUserId() ?: return false
         return catalogRepository.isItemCollected(itemId, currentUserId)
@@ -728,162 +729,15 @@ class MainViewModel(
             }
 
         } else if (catalog.addonUrl == "mdblist") {
-            // mdblist integration
-            val listUrl = catalog.manifestId
-            // Extract list ID from URL (e.g., "https://mdblist.com/lists/username/listname" or just "username/listname")
-            val listId = listUrl.replace("https://mdblist.com/lists/", "")
-                .replace("http://mdblist.com/lists/", "")
-                .replace("mdblist.com/lists/", "")
-                .trim('/')
-
-            try {
-                // mdblist API: GET https://mdblist.com/api/lists/{username}/{listname}/items
-                val url = "https://mdblist.com/api/lists/$listId/items?apikey=&m=movie,show"
-
-                // For now, return empty list - mdblist requires API key which user needs to configure
-                // TODO: Add mdblist API key to settings
-                return emptyList()
-            } catch (e: Exception) {
-                return emptyList()
-            }
+            // mdblist integration - Placeholder
+            return emptyList()
 
         } else if (catalog.addonUrl == "imdb") {
-            // IMDB list integration (via web scraping or third-party API)
-            val listId = catalog.manifestId.replace("https://www.imdb.com/list/", "")
-                .replace("http://www.imdb.com/list/", "")
-                .replace("www.imdb.com/list/", "")
-                .trim('/')
-
-            try {
-                // IMDB doesn't have a public API, so we would need to:
-                // 1. Use a third-party service
-                // 2. Web scrape (not recommended)
-                // 3. Use TMDB's "external_source" feature if available
-
-                // For now, return empty list
-                // TODO: Implement IMDB list fetching via third-party service
-                return emptyList()
-            } catch (e: Exception) {
-                return emptyList()
-            }
-
-        } else if (catalog.catalogId in listOf("popular", "latest", "trending")) {
-            Log.d("CatalogLoad", "Fetching TMDB ${catalog.catalogId} ${catalog.catalogType}")
-            val pagesToLoad = listOf(1, 2)
-            val allItems = mutableListOf<MetaItem>()
-
-            // Get current user's age rating
-            val currentUserId = prefsManager.getCurrentUserId()
-            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
-            val ageRating = currentUser?.ageRating ?: "18" // Default to 18 (no filtering) if not set
-            Log.d("CatalogLoad", "Age Rating: $ageRating, userId: $currentUserId")
-
-            // Get selected genre ID if any
-            val selectedGenreId = _selectedGenre.value?.id?.toString()
-            if (selectedGenreId != null) {
-                Log.d("CatalogLoad", "Using genre filter: $selectedGenreId (${_selectedGenre.value?.name})")
-            }
-
-            val deferredResults = pagesToLoad.map { page ->
-                viewModelScope.async {
-                    try {
-                        Log.d("CatalogLoad", "Loading page $page for ${catalog.catalogId}")
-                        val response = when (ageRating) {
-                            "U", "PG", "12", "15" -> {
-                                // Use discover endpoints with age rating filtering
-                                if (catalog.catalogType == "movie") {
-                                    TMDBClient.api.discoverMovies(
-                                        apiKey = apiKey,
-                                        page = page,
-                                        sortBy = "popularity.desc",
-                                        certificationCountry = "GB",
-                                        certificationLte = ageRating,
-                                        withGenres = selectedGenreId,
-                                        includeAdult = false
-                                    )
-                                } else {
-                                    // For TV, use genre filtering based on age rating or user selection
-                                    val genres = selectedGenreId ?: when (ageRating) {
-                                        "U", "PG" -> "10762" // Kids genre
-                                        else -> null // No genre filter for 12, 15
-                                    }
-                                    TMDBClient.api.discoverTV(
-                                        apiKey = apiKey,
-                                        page = page,
-                                        sortBy = "popularity.desc",
-                                        withGenres = genres,
-                                        includeAdult = false
-                                    )
-                                }
-                            }
-                            else -> {
-                                // Age rating 18 or not set - check if genre filter is applied
-                                if (selectedGenreId != null) {
-                                    // Use discover endpoints with genre filtering
-                                    if (catalog.catalogType == "movie") {
-                                        TMDBClient.api.discoverMovies(
-                                            apiKey = apiKey,
-                                            page = page,
-                                            sortBy = "popularity.desc",
-                                            withGenres = selectedGenreId,
-                                            includeAdult = false
-                                        )
-                                    } else {
-                                        TMDBClient.api.discoverTV(
-                                            apiKey = apiKey,
-                                            page = page,
-                                            sortBy = "popularity.desc",
-                                            withGenres = selectedGenreId,
-                                            includeAdult = false
-                                        )
-                                    }
-                                } else {
-                                    // No genre filter - use standard endpoints
-                                    if (catalog.catalogType == "movie") {
-                                        when (catalog.catalogId) {
-                                            "popular" -> TMDBClient.api.getPopularMovies(apiKey, page = page)
-                                            "latest" -> TMDBClient.api.getLatestMovies(apiKey, page = page)
-                                            else -> TMDBClient.api.getTrendingMovies(apiKey, page = page)
-                                        }
-                                    } else {
-                                        when (catalog.catalogId) {
-                                            "popular" -> TMDBClient.api.getPopularSeries(apiKey, page = page)
-                                            "latest" -> TMDBClient.api.getLatestSeries(apiKey, page = page)
-                                            else -> TMDBClient.api.getTrendingSeries(apiKey, page = page)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        Log.d("CatalogLoad", "Page $page loaded successfully: ${response}")
-                        response
-                    } catch (e: Exception) {
-                        Log.e("CatalogLoad", "Error fetching TMDB ${catalog.catalogId} ${catalog.catalogType} page $page", e)
-                        _error.postValue("Failed to load ${catalog.catalogId} ${catalog.catalogType}: ${e.message}")
-                        null
-                    }
-                }
-            }
-            val results = deferredResults.awaitAll()
-            Log.d("CatalogLoad", "Got ${results.filterNotNull().size} non-null responses")
-            results.filterNotNull().forEach { response ->
-                val fetchedItems = if (response is TMDBMovieListResponse) {
-                    Log.d("CatalogLoad", "MovieListResponse has ${response.results.size} results")
-                    response.results.map { it.toMetaItem() }
-                } else if (response is TMDBSeriesListResponse) {
-                    Log.d("CatalogLoad", "SeriesListResponse has ${response.results.size} results")
-                    response.results.map { it.toMetaItem() }
-                } else {
-                    Log.w("CatalogLoad", "Unknown response type: ${response::class.simpleName}")
-                    emptyList()
-                }
-                Log.d("CatalogLoad", "Adding ${fetchedItems.size} items to allItems")
-                allItems.addAll(fetchedItems)
-            }
-            Log.d("CatalogLoad", "Returning ${allItems.size} total items")
-            return allItems
+            // IMDB list integration - Placeholder
+            return emptyList()
 
         } else {
+            // Local Logic (App Next Up, App Continue)
             return when (catalog.catalogId) {
                 "continue_movies" -> {
                     val currentUserId = prefsManager.getCurrentUserId() ?: "default"
@@ -1311,20 +1165,42 @@ class MainViewModel(
         val tmdbId = idStr.toIntOrNull()
 
         viewModelScope.launch {
-            try {
-                if (syncToTrakt && prefsManager.isTraktEnabled()) {
+            // 1. Scrobble to Trakt (Isolated in try-catch)
+            if (syncToTrakt && prefsManager.isTraktEnabled()) {
+                try {
                     val token = prefsManager.getTraktAccessToken()
                     if (token != null) {
                         val bearer = "Bearer $token"
-                        val body = if (item.type == "movie") {
+                        val body: TraktHistoryBody? = if (item.type == "movie") {
                             val id = item.id.removePrefix("tmdb:").toIntOrNull()
                             if (id != null) TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, id, null, null)))) else null
                         } else if (item.type == "episode") {
                             val parts = item.id.split(":")
                             if (parts.size >= 4) {
+                                // Format: tmdb:SHOW_ID:SEASON:EPISODE
+                                val showId = parts[1].toIntOrNull()
                                 val s = parts[2].toIntOrNull()
                                 val e = parts[3].toIntOrNull()
-                                if (s != null && e != null) TraktHistoryBody(episodes = listOf(TraktEpisode(s, e, 0, null, null))) else null
+
+                                if (showId != null && s != null && e != null) {
+                                    // [FIX] Use nested Show -> Season -> Episode structure
+                                    // This gives Trakt the context it needs (which show this episode belongs to)
+                                    TraktHistoryBody(
+                                        shows = listOf(
+                                            TraktShow(
+                                                title = item.name, // Optional
+                                                year = null,
+                                                ids = TraktIds(0, showId, null, null),
+                                                seasons = listOf(
+                                                    TraktSeason(
+                                                        number = s,
+                                                        episodes = listOf(TraktEpisode(season = s, number = e))
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                } else null
                             } else null
                         } else null
 
@@ -1339,7 +1215,7 @@ class MainViewModel(
                                     TraktClient.api.getPausedEpisodes(bearer, Secrets.TRAKT_CLIENT_ID)
                                 }
 
-                                // Find matching playback item by TMDB ID
+                                // Find matching playback item
                                 val matchingPlayback = playbackItems.find { playbackItem ->
                                     when (item.type) {
                                         "movie" -> playbackItem.movie?.ids?.tmdb == tmdbId
@@ -1363,14 +1239,18 @@ class MainViewModel(
                                     TraktClient.api.removePlaybackProgress(bearer, Secrets.TRAKT_CLIENT_ID, playbackId)
                                 }
                             } catch (e: Exception) {
-                                // Log but don't fail - the item is still marked as watched locally
-                                e.printStackTrace()
+                                // Ignore playback removal errors
                             }
                         }
                     }
+                } catch (e: Exception) {
+                    Log.e("MainViewModel", "Trakt sync failed in markAsWatched: ${e.message}")
+                    // Don't block local update if Trakt fails
                 }
+            }
 
-                // Update Local DB
+            // 2. Update Local DB (Always runs)
+            try {
                 if (item.type == "series" && tmdbId != null && apiKey.isNotEmpty()) {
                     val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
                     details.seasons?.forEach { season ->
@@ -1394,14 +1274,12 @@ class MainViewModel(
                     catalogRepository.saveWatchProgress(WatchProgress(currentUserId, item.id, item.type, 0, 0, true, System.currentTimeMillis(), item.name, item.poster, item.background, null, null, null))
                 }
 
-                // Refresh: Explicitly clear cache and force reload
+                // 3. REFRESH UI
                 loadedContentCache.clear()
-                // PERFORMANCE: Invalidate session cache since watch status changed
                 sessionCache.invalidateAll(currentUserId)
                 lastRequestedCatalog?.let {
                     loadContentForCatalog(it, isInitialLoad = true)
                 }
-                // Also reload home to update Next Up
                 loadHomeContent()
 
                 _isItemWatched.postValue(true)
@@ -1419,22 +1297,30 @@ class MainViewModel(
 
         viewModelScope.launch {
             try {
+                // 1. Trakt Sync Removal (Isolated in try-catch)
                 if (syncToTrakt && prefsManager.isTraktEnabled() && tmdbId != null) {
-                    val token = prefsManager.getTraktAccessToken()
-                    if (token != null) {
-                        val bearer = "Bearer $token"
-                        val body = if (item.type == "movie") {
-                            TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, tmdbId, null, null))))
-                        } else null
+                    try {
+                        val token = prefsManager.getTraktAccessToken()
+                        if (token != null) {
+                            val bearer = "Bearer $token"
+                            val body = if (item.type == "movie") {
+                                TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, tmdbId, null, null))))
+                            } else null
 
-                        if (body != null) TraktClient.api.removeFromHistory(bearer, Secrets.TRAKT_CLIENT_ID, body)
+                            if (body != null) TraktClient.api.removeFromHistory(bearer, Secrets.TRAKT_CLIENT_ID, body)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MainViewModel", "Trakt sync failed in clearWatchedStatus: ${e.message}")
+                        // Proceed to local update
                     }
                 }
 
+                // 2. Local Update (Always runs)
                 catalogRepository.updateWatchedStatus(currentUserId, item.id, false)
                 
                 // Refresh: Explicitly clear cache and force reload
                 loadedContentCache.clear()
+                sessionCache.invalidateAll(currentUserId)
                 lastRequestedCatalog?.let { loadContentForCatalog(it, isInitialLoad = true) }
                 loadHomeContent()
 
