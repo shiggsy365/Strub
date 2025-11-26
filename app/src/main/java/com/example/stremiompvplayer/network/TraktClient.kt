@@ -172,15 +172,7 @@ data class TraktPlaybackItem(
 )
 
 data class TraktMovie(val title: String, val year: Int?, val ids: TraktIds)
-
-// [FIX] Added seasons field to TraktShow to allow nested sync history
-data class TraktShow(
-    val title: String,
-    val year: Int?,
-    val ids: TraktIds,
-    val seasons: List<TraktSeason>? = null
-)
-
+data class TraktShow(val title: String, val year: Int?, val ids: TraktIds)
 data class TraktSeason(val number: Int, val episodes: List<TraktEpisode>)
 data class TraktEpisode(val season: Int = 1, val number: Int, val plays: Int = 0, val last_watched_at: String? = null, val ids: TraktIds? = null)
 data class TraktIds(val trakt: Int, val tmdb: Int?, val imdb: String?, val slug: String?)
