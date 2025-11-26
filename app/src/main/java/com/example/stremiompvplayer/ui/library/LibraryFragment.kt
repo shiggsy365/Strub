@@ -46,11 +46,8 @@ class LibraryFragment : Fragment() {
     }
 
     private lateinit var contentAdapter: PosterAdapter
-    private lateinit var sidebarAdapter: LibrarySidebarAdapter
     private var currentSelectedItem: MetaItem? = null
     private var currentType = "movie"
-    private var currentSortBy = "dateAdded"
-    private var sortAscending = false
 
     private var detailsUpdateJob: Job? = null
 
@@ -74,15 +71,72 @@ class LibraryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         currentType = arguments?.getString(ARG_TYPE) ?: "movie"
 
+        setupUI()
         setupAdapters()
         setupObservers()
-        setupSidebar()
-        applyFiltersAndSort()
+        setupKeyHandling()
+        loadLibrary()
     }
 
     override fun onResume() {
         super.onResume()
         currentSelectedItem?.let { updateDetailsPane(it) }
+    }
+
+    private fun setupUI() {
+        // Setup Movies/Series dropdown
+        val dropdownMediaType = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
+        dropdownMediaType?.apply {
+            // Set initial text based on current type
+            text = if (currentType == "series") "Series" else "Movies"
+
+            // Handle dropdown clicks
+            setOnClickListener { view ->
+                val contextWrapper = android.view.ContextThemeWrapper(
+                    requireContext(),
+                    android.R.style.Theme_DeviceDefault_Light_NoActionBar
+                )
+                val popup = android.widget.PopupMenu(contextWrapper, view)
+                popup.menu.add("Movies")
+                popup.menu.add("Series")
+
+                popup.setOnMenuItemClickListener { menuItem ->
+                    val newType = if (menuItem.title == "Series") "series" else "movie"
+                    if (newType != currentType) {
+                        currentType = newType
+                        dropdownMediaType.text = menuItem.title
+                        loadLibrary()
+                    }
+                    true
+                }
+                popup.show()
+            }
+        }
+    }
+
+    private fun setupKeyHandling() {
+        // Make posterCarousel focusable to receive key events
+        binding.posterCarousel.isFocusable = true
+        binding.posterCarousel.isFocusableInTouchMode = true
+
+        // Set key listener for up navigation
+        binding.root.setOnKeyListener { _, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    android.view.KeyEvent.KEYCODE_DPAD_UP -> {
+                        val focusedChild = binding.rvContent.focusedChild
+                        if (focusedChild != null) {
+                            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                            return@setOnKeyListener true
+                        }
+                        false
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
     }
 
     private fun setupAdapters() {
@@ -104,7 +158,8 @@ class LibraryFragment : Fragment() {
             }
         )
 
-        binding.rvContent.layoutManager = com.example.stremiompvplayer.utils.AutoFitGridLayoutManager(requireContext(), 140)
+        // Horizontal scrolling for Netflix-style poster carousel
+        binding.rvContent.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         binding.rvContent.adapter = contentAdapter
 
         binding.rvContent.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
@@ -117,7 +172,7 @@ class LibraryFragment : Fragment() {
                             if (item != null) {
                                 detailsUpdateJob?.cancel()
                                 detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
-                                    delay(300) // PERFORMANCE: Reduced from 1000ms for snappier UX
+                                    delay(300) // PERFORMANCE: Reduced delay for snappier UX
                                     if (isAdded) {
                                         updateDetailsPane(item)
                                     }
@@ -155,6 +210,19 @@ class LibraryFragment : Fragment() {
         }
     }
 
+    private fun loadLibrary() {
+        val userId = SharedPreferencesManager.getInstance(requireContext()).getCurrentUserId()
+        if (userId != null) {
+            viewModel.loadLibraryByType(userId, currentType)
+            updateCurrentListLabel("My Library")
+        }
+    }
+
+    private fun updateCurrentListLabel(labelText: String) {
+        val label = binding.root.findViewById<android.widget.TextView>(R.id.currentListLabel)
+        label?.text = labelText
+    }
+
     private fun updateItemUI(item: MetaItem, isWatched: Boolean) {
         item.isWatched = isWatched
         item.progress = if (isWatched) item.duration else 0
@@ -163,42 +231,6 @@ class LibraryFragment : Fragment() {
         if (position != -1) {
             contentAdapter.notifyItemChanged(position)
         }
-    }
-    private fun setupSidebar() {
-        sidebarAdapter = LibrarySidebarAdapter { item ->
-            handleFilterClick(item)
-        }
-        binding.rvLibrarySidebar.layoutManager = LinearLayoutManager(context)
-        binding.rvLibrarySidebar.adapter = sidebarAdapter
-        updateSidebarItems()
-    }
-
-    private fun updateSidebarItems() {
-        val arrow = if (sortAscending) "↑" else "↓"
-        val items = listOf(
-            LibraryFilterOption("dateAdded", "Sort: Date Added" + if (currentSortBy == "dateAdded") " $arrow" else "", currentSortBy == "dateAdded"),
-            LibraryFilterOption("releaseDate", "Sort: Release Date" + if (currentSortBy == "releaseDate") " $arrow" else "", currentSortBy == "releaseDate"),
-            LibraryFilterOption("title", "Sort: Title" + if (currentSortBy == "title") " $arrow" else "", currentSortBy == "title"),
-            LibraryFilterOption("genre", "All Genres", false)
-        )
-        sidebarAdapter.submitList(items)
-    }
-
-    private fun handleFilterClick(item: LibraryFilterOption) {
-        if (item.id == "genre") return
-
-        if (currentSortBy == item.id) {
-            sortAscending = !sortAscending
-        } else {
-            currentSortBy = item.id
-            sortAscending = false
-        }
-        updateSidebarItems()
-        applyFiltersAndSort()
-    }
-
-    private fun applyFiltersAndSort() {
-        viewModel.filterAndSortLibrary(currentType, null, currentSortBy, sortAscending)
     }
 
     private fun updateDetailsPane(item: MetaItem) {
