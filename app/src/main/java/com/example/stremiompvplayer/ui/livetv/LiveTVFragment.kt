@@ -178,6 +178,11 @@ class LiveTVFragment : Fragment() {
         binding.rvTVGuide.layoutManager = LinearLayoutManager(context)
         binding.rvTVGuide.adapter = tvGuideAdapter
 
+        // Ensure RecyclerView retains focus when scrolling
+        binding.rvTVGuide.isFocusable = true
+        binding.rvTVGuide.isFocusableInTouchMode = true
+        binding.rvTVGuide.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+
         // Add focus listener to update details pane when channel is focused
         binding.rvTVGuide.addOnChildAttachStateChangeListener(object : androidx.recyclerview.widget.RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
@@ -195,13 +200,28 @@ class LiveTVFragment : Fragment() {
                     }
                 }
 
-                // Handle D-pad right to expand TV guide
+                // Handle D-pad keys - ensure focus stays in channel list
                 view.setOnKeyListener { v, keyCode, event ->
-                    if (event.action == android.view.KeyEvent.ACTION_DOWN &&
-                        keyCode == android.view.KeyEvent.KEYCODE_DPAD_RIGHT) {
-                        // Move focus to details card to show expanded guide
-                        binding.detailsCard.requestFocus()
-                        true
+                    if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                        when (keyCode) {
+                            android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                                // Move focus to details card to show expanded guide
+                                binding.detailsCard.requestFocus()
+                                true
+                            }
+                            android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
+                                // Prevent focus from moving to sidebar when scrolling channels
+                                // Only allow left navigation if we're not at the leftmost position
+                                false  // Let RecyclerView handle scrolling
+                            }
+                            android.view.KeyEvent.KEYCODE_DPAD_UP,
+                            android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                // Let RecyclerView handle vertical scrolling
+                                // This ensures focus stays within the channel list
+                                false
+                            }
+                            else -> false
+                        }
                     } else {
                         false
                     }

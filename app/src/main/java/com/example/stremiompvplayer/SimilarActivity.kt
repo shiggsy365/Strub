@@ -27,7 +27,9 @@ class SimilarActivity : AppCompatActivity() {
     }
 
     private lateinit var posterAdapter: PosterAdapter
-    private var similarItems: List<MetaItem> = emptyList()
+    private var movieResults = listOf<MetaItem>()
+    private var seriesResults = listOf<MetaItem>()
+    private var currentResultIndex = 0  // 0 for movies, 1 for series
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,18 +68,83 @@ class SimilarActivity : AppCompatActivity() {
         binding.btnBack.setOnClickListener {
             finish()
         }
+
+        // Set up key handling for cycling
+        setupKeyHandling()
+    }
+
+    private fun setupKeyHandling() {
+        binding.rvContent.setOnKeyListener { _, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        val focusedChild = binding.rvContent.focusedChild
+                        if (focusedChild != null && (movieResults.isNotEmpty() || seriesResults.isNotEmpty())) {
+                            cycleToNextResultType()
+                            return@setOnKeyListener true
+                        }
+                        false
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
+    }
+
+    private fun cycleToNextResultType() {
+        val hasMovies = movieResults.isNotEmpty()
+        val hasSeries = seriesResults.isNotEmpty()
+
+        if (!hasMovies && !hasSeries) return
+
+        // Cycle between movies (0) and series (1)
+        if (hasMovies && hasSeries) {
+            currentResultIndex = (currentResultIndex + 1) % 2
+        } else if (hasMovies) {
+            currentResultIndex = 0
+        } else {
+            currentResultIndex = 1
+        }
+
+        updateDisplayedResults()
+    }
+
+    private fun updateDisplayedResults() {
+        val results = if (currentResultIndex == 0 && movieResults.isNotEmpty()) {
+            movieResults
+        } else if (currentResultIndex == 1 && seriesResults.isNotEmpty()) {
+            seriesResults
+        } else if (movieResults.isNotEmpty()) {
+            movieResults
+        } else {
+            seriesResults
+        }
+
+        posterAdapter.updateData(results)
+        if (results.isNotEmpty()) {
+            updateDetailPane(results[0])
+        }
+
+        // Update title to show current type
+        val originalTitle = intent.getStringExtra("title") ?: ""
+        val typeLabel = if (currentResultIndex == 0) "Movies" else "Series"
+        binding.tvTitle.text = "Similar $typeLabel - $originalTitle"
     }
 
     private fun loadSimilarContent(metaId: String, type: String) {
         lifecycleScope.launch {
-            val items = viewModel.fetchSimilarContent(metaId, type)
-            similarItems = items
-            posterAdapter.updateData(items)
+            // Fetch similar content for both movies and series
+            val allItems = viewModel.fetchSimilarContent(metaId, type)
 
-            // Update detail pane with first item if available
-            if (items.isNotEmpty()) {
-                updateDetailPane(items[0])
-            }
+            // Split into movies and series
+            movieResults = allItems.filter { it.type == "movie" }
+            seriesResults = allItems.filter { it.type == "series" || it.type == "tv" }
+
+            // Start with movies if available, otherwise series
+            currentResultIndex = if (movieResults.isNotEmpty()) 0 else 1
+            updateDisplayedResults()
         }
     }
 

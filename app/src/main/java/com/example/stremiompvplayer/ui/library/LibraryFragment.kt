@@ -47,7 +47,9 @@ class LibraryFragment : Fragment() {
 
     private lateinit var contentAdapter: PosterAdapter
     private var currentSelectedItem: MetaItem? = null
-    private var currentType = "movie"
+    private var allLibraryItems = listOf<MetaItem>()  // Combined movie + series library
+    private var currentCatalogIndex = 0
+    private var currentCatalogs = listOf<Pair<String, List<MetaItem>>>()  // (label, items) pairs
 
     private var detailsUpdateJob: Job? = null
 
@@ -69,9 +71,7 @@ class LibraryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        currentType = arguments?.getString(ARG_TYPE) ?: "movie"
 
-        setupMediaTypeToggle()
         setupAdapters()
         setupObservers()
         setupKeyHandling()
@@ -83,37 +83,25 @@ class LibraryFragment : Fragment() {
         currentSelectedItem?.let { updateDetailsPane(it) }
     }
 
-    private fun setupMediaTypeToggle() {
-        val dropdown = binding.root.findViewById<TextView>(R.id.dropdownMediaType)
-        dropdown?.text = if (currentType == "movie") "Movies" else "Series"
-        dropdown?.setOnClickListener {
-            val popup = PopupMenu(requireContext(), it)
-            popup.menu.add("Movies")
-            popup.menu.add("Series")
-            popup.setOnMenuItemClickListener { menuItem ->
-                val newType = if (menuItem.title == "Movies") "movie" else "series"
-                if (newType != currentType) {
-                    currentType = newType
-                    dropdown.text = menuItem.title
-
-                    // Reload library for new type
-                    loadLibrary()
-                }
-                true
-            }
-            popup.show()
-        }
-    }
+    // Dropdown removed - now browsing both movies and series together
 
     private fun setupKeyHandling() {
         // Make posterCarousel focusable to receive key events
         binding.posterCarousel.isFocusable = true
         binding.posterCarousel.isFocusableInTouchMode = true
 
-        // Set key listener for up navigation
+        // Set key listener for up/down navigation
         binding.root.setOnKeyListener { _, keyCode, event ->
             if (event.action == android.view.KeyEvent.ACTION_DOWN) {
                 when (keyCode) {
+                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        val focusedChild = binding.rvContent.focusedChild
+                        if (focusedChild != null) {
+                            cycleToNextList()
+                            return@setOnKeyListener true
+                        }
+                        false
+                    }
                     android.view.KeyEvent.KEYCODE_DPAD_UP -> {
                         val focusedChild = binding.rvContent.focusedChild
                         if (focusedChild != null) {
@@ -202,8 +190,20 @@ class LibraryFragment : Fragment() {
     }
 
     private fun loadLibrary() {
-        viewModel.filterAndSortLibrary(currentType)
-        updateCurrentListLabel("My Library")
+        // Load both movie and series libraries
+        viewModel.filterAndSortLibrary("movie")
+        viewModel.filterAndSortLibrary("series")
+    }
+
+    private fun cycleToNextList() {
+        if (currentCatalogs.isEmpty()) return
+        currentCatalogIndex = (currentCatalogIndex + 1) % currentCatalogs.size
+        val (label, items) = currentCatalogs[currentCatalogIndex]
+        updateCurrentListLabel(label)
+        contentAdapter.updateData(items)
+        if (items.isNotEmpty()) {
+            updateDetailsPane(items[0])
+        }
     }
 
     private fun updateCurrentListLabel(labelText: String) {
@@ -454,19 +454,37 @@ class LibraryFragment : Fragment() {
             }
         }
 
-        val liveData = if (currentType == "movie") viewModel.filteredLibraryMovies else viewModel.filteredLibrarySeries
+        // Observe both movie and series libraries
+        viewModel.filteredLibraryMovies.observe(viewLifecycleOwner) { movieItems ->
+            viewModel.filteredLibrarySeries.observe(viewLifecycleOwner) { seriesItems ->
+                // Create catalogs for cycling
+                currentCatalogs = buildList {
+                    if (movieItems.isNotEmpty()) {
+                        add(Pair("My Movies", movieItems))
+                    }
+                    if (seriesItems.isNotEmpty()) {
+                        add(Pair("My Series", seriesItems))
+                    }
+                }
 
-        liveData.observe(viewLifecycleOwner) { items ->
-            contentAdapter.updateData(items)
+                // Show first catalog by default
+                if (currentCatalogs.isNotEmpty()) {
+                    currentCatalogIndex = 0
+                    val (label, items) = currentCatalogs[0]
+                    updateCurrentListLabel(label)
+                    contentAdapter.updateData(items)
 
-            if (items.isEmpty()) {
-                binding.emptyText.visibility = View.VISIBLE
-                binding.rvContent.visibility = View.GONE
-            } else {
-                binding.emptyText.visibility = View.GONE
-                binding.rvContent.visibility = View.VISIBLE
-                if (items.isNotEmpty()) {
-                    updateDetailsPane(items[0])
+                    if (items.isNotEmpty()) {
+                        binding.emptyText.visibility = View.GONE
+                        binding.rvContent.visibility = View.VISIBLE
+                        updateDetailsPane(items[0])
+                    } else {
+                        binding.emptyText.visibility = View.VISIBLE
+                        binding.rvContent.visibility = View.GONE
+                    }
+                } else {
+                    binding.emptyText.visibility = View.VISIBLE
+                    binding.rvContent.visibility = View.GONE
                 }
             }
         }

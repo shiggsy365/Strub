@@ -362,25 +362,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
-            // ... (existing back handling)
+            // Allow specific fragments to intercept back press
             if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
 
-            val focus = currentFocus
-            val isFocusOnMenu = focus == binding.btnAppLogo ||
-                    focus == binding.chipHome ||
-                    focus == binding.chipDiscover ||
-                    focus == binding.chipLibrary ||
-                    focus == binding.chipSearch ||
-                    focus == binding.chipLiveTV ||
-                    focus == binding.chipMore
-
-            if (isFocusOnMenu) {
-                startActivity(Intent(this, UserSelectionActivity::class.java))
-                finish()
-                return true
-            }
-
+            // Use navigation stack for back navigation - NEVER exit app
             if (navigationStack.isNotEmpty()) {
                 val (previousKey, previousFragment) = navigationStack.removeLast()
                 currentFragmentKey = previousKey
@@ -393,16 +379,14 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
 
-            // If on sidebar, exit
-            val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
-            if (isViewInSidebar(focus ?: binding.root, sidebar)) {
-                // Exit app or go to user selection
-                startActivity(Intent(this, UserSelectionActivity::class.java))
-                finish()
+            // If navigation stack is empty, go to Home fragment
+            if (currentFragment !is HomeFragment) {
+                loadFragment(HomeFragment.newInstance(), addToStack = false)
                 return true
             }
 
-            // Focus sidebar
+            // If already on Home, show sidebar instead of exiting
+            val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
             showSidebar(sidebar)
             return true
         }

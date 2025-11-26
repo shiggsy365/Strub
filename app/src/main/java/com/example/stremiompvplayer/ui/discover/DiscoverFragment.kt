@@ -46,16 +46,14 @@ class DiscoverFragment : Fragment() {
     }
 
     private lateinit var contentAdapter: PosterAdapter
-    private var currentType = "movie"
     private var currentSelectedItem: MetaItem? = null
-    private var currentCatalogs = listOf<UserCatalog>()
+    private var allCatalogs = listOf<UserCatalog>()  // Combined movie + series catalogs
     private var currentCatalogIndex = 0
     private var isShowingGenre = false
 
     private var detailsUpdateJob: Job? = null
     private val focusMemoryManager = FocusMemoryManager.getInstance()
-    private val fragmentKey: String
-        get() = focusMemoryManager.getFragmentKey("discover", currentType)
+    private val fragmentKey: String = "discover"
 
     // Drill-down navigation state
     private enum class DrillDownLevel { CATALOG, SERIES, SEASON }
@@ -81,41 +79,13 @@ class DiscoverFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        currentType = arguments?.getString(ARG_TYPE) ?: "movie"
-        setupMediaTypeToggle()
         setupAdapters()
         setupObservers()
         loadCatalogs()
         setupKeyHandling()
     }
 
-    private fun setupMediaTypeToggle() {
-        val dropdown = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
-        dropdown?.text = if (currentType == "movie") "Movies" else "Series"
-        dropdown?.setOnClickListener {
-            val popup = PopupMenu(requireContext(), it)
-            popup.menu.add("Movies")
-            popup.menu.add("Series")
-            popup.setOnMenuItemClickListener { menuItem ->
-                val newType = if (menuItem.title == "Movies") "movie" else "series"
-                if (newType != currentType) {
-                    currentType = newType
-                    dropdown.text = menuItem.title
-
-                    // Reset drill-down state
-                    currentDrillDownLevel = DrillDownLevel.CATALOG
-                    currentSeriesId = null
-                    currentSeasonNumber = null
-
-                    // Reload catalogs for new type
-                    loadCatalogs()
-                    updatePlayButtonVisibility()
-                }
-                true
-            }
-            popup.show()
-        }
-    }
+    // Dropdown removed - now browsing both movies and series together
 
     private fun setupKeyHandling() {
         // Make posterCarousel focusable to receive key events
@@ -233,12 +203,8 @@ class DiscoverFragment : Fragment() {
         currentSeriesId = null
         currentSeasonNumber = null
 
-        // Perform search based on current media type
-        when (currentType) {
-            "movie" -> viewModel.searchMovies(query)
-            "series" -> viewModel.searchSeries(query)
-            else -> viewModel.searchTMDB(query)
-        }
+        // Perform dual search (movies + series)
+        viewModel.searchTMDB(query)
 
         // Update label to show search query
         updateCurrentListLabel("Search: $query")
@@ -383,8 +349,8 @@ class DiscoverFragment : Fragment() {
     private fun updatePlayButtonVisibility() {
         val playButton = binding.root.findViewById<View>(R.id.btnPlay)
         val shouldShowPlay = when {
-            // Always show for movies at catalog level
-            currentDrillDownLevel == DrillDownLevel.CATALOG && currentType == "movie" -> true
+            // Show for movies at catalog level
+            currentDrillDownLevel == DrillDownLevel.CATALOG && currentSelectedItem?.type == "movie" -> true
             // Show for episodes (when drilled down to season level)
             currentDrillDownLevel == DrillDownLevel.SEASON -> true
             // Hide for series and seasons (not yet at playable level)
@@ -503,15 +469,20 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun loadCatalogs() {
-        // Fetch genres for the current type
-        viewModel.fetchGenres(currentType)
+        // Fetch genres for both movies and series
+        viewModel.fetchGenres("movie")
+        viewModel.fetchGenres("series")
 
-        viewModel.getDiscoverCatalogs(currentType).observe(viewLifecycleOwner) { catalogs ->
-            currentCatalogs = catalogs
-            currentCatalogIndex = 0
-            if (catalogs.isNotEmpty()) {
-                updateCurrentListLabel(catalogs[0].displayName)
-                viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
+        // Load both movie and series catalogs
+        viewModel.getDiscoverCatalogs("movie").observe(viewLifecycleOwner) { movieCatalogs ->
+            viewModel.getDiscoverCatalogs("series").observe(viewLifecycleOwner) { seriesCatalogs ->
+                // Combine movie and series catalogs
+                allCatalogs = movieCatalogs + seriesCatalogs
+                currentCatalogIndex = 0
+                if (allCatalogs.isNotEmpty()) {
+                    updateCurrentListLabel(allCatalogs[0].displayName)
+                    viewModel.loadContentForCatalog(allCatalogs[0], isInitialLoad = true)
+                }
             }
         }
     }
@@ -522,22 +493,22 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun cycleToNextList() {
-        if (currentCatalogs.isEmpty()) return
+        if (allCatalogs.isEmpty()) return
 
         // Reset drill-down state when cycling lists
         currentDrillDownLevel = DrillDownLevel.CATALOG
         currentSeriesId = null
         currentSeasonNumber = null
 
-        currentCatalogIndex = (currentCatalogIndex + 1) % currentCatalogs.size
-        val nextCatalog = currentCatalogs[currentCatalogIndex]
+        currentCatalogIndex = (currentCatalogIndex + 1) % allCatalogs.size
+        val nextCatalog = allCatalogs[currentCatalogIndex]
         updateCurrentListLabel(nextCatalog.displayName)
         viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
         isShowingGenre = false
         updatePlayButtonVisibility()
     }
 
-    private fun loadGenreList(genreId: Int, genreName: String) {
+    private fun loadGenreList(genreId: Int, genreName: String, type: String = "movie") {
         // Reset drill-down state when loading genre
         currentDrillDownLevel = DrillDownLevel.CATALOG
         currentSeriesId = null
@@ -549,7 +520,7 @@ class DiscoverFragment : Fragment() {
         // Fetch popular movies/series for this genre
         lifecycleScope.launch {
             try {
-                val content = viewModel.fetchPopularByGenre(currentType, genreId)
+                val content = viewModel.fetchPopularByGenre(type, genreId)
                 contentAdapter.updateData(content)
                 if (content.isNotEmpty()) {
                     updateDetailsPane(content[0])
@@ -670,21 +641,50 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun showGenreSelectionDialog() {
-        val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
-        if (genres == null || genres.isEmpty()) {
+        // Show combined movie and series genres
+        val movieGenres = viewModel.movieGenres.value ?: emptyList()
+        val tvGenres = viewModel.tvGenres.value ?: emptyList()
+
+        if (movieGenres.isEmpty() && tvGenres.isEmpty()) {
             Toast.makeText(requireContext(), "Loading genres...", Toast.LENGTH_SHORT).show()
             return
         }
 
         val popupMenu = PopupMenu(requireContext(), binding.rvContent)
-        genres.forEach { genre ->
-            popupMenu.menu.add(genre.name)
+
+        // Add movie genres
+        if (movieGenres.isNotEmpty()) {
+            popupMenu.menu.add(0, -1, 0, "--- Movies ---").isEnabled = false
+            movieGenres.forEach { genre ->
+                popupMenu.menu.add(0, genre.id, 0, genre.name)
+            }
+        }
+
+        // Add series genres
+        if (tvGenres.isNotEmpty()) {
+            popupMenu.menu.add(1, -1, 0, "--- Series ---").isEnabled = false
+            tvGenres.forEach { genre ->
+                popupMenu.menu.add(1, genre.id + 10000, 0, genre.name)  // Offset ID to distinguish
+            }
         }
 
         popupMenu.setOnMenuItemClickListener { menuItem ->
-            val selectedGenre = genres.find { it.name == menuItem.title.toString() }
-            selectedGenre?.let {
-                loadGenreList(it.id, it.name)
+            if (menuItem.itemId == -1) return@setOnMenuItemClickListener false
+
+            // Check if it's a movie or series genre
+            if (menuItem.itemId >= 10000) {
+                // Series genre
+                val genreId = menuItem.itemId - 10000
+                val selectedGenre = tvGenres.find { it.id == genreId }
+                selectedGenre?.let {
+                    loadGenreList(it.id, it.name, "series")
+                }
+            } else {
+                // Movie genre
+                val selectedGenre = movieGenres.find { it.id == menuItem.itemId }
+                selectedGenre?.let {
+                    loadGenreList(it.id, it.name, "movie")
+                }
             }
             true
         }
@@ -697,8 +697,12 @@ class DiscoverFragment : Fragment() {
             // Only update content if we're at catalog level (not drilled down)
             if (currentDrillDownLevel == DrillDownLevel.CATALOG) {
                 // Add genre selector as the last item in the carousel
-                val genres = if (currentType == "movie") viewModel.movieGenres.value else viewModel.tvGenres.value
-                val itemsWithGenres = if (genres != null && genres.isNotEmpty() && !isShowingGenre) {
+                val movieGenres = viewModel.movieGenres.value
+                val tvGenres = viewModel.tvGenres.value
+                val hasGenres = (movieGenres != null && movieGenres.isNotEmpty()) ||
+                               (tvGenres != null && tvGenres.isNotEmpty())
+
+                val itemsWithGenres = if (hasGenres && !isShowingGenre) {
                     // Create a special "Browse Genres" item
                     val genreBrowserItem = MetaItem(
                         id = "genre_browser",
