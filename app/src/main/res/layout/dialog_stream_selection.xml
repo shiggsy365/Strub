@@ -32,11 +32,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Stream List (Fixed height for 15 items, scrollable) -->
+    <!-- Stream List (Fixed height for 10 items, scrollable) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvStreams"
         android:layout_width="0dp"
-        android:layout_height="600dp"
+        android:layout_height="400dp"
         android:scrollbars="vertical"
         android:nestedScrollingEnabled="true"
         app:layout_constraintTop_toTopOf="parent"

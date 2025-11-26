@@ -91,7 +91,7 @@ class HomeFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         val currentView = view?.findFocus()
-        if (currentView != null) {
+        if (currentView != null && currentView.parent == binding.rvContent) {
             val position = binding.rvContent.getChildAdapterPosition(currentView)
             if (position != RecyclerView.NO_POSITION) {
                 focusMemoryManager.saveFocus(fragmentKey, currentView, position)
