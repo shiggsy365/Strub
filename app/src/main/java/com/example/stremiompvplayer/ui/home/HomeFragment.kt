@@ -246,11 +246,11 @@ class HomeFragment : Fragment() {
         currentSelectedItem = item
         Glide.with(this).load(item.background ?: item.poster).into(binding.pageBackground)
         binding.detailTitle.text = item.name
-        binding.detailTitle.visibility = View.GONE
-        binding.detailLogo.visibility = View.GONE
+        binding.detailTitle.visibility = View.VISIBLE
         binding.detailDescription.text = item.description ?: "No description available."
         val formattedDate = try { item.releaseDate?.let { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).parse(it)?.let { d -> java.text.SimpleDateFormat("yyyy", java.util.Locale.getDefault()).format(d) } } } catch (e: Exception) { item.releaseDate }
         binding.detailDate.text = formattedDate ?: ""
+        binding.detailDate.visibility = if (formattedDate.isNullOrEmpty()) View.GONE else View.VISIBLE
         if (item.type == "episode") {
             val parts = item.id.split(":")
             if (parts.size >= 4) {

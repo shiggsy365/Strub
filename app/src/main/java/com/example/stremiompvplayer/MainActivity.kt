@@ -112,6 +112,11 @@ class MainActivity : AppCompatActivity() {
     private fun setupNetflixNavigation() {
         val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
 
+        sidebar.findViewById<View>(R.id.appLogo).setOnClickListener {
+            startActivity(Intent(this, UserSelectionActivity::class.java))
+            finish()
+        }
+
         sidebar.findViewById<View>(R.id.sidebarHome).setOnClickListener {
             loadFragment(HomeFragment.newInstance())
         }
