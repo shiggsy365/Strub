@@ -364,12 +364,16 @@ class LibraryFragment : Fragment() {
 
         val streamAdapter = com.example.stremiompvplayer.adapters.StreamAdapter { stream ->
             dialog.dismiss()
+            viewModel.clearStreams()
             playStream(stream)
         }
         rvStreams.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
         rvStreams.adapter = streamAdapter
 
-        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+            viewModel.clearStreams()
+        }
 
         progressBar.visibility = View.VISIBLE
         rvStreams.visibility = View.GONE
@@ -384,12 +388,17 @@ class LibraryFragment : Fragment() {
                 dialog.dismiss()
             } else {
                 streamAdapter.submitList(streams)
+                // Focus first item after list is populated
+                rvStreams.post {
+                    rvStreams.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }
             }
         }
         viewModel.streams.observe(viewLifecycleOwner, streamObserver)
 
         dialog.setOnDismissListener {
             viewModel.streams.removeObserver(streamObserver)
+            viewModel.clearStreams()
         }
 
         dialog.show()

@@ -314,8 +314,11 @@ class MainActivity : AppCompatActivity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
 
-        // 1. Allow HomeFragment to intercept keys (Fixes RecyclerView Down Press)
+        // 1. Allow HomeFragment and DiscoverFragment to intercept keys (Fixes RecyclerView Down Press)
         if (currentFragment is HomeFragment) {
+            if (currentFragment.handleKeyDown(keyCode, event)) return true
+        }
+        if (currentFragment is DiscoverFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
 

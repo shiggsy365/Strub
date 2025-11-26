@@ -1430,6 +1430,11 @@ class MainViewModel(
         }
     }
 
+    fun clearStreams() {
+        _streams.value = emptyList()
+        Log.d("MainViewModel", "Streams cleared from memory")
+    }
+
     private suspend fun getImdbIdForMovie(itemId: String): String? {
         return try {
             if (apiKey.isEmpty()) return null
@@ -2031,6 +2036,8 @@ class MainViewModel(
             try {
                 val idParts = meta.id.removePrefix("tmdb:").split(":")
                 val tmdbId = idParts[0].toIntOrNull()
+                Log.d("LogoFetch", "Fetching logo for ${meta.name} (${meta.type}) - TMDB ID: $tmdbId, apiKey present: ${apiKey.isNotEmpty()}")
+
                 if (tmdbId != null && apiKey.isNotEmpty()) {
                     // For episodes, use TV images API; for movies use movie images; for series use TV images
                     val images = if (meta.type == "movie") {
@@ -2039,12 +2046,28 @@ class MainViewModel(
                         // For both "series" and "episode", use TV images with the show ID
                         TMDBClient.api.getTVImages(tmdbId, apiKey)
                     }
+
+                    Log.d("LogoFetch", "Total logos received: ${images.logos.size}")
+                    images.logos.forEach {
+                        Log.d("LogoFetch", "Logo: ${it.file_path}, language: ${it.iso_639_1}")
+                    }
+
                     // Filter for English logos (iso_639_1 == "en" or null for language-neutral logos)
                     val enLogos = images.logos.filter { it.iso_639_1 == "en" || it.iso_639_1 == null }
+                    Log.d("LogoFetch", "English/neutral logos: ${enLogos.size}")
+
                     val logo = enLogos.firstOrNull()
-                    _currentLogo.postValue(logo?.let { "https://image.tmdb.org/t/p/w300${it.file_path}" })
-                } else { _currentLogo.postValue(null) }
-            } catch (e: Exception) { _currentLogo.postValue(null) }
+                    val logoUrl = logo?.let { "https://image.tmdb.org/t/p/w300${it.file_path}" }
+                    Log.d("LogoFetch", "Final logo URL: $logoUrl")
+                    _currentLogo.postValue(logoUrl)
+                } else {
+                    Log.w("LogoFetch", "Cannot fetch logo: tmdbId=$tmdbId, apiKey present=${apiKey.isNotEmpty()}")
+                    _currentLogo.postValue(null)
+                }
+            } catch (e: Exception) {
+                Log.e("LogoFetch", "Error fetching logo for ${meta.name}", e)
+                _currentLogo.postValue(null)
+            }
         }
     }
 
