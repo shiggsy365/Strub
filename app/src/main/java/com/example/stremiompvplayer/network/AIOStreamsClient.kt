@@ -31,34 +31,28 @@ object AIOStreamsClient {
         .add(KotlinJsonAdapterFactory())
         .build()
 
-    // OPTIMIZATION: Singleton Client
-    // We use 'by lazy' to create this once and reuse it for the app's lifetime.
-    // This keeps the connection pool alive (SSL handshakes are cached).
-    private val client: OkHttpClient by lazy {
-        OkHttpClient.Builder()
+    private fun createClient(): OkHttpClient {
+        return OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
-            // Optional: Add logging interceptor here if needed for debug
             .build()
     }
 
-    // OPTIMIZATION: Singleton Retrofit instance
-    // Uses a dummy base URL because we override it with @Url in the interface
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl("https://dummy.base/") 
+    private fun createRetrofit(baseUrl: String, client: OkHttpClient): Retrofit {
+        // Ensure base URL ends with /
+        val normalizedUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+
+        return Retrofit.Builder()
+            .baseUrl(normalizedUrl)
             .client(client)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
     }
 
-    // Cached API implementation
-    private val api: AIOStreamsApiService by lazy {
-        retrofit.create(AIOStreamsApiService::class.java)
-    }
-
     /**
      * Extract base URL from manifest URL
+     * Example: https://aiostreams.shiggsy.co.uk/stremio/.../manifest.json
+     * Returns: https://aiostreams.shiggsy.co.uk/stremio/...
      */
     private fun extractBaseUrl(manifestUrl: String): String {
         return manifestUrl.removeSuffix("/manifest.json").removeSuffix("manifest.json")
@@ -66,6 +60,7 @@ object AIOStreamsClient {
 
     /**
      * Build stream URL for movies
+     * Format: {base_url}/stream/movie/{imdb_id}.json
      */
     fun buildMovieStreamUrl(manifestUrl: String, imdbId: String): String {
         val baseUrl = extractBaseUrl(manifestUrl)
@@ -74,6 +69,7 @@ object AIOStreamsClient {
 
     /**
      * Build stream URL for series
+     * Format: {base_url}/stream/series/{imdb_id}:{season}:{episode}.json
      */
     fun buildSeriesStreamUrl(manifestUrl: String, imdbId: String, season: Int, episode: Int): String {
         val baseUrl = extractBaseUrl(manifestUrl)
@@ -82,6 +78,7 @@ object AIOStreamsClient {
 
     /**
      * Build subtitle URL for movies
+     * Format: {base_url}/subtitles/movie/{imdb_id}.json
      */
     fun buildMovieSubtitleUrl(manifestUrl: String, imdbId: String): String {
         val baseUrl = extractBaseUrl(manifestUrl)
@@ -90,14 +87,17 @@ object AIOStreamsClient {
 
     /**
      * Build subtitle URL for series
+     * Format: {base_url}/subtitles/series/{imdb_id}:{season}:{episode}.json
      */
     fun buildSeriesSubtitleUrl(manifestUrl: String, imdbId: String, season: Int, episode: Int): String {
         val baseUrl = extractBaseUrl(manifestUrl)
         return "$baseUrl/subtitles/series/$imdbId:$season:$episode.json"
     }
 
-    // Simply return the cached singleton instance
     fun getApi(manifestUrl: String): AIOStreamsApiService {
-        return api
+        val client = createClient()
+        // Use a dummy base URL since we'll be using full URLs with @Url
+        val retrofit = createRetrofit("https://dummy.base/", client)
+        return retrofit.create(AIOStreamsApiService::class.java)
     }
 }
