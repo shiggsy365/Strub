@@ -1332,39 +1332,47 @@ class MainViewModel(
         }
     }
 
-    // === STANDARD METHODS ===
     fun loadStreams(type: String, itemId: String) {
         _isLoading.postValue(true)
-        viewModelScope.launch {
+        // OPTIMIZATION: Run on IO dispatcher
+        viewModelScope.launch(Dispatchers.IO) {
             val allStreams = mutableListOf<Stream>()
             val manifestUrl = prefsManager.getAIOStreamsManifestUrl()
 
+            val startTime = System.currentTimeMillis() // Timing debug
+
             if (!manifestUrl.isNullOrEmpty()) {
                 try {
+                    // This now returns the singleton API, very fast
                     val aioApi = AIOStreamsClient.getApi(manifestUrl)
+                    
                     val streamUrl = when (type) {
                         "movie" -> {
-                            // For movies, convert tmdb:12345 to IMDb ID
                             val imdbId = getImdbIdForMovie(itemId)
                             if (imdbId != null) {
+                                Log.d("StreamDebug", "Movie Fetch: $itemId -> $imdbId")
                                 AIOStreamsClient.buildMovieStreamUrl(manifestUrl, imdbId)
                             } else {
                                 Log.e("MainViewModel", "Could not get IMDb ID for movie: $itemId")
                                 null
                             }
                         }
-                        "series" -> {
-                            // itemId format for series: "tmdb:12345:season:episode"
+                        "series", "episode" -> {
+                            // itemId format: "tmdb:12345:season:episode"
                             val parts = itemId.split(":")
-                            if (parts.size == 4 && parts[0] == "tmdb") {
+                            // Be flexible: handle "tmdb:ID:S:E"
+                            if (parts.size >= 4 && parts[0] == "tmdb") {
                                 val tmdbId = parts[1].toIntOrNull()
                                 val season = parts[2].toIntOrNull() ?: 1
                                 val episode = parts[3].toIntOrNull() ?: 1
 
-                                // Get IMDb ID from TMDB ID
                                 val imdbId = getImdbIdForSeries(tmdbId)
                                 if (imdbId != null) {
-                                    AIOStreamsClient.buildSeriesStreamUrl(manifestUrl, imdbId, season, episode)
+                                    // AIOStreams expects: showImdbId:season:episode
+                                    // e.g. tt049406:2:1
+                                    val url = AIOStreamsClient.buildSeriesStreamUrl(manifestUrl, imdbId, season, episode)
+                                    Log.d("StreamDebug", "Series Fetch: $itemId -> $imdbId S$season E$episode -> URL: $url")
+                                    url
                                 } else {
                                     Log.e("MainViewModel", "Could not get IMDb ID for series: $itemId")
                                     null
@@ -1380,8 +1388,11 @@ class MainViewModel(
                     if (streamUrl != null) {
                         val aioResponse = aioApi.getStreams(streamUrl)
                         allStreams.addAll(aioResponse.streams)
+                        Log.d("StreamDebug", "Fetched ${aioResponse.streams.size} streams in ${System.currentTimeMillis() - startTime}ms")
                     }
-                } catch (e: Exception) { Log.e("MainViewModel", "AIOStreams error", e) }
+                } catch (e: Exception) { 
+                    Log.e("MainViewModel", "AIOStreams error: ${e.message}", e) 
+                }
             }
             _streams.postValue(allStreams)
             _isLoading.postValue(false)
