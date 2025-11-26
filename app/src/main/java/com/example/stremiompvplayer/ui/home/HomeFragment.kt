@@ -294,11 +294,92 @@ class HomeFragment : Fragment() {
     }
 
     private fun showStreamDialog(item: MetaItem) {
-        // ... (existing implementation) ...
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_stream_selection, null)
+        val dialog = android.app.AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        val rvStreams = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvStreams)
+        val progressBar = dialogView.findViewById<android.widget.ProgressBar>(R.id.progressBar)
+        val btnCancel = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
+        val dialogTitle = dialogView.findViewById<android.widget.TextView>(R.id.dialogTitle)
+
+        dialogTitle.text = "Select Stream - ${item.name}"
+
+        val streamAdapter = com.example.stremiompvplayer.adapters.StreamAdapter { stream ->
+            dialog.dismiss()
+            playStream(stream)
+        }
+        rvStreams.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
+        rvStreams.adapter = streamAdapter
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        progressBar.visibility = View.VISIBLE
+        rvStreams.visibility = View.GONE
+
+        viewModel.loadStreams(item.type, item.id)
+
+        val streamObserver = androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.Stream>> { streams ->
+            progressBar.visibility = View.GONE
+            rvStreams.visibility = View.VISIBLE
+            if (streams.isEmpty()) {
+                android.widget.Toast.makeText(requireContext(), "No streams available", android.widget.Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            } else {
+                streamAdapter.submitList(streams)
+            }
+        }
+        viewModel.streams.observe(viewLifecycleOwner, streamObserver)
+
+        dialog.setOnDismissListener {
+            viewModel.streams.removeObserver(streamObserver)
+        }
+
+        dialog.show()
     }
 
-    private fun playTrailer(item: MetaItem) { /* ... */ }
-    private fun showRelatedContent(item: MetaItem) { /* ... */ }
+    private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {
+        val intent = Intent(requireContext(), com.example.stremiompvplayer.PlayerActivity::class.java).apply {
+            putExtra("stream", stream)
+            putExtra("title", currentSelectedItem?.name ?: "Unknown")
+            putExtra("metaId", currentSelectedItem?.id)
+        }
+        startActivity(intent)
+    }
+
+    private fun playTrailer(item: MetaItem) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val trailerUrl = viewModel.fetchTrailer(item.id, item.type)
+                if (trailerUrl != null) {
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(trailerUrl))
+                    startActivity(intent)
+                } else {
+                    android.widget.Toast.makeText(requireContext(), "No trailer available", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(requireContext(), "Error loading trailer", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showRelatedContent(item: MetaItem) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val similarContent = viewModel.fetchSimilarContent(item.id, item.type)
+                if (similarContent.isNotEmpty()) {
+                    contentAdapter.updateData(similarContent)
+                    updateDetailsPane(similarContent[0])
+                    updateCurrentListLabel("Related to ${item.name}")
+                } else {
+                    android.widget.Toast.makeText(requireContext(), "No related content found", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(requireContext(), "Error loading related content", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
