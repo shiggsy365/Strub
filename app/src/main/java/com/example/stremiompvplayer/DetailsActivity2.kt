@@ -228,7 +228,10 @@ class DetailsActivity2 : AppCompatActivity() {
         viewModel.streams.observe(this) { streams ->
             if (binding.rvNavigation.adapter == streamAdapter) {
                 streamAdapter.submitList(streams)
-                focusFirstNavigationItem()
+                // Focus on the stream list when streams are loaded
+                binding.rvNavigation.post {
+                    focusFirstNavigationItem()
+                }
             }
         }
 
@@ -527,12 +530,27 @@ class DetailsActivity2 : AppCompatActivity() {
         }
 
         binding.btnPlay.setOnClickListener {
-            val isWatched = binding.btnPlay.text == "WATCHED"
+            // Search for streams for the currently displayed item
             currentMetaItem?.let { item ->
-                if (isWatched) {
-                    viewModel.clearWatchedStatus(item)
-                } else {
-                    viewModel.markAsWatched(item)
+                when (item.type) {
+                    "movie" -> {
+                        viewModel.loadStreams("movie", item.id)
+                        binding.rvNavigation.adapter = streamAdapter
+                    }
+                    "episode" -> {
+                        val parts = item.id.split(":")
+                        if (parts.size >= 4) {
+                            val parentId = "${parts[0]}:${parts[1]}"
+                            val season = parts[2].toIntOrNull() ?: 1
+                            val episode = parts[3].toIntOrNull() ?: 1
+                            viewModel.loadEpisodeStreams(parentId, season, episode)
+                            binding.rvNavigation.adapter = streamAdapter
+                        }
+                    }
+                    "series" -> {
+                        // For series, we need to load season list first
+                        // This shouldn't normally happen as Play button is hidden for series
+                    }
                 }
             }
         }

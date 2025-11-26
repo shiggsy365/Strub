@@ -359,6 +359,15 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    override fun onBackPressed() {
+        // Stop playback, scrobble, and return to the previous activity
+        // onPause() will be called automatically, which handles:
+        // 1. Saving progress
+        // 2. Releasing player
+        // 3. Scrobbling to Trakt
+        finish()
+    }
+
     private fun hideSystemUi() {
         // Immersive mode
         binding.root.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
