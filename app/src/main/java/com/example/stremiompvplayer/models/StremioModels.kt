@@ -15,6 +15,7 @@ data class Stream(
     val parsedFile: ParsedFile?
 ) : Serializable {
     val title: String get() = name ?: "Unknown Stream"
+    val rawTitle: String get() = name ?: "Unknown Stream"
     private val resolutionRegex = "(?i)(2160p|4k|1080p|720p|480p|360p)".toRegex()
     private val cachedRegex = "(?i)\\[(RD\\+|AD\\+|PM\\+|DL\\+)\\]|\\b(cached)\\b".toRegex()
     val formattedTitle: String get() {

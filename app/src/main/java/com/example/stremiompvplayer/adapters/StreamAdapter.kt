@@ -25,8 +25,8 @@ class StreamAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val stream = getItem(position)
-        // USE FORMATTED TITLE
-        holder.binding.title.text = stream.formattedTitle
+        // USE RAW TITLE (as-is from aiostreams)
+        holder.binding.title.text = stream.rawTitle
 
         // Optionally show raw description if needed, or hide subtitle
         // holder.binding.subtitle.text = stream.description

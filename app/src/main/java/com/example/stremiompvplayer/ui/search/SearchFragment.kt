@@ -100,7 +100,7 @@ class SearchFragment : Fragment() {
             }
         )
         binding.resultsRecycler.apply {
-            layoutManager = GridLayoutManager(context, 10)
+            layoutManager = com.example.stremiompvplayer.utils.AutoFitGridLayoutManager(requireContext(), 140)
             adapter = searchAdapter
         }
 
@@ -183,7 +183,7 @@ class SearchFragment : Fragment() {
             }
 
             popup.menu.add("Mark as Watched")
-            popup.menu.add("Clear Watched Status")
+            popup.menu.add("Clear Progress")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -202,7 +202,7 @@ class SearchFragment : Fragment() {
                         refreshItem(item)
                         true
                     }
-                    "Clear Watched Status" -> {
+                    "Clear Progress" -> {
                         viewModel.clearWatchedStatus(item)
                         item.isWatched = false
                         item.progress = 0

@@ -184,17 +184,33 @@ class LiveTVFragment : Fragment() {
                 view.setOnFocusChangeListener { v, hasFocus ->
                     if (hasFocus) {
                         val position = binding.rvTVGuide.getChildAdapterPosition(v)
-                        if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION && position < channelsWithPrograms.size) {
-                            val channel = channelsWithPrograms[position]
-                            selectedChannel = channel
-                            updateDetailsPane(channel, expanded = false)
+                        if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
+                            // Get channel from adapter's current list, not full list
+                            val channel = tvGuideAdapter.getItemAtPosition(position)
+                            if (channel != null) {
+                                selectedChannel = channel
+                                updateDetailsPane(channel, expanded = false)
+                            }
                         }
+                    }
+                }
+
+                // Handle D-pad right to expand TV guide
+                view.setOnKeyListener { v, keyCode, event ->
+                    if (event.action == android.view.KeyEvent.ACTION_DOWN &&
+                        keyCode == android.view.KeyEvent.KEYCODE_DPAD_RIGHT) {
+                        // Move focus to details card to show expanded guide
+                        binding.detailsCard.requestFocus()
+                        true
+                    } else {
+                        false
                     }
                 }
             }
 
             override fun onChildViewDetachedFromWindow(view: View) {
                 view.setOnFocusChangeListener(null)
+                view.setOnKeyListener(null)
             }
         })
 
@@ -205,6 +221,9 @@ class LiveTVFragment : Fragment() {
             if (hasFocus && selectedChannel != null) {
                 // Expand to show full TV guide when details pane is focused
                 updateDetailsPane(selectedChannel!!, expanded = true)
+            } else if (!hasFocus && selectedChannel != null) {
+                // Collapse when focus leaves
+                updateDetailsPane(selectedChannel!!, expanded = false)
             }
         }
 

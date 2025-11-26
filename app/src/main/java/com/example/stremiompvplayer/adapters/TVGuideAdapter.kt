@@ -83,6 +83,14 @@ class TVGuideAdapter(
         notifyDataSetChanged()
     }
 
+    fun getItemAtPosition(position: Int): ChannelWithPrograms? {
+        return if (position >= 0 && position < channels.size) {
+            channels[position]
+        } else {
+            null
+        }
+    }
+
     private fun formatTimeRange(startTime: Long, endTime: Long): String {
         val start = timeFormat.format(Date(startTime))
         val end = timeFormat.format(Date(endTime))

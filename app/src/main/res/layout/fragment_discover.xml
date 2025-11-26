@@ -23,15 +23,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Gradient Overlay (Black to Transparent, Left to Right) -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/gradient_netflix_overlay"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
 
         <!-- Main Content Area -->
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -193,6 +184,7 @@
                         android:focusable="true"
                         app:icon="@drawable/ic_play_circle"
                         app:iconSize="24dp"
+                        android:layout_marginEnd="12dp"
                         style="@style/Widget.MaterialComponents.Button" />
 
                     <com.google.android.material.button.MaterialButton
@@ -203,7 +195,18 @@
                         android:textSize="16sp"
                         android:paddingHorizontal="32dp"
                         android:paddingVertical="12dp"
-                        android:layout_marginStart="16dp"
+                        android:focusable="true"
+                        android:layout_marginEnd="12dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRelated"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Related"
+                        android:textSize="16sp"
+                        android:paddingHorizontal="32dp"
+                        android:paddingVertical="12dp"
                         android:focusable="true"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 

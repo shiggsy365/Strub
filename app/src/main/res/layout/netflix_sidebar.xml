@@ -119,6 +119,36 @@
             android:layout_marginTop="4dp" />
     </LinearLayout>
 
+    <!-- Search -->
+    <LinearLayout
+        android:id="@+id/sidebarSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingVertical="16dp"
+        android:focusable="true"
+        android:clickable="true"
+        android:background="?attr/selectableItemBackground">
+
+        <ImageView
+            android:id="@+id/iconSearch"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_search"
+            app:tint="@android:color/white"
+            android:contentDescription="Search" />
+
+        <TextView
+            android:id="@+id/textSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Search"
+            android:textSize="10sp"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="4dp" />
+    </LinearLayout>
+
     <!-- Live TV -->
     <LinearLayout
         android:id="@+id/sidebarLiveTV"

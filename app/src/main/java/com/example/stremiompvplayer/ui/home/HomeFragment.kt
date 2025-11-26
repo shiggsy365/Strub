@@ -115,7 +115,15 @@ class HomeFragment : Fragment() {
         // Content Grid Setup
         contentAdapter = PosterAdapter(
             items = emptyList(),
-            onClick = { item -> openDetails(item) },
+            onClick = { item ->
+                // For playable items, focus play button; for non-playable, open details
+                if (item.type == "movie" || item.type == "episode") {
+                    updateDetailsPane(item)
+                    binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                } else {
+                    openDetails(item)
+                }
+            },
             onLongClick = { item ->
                 val pos = contentAdapter.getItemPosition(item)
                 val holder = binding.rvContent.findViewHolderForAdapterPosition(pos)
@@ -123,7 +131,7 @@ class HomeFragment : Fragment() {
             }
         )
 
-        binding.rvContent.layoutManager = GridLayoutManager(context, 10)
+        binding.rvContent.layoutManager = com.example.stremiompvplayer.utils.AutoFitGridLayoutManager(requireContext(), 140)
         binding.rvContent.adapter = contentAdapter
 
         // Focus listener for sidecar updates
@@ -166,6 +174,13 @@ class HomeFragment : Fragment() {
         binding.root.findViewById<View>(R.id.btnTrailer)?.setOnClickListener {
             currentSelectedItem?.let { item ->
                 playTrailer(item)
+            }
+        }
+
+        // Setup Related button
+        binding.root.findViewById<View>(R.id.btnRelated)?.setOnClickListener {
+            currentSelectedItem?.let { item ->
+                showRelatedContent(item)
             }
         }
     }
@@ -250,7 +265,7 @@ class HomeFragment : Fragment() {
             }
 
             popup.menu.add("Mark as Watched")
-            popup.menu.add("Clear Watched Status")
+            popup.menu.add("Clear Progress")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -266,7 +281,7 @@ class HomeFragment : Fragment() {
                         viewModel.markAsWatched(item)
                         true
                     }
-                    "Clear Watched Status" -> {
+                    "Clear Progress" -> {
                         viewModel.clearWatchedStatus(item)
                         true
                     }
@@ -364,6 +379,17 @@ class HomeFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error loading trailer", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showRelatedContent(item: MetaItem) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                viewModel.fetchSimilarContent(item.id, item.type)
+                Toast.makeText(requireContext(), "Loading related content...", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error loading related content", Toast.LENGTH_SHORT).show()
             }
         }
     }
