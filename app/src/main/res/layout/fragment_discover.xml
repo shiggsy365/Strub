@@ -34,25 +34,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Movies/Series Dropdown (Top Right) -->
-        <TextView
-            android:id="@+id/dropdownMediaType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Movies"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="@color/text_primary"
-            android:padding="12dp"
-            android:focusable="true"
-            android:clickable="true"
-            android:background="?attr/selectableItemBackground"
-            android:drawableEnd="@drawable/ic_arrow_drop_down"
-            android:drawableTint="@color/text_secondary"
-            android:gravity="center"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        <!-- Movies/Series Dropdown removed - now browsing both together -->
 
         <!-- Main Content Area -->
         <androidx.constraintlayout.widget.ConstraintLayout

@@ -59,11 +59,12 @@ class SearchFragment : Fragment() {
     private lateinit var contentAdapter: PosterAdapter
     private lateinit var searchAdapter: PosterAdapter
     private var currentSelectedItem: MetaItem? = null
+    private var movieResults = listOf<MetaItem>()
+    private var seriesResults = listOf<MetaItem>()
+    private var currentResultIndex = 0  // 0 for movies, 1 for series
+    private var currentSearchQuery: String? = null
 
     private var detailsUpdateJob: Job? = null
-
-    private enum class SearchType { MIXED, MOVIES, SERIES }
-    private var currentSearchType = SearchType.MIXED
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSearchNewBinding.inflate(inflater, container, false)
@@ -74,8 +75,70 @@ class SearchFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         setupObservers()
-        binding.chipMixed.isChecked = true
+        setupKeyHandling()
         binding.searchEditText.requestFocus()
+    }
+
+    private fun setupKeyHandling() {
+        // Set key listener for cycling through movie/series results
+        binding.root.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        val focusedChild = binding.resultsRecycler.focusedChild
+                        if (focusedChild != null && (movieResults.isNotEmpty() || seriesResults.isNotEmpty())) {
+                            cycleToNextResultType()
+                            return@setOnKeyListener true
+                        }
+                        false
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
+    }
+
+    private fun cycleToNextResultType() {
+        val hasMovies = movieResults.isNotEmpty()
+        val hasSeries = seriesResults.isNotEmpty()
+
+        if (!hasMovies && !hasSeries) return
+
+        // Cycle between movies (0) and series (1)
+        if (hasMovies && hasSeries) {
+            currentResultIndex = (currentResultIndex + 1) % 2
+        } else if (hasMovies) {
+            currentResultIndex = 0
+        } else {
+            currentResultIndex = 1
+        }
+
+        updateDisplayedResults()
+    }
+
+    private fun updateDisplayedResults() {
+        val results = if (currentResultIndex == 0 && movieResults.isNotEmpty()) {
+            movieResults
+        } else if (currentResultIndex == 1 && seriesResults.isNotEmpty()) {
+            seriesResults
+        } else if (movieResults.isNotEmpty()) {
+            movieResults
+        } else {
+            seriesResults
+        }
+
+        searchAdapter.updateData(results)
+        if (results.isNotEmpty()) {
+            updateDetailsPane(results[0])
+
+            // Update label to show current type
+            binding.root.post {
+                val label = if (currentResultIndex == 0) "Movies" else "Series"
+                // You might want to add a label TextView to show this
+            }
+        }
     }
 
     private fun setupRecyclerView() {
@@ -225,29 +288,69 @@ class SearchFragment : Fragment() {
 
     private fun performSearch(query: String) {
         if (query.isBlank()) return
-        when (currentSearchType) {
-            SearchType.MIXED -> viewModel.searchTMDB(query)
-            SearchType.MOVIES -> viewModel.searchMovies(query)
-            SearchType.SERIES -> viewModel.searchSeries(query)
+        currentSearchQuery = query
+
+        // Perform dual search - both movies and series
+        lifecycleScope.launch {
+            try {
+                // Search movies
+                viewModel.searchMovies(query)
+                val tempMovieResults = viewModel.searchResults.value ?: emptyList()
+                movieResults = tempMovieResults.filter { it.type == "movie" }
+
+                // Search series
+                viewModel.searchSeries(query)
+                val tempSeriesResults = viewModel.searchResults.value ?: emptyList()
+                seriesResults = tempSeriesResults.filter { it.type == "series" || it.type == "tv" }
+
+                // Start with movies
+                currentResultIndex = 0
+                updateDisplayedResults()
+            } catch (e: Exception) {
+                // Fallback to mixed search
+                viewModel.searchTMDB(query)
+            }
         }
     }
 
     private fun setupObservers() {
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            searchAdapter.updateData(results)
-            if (results.isEmpty()) {
-                binding.emptyState.visibility = View.GONE
-                binding.noResultsState.visibility = View.VISIBLE
-                binding.contentGrid.visibility = View.GONE
-                binding.heroCard.visibility = View.GONE
+            // Split results into movies and series
+            if (currentSearchQuery != null) {
+                movieResults = results.filter { it.type == "movie" }
+                seriesResults = results.filter { it.type == "series" || it.type == "tv" }
+
+                if (movieResults.isEmpty() && seriesResults.isEmpty()) {
+                    binding.emptyState.visibility = View.GONE
+                    binding.noResultsState.visibility = View.VISIBLE
+                    binding.contentGrid.visibility = View.GONE
+                    binding.heroCard.visibility = View.GONE
+                } else {
+                    binding.emptyState.visibility = View.GONE
+                    binding.noResultsState.visibility = View.GONE
+                    binding.contentGrid.visibility = View.VISIBLE
+                    binding.heroCard.visibility = View.VISIBLE
+                    currentResultIndex = if (movieResults.isNotEmpty()) 0 else 1
+                    updateDisplayedResults()
+                }
+                binding.resultsRecycler.requestFocus()
             } else {
-                binding.emptyState.visibility = View.GONE
-                binding.noResultsState.visibility = View.GONE
-                binding.contentGrid.visibility = View.VISIBLE
-                binding.heroCard.visibility = View.VISIBLE
-                if (results.isNotEmpty()) updateDetailsPane(results[0])
+                // Initial empty state
+                searchAdapter.updateData(results)
+                if (results.isEmpty()) {
+                    binding.emptyState.visibility = View.GONE
+                    binding.noResultsState.visibility = View.VISIBLE
+                    binding.contentGrid.visibility = View.GONE
+                    binding.heroCard.visibility = View.GONE
+                } else {
+                    binding.emptyState.visibility = View.GONE
+                    binding.noResultsState.visibility = View.GONE
+                    binding.contentGrid.visibility = View.VISIBLE
+                    binding.heroCard.visibility = View.VISIBLE
+                    if (results.isNotEmpty()) updateDetailsPane(results[0])
+                }
+                binding.resultsRecycler.requestFocus()
             }
-            binding.resultsRecycler.requestFocus()
         }
         viewModel.isSearching.observe(viewLifecycleOwner) { isSearching ->
             binding.progressBar.visibility = if (isSearching) View.VISIBLE else View.GONE
