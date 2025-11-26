@@ -499,21 +499,35 @@ class LibraryFragment : Fragment() {
         }
 
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
+            android.util.Log.d("LogoObserver", "LibraryFragment received logo URL: '$logoUrl'")
             when (logoUrl) {
                 "" -> {
+                    android.util.Log.d("LogoObserver", "Empty string - hiding both title and logo (loading state)")
                     binding.detailTitle.visibility = View.GONE
                     binding.detailLogo.visibility = View.GONE
                 }
                 null -> {
+                    android.util.Log.d("LogoObserver", "Null - showing title, hiding logo (no logo available)")
                     binding.detailTitle.visibility = View.VISIBLE
                     binding.detailLogo.visibility = View.GONE
                 }
                 else -> {
+                    android.util.Log.d("LogoObserver", "Loading logo with Glide: $logoUrl")
                     binding.detailTitle.visibility = View.GONE
                     binding.detailLogo.visibility = View.VISIBLE
                     Glide.with(this)
                         .load(logoUrl)
                         .fitCenter()
+                        .listener(object : com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable> {
+                            override fun onLoadFailed(e: com.bumptech.glide.load.engine.GlideException?, model: Any?, target: com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable>?, isFirstResource: Boolean): Boolean {
+                                android.util.Log.e("LogoObserver", "Glide failed to load logo: ${e?.message}", e)
+                                return false
+                            }
+                            override fun onResourceReady(resource: android.graphics.drawable.Drawable?, model: Any?, target: com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable>?, dataSource: com.bumptech.glide.load.DataSource?, isFirstResource: Boolean): Boolean {
+                                android.util.Log.d("LogoObserver", "Glide successfully loaded logo!")
+                                return false
+                            }
+                        })
                         .into(binding.detailLogo)
                 }
             }
