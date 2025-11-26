@@ -42,13 +42,13 @@ class HomeFragment : Fragment() {
         )
     }
 
-    private lateinit var sidebarAdapter: SidebarAdapter
     private lateinit var contentAdapter: PosterAdapter
     private var currentSelectedItem: MetaItem? = null
     private var detailsUpdateJob: Job? = null
 
-    // [FIX] Track current catalog to refresh it on Resume
-    private var currentCatalog: UserCatalog? = null
+    // Track current catalogs and index for cycling
+    private var currentCatalogs = listOf<UserCatalog>()
+    private var currentCatalogIndex = 0
 
     private val focusMemoryManager = FocusMemoryManager.getInstance()
     private val fragmentKey = "home"
@@ -66,17 +66,19 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupUI()
         setupAdapters()
         setupObservers()
+        setupKeyHandling()
         loadHomeCatalogs()
     }
 
     override fun onResume() {
         super.onResume()
         currentSelectedItem?.let { updateDetailsPane(it) }
-        // [FIX] Reload the current list when returning to screen (e.g. from Player)
-        currentCatalog?.let {
-            viewModel.loadContentForCatalog(it, isInitialLoad = true)
+        // Reload the current list when returning to screen (e.g. from Player)
+        if (currentCatalogs.isNotEmpty() && currentCatalogIndex < currentCatalogs.size) {
+            viewModel.loadContentForCatalog(currentCatalogs[currentCatalogIndex], isInitialLoad = true)
         }
 
         // Restore previously focused position for seamless navigation
@@ -103,16 +105,47 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun setupAdapters() {
-        // Sidebar Setup
-        sidebarAdapter = SidebarAdapter { catalog ->
-            currentCatalog = catalog
-            viewModel.loadContentForCatalog(catalog, isInitialLoad = true)
-        }
-        binding.rvSidebar.layoutManager = LinearLayoutManager(context)
-        binding.rvSidebar.adapter = sidebarAdapter
+    private fun setupUI() {
+        // Setup dropdown (hidden for Home, but keeping structure consistent)
+        val dropdownMediaType = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
+        dropdownMediaType?.visibility = View.GONE // Home shows all content types
+    }
 
-        // Content Grid Setup
+    private fun setupKeyHandling() {
+        // Make posterCarousel focusable to receive key events
+        binding.posterCarousel.isFocusable = true
+        binding.posterCarousel.isFocusableInTouchMode = true
+
+        // Set key listener for down/up navigation
+        binding.root.setOnKeyListener { _, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        val focusedChild = binding.rvContent.focusedChild
+                        if (focusedChild != null) {
+                            cycleToNextList()
+                            return@setOnKeyListener true
+                        }
+                        false
+                    }
+                    android.view.KeyEvent.KEYCODE_DPAD_UP -> {
+                        val focusedChild = binding.rvContent.focusedChild
+                        if (focusedChild != null) {
+                            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                            return@setOnKeyListener true
+                        }
+                        false
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
+    }
+
+    private fun setupAdapters() {
+        // Content carousel setup (horizontal scrolling)
         contentAdapter = PosterAdapter(
             items = emptyList(),
             onClick = { item ->
@@ -131,10 +164,11 @@ class HomeFragment : Fragment() {
             }
         )
 
-        binding.rvContent.layoutManager = com.example.stremiompvplayer.utils.AutoFitGridLayoutManager(requireContext(), 140)
+        // Horizontal scrolling for Netflix-style poster carousel
+        binding.rvContent.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         binding.rvContent.adapter = contentAdapter
 
-        // Focus listener for sidecar updates
+        // Focus listener for details pane updates
         binding.rvContent.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
                 view.setOnFocusChangeListener { v, hasFocus ->
@@ -148,7 +182,7 @@ class HomeFragment : Fragment() {
                             if (item != null) {
                                 detailsUpdateJob?.cancel()
                                 detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
-                                    delay(500) // Short delay to prevent flashing
+                                    delay(300) // PERFORMANCE: Reduced delay for snappier UX
                                     if (isAdded) {
                                         updateDetailsPane(item)
                                     }
@@ -187,14 +221,28 @@ class HomeFragment : Fragment() {
 
     private fun loadHomeCatalogs() {
         // Construct the 3 required Home catalogs
-        val catalogs = viewModel.getHomeCatalogs()
-        sidebarAdapter.submitList(catalogs)
+        currentCatalogs = viewModel.getHomeCatalogs()
+        currentCatalogIndex = 0
 
-        // Auto-load the first catalog (Next Up)
-        if (catalogs.isNotEmpty()) {
-            currentCatalog = catalogs[0]
-            viewModel.loadContentForCatalog(catalogs[0], isInitialLoad = true)
+        // Auto-load the first catalog (Continue Watching / Next Up)
+        if (currentCatalogs.isNotEmpty()) {
+            updateCurrentListLabel(currentCatalogs[0].displayName)
+            viewModel.loadContentForCatalog(currentCatalogs[0], isInitialLoad = true)
         }
+    }
+
+    private fun updateCurrentListLabel(labelText: String) {
+        val label = binding.root.findViewById<android.widget.TextView>(R.id.currentListLabel)
+        label?.text = labelText
+    }
+
+    private fun cycleToNextList() {
+        if (currentCatalogs.isEmpty()) return
+
+        currentCatalogIndex = (currentCatalogIndex + 1) % currentCatalogs.size
+        val nextCatalog = currentCatalogs[currentCatalogIndex]
+        updateCurrentListLabel(nextCatalog.displayName)
+        viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
     }
 
     private fun updateDetailsPane(item: MetaItem) {
@@ -212,6 +260,20 @@ class HomeFragment : Fragment() {
 
         binding.detailDescription.text = item.description ?: "No description available."
 
+        // Date formatting
+        val formattedDate = try {
+            item.releaseDate?.let { dateStr ->
+                val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                val outputFormat = java.text.SimpleDateFormat("yyyy", java.util.Locale.getDefault())
+                val date = inputFormat.parse(dateStr)
+                date?.let { outputFormat.format(it) }
+            }
+        } catch (e: Exception) {
+            item.releaseDate
+        }
+
+        binding.detailDate.text = formattedDate ?: ""
+
         // Episode Info (Specific to Next Up / Continue Episodes)
         if (item.type == "episode") {
             val parts = item.id.split(":")
@@ -228,11 +290,11 @@ class HomeFragment : Fragment() {
         }
 
         // Rating
-        if (item.rating != null) {
+        binding.detailRating.visibility = if (item.rating != null) {
             binding.detailRating.text = "★ ${item.rating}"
-            binding.detailRating.visibility = View.VISIBLE
+            View.VISIBLE
         } else {
-            binding.detailRating.visibility = View.GONE
+            View.GONE
         }
 
         // Fetch Logo
