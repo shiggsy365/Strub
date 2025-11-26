@@ -211,11 +211,8 @@ class LibraryFragment : Fragment() {
     }
 
     private fun loadLibrary() {
-        val userId = SharedPreferencesManager.getInstance(requireContext()).getCurrentUserId()
-        if (userId != null) {
-            viewModel.loadLibraryByType(userId, currentType)
-            updateCurrentListLabel("My Library")
-        }
+        viewModel.filterAndSortLibrary(currentType)
+        updateCurrentListLabel("My Library")
     }
 
     private fun updateCurrentListLabel(labelText: String) {
@@ -534,53 +531,16 @@ class LibraryFragment : Fragment() {
 
     fun focusSidebar(): Boolean {
         binding.root.post {
-            val firstView = binding.rvLibrarySidebar.layoutManager?.findViewByPosition(0)
-            if (firstView != null && firstView.isFocusable) {
-                firstView.requestFocus()
-            } else if (binding.rvLibrarySidebar.isFocusable) {
-                binding.rvLibrarySidebar.requestFocus()
-            } else {
-                // Try again after a delay if views aren't ready
-                binding.root.postDelayed({
-                    binding.rvLibrarySidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
-                        ?: binding.rvContent.requestFocus()
-                }, 100)
-            }
+            // Focus on Play button or poster carousel
+            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                ?: binding.rvContent.requestFocus()
         }
-        return true  // Always return true as we've initiated focus attempt
+        return true
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
         detailsUpdateJob?.cancel()
-    }
-
-    data class LibraryFilterOption(val id: String, val label: String, val isSelected: Boolean)
-
-    inner class LibrarySidebarAdapter(private val onClick: (LibraryFilterOption) -> Unit) :
-        androidx.recyclerview.widget.ListAdapter<LibraryFilterOption, LibrarySidebarAdapter.ViewHolder>(DiffCallback()) {
-
-        inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
-            val name: TextView = view.findViewById(R.id.catalogName)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_discover_sidebar, parent, false)
-            return ViewHolder(view)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = getItem(position)
-            holder.name.text = item.label
-            holder.view.isSelected = item.isSelected
-            holder.view.setOnClickListener { onClick(item) }
-        }
-    }
-
-    class DiffCallback : DiffUtil.ItemCallback<LibraryFilterOption>() {
-        override fun areItemsTheSame(oldItem: LibraryFilterOption, newItem: LibraryFilterOption) = oldItem.id == newItem.id
-        override fun areContentsTheSame(oldItem: LibraryFilterOption, newItem: LibraryFilterOption) = oldItem == newItem
     }
 }

@@ -528,57 +528,16 @@ class HomeFragment : Fragment() {
 
     fun focusSidebar(): Boolean {
         binding.root.post {
-            val firstView = binding.rvSidebar.layoutManager?.findViewByPosition(0)
-            if (firstView != null && firstView.isFocusable) {
-                firstView.requestFocus()
-            } else if (binding.rvSidebar.isFocusable) {
-                binding.rvSidebar.requestFocus()
-            } else {
-                // Try again after a delay if views aren't ready
-                binding.root.postDelayed({
-                    binding.rvSidebar.layoutManager?.findViewByPosition(0)?.requestFocus()
-                        ?: binding.rvContent.requestFocus()
-                }, 100)
-            }
+            // Focus on Play button or poster carousel
+            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                ?: binding.rvContent.requestFocus()
         }
-        return true  // Always return true as we've initiated focus attempt
+        return true
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
         detailsUpdateJob?.cancel()
-    }
-
-    // Sidebar Adapter Class (Inner)
-    inner class SidebarAdapter(
-        private val onClick: (UserCatalog) -> Unit
-    ) : androidx.recyclerview.widget.ListAdapter<UserCatalog, SidebarAdapter.ViewHolder>(
-        com.example.stremiompvplayer.adapters.CatalogConfigAdapter.DiffCallback()
-    ) {
-        private var selectedPosition = 0
-
-        inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
-            val name: android.widget.TextView = view.findViewById(R.id.catalogName)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_discover_sidebar, parent, false)
-            return ViewHolder(view)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = getItem(position)
-            holder.name.text = item.displayName
-            holder.view.isSelected = position == selectedPosition
-            holder.view.setOnClickListener {
-                val oldPosition = selectedPosition
-                selectedPosition = position
-                notifyItemChanged(oldPosition)
-                notifyItemChanged(selectedPosition)
-                onClick(item)
-            }
-        }
     }
 }
