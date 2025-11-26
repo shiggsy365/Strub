@@ -109,6 +109,9 @@ interface WatchProgressDao {
     @Query("DELETE FROM watch_progress WHERE userId = :userId AND itemId = :itemId")
     suspend fun deleteItemProgress(userId: String, itemId: String)
 
+    @Query("DELETE FROM watch_progress WHERE userId = :userId AND itemId LIKE :showIdPattern")
+    suspend fun deleteAllEpisodesOfShow(userId: String, showIdPattern: String)
+
     @Query("UPDATE watch_progress SET isWatched = :isWatched, progress = :progress WHERE userId = :userId AND itemId = :itemId")
     suspend fun updateWatchedStatus(userId: String, itemId: String, isWatched: Boolean, progress: Long = 0)
 

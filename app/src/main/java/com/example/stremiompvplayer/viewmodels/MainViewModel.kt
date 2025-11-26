@@ -1333,7 +1333,14 @@ class MainViewModel(
                 }
 
                 // 3. Clear Local Watch Progress
-                catalogRepository.updateWatchedStatus(currentUserId, item.id, false)
+                if (item.type == "episode" || item.type == "series") {
+                    // For episodes/series, remove ALL episodes of the show from database
+                    val showId = "tmdb:" + tmdbId.toString()
+                    catalogRepository.deleteAllEpisodesOfShow(currentUserId, showId)
+                } else {
+                    // For movies, just remove the single item
+                    catalogRepository.updateWatchedStatus(currentUserId, item.id, false)
+                }
 
                 // Refresh UI
                 loadedContentCache.clear()
@@ -2025,8 +2032,16 @@ class MainViewModel(
                 val idParts = meta.id.removePrefix("tmdb:").split(":")
                 val tmdbId = idParts[0].toIntOrNull()
                 if (tmdbId != null && apiKey.isNotEmpty()) {
-                    val images = if (meta.type == "movie") TMDBClient.api.getMovieImages(tmdbId, apiKey) else TMDBClient.api.getTVImages(tmdbId, apiKey)
-                    val logo = images.logos.firstOrNull()
+                    // For episodes, use TV images API; for movies use movie images; for series use TV images
+                    val images = if (meta.type == "movie") {
+                        TMDBClient.api.getMovieImages(tmdbId, apiKey)
+                    } else {
+                        // For both "series" and "episode", use TV images with the show ID
+                        TMDBClient.api.getTVImages(tmdbId, apiKey)
+                    }
+                    // Filter for English logos (iso_639_1 == "en" or null for language-neutral logos)
+                    val enLogos = images.logos.filter { it.iso_639_1 == "en" || it.iso_639_1 == null }
+                    val logo = enLogos.firstOrNull()
                     _currentLogo.postValue(logo?.let { "https://image.tmdb.org/t/p/w300${it.file_path}" })
                 } else { _currentLogo.postValue(null) }
             } catch (e: Exception) { _currentLogo.postValue(null) }
