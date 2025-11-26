@@ -1,41 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modern button background with material elevation -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Focused State -->
+    <!-- Focused State: Red Border -->
     <item android:state_focused="true">
-        <layer-list>
-            <item>
-                <shape android:shape="rectangle">
-                    <solid android:color="@color/button_background_focused" />
-                    <corners android:radius="12dp" />
-                    <stroke android:width="2dp" android:color="@color/md_theme_primary" />
-                </shape>
-            </item>
-            <!-- Focus glow effect -->
-            <item android:insetTop="2dp" android:insetBottom="2dp" 
-                  android:insetLeft="2dp" android:insetRight="2dp">
-                <shape android:shape="rectangle">
-                    <solid android:color="#00000000" />
-                    <corners android:radius="10dp" />
-                    <stroke android:width="1dp" android:color="#4DE50914" />
-                </shape>
-            </item>
-        </layer-list>
-    </item>
-    
-    <!-- Pressed State -->
-    <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="@color/button_background_pressed" />
-            <corners android:radius="12dp" />
+            <!-- Background will be set dynamically via backgroundTintList in Kotlin -->
+            <solid android:color="@android:color/transparent" />
+            <stroke android:width="3dp" android:color="#E50914" />
+            <corners android:radius="8dp" />
         </shape>
     </item>
-    
+
     <!-- Default State -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/button_background_default" />
-            <corners android:radius="12dp" />
+            <solid android:color="#1A1A1A" />
+            <corners android:radius="8dp" />
         </shape>
     </item>
 </selector>

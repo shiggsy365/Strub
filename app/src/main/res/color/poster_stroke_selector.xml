@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Poster Stroke Color Selector -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="@color/poster_stroke_focused" android:state_focused="true" />
-    <item android:color="@color/poster_stroke_selected" android:state_selected="true" />
-    <item android:color="@color/poster_stroke_default" />
+    <item android:color="#E50914" android:state_focused="true" />
+    <item android:color="#E50914" android:state_selected="true" />
+    <item android:color="@android:color/transparent" />
 </selector>

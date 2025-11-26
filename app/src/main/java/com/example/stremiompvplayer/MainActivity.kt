@@ -3,8 +3,10 @@ package com.example.stremiompvplayer
 import android.content.Intent
 import android.os.Bundle
 import android.view.ContextThemeWrapper
+import android.view.FocusFinder
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -29,10 +31,11 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
+    // ... (Existing properties) ...
     private lateinit var binding: ActivityMainBinding
     private val focusMemoryManager = FocusMemoryManager.getInstance()
     private var currentFragmentKey: String? = null
-    private val navigationStack = mutableListOf<Pair<String, Fragment>>() // Stack of (fragmentKey, fragment) pairs
+    private val navigationStack = mutableListOf<Pair<String, Fragment>>()
 
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(
@@ -43,13 +46,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        // ... (Init logic same as before) ...
         val userId = SharedPreferencesManager.getInstance(this).getCurrentUserId()
-        if (userId == null) {
-            startActivity(Intent(this, UserSelectionActivity::class.java))
-            finish()
-            return
-        }
+        if (userId == null) { startActivity(Intent(this, UserSelectionActivity::class.java)); finish(); return }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -102,44 +101,36 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (savedInstanceState == null) {
-            // Default to Home
             loadFragment(HomeFragment.newInstance())
         }
 
         handleIntent(intent)
-
         setupNetflixNavigation()
         setupLegacyNavigation()
     }
 
     private fun setupNetflixNavigation() {
-        // Get the included layouts
         val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
-        val dropdownMediaType = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
 
-        // Setup sidebar navigation
         sidebar.findViewById<View>(R.id.sidebarHome).setOnClickListener {
             loadFragment(HomeFragment.newInstance())
         }
 
         sidebar.findViewById<View>(R.id.sidebarDiscover).setOnClickListener {
-            val currentType = dropdownMediaType.text.toString()
-            val type = if (currentType.contains("Series", ignoreCase = true)) "series" else "movie"
-            loadFragment(DiscoverFragment.newInstance(type))
+            // REMOVED dropdown check, defaulting to "movie" for now.
+            // Fragment will handle its own type switching if needed.
+            loadFragment(DiscoverFragment.newInstance("movie"))
         }
 
         sidebar.findViewById<View>(R.id.sidebarLibrary).setOnClickListener {
-            val currentType = dropdownMediaType.text.toString()
-            val type = if (currentType.contains("Series", ignoreCase = true)) "series" else "movie"
-            loadFragment(LibraryFragment.newInstance(type))
+            // REMOVED dropdown check
+            loadFragment(LibraryFragment.newInstance("movie"))
         }
 
-        // Search - show dialog
         sidebar.findViewById<View>(R.id.sidebarSearch).setOnClickListener {
             showSearchDialog()
         }
 
-        // LIVE TV - only show if configured
         val liveTvConfigured = SharedPreferencesManager.getInstance(this).getLiveTVM3UUrl()?.isNotEmpty() == true
         if (liveTvConfigured) {
             sidebar.findViewById<View>(R.id.sidebarLiveTV).visibility = View.VISIBLE
@@ -154,27 +145,43 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
-        // Media Type dropdown (Movies/Series) - now in main layout
-        dropdownMediaType.setOnClickListener { view ->
-            showMenu(view, listOf("Movies", "Series")) { selection ->
-                dropdownMediaType.text = selection
-                // Refresh current fragment with new media type
-                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-                when (currentFragment) {
-                    is DiscoverFragment -> {
-                        val type = if (selection == "Series") "series" else "movie"
-                        loadFragment(DiscoverFragment.newInstance(type))
-                    }
-                    is LibraryFragment -> {
-                        val type = if (selection == "Series") "series" else "movie"
-                        loadFragment(LibraryFragment.newInstance(type))
-                    }
-                }
+        setupSidebarAutoHide(sidebar)
+    }
+
+    private fun setupSidebarAutoHide(sidebar: View) {
+        val hideRunnable = Runnable {
+            if (!sidebar.hasFocus() && !hasChildFocus(sidebar)) {
+                sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(300).start()
             }
         }
 
-        // Implement sidebar auto-hide behavior
-        setupSidebarAutoHide(sidebar)
+        sidebar.post {
+            sidebar.translationX = -sidebar.width.toFloat()
+        }
+
+        val onFocusChange = View.OnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                sidebar.removeCallbacks(hideRunnable)
+                sidebar.animate().translationX(0f).setDuration(200).start()
+            } else {
+                // CHANGED: 2000 -> 50 (almost instant, but safe for focus transfer)
+                sidebar.postDelayed(hideRunnable, 50)
+            }
+        }
+
+        sidebar.onFocusChangeListener = onFocusChange
+        val childViews = listOf(
+            R.id.sidebarHome, R.id.sidebarDiscover, R.id.sidebarLibrary,
+            R.id.sidebarSearch, R.id.sidebarLiveTV, R.id.sidebarSettings
+        )
+        childViews.forEach { viewId ->
+            sidebar.findViewById<View>(viewId)?.onFocusChangeListener = onFocusChange
+        }
+    }
+
+    private fun hasChildFocus(view: View): Boolean {
+        if (view is ViewGroup) return view.hasFocus()
+        return false
     }
 
     private fun showSearchDialog() {
@@ -202,54 +209,197 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun performSearch(query: String) {
-        val dropdownMediaType = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
+        // Updated to remove dropdown check
         val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
         when (currentFragment) {
-            is DiscoverFragment -> {
-                currentFragment.performSearch(query)
-            }
+            is DiscoverFragment -> currentFragment.performSearch(query)
             else -> {
-                // If not on Discover, switch to it and perform search
-                val type = if (dropdownMediaType.text == "Series") "series" else "movie"
-                val discoverFragment = DiscoverFragment.newInstance(type)
+                val discoverFragment = DiscoverFragment.newInstance("movie")
                 loadFragment(discoverFragment)
-                // Perform search after fragment is loaded
-                discoverFragment.view?.post {
-                    discoverFragment.performSearch(query)
-                }
+                discoverFragment.view?.post { discoverFragment.performSearch(query) }
             }
         }
     }
 
-    private fun setupSidebarAutoHide(sidebar: View) {
-        // Auto-hide sidebar when focus leaves it
-        sidebar.setOnFocusChangeListener { v, hasFocus ->
-            lifecycleScope.launch {
-                if (!hasFocus) {
-                    delay(3000) // Wait 3 seconds before hiding
-                    if (!sidebar.hasFocus()) {
-                        // Animate sidebar width to icon-only mode
-                        sidebar.animate().translationX(-sidebar.width.toFloat() + 80).setDuration(300).start()
+    private fun loadFragment(fragment: Fragment, fragmentKey: String? = null, addToStack: Boolean = true) {
+        // Save focus state before loading new fragment
+        currentFragmentKey?.let { key ->
+            currentFocus?.let { view ->
+                focusMemoryManager.saveFocus(key, view)
+            }
+
+            // Push current fragment to navigation stack
+            if (addToStack) {
+                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+                if (currentFragment != null) {
+                    navigationStack.add(Pair(key, currentFragment))
+                    // Keep stack size reasonable (max 10 items)
+                    if (navigationStack.size > 10) {
+                        navigationStack.removeAt(0)
                     }
-                } else {
-                    // Show full sidebar when focused
-                    sidebar.animate().translationX(0f).setDuration(300).start()
                 }
             }
         }
 
-        // Also check for focus on child views
-        val childViews = listOf(
-            R.id.sidebarHome, R.id.sidebarDiscover, R.id.sidebarLibrary,
-            R.id.sidebarSearch, R.id.sidebarLiveTV, R.id.sidebarSettings
-        )
-        childViews.forEach { viewId ->
-            sidebar.findViewById<View>(viewId)?.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    sidebar.animate().translationX(0f).setDuration(300).start()
+        // Update current fragment key
+        currentFragmentKey = fragmentKey ?: when (fragment) {
+            is HomeFragment -> "home"
+            is DiscoverFragment -> focusMemoryManager.getFragmentKey("discover", fragment.arguments?.getString("type") ?: "movie")
+            is LibraryFragment -> focusMemoryManager.getFragmentKey("library", fragment.arguments?.getString("type") ?: "movie")
+            is SearchFragment -> "search"
+            is LiveTVFragment -> "livetv"
+            is SeriesFragment -> focusMemoryManager.getFragmentKey("series", fragment.arguments?.getString("seriesId") ?: "unknown")
+            else -> fragment.javaClass.simpleName
+        }
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .commit()
+
+        // Restore focus after fragment is loaded
+        currentFragmentKey?.let { key ->
+            if (focusMemoryManager.hasFocusMemory(key)) {
+                binding.root.postDelayed({
+                    focusMemoryManager.restoreFocus(key)
+                }, 150)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Save current focus state
+        currentFragmentKey?.let { key ->
+            currentFocus?.let { view ->
+                focusMemoryManager.saveFocus(key, view)
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Clean up stale focus memory
+        focusMemoryManager.cleanupStale()
+
+        // Restore focus if available
+        currentFragmentKey?.let { key ->
+            if (focusMemoryManager.hasFocusMemory(key)) {
+                binding.root.postDelayed({
+                    focusMemoryManager.restoreFocus(key)
+                }, 100)
+            }
+        }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+
+        // 1. Allow HomeFragment to intercept keys (Fixes RecyclerView Down Press)
+        if (currentFragment is HomeFragment) {
+            if (currentFragment.handleKeyDown(keyCode, event)) return true
+        }
+
+        // 2. Handle Sidebar Unhide (Left Press)
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && event?.action == KeyEvent.ACTION_DOWN) {
+            val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
+            // Check if sidebar is effectively hidden (translated off mostly)
+            if (sidebar.translationX < -50) {
+                val currentFocus = currentFocus
+                if (currentFocus != null && !isViewInSidebar(currentFocus, sidebar)) {
+                    // We are in content. Check if next focus left is null (wall) or the sidebar itself
+                    val nextFocus = FocusFinder.getInstance().findNextFocus(binding.root as ViewGroup, currentFocus, View.FOCUS_LEFT)
+
+                    if (nextFocus == null || isViewInSidebar(nextFocus, sidebar)) {
+                        // We hit the left edge, show sidebar
+                        showSidebar(sidebar)
+                        return true
+                    }
                 }
             }
         }
+
+        // Legacy Navigation handling (if visible)
+        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event?.action == KeyEvent.ACTION_DOWN) {
+            val focus = currentFocus
+            val isFocusOnMenu = focus == binding.btnAppLogo ||
+                    focus == binding.chipHome ||
+                    focus == binding.chipDiscover ||
+                    focus == binding.chipLibrary ||
+                    focus == binding.chipSearch ||
+                    focus == binding.chipLiveTV ||
+                    focus == binding.chipMore
+
+            if (isFocusOnMenu) {
+                // Check if we have saved focus to restore
+                currentFragmentKey?.let { key ->
+                    if (focusMemoryManager.hasFocusMemory(key)) {
+                        val restored = focusMemoryManager.restoreFocus(key)
+                        if (restored) return true
+                    }
+                }
+                // Default handling...
+            }
+        }
+
+        if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
+            // ... (existing back handling)
+            if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
+            if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
+
+            val focus = currentFocus
+            val isFocusOnMenu = focus == binding.btnAppLogo ||
+                    focus == binding.chipHome ||
+                    focus == binding.chipDiscover ||
+                    focus == binding.chipLibrary ||
+                    focus == binding.chipSearch ||
+                    focus == binding.chipLiveTV ||
+                    focus == binding.chipMore
+
+            if (isFocusOnMenu) {
+                startActivity(Intent(this, UserSelectionActivity::class.java))
+                finish()
+                return true
+            }
+
+            if (navigationStack.isNotEmpty()) {
+                val (previousKey, previousFragment) = navigationStack.removeLast()
+                currentFragmentKey = previousKey
+                supportFragmentManager.beginTransaction().replace(R.id.fragmentContainer, previousFragment).commit()
+                binding.root.postDelayed({
+                    if (focusMemoryManager.hasFocusMemory(previousKey)) {
+                        focusMemoryManager.restoreFocus(previousKey)
+                    }
+                }, 150)
+                return true
+            }
+
+            // If on sidebar, exit
+            val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
+            if (isViewInSidebar(focus ?: binding.root, sidebar)) {
+                // Exit app or go to user selection
+                startActivity(Intent(this, UserSelectionActivity::class.java))
+                finish()
+                return true
+            }
+
+            // Focus sidebar
+            showSidebar(sidebar)
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    private fun isViewInSidebar(view: View, sidebar: View): Boolean {
+        if (view == sidebar) return true
+        if (view.parent == sidebar) return true
+        if (view.parent is View) return isViewInSidebar(view.parent as View, sidebar)
+        return false
+    }
+
+    private fun showSidebar(sidebar: View) {
+        sidebar.animate().translationX(0f).setDuration(200).start()
+        // Focus home or first item
+        sidebar.findViewById<View>(R.id.sidebarHome)?.requestFocus()
     }
 
     private fun setupLegacyNavigation() {
@@ -360,205 +510,5 @@ class MainActivity : AppCompatActivity() {
                 }
             }, 100)
         }
-    }
-
-    private fun loadFragment(fragment: Fragment, fragmentKey: String? = null, addToStack: Boolean = true) {
-        // Save focus state before loading new fragment
-        currentFragmentKey?.let { key ->
-            currentFocus?.let { view ->
-                focusMemoryManager.saveFocus(key, view)
-            }
-
-            // Push current fragment to navigation stack
-            if (addToStack) {
-                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-                if (currentFragment != null) {
-                    navigationStack.add(Pair(key, currentFragment))
-                    // Keep stack size reasonable (max 10 items)
-                    if (navigationStack.size > 10) {
-                        navigationStack.removeAt(0)
-                    }
-                }
-            }
-        }
-
-        // Update current fragment key
-        currentFragmentKey = fragmentKey ?: when (fragment) {
-            is HomeFragment -> "home"
-            is DiscoverFragment -> focusMemoryManager.getFragmentKey("discover", fragment.arguments?.getString("type") ?: "movie")
-            is LibraryFragment -> focusMemoryManager.getFragmentKey("library", fragment.arguments?.getString("type") ?: "movie")
-            is SearchFragment -> "search"
-            is LiveTVFragment -> "livetv"
-            is SeriesFragment -> focusMemoryManager.getFragmentKey("series", fragment.arguments?.getString("seriesId") ?: "unknown")
-            else -> fragment.javaClass.simpleName
-        }
-
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .commit()
-
-        // Restore focus after fragment is loaded
-        currentFragmentKey?.let { key ->
-            if (focusMemoryManager.hasFocusMemory(key)) {
-                binding.root.postDelayed({
-                    focusMemoryManager.restoreFocus(key)
-                }, 150)
-            }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        // Save current focus state
-        currentFragmentKey?.let { key ->
-            currentFocus?.let { view ->
-                focusMemoryManager.saveFocus(key, view)
-            }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Clean up stale focus memory
-        focusMemoryManager.cleanupStale()
-
-        // Restore focus if available
-        currentFragmentKey?.let { key ->
-            if (focusMemoryManager.hasFocusMemory(key)) {
-                binding.root.postDelayed({
-                    focusMemoryManager.restoreFocus(key)
-                }, 100)
-            }
-        }
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-
-        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event?.action == KeyEvent.ACTION_DOWN) {
-            val focus = currentFocus
-            val isFocusOnMenu = focus == binding.btnAppLogo ||
-                    focus == binding.chipHome ||
-                    focus == binding.chipDiscover ||
-                    focus == binding.chipLibrary ||
-                    focus == binding.chipSearch ||
-                    focus == binding.chipLiveTV ||
-                    focus == binding.chipMore
-
-            if (isFocusOnMenu) {
-                // Check if we have saved focus to restore
-                currentFragmentKey?.let { key ->
-                    if (focusMemoryManager.hasFocusMemory(key)) {
-                        val restored = focusMemoryManager.restoreFocus(key)
-                        if (restored) return true
-                    }
-                }
-
-                // Otherwise use default fragment-specific focus
-                val focusedSuccessfully = when (currentFragment) {
-                    is SearchFragment -> {
-                        currentFragment.focusSearch()
-                        true
-                    }
-                    is DiscoverFragment -> {
-                        currentFragment.focusSidebar()
-                    }
-                    is HomeFragment -> {
-                        currentFragment.focusSidebar()
-                    }
-                    is LibraryFragment -> {
-                        currentFragment.focusSidebar()
-                    }
-                    is LiveTVFragment -> {
-                        currentFragment.focusSidebar()
-                    }
-                    else -> false
-                }
-
-                // If focus was successfully moved, consume the event
-                if (focusedSuccessfully) {
-                    return true
-                }
-
-                // Fallback: try to find any focusable view in the fragment
-                val fragmentContainer = findViewById<View>(R.id.fragmentContainer)
-                val focusableView = fragmentContainer?.findFocus() ?: fragmentContainer?.focusSearch(View.FOCUS_DOWN)
-                if (focusableView != null && focusableView != focus) {
-                    focusableView.requestFocus()
-                    return true
-                }
-            }
-        }
-
-        if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
-            // First, check if fragment has internal navigation (drill-down)
-            if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
-            if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
-
-            // Check if focus is on menu
-            val focus = currentFocus
-            val isFocusOnMenu = focus == binding.btnAppLogo ||
-                    focus == binding.chipHome ||
-                    focus == binding.chipDiscover ||
-                    focus == binding.chipLibrary ||
-                    focus == binding.chipSearch ||
-                    focus == binding.chipLiveTV ||
-                    focus == binding.chipMore
-
-            if (isFocusOnMenu) {
-                // Navigate to user selection instead of exiting app
-                startActivity(Intent(this, UserSelectionActivity::class.java))
-                finish()
-                return true
-            }
-
-            // Check if there's a previous fragment in navigation stack
-            if (navigationStack.isNotEmpty()) {
-                val (previousKey, previousFragment) = navigationStack.removeLast()
-                currentFragmentKey = previousKey
-
-                // Load previous fragment without adding to stack
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer, previousFragment)
-                    .commit()
-
-                // Restore focus after fragment is loaded
-                binding.root.postDelayed({
-                    if (focusMemoryManager.hasFocusMemory(previousKey)) {
-                        focusMemoryManager.restoreFocus(previousKey)
-                    }
-                }, 150)
-
-                // Update sidebar selection to match previous fragment
-                when (previousFragment) {
-                    is HomeFragment -> binding.chipHome.isChecked = true
-                    is DiscoverFragment -> binding.chipDiscover.isChecked = true
-                    is LibraryFragment -> binding.chipLibrary.isChecked = true
-                    is SearchFragment -> binding.chipSearch.isChecked = true
-                    is LiveTVFragment -> binding.chipLiveTV.isChecked = true
-                }
-
-                return true
-            }
-
-            // No navigation history - focus sidebar menu
-            // Save current focus before returning to menu
-            currentFragmentKey?.let { key ->
-                currentFocus?.let { view ->
-                    focusMemoryManager.saveFocus(key, view)
-                }
-            }
-
-            when {
-                binding.chipHome.isChecked -> binding.chipHome.requestFocus()
-                binding.chipDiscover.isChecked -> binding.chipDiscover.requestFocus()
-                binding.chipLibrary.isChecked -> binding.chipLibrary.requestFocus()
-                binding.chipSearch.isChecked -> binding.chipSearch.requestFocus()
-                binding.chipLiveTV.isChecked -> binding.chipLiveTV.requestFocus()
-                else -> binding.navigationScroll.requestFocus()
-            }
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
     }
 }

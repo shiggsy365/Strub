@@ -71,7 +71,6 @@ class LibraryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         currentType = arguments?.getString(ARG_TYPE) ?: "movie"
 
-        setupUI()
         setupAdapters()
         setupObservers()
         setupKeyHandling()
@@ -81,37 +80,6 @@ class LibraryFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         currentSelectedItem?.let { updateDetailsPane(it) }
-    }
-
-    private fun setupUI() {
-        // Setup Movies/Series dropdown
-        val dropdownMediaType = binding.root.findViewById<android.widget.TextView>(R.id.dropdownMediaType)
-        dropdownMediaType?.apply {
-            // Set initial text based on current type
-            text = if (currentType == "series") "Series" else "Movies"
-
-            // Handle dropdown clicks
-            setOnClickListener { view ->
-                val contextWrapper = android.view.ContextThemeWrapper(
-                    requireContext(),
-                    android.R.style.Theme_DeviceDefault_Light_NoActionBar
-                )
-                val popup = android.widget.PopupMenu(contextWrapper, view)
-                popup.menu.add("Movies")
-                popup.menu.add("Series")
-
-                popup.setOnMenuItemClickListener { menuItem ->
-                    val newType = if (menuItem.title == "Series") "series" else "movie"
-                    if (newType != currentType) {
-                        currentType = newType
-                        dropdownMediaType.text = menuItem.title
-                        loadLibrary()
-                    }
-                    true
-                }
-                popup.show()
-            }
-        }
     }
 
     private fun setupKeyHandling() {

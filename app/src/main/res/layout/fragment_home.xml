@@ -34,26 +34,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Movies/Series Dropdown (Top Right) -->
-        <TextView
-            android:id="@+id/dropdownMediaType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Movies"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="@color/text_primary"
-            android:padding="12dp"
-            android:focusable="true"
-            android:clickable="true"
-            android:background="?attr/selectableItemBackground"
-            android:drawableEnd="@drawable/ic_arrow_drop_down"
-            android:drawableTint="@color/text_secondary"
-            android:gravity="center"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
         <!-- Main Content Area -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/detailsContainer"
@@ -84,14 +64,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center_vertical">
 
                     <!-- Logo Container -->
                     <FrameLayout
                         android:id="@+id/logoContainer"
-                        android:layout_width="180dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="120dp"
-                        android:layout_marginEnd="12dp">
+                        android:minWidth="150dp"
+                        android:layout_marginEnd="16dp">
 
                         <ImageView
                             android:id="@+id/detailLogo"
@@ -99,7 +81,7 @@
                             android:layout_height="match_parent"
                             android:adjustViewBounds="true"
                             android:contentDescription="Content Logo"
-                            android:scaleType="fitCenter"
+                            android:scaleType="fitStart"
                             android:visibility="gone"
                             tools:src="@drawable/movie"
                             tools:visibility="visible" />
@@ -118,12 +100,11 @@
                             tools:text="The Matrix" />
                     </FrameLayout>
 
-                    <!-- Rating and Date Stacked -->
+                    <!-- Rating and Date Stacked to the RIGHT of Logo -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_gravity="center_vertical">
+                        android:orientation="vertical">
 
                         <TextView
                             android:id="@+id/detailRating"
@@ -141,9 +122,9 @@
                             android:id="@+id/detailDate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="4dp"
                             android:textAppearance="?attr/textAppearanceBodyLarge"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/text_secondary"
                             tools:text="2023" />
 
                     </LinearLayout>
@@ -161,11 +142,10 @@
                     android:visibility="gone"
                     tools:text="S01E01" />
 
-                <!-- Description -->
+                <!-- Description with Fixed Height ScrollView -->
                 <ScrollView
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:maxHeight="120dp"
+                    android:layout_height="120dp"
                     android:layout_marginBottom="12dp"
                     android:scrollbars="vertical"
                     android:fadeScrollbars="false">
@@ -176,6 +156,8 @@
                         android:layout_height="wrap_content"
                         android:justificationMode="inter_word"
                         android:lineSpacingExtra="4dp"
+                        android:maxLines="5"
+                        android:ellipsize="end"
                         android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:textColor="@color/text_secondary"
                         tools:text="In a world where technology has advanced beyond imagination, humanity faces its greatest challenge yet. This epic tale of survival, love, and determination will keep you on the edge of your seat." />
@@ -212,6 +194,7 @@
                         android:paddingHorizontal="32dp"
                         android:paddingVertical="12dp"
                         android:focusable="true"
+                        android:nextFocusDown="@id/rvContent"
                         app:icon="@drawable/ic_play_circle"
                         app:iconSize="24dp"
                         android:layout_marginEnd="12dp"
@@ -226,6 +209,7 @@
                         android:paddingHorizontal="32dp"
                         android:paddingVertical="12dp"
                         android:focusable="true"
+                        android:nextFocusDown="@id/rvContent"
                         android:layout_marginEnd="12dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
@@ -238,6 +222,7 @@
                         android:paddingHorizontal="32dp"
                         android:paddingVertical="12dp"
                         android:focusable="true"
+                        android:nextFocusDown="@id/rvContent"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
                 </LinearLayout>
@@ -318,6 +303,7 @@
                     android:layout_marginBottom="16dp" />
 
                 <TextView
+                    android:id="@+id/tvLoadingMessage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Loading..."

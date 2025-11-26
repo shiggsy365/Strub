@@ -8,13 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.example.stremiompvplayer.CatalogRepository
-import com.example.stremiompvplayer.models.Meta
-import com.example.stremiompvplayer.models.MetaItem
-import com.example.stremiompvplayer.models.Stream
-import com.example.stremiompvplayer.models.UserCatalog
-import com.example.stremiompvplayer.network.TMDBClient
-import com.example.stremiompvplayer.network.TraktClient
-import com.example.stremiompvplayer.network.TraktDeviceCodeResponse
+import com.example.stremiompvplayer.models.*
+import com.example.stremiompvplayer.network.*
 import com.example.stremiompvplayer.utils.Secrets
 import com.example.stremiompvplayer.utils.SessionCache
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
@@ -54,14 +49,14 @@ class MainViewModel(
     private var logoFetchJob: Job? = null
 
     // --- Genre Selection ---
-    private val _movieGenres = MutableLiveData<List<com.example.stremiompvplayer.models.TMDBGenre>>()
-    val movieGenres: LiveData<List<com.example.stremiompvplayer.models.TMDBGenre>> = _movieGenres
+    private val _movieGenres = MutableLiveData<List<TMDBGenre>>()
+    val movieGenres: LiveData<List<TMDBGenre>> = _movieGenres
 
-    private val _tvGenres = MutableLiveData<List<com.example.stremiompvplayer.models.TMDBGenre>>()
-    val tvGenres: LiveData<List<com.example.stremiompvplayer.models.TMDBGenre>> = _tvGenres
+    private val _tvGenres = MutableLiveData<List<TMDBGenre>>()
+    val tvGenres: LiveData<List<TMDBGenre>> = _tvGenres
 
-    private val _selectedGenre = MutableLiveData<com.example.stremiompvplayer.models.TMDBGenre?>()
-    val selectedGenre: LiveData<com.example.stremiompvplayer.models.TMDBGenre?> = _selectedGenre
+    private val _selectedGenre = MutableLiveData<TMDBGenre?>()
+    val selectedGenre: LiveData<TMDBGenre?> = _selectedGenre
 
     private val apiKey: String get() = prefsManager.getTMDBApiKey() ?: ""
 
@@ -1291,45 +1286,73 @@ class MainViewModel(
         }
     }
 
-    fun clearWatchedStatus(item: MetaItem, syncToTrakt: Boolean = true) {
+    // === NEW: NOT WATCHING (Replaces Clear Progress in Context Menu) ===
+    fun markAsNotWatching(item: MetaItem) {
         val currentUserId = prefsManager.getCurrentUserId() ?: return
         val tmdbId = item.id.removePrefix("tmdb:").split(":")[0].toIntOrNull()
 
         viewModelScope.launch {
             try {
-                // 1. Trakt Sync Removal (Isolated in try-catch)
-                if (syncToTrakt && prefsManager.isTraktEnabled() && tmdbId != null) {
-                    try {
-                        val token = prefsManager.getTraktAccessToken()
-                        if (token != null) {
-                            val bearer = "Bearer $token"
-                            val body = if (item.type == "movie") {
-                                TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, tmdbId, null, null))))
-                            } else null
+                if (prefsManager.isTraktEnabled() && tmdbId != null) {
+                    val token = prefsManager.getTraktAccessToken()
+                    if (token != null) {
+                        val bearer = "Bearer $token"
+                        val clientId = Secrets.TRAKT_CLIENT_ID
 
-                            if (body != null) TraktClient.api.removeFromHistory(bearer, Secrets.TRAKT_CLIENT_ID, body)
+                        // 1. Remove from Trakt History (Clears from "Next Up")
+                        val historyBody = if (item.type == "movie") {
+                            TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, tmdbId, null, null))))
+                        } else {
+                            // For series/episodes, removing the SHOW ID from history clears all progress for that show
+                            TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, tmdbId, null, null))))
                         }
-                    } catch (e: Exception) {
-                        Log.e("MainViewModel", "Trakt sync failed in clearWatchedStatus: ${e.message}")
-                        // Proceed to local update
+                        TraktClient.api.removeFromHistory(bearer, clientId, historyBody)
+
+                        // 2. Remove from Trakt Playback (Clears from "Continue Watching")
+                        try {
+                            // We need to find the playback ID first
+                            val playbackItems = if (item.type == "movie") {
+                                TraktClient.api.getPausedMovies(bearer, clientId)
+                            } else {
+                                TraktClient.api.getPausedEpisodes(bearer, clientId)
+                            }
+
+                            // Find item matching TMDB ID
+                            val matchingItem = playbackItems.find { playback ->
+                                val pTmdb = if (item.type == "movie") playback.movie?.ids?.tmdb else playback.show?.ids?.tmdb
+                                pTmdb == tmdbId
+                            }
+
+                            matchingItem?.id?.let { playbackId ->
+                                TraktClient.api.removePlaybackProgress(bearer, clientId, playbackId)
+                            }
+                        } catch (e: Exception) {
+                            Log.e("MainViewModel", "Failed to remove playback progress: ${e.message}")
+                        }
                     }
                 }
 
-                // 2. Local Update (Always runs)
+                // 3. Clear Local Watch Progress
                 catalogRepository.updateWatchedStatus(currentUserId, item.id, false)
 
-                // Refresh: Explicitly clear cache and force reload
+                // Refresh UI
                 loadedContentCache.clear()
                 sessionCache.invalidateAll(currentUserId)
                 lastRequestedCatalog?.let { loadContentForCatalog(it, isInitialLoad = true) }
                 loadHomeContent()
 
                 _isItemWatched.postValue(false)
-                _actionResult.postValue(ActionResult.Success("Cleared watched status"))
+                _actionResult.postValue(ActionResult.Success("Removed from Watching lists"))
+
             } catch (e: Exception) {
                 _actionResult.postValue(ActionResult.Error("Failed: ${e.message}"))
             }
         }
+    }
+
+    // Keeping clearWatchedStatus for backwards compatibility if needed, but markAsNotWatching is superior
+    fun clearWatchedStatus(item: MetaItem, syncToTrakt: Boolean = true) {
+        markAsNotWatching(item)
     }
 
     // === STANDARD METHODS ===
