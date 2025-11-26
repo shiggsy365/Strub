@@ -257,10 +257,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2c02766e-19a3-4317-ae82-959ae60a24cb" name="Changes" comment="Update visual assets">
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_18_25,_1_07 AM_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/PlayerActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/PlayerActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/network/AIOStreamsClient.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/network/AIOStreamsClient.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/viewmodels/MainViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/viewmodels/MainViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/netflix_sidebar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/netflix_sidebar.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -466,22 +464,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1763370382391</updated>
-    </task>
-    <task id="LOCAL-00037" summary="stremio addon implementation">
-      <option name="closed" value="true" />
-      <created>1763509962730</created>
-      <option name="number" value="00037" />
-      <option name="presentableId" value="LOCAL-00037" />
-      <option name="project" value="LOCAL" />
-      <updated>1763509962730</updated>
-    </task>
-    <task id="LOCAL-00038" summary="stremio addon implementation">
-      <option name="closed" value="true" />
-      <created>1763509967987</created>
-      <option name="number" value="00038" />
-      <option name="presentableId" value="LOCAL-00038" />
-      <option name="project" value="LOCAL" />
-      <updated>1763509967987</updated>
     </task>
     <task id="LOCAL-00039" summary="Visual layout for movies page">
       <option name="closed" value="true" />
@@ -859,7 +841,23 @@
       <option name="project" value="LOCAL" />
       <updated>1763947127564</updated>
     </task>
-    <option name="localTasksCounter" value="86" />
+    <task id="LOCAL-00086" summary="Update visual assets">
+      <option name="closed" value="true" />
+      <created>1764179361354</created>
+      <option name="number" value="00086" />
+      <option name="presentableId" value="LOCAL-00086" />
+      <option name="project" value="LOCAL" />
+      <updated>1764179361356</updated>
+    </task>
+    <task id="LOCAL-00087" summary="Update visual assets">
+      <option name="closed" value="true" />
+      <created>1764179783457</created>
+      <option name="number" value="00087" />
+      <option name="presentableId" value="LOCAL-00087" />
+      <option name="project" value="LOCAL" />
+      <updated>1764179783457</updated>
+    </task>
+    <option name="localTasksCounter" value="88" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -878,12 +876,12 @@
       <map>
         <entry key="com.example.stremiompvplayer">
           <value>
-            <CheckInfo lastCheckTimestamp="1763940444656" />
+            <CheckInfo lastCheckTimestamp="1764180263347" />
           </value>
         </entry>
         <entry key="com.example.stremiompvplayer.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1763940444651" />
+            <CheckInfo lastCheckTimestamp="1764180263350" />
           </value>
         </entry>
       </map>

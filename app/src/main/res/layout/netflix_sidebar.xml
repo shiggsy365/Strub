@@ -2,217 +2,144 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/netflixSidebar"
-    android:layout_width="match_parent"
+    android:layout_width="80dp"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/md_theme_surfaceContainer"
     android:paddingTop="16dp"
     android:paddingBottom="16dp"
-    android:elevation="8dp">
+    android:elevation="8dp"
+    android:gravity="center_horizontal">
 
-    <!-- App Logo -->
-    <LinearLayout
-        android:id="@+id/sidebarLogo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingVertical="16dp"
-        android:paddingHorizontal="8dp">
+    <!-- 1. App Logo -->
+    <ImageView
+        android:id="@+id/appLogo"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@mipmap/ic_launcher"
+        android:scaleType="fitCenter"
+        android:contentDescription="App Logo"
+        android:layout_marginBottom="24dp" />
 
-        <ImageView
-            android:id="@+id/appLogo"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@mipmap/ic_launcher"
-            android:scaleType="centerCrop"
-            android:contentDescription="App Logo" />
-    </LinearLayout>
-
-    <!-- Home -->
-    <LinearLayout
+    <!-- 2. Home -->
+    <ImageButton
         android:id="@+id/sidebarHome"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingVertical="16dp"
-        android:focusable="true"
-        android:clickable="true"
-        android:background="?attr/selectableItemBackground">
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_home"
+        android:scaleType="centerInside"
+        android:padding="12dp"
+        app:tint="@android:color/white"
+        android:contentDescription="Home"
+        android:nextFocusDown="@id/sidebarDiscover"
+        android:layout_marginBottom="8dp" />
 
-        <ImageView
-            android:id="@+id/iconHome"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_home"
-            app:tint="@android:color/white"
-            android:contentDescription="Home" />
-
-        <TextView
-            android:id="@+id/textHome"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Home"
-            android:textSize="10sp"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="4dp" />
-    </LinearLayout>
-
-    <!-- Discover -->
-    <LinearLayout
+    <!-- 3. Discover -->
+    <ImageButton
         android:id="@+id/sidebarDiscover"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingVertical="16dp"
-        android:focusable="true"
-        android:clickable="true"
-        android:background="?attr/selectableItemBackground">
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_discover"
+        android:scaleType="centerInside"
+        android:padding="12dp"
+        app:tint="@android:color/white"
+        android:contentDescription="Discover"
+        android:nextFocusDown="@id/sidebarLibrary"
+        android:layout_marginBottom="8dp" />
 
-        <ImageView
-            android:id="@+id/iconDiscover"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_discover"
-            app:tint="@android:color/white"
-            android:contentDescription="Discover" />
-
-        <TextView
-            android:id="@+id/textDiscover"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Discover"
-            android:textSize="10sp"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="4dp" />
-    </LinearLayout>
-
-    <!-- Library -->
-    <LinearLayout
+    <!-- 4. Library -->
+    <ImageButton
         android:id="@+id/sidebarLibrary"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingVertical="16dp"
-        android:focusable="true"
-        android:clickable="true"
-        android:background="?attr/selectableItemBackground">
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_library"
+        android:scaleType="centerInside"
+        android:padding="12dp"
+        app:tint="@android:color/white"
+        android:contentDescription="Library"
+        android:nextFocusDown="@id/sidebarLiveTV"
+        android:layout_marginBottom="24dp" />
 
-        <ImageView
-            android:id="@+id/iconLibrary"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_library"
-            app:tint="@android:color/white"
-            android:contentDescription="Library" />
-
-        <TextView
-            android:id="@+id/textLibrary"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Library"
-            android:textSize="10sp"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="4dp" />
-    </LinearLayout>
-
-    <!-- Search -->
-    <LinearLayout
-        android:id="@+id/sidebarSearch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingVertical="16dp"
-        android:focusable="true"
-        android:clickable="true"
-        android:background="?attr/selectableItemBackground">
-
-        <ImageView
-            android:id="@+id/iconSearch"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_search"
-            app:tint="@android:color/white"
-            android:contentDescription="Search" />
-
-        <TextView
-            android:id="@+id/textSearch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Search"
-            android:textSize="10sp"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="4dp" />
-    </LinearLayout>
-
-    <!-- Live TV -->
-    <LinearLayout
+    <!-- 5. Live TV (Moved up) -->
+    <ImageButton
         android:id="@+id/sidebarLiveTV"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingVertical="16dp"
-        android:focusable="true"
-        android:clickable="true"
-        android:background="?attr/selectableItemBackground">
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_tv"
+        android:scaleType="centerInside"
+        android:padding="12dp"
+        app:tint="@android:color/white"
+        android:contentDescription="Live TV"
+        android:nextFocusDown="@id/mediaTypeToggle"
+        android:layout_marginBottom="8dp" />
 
-        <ImageView
-            android:id="@+id/iconLiveTV"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_tv"
-            app:tint="@android:color/white"
-            android:contentDescription="Live TV" />
+    <!-- 7. Search -->
+    <ImageButton
+        android:id="@+id/sidebarSearch"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_search"
+        android:scaleType="centerInside"
+        android:padding="12dp"
+        app:tint="@android:color/white"
+        android:contentDescription="Search"
+        android:nextFocusDown="@id/sidebarSettings"
+        android:layout_marginBottom="8dp" />
 
-        <TextView
-            android:id="@+id/textLiveTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Live TV"
-            android:textSize="10sp"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="4dp" />
-    </LinearLayout>
-
-    <!-- Spacer -->
+    <!-- Spacer to push bottom items down -->
     <View
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- Settings -->
+    <!-- 6. Movies/Series Toggle (Moved down) -->
     <LinearLayout
-        android:id="@+id/sidebarSettings"
-        android:layout_width="match_parent"
+        android:id="@+id/mediaTypeToggle"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:paddingVertical="16dp"
+        android:background="@drawable/selector_focus_border"
+        android:padding="4dp"
         android:focusable="true"
         android:clickable="true"
-        android:background="?attr/selectableItemBackground">
+        android:layout_marginBottom="8dp">
 
         <ImageView
-            android:id="@+id/iconSettings"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_settings"
-            app:tint="@android:color/white"
-            android:contentDescription="Settings" />
+            android:id="@+id/iconMediaType"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_movie"
+            app:tint="@color/md_theme_primary" />
 
         <TextView
-            android:id="@+id/textSettings"
+            android:id="@+id/textMediaType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Settings"
+            android:text="MOV"
             android:textSize="10sp"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="4dp" />
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="2dp"/>
     </LinearLayout>
+
+
+
+    <!-- 8. Settings -->
+    <ImageButton
+        android:id="@+id/sidebarSettings"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_settings"
+        android:scaleType="centerInside"
+        android:padding="12dp"
+        app:tint="@android:color/white"
+        android:contentDescription="Settings" />
 
 </LinearLayout>
