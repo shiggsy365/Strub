@@ -256,6 +256,21 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.fragmentContainer, fragment)
             .commit()
 
+        // Update media type toggle state based on fragment type
+        val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
+        val mediaTypeToggle = sidebar.findViewById<View>(R.id.mediaTypeToggle)
+        if (fragment is HomeFragment) {
+            // Disable toggle on Home page
+            mediaTypeToggle.isEnabled = false
+            mediaTypeToggle.isFocusable = false
+            mediaTypeToggle.alpha = 0.5f
+        } else {
+            // Enable toggle on other pages
+            mediaTypeToggle.isEnabled = true
+            mediaTypeToggle.isFocusable = true
+            mediaTypeToggle.alpha = 1.0f
+        }
+
         // Restore focus after fragment is loaded
         currentFragmentKey?.let { key ->
             if (focusMemoryManager.hasFocusMemory(key)) {
