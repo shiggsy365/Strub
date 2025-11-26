@@ -195,6 +195,8 @@
                         android:paddingVertical="12dp"
                         android:focusable="true"
                         android:nextFocusDown="@id/rvContent"
+                        android:background="@drawable/selector_button_focus"
+                        app:backgroundTint="@null"
                         app:icon="@drawable/ic_play_circle"
                         app:iconSize="24dp"
                         android:layout_marginEnd="12dp"
@@ -210,6 +212,8 @@
                         android:paddingVertical="12dp"
                         android:focusable="true"
                         android:nextFocusDown="@id/rvContent"
+                        android:background="@drawable/selector_button_outlined_focus"
+                        app:backgroundTint="@null"
                         android:layout_marginEnd="12dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
@@ -223,6 +227,8 @@
                         android:paddingVertical="12dp"
                         android:focusable="true"
                         android:nextFocusDown="@id/rvContent"
+                        android:background="@drawable/selector_button_outlined_focus"
+                        app:backgroundTint="@null"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
                 </LinearLayout>
