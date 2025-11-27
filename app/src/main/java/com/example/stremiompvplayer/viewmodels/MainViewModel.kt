@@ -1025,7 +1025,10 @@ class MainViewModel(
         }.awaitAll().filterNotNull()
 
         // Sort by lastUpdated (most recent first) and return only the MetaItems
-        val result = nextUpItems.sortedByDescending { it.second }.map { it.first }
+        val result = nextUpItems
+            .sortedByDescending { it.second }
+            .map { it.first }
+            .distinctBy { it.id }  // Remove any duplicate episodes
 
         // PERFORMANCE: Cache the result
         sessionCache.putNextUp(currentUserId, result)
@@ -1937,6 +1940,8 @@ class MainViewModel(
                 episode = episode
             )
             catalogRepository.saveWatchProgress(progress)
+            // Invalidate Next Up cache when watch progress changes
+            sessionCache.invalidateNextUp(currentUserId)
         }
     }
 

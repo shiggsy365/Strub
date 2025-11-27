@@ -51,6 +51,7 @@ class DiscoverFragment : Fragment() {
     private var currentCatalogIndex = 0
     private var isShowingGenre = false
     private var isCycling = false  // Prevents double press on DPAD_DOWN
+    private var cycleAttemptCount = 0
 
     private var detailsUpdateJob: Job? = null
     private val focusMemoryManager = FocusMemoryManager.getInstance()
@@ -597,7 +598,15 @@ class DiscoverFragment : Fragment() {
     private fun cycleToNextList() {
         if (allCatalogs.isEmpty() || isCycling) return
 
+        // Prevent infinite loops - if we've tried all catalogs, stop
+        if (cycleAttemptCount >= allCatalogs.size) {
+            cycleAttemptCount = 0
+            isCycling = false
+            return
+        }
+
         isCycling = true
+        cycleAttemptCount++
 
         // Reset drill-down state when cycling lists
         currentDrillDownLevel = DrillDownLevel.CATALOG
@@ -619,14 +628,18 @@ class DiscoverFragment : Fragment() {
         isShowingGenre = false
         updatePlayButtonVisibility()
 
-        // [FIX] Force focus to the first item when cycling lists
+        // Focus will be handled in the observer after content loads
         binding.root.postDelayed({
-            binding.rvContent.scrollToPosition(0)
-            binding.rvContent.post {
-                val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
-                firstView?.requestFocus()
-                isCycling = false  // Reset flag after focus is set
+            if (contentAdapter.itemCount > 0) {
+                binding.rvContent.scrollToPosition(0)
+                binding.rvContent.post {
+                    val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                    firstView?.requestFocus()
+                    isCycling = false
+                    cycleAttemptCount = 0
+                }
             }
+            // If empty, the observer will trigger another cycle
         }, 1000)
     }
 
@@ -845,10 +858,18 @@ class DiscoverFragment : Fragment() {
 
                 if (items.isNotEmpty()) {
                     updateDetailsPane(items[0])
-                }
-
-                if (items.isEmpty()) {
+                    // Reset cycle attempt count when we find a non-empty list
+                    if (isCycling) {
+                        cycleAttemptCount = 0
+                    }
+                } else {
                     currentSelectedItem = null
+                    // If we're cycling and the list is empty, automatically cycle to the next list
+                    if (isCycling && cycleAttemptCount < allCatalogs.size) {
+                        binding.root.postDelayed({
+                            cycleToNextList()
+                        }, 500)
+                    }
                 }
                 updatePlayButtonVisibility()
             }
