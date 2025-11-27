@@ -811,47 +811,64 @@ class LibraryFragment : Fragment() {
     private fun showGenreFilterDialog() {
         // Fetch genres for the current type
         val type = arguments?.getString(ARG_TYPE) ?: "movie"
-        viewModel.fetchGenres(type)
 
-        // Show loading dialog while genres are being fetched
-        val builder = android.app.AlertDialog.Builder(requireContext())
-        builder.setTitle("Select Genre")
-        builder.setMessage("Loading genres...")
-        val loadingDialog = builder.create()
-        loadingDialog.show()
+        // Use the appropriate genre list based on type
+        val genreSource = if (type == "movie") viewModel.movieGenres else viewModel.tvGenres
 
-        // Observe genres and show selection dialog
-        viewModel.genreList.observe(viewLifecycleOwner) { genres ->
-            loadingDialog.dismiss()
+        // Check if genres are already loaded
+        if (genreSource.value != null && genreSource.value!!.isNotEmpty()) {
+            showGenreSelectionDialog(genreSource.value!!, type)
+        } else {
+            // Fetch genres if not loaded
+            viewModel.fetchGenres(type)
 
-            if (genres.isEmpty()) {
-                Toast.makeText(requireContext(), "No genres available", Toast.LENGTH_SHORT).show()
-                return@observe
-            }
+            // Show loading dialog while genres are being fetched
+            val builder = android.app.AlertDialog.Builder(requireContext())
+            builder.setTitle("Select Genre")
+            builder.setMessage("Loading genres...")
+            val loadingDialog = builder.create()
+            loadingDialog.show()
 
-            val genreNames = listOf("All Genres") + genres.map { it.name }
-            val genreIds = listOf(null) + genres.map { it.id.toString() }
+            // Observe once and show selection dialog
+            genreSource.observe(viewLifecycleOwner, object : androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.TMDBGenre>> {
+                override fun onChanged(genres: List<com.example.stremiompvplayer.models.TMDBGenre>) {
+                    loadingDialog.dismiss()
+                    genreSource.removeObserver(this)
 
-            android.app.AlertDialog.Builder(requireContext())
-                .setTitle("Select Genre")
-                .setItems(genreNames.toTypedArray()) { _, which ->
-                    currentGenreFilter = genreIds[which]
-                    val selectedGenreName = genreNames[which]
-
-                    // Update label to show filter
-                    val label = if (currentGenreFilter == null) {
-                        if (type == "movie") "My Movies" else "My Series"
-                    } else {
-                        if (type == "movie") "My Movies - $selectedGenreName" else "My Series - $selectedGenreName"
+                    if (genres.isEmpty()) {
+                        Toast.makeText(requireContext(), "No genres available", Toast.LENGTH_SHORT).show()
+                        return
                     }
-                    updateCurrentListLabel(label)
 
-                    // Apply filter
-                    viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
+                    showGenreSelectionDialog(genres, type)
                 }
-                .setNegativeButton("Cancel", null)
-                .show()
+            })
         }
+    }
+
+    private fun showGenreSelectionDialog(genres: List<com.example.stremiompvplayer.models.TMDBGenre>, type: String) {
+        val genreNames = listOf("All Genres") + genres.map { it.name }
+        val genreIds = listOf(null) + genres.map { it.id.toString() }
+
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Select Genre")
+            .setItems(genreNames.toTypedArray()) { _, which ->
+                currentGenreFilter = genreIds[which]
+                val selectedGenreName = genreNames[which]
+
+                // Update label to show filter
+                val label = if (currentGenreFilter == null) {
+                    if (type == "movie") "My Movies" else "My Series"
+                } else {
+                    if (type == "movie") "My Movies - $selectedGenreName" else "My Series - $selectedGenreName"
+                }
+                updateCurrentListLabel(label)
+
+                // Apply filter
+                viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     fun focusSidebar(): Boolean {

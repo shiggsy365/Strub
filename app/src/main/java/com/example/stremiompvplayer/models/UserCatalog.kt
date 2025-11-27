@@ -71,7 +71,10 @@ data class CollectedItem(
                 name = metaItem.name,
                 poster = metaItem.poster,
                 background = metaItem.background,
-                description = metaItem.description
+                description = metaItem.description,
+                year = metaItem.releaseDate,
+                genres = metaItem.genres,
+                rating = metaItem.rating
             )
         }
     }
