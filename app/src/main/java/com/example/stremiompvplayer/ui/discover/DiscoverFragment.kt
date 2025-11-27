@@ -226,8 +226,7 @@ class DiscoverFragment : Fragment() {
     fun focusSidebar(): Boolean {
         binding.root.post {
             // Focus on Play button or poster carousel
-            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
-                ?: binding.rvContent.requestFocus()
+            binding.rvContent.requestFocus()
         }
         return true
     }
@@ -639,7 +638,7 @@ class DiscoverFragment : Fragment() {
                 val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
                 firstView?.requestFocus()
             }
-        }, 200)
+        }, 1000)
     }
 
     private fun loadGenreList(genreId: Int, genreName: String, type: String = "movie") {

@@ -32,7 +32,7 @@
                 android:id="@+id/poster"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:scaleType="centerCrop"
+                android:scaleType="fitXY"
                 android:adjustViewBounds="false"
                 android:contentDescription="Poster"
                 app:layout_constraintTop_toTopOf="parent"

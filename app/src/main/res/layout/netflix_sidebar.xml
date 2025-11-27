@@ -113,6 +113,7 @@
         android:focusable="true"
         android:clickable="true"
         android:nextFocusDown="@id/sidebarSettings"
+        android:nextFocusUp="@id/sidebarSearch"
         android:nextFocusRight="@id/fragmentContainer"
         android:layout_marginBottom="8dp">
 
@@ -141,6 +142,7 @@
         android:id="@+id/sidebarSettings"
         android:layout_width="48dp"
         android:layout_height="48dp"
+        android:nextFocusUp="@id/mediaTypeToggle"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_settings"
         android:scaleType="centerInside"
