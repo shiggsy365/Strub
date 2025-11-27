@@ -43,7 +43,7 @@ class PosterAdapter(
         if (item.isLandscape) {
             params.dimensionRatio = "H,4:3"
         } else {
-            params.dimensionRatio = "H,58:96"
+            params.dimensionRatio = "H,2:3"
         }
         holder.poster.layoutParams = params
 
