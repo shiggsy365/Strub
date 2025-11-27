@@ -184,6 +184,27 @@ class LiveTVFragment : Fragment() {
         binding.rvTVGuide.isFocusableInTouchMode = true
         binding.rvTVGuide.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 
+        // Override focus search to keep focus within RecyclerView during scrolling
+        binding.rvTVGuide.setOnKeyListener { v, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    android.view.KeyEvent.KEYCODE_DPAD_UP,
+                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        // Keep focus locked within RecyclerView - don't let it escape to sidebar
+                        // Return false to let RecyclerView handle the navigation
+                        false
+                    }
+                    android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        // Prevent left from opening sidebar when in channel list
+                        true  // Consume the event
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
+
         // Add focus listener to update details pane when channel is focused
         binding.rvTVGuide.addOnChildAttachStateChangeListener(object : androidx.recyclerview.widget.RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
