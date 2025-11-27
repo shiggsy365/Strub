@@ -83,12 +83,16 @@ class LibraryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Get the media type from arguments, default to "movie"
+        val type = arguments?.getString(ARG_TYPE) ?: "movie"
+
+        // Sync the media type toggle with current content type
+        (activity as? com.example.stremiompvplayer.MainActivity)?.syncMediaTypeToggle(type)
+
         setupAdapters()
         setupObservers()
         setupKeyHandling()
 
-        // Get the media type from arguments, default to "movie"
-        val type = arguments?.getString(ARG_TYPE) ?: "movie"
         loadLibrary(type)
     }
 

@@ -84,11 +84,15 @@ class DiscoverFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupAdapters()
-        setupObservers()
 
         // Get the media type from arguments, default to "movie"
         val type = arguments?.getString(ARG_TYPE) ?: "movie"
+
+        // Sync the media type toggle with current content type
+        (activity as? MainActivity)?.syncMediaTypeToggle(type)
+
+        setupAdapters()
+        setupObservers()
 
         // Check if we should navigate directly to a series
         val seriesId = arguments?.getString(ARG_SERIES_ID)
