@@ -533,7 +533,7 @@ class DetailsActivity2 : AppCompatActivity() {
             } else {
                 currentMetaItem!!.id
             }
-            val tempMeta = currentMetaItem!!.copy(id = idToCheck)
+            val tempMeta = currentMetaItem!!.copy(id = idToCheck, type = currentType)
             viewModel.toggleLibrary(tempMeta)
         }
 

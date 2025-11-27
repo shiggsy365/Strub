@@ -48,6 +48,8 @@ class HomeFragment : Fragment() {
     // Track current catalogs and index for cycling
     private var currentCatalogs = listOf<UserCatalog>()
     private var currentCatalogIndex = 0
+    private var isCycling = false
+    private var cycleAttemptCount = 0
 
     private val focusMemoryManager = FocusMemoryManager.getInstance()
     private val fragmentKey = "home"
@@ -243,18 +245,34 @@ class HomeFragment : Fragment() {
 
     private fun cycleToNextList() {
         if (currentCatalogs.isEmpty()) return
+
+        // Prevent infinite loops - if we've tried all catalogs, stop
+        if (cycleAttemptCount >= currentCatalogs.size) {
+            cycleAttemptCount = 0
+            isCycling = false
+            return
+        }
+
+        isCycling = true
+        cycleAttemptCount++
+
         currentCatalogIndex = (currentCatalogIndex + 1) % currentCatalogs.size
         val nextCatalog = currentCatalogs[currentCatalogIndex]
         updateCurrentListLabel(nextCatalog.displayName)
         viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
 
-        // Focus first item when cycling lists
+        // Focus will be handled in the observer after content loads
         binding.root.postDelayed({
-            binding.rvContent.scrollToPosition(0)
-            binding.rvContent.post {
-                val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
-                firstView?.requestFocus()
+            if (contentAdapter.itemCount > 0) {
+                binding.rvContent.scrollToPosition(0)
+                binding.rvContent.post {
+                    val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                    firstView?.requestFocus()
+                    isCycling = false
+                    cycleAttemptCount = 0
+                }
             }
+            // If empty, the observer will trigger another cycle
         }, 1000)
     }
 
@@ -420,8 +438,21 @@ class HomeFragment : Fragment() {
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
             contentAdapter.updateData(items)
-            if (items.isNotEmpty()) updateDetailsPane(items[0])
-            else currentSelectedItem = null
+            if (items.isNotEmpty()) {
+                updateDetailsPane(items[0])
+                // Reset cycle attempt count when we find a non-empty list
+                if (isCycling) {
+                    cycleAttemptCount = 0
+                }
+            } else {
+                currentSelectedItem = null
+                // If we're cycling and the list is empty, automatically cycle to the next list
+                if (isCycling && cycleAttemptCount < currentCatalogs.size) {
+                    binding.root.postDelayed({
+                        cycleToNextList()
+                    }, 500)
+                }
+            }
         }
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
             when (logoUrl) {
