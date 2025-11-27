@@ -281,6 +281,22 @@ class SettingsActivity : AppCompatActivity() {
             setPadding(50, 40, 50, 40)
         }
 
+        // Add Trakt logo at the top left
+        val logoImage = ImageView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                dpToPx(120),
+                dpToPx(30)
+            ).apply {
+                gravity = android.view.Gravity.START
+                bottomMargin = dpToPx(16)
+            }
+            scaleType = ImageView.ScaleType.FIT_START
+            contentDescription = "Trakt Logo"
+        }
+        val traktLogoUrl = "https://walter.trakt.tv/public/production/images/logo-red.svg"
+        Glide.with(this).load(traktLogoUrl).into(logoImage)
+        container.addView(logoImage)
+
         val codeText = TextView(this).apply {
             text = data.user_code
             textSize = 32f
@@ -317,6 +333,10 @@ class SettingsActivity : AppCompatActivity() {
                 // User cancelled manually
             }
             .show()
+    }
+
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
     }
 
     private fun showTraktSyncDialog() {
