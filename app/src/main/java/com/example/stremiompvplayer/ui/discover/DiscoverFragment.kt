@@ -639,9 +639,12 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun onContentClicked(item: MetaItem) {
-        // Check if this is the genre browser item
-        if (item.type == "genre_browser") {
-            showGenreSelectionDialog()
+        // Check if this is a genre item
+        if (item.type == "genre") {
+            item.genreId?.let { genreId ->
+                val genreType = item.genreType ?: "movie"
+                loadGenreList(genreId, item.name, genreType)
+            }
             return
         }
 
@@ -759,16 +762,38 @@ class DiscoverFragment : Fragment() {
                         (tvGenres != null && tvGenres.isNotEmpty())
 
                 val itemsWithGenres = if (hasGenres && !isShowingGenre) {
-                    // Create a special "Browse Genres" item
-                    val genreBrowserItem = MetaItem(
-                        id = "genre_browser",
-                        type = "genre_browser",
-                        name = "Browse by Genre",
-                        poster = null,
-                        background = null,
-                        description = "Select a genre to explore"
-                    )
-                    items + genreBrowserItem
+                    // Create individual genre items for each genre
+                    val genreItems = mutableListOf<MetaItem>()
+
+                    // Add movie genres
+                    movieGenres?.forEach { genre ->
+                        genreItems.add(MetaItem(
+                            id = "genre_${genre.id}_movie",
+                            type = "genre",
+                            name = genre.name,
+                            poster = null,
+                            background = null,
+                            description = "${genre.name} Movies",
+                            genreId = genre.id,
+                            genreType = "movie"
+                        ))
+                    }
+
+                    // Add TV genres
+                    tvGenres?.forEach { genre ->
+                        genreItems.add(MetaItem(
+                            id = "genre_${genre.id}_tv",
+                            type = "genre",
+                            name = genre.name,
+                            poster = null,
+                            background = null,
+                            description = "${genre.name} Series",
+                            genreId = genre.id,
+                            genreType = "series"
+                        ))
+                    }
+
+                    items + genreItems
                 } else {
                     items
                 }

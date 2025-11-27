@@ -36,6 +36,7 @@ class MainActivity : AppCompatActivity() {
     private val focusMemoryManager = FocusMemoryManager.getInstance()
     private var currentFragmentKey: String? = null
     private val navigationStack = mutableListOf<Pair<String, Fragment>>()
+    private var currentMediaType: String = "movie"  // Track current media type: "movie" or "series"
 
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(
@@ -150,7 +151,46 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
+        // Add click listener for media type toggle
+        sidebar.findViewById<View>(R.id.mediaTypeToggle).setOnClickListener {
+            toggleMediaType()
+        }
+
         setupSidebarAutoHide(sidebar)
+    }
+
+    private fun toggleMediaType() {
+        // Toggle between movie and series
+        currentMediaType = if (currentMediaType == "movie") "series" else "movie"
+
+        // Update the toggle UI
+        updateMediaTypeToggleUI()
+
+        // Reload the current fragment with the new type
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+        when (currentFragment) {
+            is DiscoverFragment -> {
+                loadFragment(DiscoverFragment.newInstance(currentMediaType))
+            }
+            is LibraryFragment -> {
+                loadFragment(LibraryFragment.newInstance(currentMediaType))
+            }
+            // Add other fragments that support type filtering here if needed
+        }
+    }
+
+    private fun updateMediaTypeToggleUI() {
+        val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
+        val textMediaType = sidebar.findViewById<android.widget.TextView>(R.id.textMediaType)
+        val iconMediaType = sidebar.findViewById<android.widget.ImageView>(R.id.iconMediaType)
+
+        if (currentMediaType == "movie") {
+            textMediaType.text = "MOV"
+            iconMediaType.setImageResource(R.drawable.ic_movie)
+        } else {
+            textMediaType.text = "TV"
+            iconMediaType.setImageResource(R.drawable.ic_tv)
+        }
     }
 
     private fun setupSidebarAutoHide(sidebar: View) {
@@ -193,7 +233,7 @@ class MainActivity : AppCompatActivity() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_search, null)
         val searchInput = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.searchInput)
 
-        val dialog = android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle("Search")
             .setView(dialogView)
             .setPositiveButton("Search") { _, _ ->
@@ -206,6 +246,14 @@ class MainActivity : AppCompatActivity() {
             .create()
 
         dialog.show()
+
+        // Apply OutlinedButton style to dialog buttons
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.apply {
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge)
+        }
+        dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.apply {
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge)
+        }
 
         // Focus search input and show keyboard
         searchInput.requestFocus()
@@ -314,11 +362,14 @@ class MainActivity : AppCompatActivity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
 
-        // 1. Allow HomeFragment and DiscoverFragment to intercept keys (Fixes RecyclerView Down Press)
+        // 1. Allow HomeFragment, DiscoverFragment, and LiveTVFragment to intercept keys (Fixes RecyclerView Down Press)
         if (currentFragment is HomeFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
         if (currentFragment is DiscoverFragment) {
+            if (currentFragment.handleKeyDown(keyCode, event)) return true
+        }
+        if (currentFragment is com.example.stremiompvplayer.ui.livetv.LiveTVFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
 

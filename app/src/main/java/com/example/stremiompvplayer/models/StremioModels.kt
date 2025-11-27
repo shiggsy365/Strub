@@ -73,7 +73,10 @@ data class MetaItem(
     var progress: Long = 0,
     var duration: Long = 0,
     // NEW: Landscape Flag
-    var isLandscape: Boolean = false
+    var isLandscape: Boolean = false,
+    // Genre fields for genre items
+    val genreId: Int? = null,
+    val genreType: String? = null
 ) : Serializable
 
 data class Manifest(val id: String, val version: String, val name: String, val description: String?, val types: List<String>, val catalogs: List<Catalog>) : Serializable

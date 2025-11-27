@@ -971,10 +971,32 @@ class MainViewModel(
 
                     watchedMovies.forEach { item ->
                         item.movie?.ids?.tmdb?.let { tmdbId ->
-                            val meta = MetaItem("tmdb:$tmdbId", "movie", item.movie.title, null, null, "Trakt Import")
-                            catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
-                            catalogRepository.saveWatchProgress(WatchProgress(userId, meta.id, "movie", 0, 0, true, System.currentTimeMillis(), meta.name, null, null, null, null, null))
-                            importedMovieIds.add(tmdbId)
+                            try {
+                                // Fetch full metadata from TMDB
+                                val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
+                                val posterUrl = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                val backgroundUrl = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+
+                                val meta = MetaItem(
+                                    id = "tmdb:$tmdbId",
+                                    type = "movie",
+                                    name = details.title ?: item.movie.title,
+                                    poster = posterUrl,
+                                    background = backgroundUrl,
+                                    description = details.overview,
+                                    releaseDate = details.release_date,
+                                    rating = details.vote_average?.toString()
+                                )
+                                catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
+                                catalogRepository.saveWatchProgress(WatchProgress(userId, meta.id, "movie", 0, 0, true, System.currentTimeMillis(), meta.name, posterUrl, null, null, null, null))
+                                importedMovieIds.add(tmdbId)
+                            } catch (e: Exception) {
+                                // Fallback to minimal metadata if TMDB fetch fails
+                                val meta = MetaItem("tmdb:$tmdbId", "movie", item.movie.title, null, null, "Trakt Import")
+                                catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
+                                catalogRepository.saveWatchProgress(WatchProgress(userId, meta.id, "movie", 0, 0, true, System.currentTimeMillis(), meta.name, null, null, null, null, null))
+                                importedMovieIds.add(tmdbId)
+                            }
                         }
                     }
 
@@ -983,17 +1005,48 @@ class MainViewModel(
 
                     watchedShows.forEach { item ->
                         item.show?.ids?.tmdb?.let { showTmdbId ->
-                            val seriesMeta = MetaItem("tmdb:$showTmdbId", "series", item.show.title, null, null, "Trakt Import")
-                            catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, seriesMeta))
-                            importedShowIds.add(showTmdbId)
+                            try {
+                                // Fetch full metadata from TMDB
+                                val details = TMDBClient.api.getTVDetails(showTmdbId, apiKey)
+                                val posterUrl = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                val backgroundUrl = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
 
-                            item.seasons?.forEach { season ->
-                                season.episodes.forEach { ep ->
-                                    val epId = "tmdb:$showTmdbId:${season.number}:${ep.number}"
-                                    catalogRepository.saveWatchProgress(
-                                        WatchProgress(userId, epId, "episode", 0, 0, true, System.currentTimeMillis(),
-                                            "${item.show.title} S${season.number}E${ep.number}", null, null, "tmdb:$showTmdbId", season.number, ep.number)
-                                    )
+                                val seriesMeta = MetaItem(
+                                    id = "tmdb:$showTmdbId",
+                                    type = "series",
+                                    name = details.name ?: item.show.title,
+                                    poster = posterUrl,
+                                    background = backgroundUrl,
+                                    description = details.overview,
+                                    releaseDate = details.first_air_date,
+                                    rating = details.vote_average?.toString()
+                                )
+                                catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, seriesMeta))
+                                importedShowIds.add(showTmdbId)
+
+                                item.seasons?.forEach { season ->
+                                    season.episodes.forEach { ep ->
+                                        val epId = "tmdb:$showTmdbId:${season.number}:${ep.number}"
+                                        catalogRepository.saveWatchProgress(
+                                            WatchProgress(userId, epId, "episode", 0, 0, true, System.currentTimeMillis(),
+                                                "${seriesMeta.name} S${season.number}E${ep.number}", posterUrl, null, "tmdb:$showTmdbId", season.number, ep.number)
+                                        )
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                // Fallback to minimal metadata if TMDB fetch fails
+                                val seriesMeta = MetaItem("tmdb:$showTmdbId", "series", item.show.title, null, null, "Trakt Import")
+                                catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, seriesMeta))
+                                importedShowIds.add(showTmdbId)
+
+                                item.seasons?.forEach { season ->
+                                    season.episodes.forEach { ep ->
+                                        val epId = "tmdb:$showTmdbId:${season.number}:${ep.number}"
+                                        catalogRepository.saveWatchProgress(
+                                            WatchProgress(userId, epId, "episode", 0, 0, true, System.currentTimeMillis(),
+                                                "${item.show.title} S${season.number}E${ep.number}", null, null, "tmdb:$showTmdbId", season.number, ep.number)
+                                        )
+                                    }
                                 }
                             }
                         }

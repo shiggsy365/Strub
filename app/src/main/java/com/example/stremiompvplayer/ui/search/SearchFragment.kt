@@ -300,20 +300,26 @@ class SearchFragment : Fragment() {
         if (query.isBlank()) return
         currentSearchQuery = query
 
-        // Perform dual search - both movies and series
+        // Perform combined search - both movies and series together, sorted by popularity
         lifecycleScope.launch {
             try {
                 // Search movies
                 viewModel.searchMovies(query)
                 val tempMovieResults = viewModel.searchResults.value ?: emptyList()
-                movieResults = tempMovieResults.filter { it.type == "movie" }
+                val movies = tempMovieResults.filter { it.type == "movie" }
 
                 // Search series
                 viewModel.searchSeries(query)
                 val tempSeriesResults = viewModel.searchResults.value ?: emptyList()
-                seriesResults = tempSeriesResults.filter { it.type == "series" || it.type == "tv" }
+                val series = tempSeriesResults.filter { it.type == "series" || it.type == "tv" }
 
-                // Start with movies
+                // Combine and sort by popularity (rating)
+                val combinedResults = (movies + series).sortedByDescending {
+                    it.rating?.toDoubleOrNull() ?: 0.0
+                }
+
+                movieResults = combinedResults
+                seriesResults = emptyList()
                 currentResultIndex = 0
                 updateDisplayedResults()
             } catch (e: Exception) {
@@ -325,12 +331,16 @@ class SearchFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            // Split results into movies and series
+            // Combined results sorted by popularity
             if (currentSearchQuery != null) {
-                movieResults = results.filter { it.type == "movie" }
-                seriesResults = results.filter { it.type == "series" || it.type == "tv" }
+                val combinedResults = results.sortedByDescending {
+                    it.rating?.toDoubleOrNull() ?: 0.0
+                }
 
-                if (movieResults.isEmpty() && seriesResults.isEmpty()) {
+                movieResults = combinedResults
+                seriesResults = emptyList()
+
+                if (combinedResults.isEmpty()) {
                     binding.emptyState.visibility = View.GONE
                     binding.noResultsState.visibility = View.VISIBLE
                     binding.contentGrid.visibility = View.GONE
@@ -340,7 +350,7 @@ class SearchFragment : Fragment() {
                     binding.noResultsState.visibility = View.GONE
                     binding.contentGrid.visibility = View.VISIBLE
                     binding.heroCard.visibility = View.VISIBLE
-                    currentResultIndex = if (movieResults.isNotEmpty()) 0 else 1
+                    currentResultIndex = 0
                     updateDisplayedResults()
                 }
                 binding.resultsRecycler.requestFocus()

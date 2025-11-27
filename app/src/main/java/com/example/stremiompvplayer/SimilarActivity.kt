@@ -127,10 +127,9 @@ class SimilarActivity : AppCompatActivity() {
             updateDetailPane(results[0])
         }
 
-        // Update title to show current type
+        // Update title (combined results, no type label needed)
         val originalTitle = intent.getStringExtra("title") ?: ""
-        val typeLabel = if (currentResultIndex == 0) "Movies" else "Series"
-        binding.tvTitle.text = "Similar $typeLabel - $originalTitle"
+        binding.tvTitle.text = "Similar to $originalTitle"
 
         // [FIX] Force focus to the first item when changing result type
         binding.rvContent.postDelayed({
@@ -147,12 +146,14 @@ class SimilarActivity : AppCompatActivity() {
             // Fetch similar content for both movies and series
             val allItems = viewModel.fetchSimilarContent(metaId, type)
 
-            // Split into movies and series
-            movieResults = allItems.filter { it.type == "movie" }
-            seriesResults = allItems.filter { it.type == "series" || it.type == "tv" }
+            // Combine and sort by popularity (rating)
+            val combinedResults = allItems.sortedByDescending {
+                it.rating?.toDoubleOrNull() ?: 0.0
+            }
 
-            // Start with movies if available, otherwise series
-            currentResultIndex = if (movieResults.isNotEmpty()) 0 else 1
+            movieResults = combinedResults
+            seriesResults = emptyList()
+            currentResultIndex = 0
             updateDisplayedResults()
         }
     }

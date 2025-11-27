@@ -7,8 +7,8 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardRoot"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:layout_width="@dimen/poster_width"
+        android:layout_height="@dimen/poster_height_standard"
         android:layout_margin="4dp"
         android:focusable="true"
         android:clickable="true"
@@ -26,14 +26,13 @@
             android:layout_height="match_parent">
 
             <!--
-                 Using adjustViewBounds=true with wrap_content width allows the image
-                 to determine the card width based on the parent's height constraint.
+                 Fixed width poster with 2:3 aspect ratio
             -->
             <ImageView
                 android:id="@+id/poster"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scaleType="fitCenter"
+                android:scaleType="centerCrop"
                 android:adjustViewBounds="false"
                 android:contentDescription="Poster"
                 app:layout_constraintTop_toTopOf="parent"

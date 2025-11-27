@@ -38,8 +38,8 @@ class PosterAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
 
-        // Use scaleType fitXY to fill the bounds determined by layout_height (parent) and wrap_content width
-        holder.poster.scaleType = ImageView.ScaleType.FIT_XY
+        // Use scaleType centerCrop to fill the fixed 2:3 aspect ratio poster
+        holder.poster.scaleType = ImageView.ScaleType.CENTER_CROP
 
         // Load Image with Glide
         Glide.with(holder.itemView.context)

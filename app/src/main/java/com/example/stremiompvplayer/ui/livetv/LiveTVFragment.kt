@@ -3,6 +3,7 @@ package com.example.stremiompvplayer.ui.livetv
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -564,6 +565,28 @@ class LiveTVFragment : Fragment() {
         val duration = endTime - startTime
         val elapsed = currentTime - startTime
         return ((elapsed.toFloat() / duration.toFloat()) * 100).toInt()
+    }
+
+    fun handleKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (event?.action == KeyEvent.ACTION_DOWN) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    // If the RecyclerView or any of its children have focus, keep focus within the list
+                    // This prevents focus from jumping to the sidebar during scrolling
+                    if (binding.rvTVGuide.hasFocus() || binding.rvTVGuide.focusedChild != null) {
+                        // Let the RecyclerView handle the scrolling naturally
+                        return false
+                    }
+                }
+                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    // Prevent left key from moving to sidebar when in channel list
+                    if (binding.rvTVGuide.hasFocus() || binding.rvTVGuide.focusedChild != null) {
+                        return true  // Consume the event to prevent sidebar activation
+                    }
+                }
+            }
+        }
+        return false
     }
 
     fun focusSidebar(): Boolean {
