@@ -189,7 +189,7 @@ class DetailsActivity2 : AppCompatActivity() {
 
     private fun updateButtonVisibility() {
         val isPlayableLevel = currentType == "movie" ||
-                (currentType == "series" && binding.rvNavigation.adapter == streamAdapter) ||
+                ((currentType == "series" || currentType == "tv") && binding.rvNavigation.adapter == streamAdapter) ||
                 (currentType == "episode")
 
         if (isPlayableLevel) {
@@ -265,7 +265,7 @@ class DetailsActivity2 : AppCompatActivity() {
         }
 
         viewModel.metaDetails.observe(this) { meta ->
-            if (meta != null && currentType == "series") {
+            if (meta != null && (currentType == "series" || currentType == "tv")) {
                 currentSeriesMeta = meta
                 if (currentSeason == null && binding.rvNavigation.adapter == textListAdapter) {
                     if (!meta.background.isNullOrEmpty()) {
@@ -502,7 +502,7 @@ class DetailsActivity2 : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (currentType == "series") {
+        if (currentType == "series" || currentType == "tv") {
             if (binding.rvNavigation.adapter == streamAdapter || currentSeason != null) {
                 navigateUp()
                 return
@@ -528,7 +528,7 @@ class DetailsActivity2 : AppCompatActivity() {
 
     private fun setupUI() {
         binding.btnLibrary.setOnClickListener {
-            val idToCheck = if(currentType=="series") {
+            val idToCheck = if(currentType=="series" || currentType=="tv") {
                 currentMetaItem!!.id.split(":").take(2).joinToString(":")
             } else {
                 currentMetaItem!!.id
@@ -538,7 +538,7 @@ class DetailsActivity2 : AppCompatActivity() {
         }
 
         binding.btnWatchlist.setOnClickListener {
-            val idToCheck = if(currentType=="series") {
+            val idToCheck = if(currentType=="series" || currentType=="tv") {
                 currentMetaItem!!.id.split(":").take(2).joinToString(":")
             } else {
                 currentMetaItem!!.id
@@ -575,7 +575,7 @@ class DetailsActivity2 : AppCompatActivity() {
 
         binding.btnTrailer.setOnClickListener {
             currentMetaItem?.let { item ->
-                val idToCheck = if(currentType=="series") {
+                val idToCheck = if(currentType=="series" || currentType=="tv") {
                     item.id.split(":").take(2).joinToString(":")
                 } else {
                     item.id
@@ -602,7 +602,7 @@ class DetailsActivity2 : AppCompatActivity() {
 
         binding.btnMoreLikeThis.setOnClickListener {
             currentMetaItem?.let { item ->
-                val idToCheck = if(currentType=="series") {
+                val idToCheck = if(currentType=="series" || currentType=="tv") {
                     item.id.split(":").take(2).joinToString(":")
                 } else {
                     item.id
