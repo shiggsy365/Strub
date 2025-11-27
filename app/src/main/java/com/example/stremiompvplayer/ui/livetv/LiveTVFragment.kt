@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.adapters.TVGuideAdapter
@@ -142,19 +143,47 @@ class LiveTVFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupAdapters()
 
-        // Only load if cache is empty (first time or after manual refresh)
+        // Only load EPG data if cache is empty (first time or after manual refresh)
         if (cachedChannelsWithPrograms.isEmpty()) {
             loadLiveTVData()
         } else {
-            // Use cached data
-            allChannels = cachedChannels
-            allPrograms = cachedPrograms
-            channelsWithPrograms = cachedChannelsWithPrograms
-            setupGroupFilters()
-            updateChannelList()
-            if (channelsWithPrograms.isNotEmpty()) {
-                selectedChannel = channelsWithPrograms[0]
-                updateDetailsPane(channelsWithPrograms[0], expanded = false)
+            // Use cached EPG data but apply user-specific mappings
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    allChannels = cachedChannels
+                    allPrograms = cachedPrograms
+
+                    // Load and apply database mappings (user-specific)
+                    val prefsManager = SharedPreferencesManager.getInstance(requireContext())
+                    val userId = prefsManager.getCurrentUserId() ?: ""
+                    val tvGuideSource = getTVGuideSource()
+
+                    channelMappings = withContext(Dispatchers.IO) {
+                        AppDatabase.getInstance(requireContext()).channelMappingDao()
+                            .getMappingsForUser(userId, tvGuideSource)
+                    }
+                    groupsOrdering = withContext(Dispatchers.IO) {
+                        AppDatabase.getInstance(requireContext()).channelGroupDao()
+                            .getVisibleGroupsForUser(userId, tvGuideSource)
+                    }
+
+                    // Apply mappings to cached channels
+                    allChannels = applyChannelMappings(allChannels)
+
+                    // Rebuild channels with programs using mapped channels
+                    channelsWithPrograms = buildChannelsWithPrograms()
+
+                    setupGroupFilters()
+                    updateChannelList()
+                    if (channelsWithPrograms.isNotEmpty()) {
+                        selectedChannel = channelsWithPrograms[0]
+                        updateDetailsPane(channelsWithPrograms[0], expanded = false)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("LiveTV", "Error applying mappings to cached data", e)
+                    // Fallback to full load if mapping fails
+                    loadLiveTVData()
+                }
             }
         }
     }
@@ -504,7 +533,22 @@ class LiveTVFragment : Fragment() {
             channelsWithPrograms
         }
 
+        // Save current focus position before updating
+        val currentFocusedView = binding.rvTVGuide.focusedChild
+        val currentFocusedPosition = if (currentFocusedView != null) {
+            binding.rvTVGuide.getChildAdapterPosition(currentFocusedView)
+        } else {
+            RecyclerView.NO_POSITION
+        }
+
         tvGuideAdapter.updateChannels(filteredChannels)
+
+        // Restore focus after update if there was a focused item
+        if (currentFocusedPosition != RecyclerView.NO_POSITION && currentFocusedPosition < filteredChannels.size) {
+            binding.rvTVGuide.post {
+                binding.rvTVGuide.layoutManager?.findViewByPosition(currentFocusedPosition)?.requestFocus()
+            }
+        }
     }
 
     private fun updateDetailsPane(channelWithPrograms: ChannelWithPrograms, expanded: Boolean = false) {

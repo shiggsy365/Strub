@@ -678,9 +678,10 @@ class MainViewModel(
                         val progressMap = allProgress.associateBy { it.itemId }
 
                         val list = TraktClient.api.getPausedMovies(bearer, clientId)
-                        list.mapNotNull { it.movie }
+                        list
                             // [FIX] Filter out items that are watched OR have progress > 90% in LOCAL DB
-                            .filter { movie ->
+                            .filter { item ->
+                                val movie = item.movie ?: return@filter false
                                 val tmdbId = movie.ids.tmdb
                                 if (tmdbId == null) return@filter true
 
@@ -690,6 +691,9 @@ class MainViewModel(
 
                                 !isLocallyWatched && !isLocallyFinished
                             }
+                            // Sort by paused_at timestamp descending (most recent first)
+                            .sortedByDescending { it.paused_at }
+                            .mapNotNull { it.movie }
                             .map { movie ->
                                 MetaItem(id = "tmdb:${movie.ids.tmdb}", type = "movie", name = movie.title, description = "Paused", poster = null, background = null)
                             }
@@ -702,32 +706,35 @@ class MainViewModel(
                         val progressMap = allProgress.associateBy { it.itemId }
 
                         val list = TraktClient.api.getPausedEpisodes(bearer, clientId)
-                        list.mapNotNull { item ->
-                            val show = item.show
-                            val ep = item.episode
-                            if (show != null && ep != null && ep.ids?.tmdb != null) {
-                                val showTmdbId = show.ids.tmdb
-                                val epTmdbId = ep.ids.tmdb
-                                val season = ep.season ?: 1
-                                val episode = ep.number ?: 1
-                                val epId = "tmdb:$showTmdbId:$season:$episode" // Construct standard local ID
+                        list
+                            // Sort by paused_at timestamp descending (most recent first)
+                            .sortedByDescending { it.paused_at }
+                            .mapNotNull { item ->
+                                val show = item.show
+                                val ep = item.episode
+                                if (show != null && ep != null && ep.ids?.tmdb != null) {
+                                    val showTmdbId = show.ids.tmdb
+                                    val epTmdbId = ep.ids.tmdb
+                                    val season = ep.season ?: 1
+                                    val episode = ep.number ?: 1
+                                    val epId = "tmdb:$showTmdbId:$season:$episode" // Construct standard local ID
 
-                                // CHECK LOCAL DB using map lookup
-                                val progress = progressMap[epId]
-                                val isLocallyWatched = progress?.isWatched == true
-                                val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
+                                    // CHECK LOCAL DB using map lookup
+                                    val progress = progressMap[epId]
+                                    val isLocallyWatched = progress?.isWatched == true
+                                    val isLocallyFinished = progress?.let { p -> p.duration > 0 && (p.progress.toFloat() / p.duration.toFloat() > 0.9f) } == true
 
-                                if (!isLocallyWatched && !isLocallyFinished) {
-                                    MetaItem(
-                                        id = epId,
-                                        type = "episode",
-                                        name = "${show.title} - S${season.toString().padStart(2, '0')}E${episode.toString().padStart(2, '0')}",
-                                        description = "Paused at ${(item.progress ?: 0f).toInt()}%",
-                                        poster = null, background = null
-                                    )
+                                    if (!isLocallyWatched && !isLocallyFinished) {
+                                        MetaItem(
+                                            id = epId,
+                                            type = "episode",
+                                            name = "${show.title} - S${season.toString().padStart(2, '0')}E${episode.toString().padStart(2, '0')}",
+                                            description = "Paused at ${(item.progress ?: 0f).toInt()}%",
+                                            poster = null, background = null
+                                        )
+                                    } else null
                                 } else null
-                            } else null
-                        }
+                            }
                     }
 
                     "trakt_watchlist_movies" -> {
