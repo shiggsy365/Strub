@@ -207,6 +207,53 @@
 
                         </LinearLayout>
 
+                        <!-- Action Buttons -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="start"
+                            android:layout_marginTop="@dimen/spacing_sm">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnPlay"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Play"
+                                android:textSize="14sp"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="6dp"
+                                android:minHeight="36dp"
+                                android:focusable="true"
+                                android:nextFocusDown="@id/resultsRecycler"
+                                app:icon="@drawable/ic_play_arrow"
+                                app:iconGravity="textStart"
+                                app:iconPadding="4dp"
+                                app:iconSize="20dp"
+                                android:layout_marginEnd="8dp"
+                                android:visibility="gone"
+                                style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnRelated"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Related"
+                                android:textSize="14sp"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="6dp"
+                                android:minHeight="36dp"
+                                android:focusable="true"
+                                android:nextFocusDown="@id/resultsRecycler"
+                                app:icon="@drawable/ic_related"
+                                app:iconGravity="textStart"
+                                app:iconPadding="4dp"
+                                app:iconSize="20dp"
+                                android:layout_marginEnd="8dp"
+                                style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                        </LinearLayout>
+
                     </LinearLayout>
 
                     <!-- Description -->

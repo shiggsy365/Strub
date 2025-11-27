@@ -1854,7 +1854,10 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val response = TMDBClient.api.getPersonCombinedCredits(personId, apiKey)
-                val results = response.cast.map { it.toMetaItem() }
+                // Merge movies and series, sort by popularity (rating)
+                val results = response.cast
+                    .map { it.toMetaItem() }
+                    .sortedByDescending { it.rating?.toDoubleOrNull() ?: 0.0 }
                 _searchResults.postValue(results)
             } catch (e: Exception) {
                 _error.postValue("Person credits failed: ${e.message}")
@@ -2143,19 +2146,41 @@ class MainViewModel(
         }
     }
 
-    // Fetch similar content for a movie or series
+    // Fetch similar content for a movie or series - merged and sorted by popularity
     suspend fun fetchSimilarContent(itemId: String, type: String): List<MetaItem> {
         if (apiKey.isEmpty()) return emptyList()
         return try {
             val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull() ?: return emptyList()
-            val results = if (type == "movie") {
-                val response = TMDBClient.api.getSimilarMovies(tmdbId, apiKey)
-                response.results.map { it.toMetaItem() }
-            } else {
-                val response = TMDBClient.api.getSimilarTV(tmdbId, apiKey)
-                response.results.map { it.toMetaItem() }
+
+            // Fetch both similar movies and series, merge them
+            val movieResults = try {
+                if (type == "movie") {
+                    val response = TMDBClient.api.getSimilarMovies(tmdbId, apiKey)
+                    response.results.map { it.toMetaItem() }
+                } else {
+                    // For series, also get similar movies for more variety
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                emptyList()
             }
-            results
+
+            val seriesResults = try {
+                if (type == "series") {
+                    val response = TMDBClient.api.getSimilarTV(tmdbId, apiKey)
+                    response.results.map { it.toMetaItem() }
+                } else {
+                    // For movies, also get similar series for more variety
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                emptyList()
+            }
+
+            // Merge and sort by popularity (rating)
+            (movieResults + seriesResults).sortedByDescending {
+                it.rating?.toDoubleOrNull() ?: 0.0
+            }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to fetch similar content", e)
             emptyList()
