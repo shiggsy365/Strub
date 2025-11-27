@@ -345,9 +345,7 @@ class DiscoverFragment : Fragment() {
             binding.detailEpisode.visibility = View.GONE
         }
 
-        binding.detailTitle.text = item.name
-        // [CHANGE] Initial state is hidden for both to prevent flash
-        binding.detailTitle.visibility = View.GONE
+
         binding.detailLogo.visibility = View.GONE
 
         viewModel.fetchItemLogo(item)
@@ -535,6 +533,15 @@ class DiscoverFragment : Fragment() {
         viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
         isShowingGenre = false
         updatePlayButtonVisibility()
+
+        // [FIX] Force focus to the first item when cycling lists
+        binding.root.postDelayed({
+            binding.rvContent.scrollToPosition(0)
+            binding.rvContent.post {
+                val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                firstView?.requestFocus()
+            }
+        }, 200)
     }
 
     private fun loadGenreList(genreId: Int, genreName: String, type: String = "movie") {
@@ -555,6 +562,14 @@ class DiscoverFragment : Fragment() {
                     updateDetailsPane(content[0])
                 }
                 updatePlayButtonVisibility()
+
+                // [FIX] Focus first item after loading genre
+                binding.root.postDelayed({
+                    binding.rvContent.scrollToPosition(0)
+                    val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                    firstView?.requestFocus()
+                }, 200)
+
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error loading genre content", Toast.LENGTH_SHORT).show()
             }
@@ -640,6 +655,12 @@ class DiscoverFragment : Fragment() {
                 currentSeasonNumber = null
                 viewModel.loadSeriesMeta(item.id)
                 updatePlayButtonVisibility()
+
+                // Focus first item of seasons list
+                binding.root.postDelayed({
+                    binding.rvContent.scrollToPosition(0)
+                    binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }, 200)
             }
             "season" -> {
                 // Drill down into season to show episodes
@@ -652,6 +673,12 @@ class DiscoverFragment : Fragment() {
                     currentSeasonNumber = seasonNum
                     viewModel.loadSeasonEpisodes(seriesId, seasonNum)
                     updatePlayButtonVisibility()
+
+                    // Focus first item of episodes list
+                    binding.root.postDelayed({
+                        binding.rvContent.scrollToPosition(0)
+                        binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
+                    }, 200)
                 }
             }
             "episode" -> {
@@ -729,7 +756,7 @@ class DiscoverFragment : Fragment() {
                 val movieGenres = viewModel.movieGenres.value
                 val tvGenres = viewModel.tvGenres.value
                 val hasGenres = (movieGenres != null && movieGenres.isNotEmpty()) ||
-                               (tvGenres != null && tvGenres.isNotEmpty())
+                        (tvGenres != null && tvGenres.isNotEmpty())
 
                 val itemsWithGenres = if (hasGenres && !isShowingGenre) {
                     // Create a special "Browse Genres" item
@@ -781,15 +808,15 @@ class DiscoverFragment : Fragment() {
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
             when (logoUrl) {
                 "" -> { // Loading
-                    binding.detailTitle.visibility = View.GONE
+
                     binding.detailLogo.visibility = View.GONE
                 }
                 null -> { // No Logo
-                    binding.detailTitle.visibility = View.VISIBLE
+
                     binding.detailLogo.visibility = View.GONE
                 }
                 else -> { // Has Logo
-                    binding.detailTitle.visibility = View.GONE
+
                     binding.detailLogo.visibility = View.VISIBLE
                     Glide.with(this)
                         .load(logoUrl)
@@ -885,6 +912,12 @@ class DiscoverFragment : Fragment() {
             if (results.isNotEmpty() && currentDrillDownLevel == DrillDownLevel.CATALOG) {
                 contentAdapter.updateData(results)
                 updateDetailsPane(results[0])
+
+                // Focus first item
+                binding.root.postDelayed({
+                    binding.rvContent.scrollToPosition(0)
+                    binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }, 200)
             }
         }
     }

@@ -23,16 +23,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Gradient Scrim Overlay -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/black"
-            android:alpha="0.6"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+
 
         <!-- Main Content Area -->
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -77,11 +68,11 @@
 
                         <ImageView
                             android:id="@+id/detailLogo"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                            android:layout_width="300dp"
+                            android:layout_height="120dp"
                             android:adjustViewBounds="true"
                             android:contentDescription="Content Logo"
-                            android:scaleType="fitStart"
+                            android:scaleType="fitCenter"
                             android:visibility="gone"
                             tools:src="@drawable/movie"
                             tools:visibility="visible" />
@@ -190,46 +181,50 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Play"
-                        android:textSize="16sp"
-                        android:paddingHorizontal="32dp"
-                        android:paddingVertical="8dp"
+                        android:textSize="14sp"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
                         android:focusable="true"
                         android:nextFocusDown="@id/rvContent"
-                        android:background="@drawable/selector_button_focus"
+                        android:background="@drawable/selector_button_outlined_focus"
                         app:backgroundTint="@null"
                         app:icon="@drawable/ic_play_circle"
-                        app:iconSize="24dp"
-                        android:layout_marginEnd="12dp"
-                        style="@style/Widget.MaterialComponents.Button" />
+                        app:iconSize="20dp"
+                        android:layout_marginEnd="8dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnTrailer"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Trailer"
-                        android:textSize="16sp"
-                        android:paddingHorizontal="32dp"
-                        android:paddingVertical="8dp"
+                        android:textSize="14sp"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
                         android:focusable="true"
                         android:nextFocusDown="@id/rvContent"
                         android:background="@drawable/selector_button_outlined_focus"
                         app:backgroundTint="@null"
-                        android:layout_marginEnd="12dp"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                        app:icon="@drawable/ic_movie"
+                        app:iconSize="20dp"
+                        android:layout_marginEnd="8dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRelated"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Related"
-                        android:textSize="16sp"
-                        android:paddingHorizontal="32dp"
-                        android:paddingVertical="8dp"
+                        android:textSize="14sp"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
                         android:focusable="true"
                         android:nextFocusDown="@id/rvContent"
                         android:background="@drawable/selector_button_outlined_focus"
                         app:backgroundTint="@null"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                        app:icon="@drawable/ic_search"
+                        app:iconSize="20dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
 
                 </LinearLayout>
 

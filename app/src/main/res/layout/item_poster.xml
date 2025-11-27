@@ -6,37 +6,42 @@
     <data />
 
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardRoot"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_margin="2dp"
+        android:layout_margin="4dp"
         android:focusable="true"
         android:clickable="true"
         style="@style/Widget.App.Poster"
         app:cardCornerRadius="8dp"
-        app:cardElevation="0dp"
+        app:cardElevation="4dp"
         app:cardBackgroundColor="@android:color/transparent"
         app:strokeWidth="3dp"
         app:strokeColor="@color/poster_stroke_selector"
-        app:contentPadding="2dp">
+        app:contentPadding="0dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/poster_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Main Poster ImageView -->
+            <!--
+                 Using adjustViewBounds=true with wrap_content width allows the image
+                 to determine the card width based on the parent's height constraint.
+            -->
             <ImageView
                 android:id="@+id/poster"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:scaleType="centerCrop"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="false"
                 android:contentDescription="Poster"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintDimensionRatio="W,2:3"
-                tools:src="@drawable/movie" />
+                tools:src="@drawable/movie"
+                tools:layout_width="100dp" />
 
             <!-- Watched Icon (Green Checkmark) -->
             <ImageView
@@ -51,6 +56,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_margin="8dp"
+                android:elevation="6dp"
                 android:contentDescription="Watched"
                 tools:visibility="visible" />
 
@@ -67,8 +73,18 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_margin="8dp"
+                android:elevation="6dp"
                 android:contentDescription="In Progress"
                 tools:visibility="gone" />
+
+            <!-- Hover Overlay -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintTop_toTopOf="@id/poster"
+                app:layout_constraintBottom_toBottomOf="@id/poster"
+                app:layout_constraintStart_toStartOf="@id/poster"
+                app:layout_constraintEnd_toEndOf="@id/poster" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

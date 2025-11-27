@@ -131,6 +131,15 @@ class SimilarActivity : AppCompatActivity() {
         val originalTitle = intent.getStringExtra("title") ?: ""
         val typeLabel = if (currentResultIndex == 0) "Movies" else "Series"
         binding.tvTitle.text = "Similar $typeLabel - $originalTitle"
+
+        // [FIX] Force focus to the first item when changing result type
+        binding.rvContent.postDelayed({
+            binding.rvContent.scrollToPosition(0)
+            binding.rvContent.post {
+                val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                firstView?.requestFocus()
+            }
+        }, 200)
     }
 
     private fun loadSimilarContent(metaId: String, type: String) {
@@ -180,22 +189,5 @@ class SimilarActivity : AppCompatActivity() {
             putExtra("type", item.type)
         }
         startActivity(intent)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Observe logo changes
-        viewModel.currentLogo.observe(this) { logoUrl ->
-            if (!logoUrl.isNullOrEmpty()) {
-                binding.imgLogo.visibility = android.view.View.VISIBLE
-                binding.detailTitle.visibility = android.view.View.GONE
-                Glide.with(this)
-                    .load(logoUrl)
-                    .into(binding.imgLogo)
-            } else {
-                binding.imgLogo.visibility = android.view.View.GONE
-                binding.detailTitle.visibility = android.view.View.VISIBLE
-            }
-        }
     }
 }

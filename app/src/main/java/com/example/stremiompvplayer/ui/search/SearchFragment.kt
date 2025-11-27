@@ -139,6 +139,15 @@ class SearchFragment : Fragment() {
                 // You might want to add a label TextView to show this
             }
         }
+
+        // [FIX] Force focus to the first item when switching types
+        binding.root.postDelayed({
+            binding.resultsRecycler.scrollToPosition(0)
+            binding.resultsRecycler.post {
+                val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
+                firstView?.requestFocus()
+            }
+        }, 200)
     }
 
     private fun setupRecyclerView() {
@@ -224,6 +233,7 @@ class SearchFragment : Fragment() {
         binding.detailDescription.text = item.description ?: "No description available."
 
         binding.detailTitle.text = item.name
+        // [CHANGE] Initial state is hidden for both title and logo to prevent flash
         binding.detailTitle.visibility = View.GONE
         binding.detailLogo.visibility = View.GONE
 

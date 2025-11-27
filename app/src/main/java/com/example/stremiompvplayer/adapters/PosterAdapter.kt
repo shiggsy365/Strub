@@ -4,7 +4,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
@@ -19,14 +18,18 @@ class PosterAdapter(
 ) : RecyclerView.Adapter<PosterAdapter.ViewHolder>() {
 
     class ViewHolder(val binding: ItemPosterBinding) : RecyclerView.ViewHolder(binding.root) {
-        val posterContainer: View = binding.root.findViewById(R.id.poster_container)
-        val poster: ImageView by lazy { posterContainer.findViewById(R.id.poster) }
-        val iconWatched: ImageView by lazy { posterContainer.findViewById(R.id.iconWatched) }
-        val iconInProgress: ImageView by lazy { posterContainer.findViewById(R.id.iconInProgress) }
+        val poster: ImageView = binding.poster
+        val iconWatched: ImageView = binding.iconWatched
+        val iconInProgress: ImageView = binding.iconInProgress
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemPosterBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+
+        // Ensure the root card can accept focus
+        binding.root.isFocusable = true
+        binding.root.isFocusableInTouchMode = true
+
         return ViewHolder(binding)
     }
 
@@ -35,22 +38,13 @@ class PosterAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
 
-        // Show poster container
-        holder.posterContainer.visibility = View.VISIBLE
+        // Use scaleType fitXY to fill the bounds determined by layout_height (parent) and wrap_content width
+        holder.poster.scaleType = ImageView.ScaleType.FIT_XY
 
-        // --- ASPECT RATIO LOGIC ---
-        val params = holder.poster.layoutParams as ConstraintLayout.LayoutParams
-        if (item.isLandscape) {
-            params.dimensionRatio = "H,4:3"
-        } else {
-            params.dimensionRatio = "H,2:3"
-        }
-        holder.poster.layoutParams = params
-
-        // Load Image
+        // Load Image with Glide
         Glide.with(holder.itemView.context)
             .load(item.poster)
-            .placeholder(R.drawable.movie)
+            .placeholder(R.drawable.movie) // Ensure this drawable exists and has a reasonable aspect ratio (2:3)
             .error(R.drawable.movie)
             .transition(DrawableTransitionOptions.withCrossFade())
             .into(holder.poster)
@@ -67,9 +61,6 @@ class PosterAdapter(
                 true
             }
         }
-
-        holder.itemView.isFocusable = true
-        holder.itemView.isFocusableInTouchMode = true
     }
 
     fun updateData(newItems: List<MetaItem>) {

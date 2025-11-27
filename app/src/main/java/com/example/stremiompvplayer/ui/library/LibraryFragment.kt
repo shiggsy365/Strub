@@ -204,6 +204,14 @@ class LibraryFragment : Fragment() {
         if (items.isNotEmpty()) {
             updateDetailsPane(items[0])
         }
+        // [FIX] Force focus to the first item when cycling lists
+        binding.root.postDelayed({
+            binding.rvContent.scrollToPosition(0)
+            binding.rvContent.post {
+                val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                firstView?.requestFocus()
+            }
+        }, 200)
     }
 
     private fun updateCurrentListLabel(labelText: String) {

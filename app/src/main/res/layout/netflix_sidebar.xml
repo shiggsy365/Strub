@@ -14,15 +14,15 @@
     <!-- 1. App Logo -->
     <ImageView
         android:id="@+id/appLogo"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:src="@mipmap/ic_launcher"
         android:scaleType="fitCenter"
         android:contentDescription="App Logo"
         android:layout_marginBottom="24dp"
         android:focusable="true"
         android:clickable="true"
-        android:background="@drawable/selector_logo_focus"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:padding="4dp" />
 
     <!-- 2. Home -->
@@ -65,7 +65,7 @@
         app:tint="@android:color/white"
         android:contentDescription="Library"
         android:nextFocusDown="@id/sidebarLiveTV"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="8dp" />
 
     <!-- 5. Live TV (Moved up) -->
     <ImageButton
@@ -78,7 +78,7 @@
         android:padding="12dp"
         app:tint="@android:color/white"
         android:contentDescription="Live TV"
-        android:nextFocusDown="@id/mediaTypeToggle"
+        android:nextFocusDown="@id/sidebarSearch"
         android:layout_marginBottom="8dp" />
 
     <!-- 7. Search -->
@@ -92,7 +92,7 @@
         android:padding="12dp"
         app:tint="@android:color/white"
         android:contentDescription="Search"
-        android:nextFocusDown="@id/sidebarSettings"
+        android:nextFocusDown="@id/mediaTypeToggle"
         android:layout_marginBottom="8dp" />
 
     <!-- Spacer to push bottom items down -->
@@ -112,6 +112,7 @@
         android:padding="4dp"
         android:focusable="true"
         android:clickable="true"
+        android:nextFocusDown="@id/sidebarSettings"
         android:layout_marginBottom="8dp">
 
         <ImageView

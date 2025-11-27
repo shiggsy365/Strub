@@ -98,26 +98,35 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <ImageView
-                        android:id="@+id/imgLogo"
+                    <!-- CHANGED: Wrap content width and fixed height for logo -->
+                    <FrameLayout
                         android:layout_width="wrap_content"
                         android:layout_height="120dp"
-                        android:layout_marginBottom="8dp"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitStart"
-                        android:visibility="gone"
-                        tools:src="@drawable/movie"
-                        tools:visibility="visible" />
+                        android:minWidth="150dp"
+                        android:layout_marginBottom="8dp">
 
-                    <TextView
-                        android:id="@+id/detailTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@android:color/white"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="8dp"
-                        tools:text="Item Title" />
+                        <ImageView
+                            android:id="@+id/detailLogo"
+                            android:layout_width="300dp"
+                            android:layout_height="120dp"
+                            android:adjustViewBounds="true"
+                            android:contentDescription="Content Logo"
+                            android:scaleType="fitCenter"
+                            android:visibility="gone"
+                            tools:src="@drawable/movie"
+                            tools:visibility="visible" />
+
+                        <TextView
+                            android:id="@+id/detailTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@android:color/white"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:gravity="center_vertical"
+                            android:layout_gravity="center_vertical"
+                            tools:text="Item Title" />
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -144,14 +153,21 @@
 
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/detailDescription"
+                    <!-- CHANGED: Fixed height scrollview for description -->
+                    <ScrollView
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#DDDDDD"
-                        android:textSize="14sp"
-                        android:lineSpacingExtra="4dp"
-                        tools:text="Description goes here..." />
+                        android:layout_height="120dp"
+                        android:scrollbars="vertical">
+
+                        <TextView
+                            android:id="@+id/detailDescription"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#DDDDDD"
+                            android:textSize="14sp"
+                            android:lineSpacingExtra="4dp"
+                            tools:text="Description goes here..." />
+                    </ScrollView>
 
                 </LinearLayout>
 

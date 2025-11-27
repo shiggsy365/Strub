@@ -55,7 +55,7 @@
 
                 <Button
                     android:id="@+id/btnExportProfile"
-                    style="@style/Widget.App.Button.Outlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -66,7 +66,7 @@
 
                 <Button
                     android:id="@+id/btnImportProfile"
-                    style="@style/Widget.App.Button.Outlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -133,7 +133,7 @@
 
                 <Button
                     android:id="@+id/btnAuthoriseTMDB"
-                    style="@style/Widget.App.Button.Outlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Authorise TMDB"
@@ -160,7 +160,7 @@
 
                 <Button
                     android:id="@+id/btnTraktAuth"
-                    style="@style/Widget.App.Button.Outlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Connect Trakt"
@@ -203,7 +203,7 @@
 
                 <Button
                     android:id="@+id/btnTraktSync"
-                    style="@style/Widget.App.Button.Outlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Sync Trakt"
@@ -242,7 +242,7 @@
 
                 <Button
                     android:id="@+id/btnConfigureAIOStreams"
-                    style="@style/Widget.App.Button.Outlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Configure Manifest URL"
@@ -279,7 +279,7 @@
 
                 <Button
                     android:id="@+id/btnConfigureLiveTV"
-                    style="@style/Widget.App.Button.Outlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Configure Live TV"
@@ -288,7 +288,7 @@
 
                 <Button
                     android:id="@+id/btnRefreshTVGuide"
-                    style="@style/Widget.App.Button.Outlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -298,7 +298,7 @@
 
                 <Button
                     android:id="@+id/btnTVSettings"
-                    style="@style/Widget.App.Button.Outlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -390,7 +390,7 @@
 
             <Button
                 android:id="@+id/btnAddMovieList"
-                style="@style/Widget.App.Button.Outlined"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Add Custom List"
@@ -472,7 +472,7 @@
 
             <Button
                 android:id="@+id/btnAddSeriesList"
-                style="@style/Widget.App.Button.Outlined"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Add Custom List"

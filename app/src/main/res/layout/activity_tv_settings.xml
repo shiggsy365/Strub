@@ -67,7 +67,7 @@
 
                     <Button
                         android:id="@+id/btnCreateGroup"
-                        style="@style/Widget.App.Button.Outlined"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="+ New Group"

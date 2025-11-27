@@ -34,8 +34,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Movies/Series Dropdown removed - now browsing both together -->
-
         <!-- Main Content Area -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/detailsContainer"
@@ -69,7 +67,7 @@
                     android:layout_marginBottom="12dp"
                     android:gravity="center_vertical">
 
-                    <!-- Logo Container -->
+                    <!-- Logo Container - CHANGED: Wrap content width, fixed height -->
                     <FrameLayout
                         android:id="@+id/logoContainer"
                         android:layout_width="wrap_content"
@@ -77,13 +75,14 @@
                         android:minWidth="150dp"
                         android:layout_marginEnd="16dp">
 
+                        <!-- CHANGED: Wrap content width -->
                         <ImageView
                             android:id="@+id/detailLogo"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                            android:layout_width="300dp"
+                            android:layout_height="120dp"
                             android:adjustViewBounds="true"
                             android:contentDescription="Content Logo"
-                            android:scaleType="fitStart"
+                            android:scaleType="fitCenter"
                             android:visibility="gone"
                             tools:src="@drawable/movie"
                             tools:visibility="visible" />
@@ -144,11 +143,10 @@
                     android:visibility="gone"
                     tools:text="S01E01" />
 
-                <!-- Description -->
+                <!-- Description - CHANGED: Fixed Height 120dp -->
                 <ScrollView
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:maxHeight="120dp"
+                    android:layout_height="120dp"
                     android:layout_marginBottom="12dp"
                     android:scrollbars="vertical"
                     android:fadeScrollbars="false">
@@ -191,37 +189,50 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Play"
-                        android:textSize="16sp"
-                        android:paddingHorizontal="32dp"
-                        android:paddingVertical="12dp"
+                        android:textSize="14sp"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
                         android:focusable="true"
+                        android:nextFocusDown="@id/rvContent"
+                        android:background="@drawable/selector_button_outlined_focus"
+                        app:backgroundTint="@null"
                         app:icon="@drawable/ic_play_circle"
-                        app:iconSize="24dp"
-                        android:layout_marginEnd="12dp"
-                        style="@style/Widget.MaterialComponents.Button" />
+                        app:iconSize="20dp"
+                        android:layout_marginEnd="8dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnTrailer"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Trailer"
-                        android:textSize="16sp"
-                        android:paddingHorizontal="32dp"
-                        android:paddingVertical="12dp"
+                        android:textSize="14sp"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
                         android:focusable="true"
-                        android:layout_marginEnd="12dp"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                        android:nextFocusDown="@id/rvContent"
+                        android:background="@drawable/selector_button_outlined_focus"
+                        app:backgroundTint="@null"
+                        app:icon="@drawable/ic_movie"
+                        app:iconSize="20dp"
+                        android:layout_marginEnd="8dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRelated"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Related"
-                        android:textSize="16sp"
-                        android:paddingHorizontal="32dp"
-                        android:paddingVertical="12dp"
+                        android:textSize="14sp"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
                         android:focusable="true"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                        android:nextFocusDown="@id/rvContent"
+                        android:background="@drawable/selector_button_outlined_focus"
+                        app:backgroundTint="@null"
+                        app:icon="@drawable/ic_search"
+                        app:iconSize="20dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
 
                 </LinearLayout>
 
