@@ -756,8 +756,7 @@ class LibraryFragment : Fragment() {
         popup.menu.add("Sort by Date Added (Newest First)")
         popup.menu.add("Sort by Date Added (Oldest First)")
 
-        // Add genre filter option
-        popup.menu.add("Filter by Genre...")
+        // Note: Genre filter removed - requires refactoring to add genre info to MetaItem
 
         popup.setOnMenuItemClickListener { menuItem ->
             val type = arguments?.getString(ARG_TYPE) ?: "movie"
@@ -798,60 +797,10 @@ class LibraryFragment : Fragment() {
                     viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
                     true
                 }
-                "Filter by Genre..." -> {
-                    showGenreFilterDialog()
-                    true
-                }
                 else -> false
             }
         }
         popup.show()
-    }
-
-    private fun showGenreFilterDialog() {
-        // Fetch genres for the current type
-        val type = arguments?.getString(ARG_TYPE) ?: "movie"
-        viewModel.fetchGenres(type)
-
-        // Show loading dialog while genres are being fetched
-        val builder = android.app.AlertDialog.Builder(requireContext())
-        builder.setTitle("Select Genre")
-        builder.setMessage("Loading genres...")
-        val loadingDialog = builder.create()
-        loadingDialog.show()
-
-        // Observe genres and show selection dialog
-        viewModel.genreList.observe(viewLifecycleOwner) { genres ->
-            loadingDialog.dismiss()
-
-            if (genres.isEmpty()) {
-                Toast.makeText(requireContext(), "No genres available", Toast.LENGTH_SHORT).show()
-                return@observe
-            }
-
-            val genreNames = listOf("All Genres") + genres.map { it.name }
-            val genreIds = listOf(null) + genres.map { it.id.toString() }
-
-            android.app.AlertDialog.Builder(requireContext())
-                .setTitle("Select Genre")
-                .setItems(genreNames.toTypedArray()) { _, which ->
-                    currentGenreFilter = genreIds[which]
-                    val selectedGenreName = genreNames[which]
-
-                    // Update label to show filter
-                    val label = if (currentGenreFilter == null) {
-                        if (type == "movie") "My Movies" else "My Series"
-                    } else {
-                        if (type == "movie") "My Movies - $selectedGenreName" else "My Series - $selectedGenreName"
-                    }
-                    updateCurrentListLabel(label)
-
-                    // Apply filter
-                    viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
-        }
     }
 
     fun focusSidebar(): Boolean {

@@ -315,14 +315,15 @@ class MainViewModel(
                 // Fetch Movies with full TMDB metadata
                 val movies = TraktClient.api.getMovieCollection(bearer, clientId)
                 val metaMovies = movies.mapNotNull { it.movie }.mapNotNull { movie ->
+                    val tmdbId = movie.ids.tmdb ?: return@mapNotNull null
                     try {
                         // Fetch full metadata from TMDB (like performTraktSync does)
-                        val details = TMDBClient.api.getMovieDetails(movie.ids.tmdb, apiKey)
+                        val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
                         val posterUrl = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                         val backgroundUrl = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
 
                         val meta = MetaItem(
-                            id = "tmdb:${movie.ids.tmdb}",
+                            id = "tmdb:$tmdbId",
                             type = "movie",
                             name = details.title ?: movie.title,
                             poster = posterUrl,
@@ -339,7 +340,7 @@ class MainViewModel(
                         Log.e("TraktSync", "Error fetching metadata for movie ${movie.title}", e)
                         // Fallback to minimal metadata
                         MetaItem(
-                            id = "tmdb:${movie.ids.tmdb}",
+                            id = "tmdb:$tmdbId",
                             type = "movie",
                             name = movie.title,
                             poster = null,
@@ -354,14 +355,15 @@ class MainViewModel(
                 // Fetch Shows with full TMDB metadata
                 val shows = TraktClient.api.getShowCollection(bearer, clientId)
                 val metaShows = shows.mapNotNull { it.show }.mapNotNull { show ->
+                    val tmdbId = show.ids.tmdb ?: return@mapNotNull null
                     try {
                         // Fetch full metadata from TMDB (like performTraktSync does)
-                        val details = TMDBClient.api.getTVDetails(show.ids.tmdb, apiKey)
+                        val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
                         val posterUrl = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                         val backgroundUrl = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
 
                         val meta = MetaItem(
-                            id = "tmdb:${show.ids.tmdb}",
+                            id = "tmdb:$tmdbId",
                             type = "series",
                             name = details.name ?: show.title,
                             poster = posterUrl,
@@ -378,7 +380,7 @@ class MainViewModel(
                         Log.e("TraktSync", "Error fetching metadata for show ${show.title}", e)
                         // Fallback to minimal metadata
                         MetaItem(
-                            id = "tmdb:${show.ids.tmdb}",
+                            id = "tmdb:$tmdbId",
                             type = "series",
                             name = show.title,
                             poster = null,
@@ -2122,15 +2124,9 @@ class MainViewModel(
             val rawItems = if (type == "movie") libraryMovies.value else librarySeries.value
             if (rawItems == null) return@launch
 
-            // Apply genre filter if specified
-            val filtered = if (genre != null) {
-                rawItems.filter { item ->
-                    // Check if the item's genres contain the selected genre ID
-                    item.genres?.contains(genre) == true
-                }
-            } else {
-                rawItems
-            }
+            // Note: Genre filtering not yet implemented as MetaItem doesn't contain genre information
+            // This would require refactoring to query CollectedItem directly or add genres to MetaItem
+            val filtered = rawItems
 
             // Apply sorting
             val sorted = when (sortBy) {
