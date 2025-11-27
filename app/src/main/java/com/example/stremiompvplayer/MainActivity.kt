@@ -60,6 +60,11 @@ class MainActivity : AppCompatActivity() {
 
         // Load everything with proper sequencing
         lifecycleScope.launch {
+            // Task 0: Remove duplicate lists (runs first, in background)
+            launch {
+                viewModel.removeDuplicateLists()
+            }
+
             // Task 1: Load user lists and sync Trakt
             loadingDialog.setUserListsLoading()
             val traktSyncJob = launch {
@@ -474,6 +479,7 @@ class MainActivity : AppCompatActivity() {
             // Allow specific fragments to intercept back press
             if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
+            if (currentFragment is LibraryFragment && currentFragment.handleBackPress()) return true
 
             // Use navigation stack for back navigation - NEVER exit app
             if (navigationStack.isNotEmpty()) {
