@@ -903,9 +903,20 @@ class MainViewModel(
     }
 
     private suspend fun enrichWithTmdbMetadata(items: List<MetaItem>, catalogId: String): List<MetaItem> {
+        // PERFORMANCE: Fetch all progress once for watched status enrichment
+        val currentUserId = prefsManager.getCurrentUserId() ?: "default"
+        val allProgress = catalogRepository.getAllWatchProgress(currentUserId)
+        val progressMap = allProgress.associateBy { it.itemId }
+
         return items.map { item ->
             viewModelScope.async {
                 try {
+                    // Get watched status and progress from local DB
+                    val progress = progressMap[item.id]
+                    val isWatched = progress?.isWatched ?: false
+                    val watchProgress = progress?.progress ?: 0
+                    val duration = progress?.duration ?: 0
+
                     if (item.id.startsWith("trakt_ep:")) {
                         val parts = item.id.split(":")
                         val showTmdbId = parts[1].toIntOrNull()
@@ -922,9 +933,12 @@ class MainViewModel(
                                 poster = poster,
                                 background = background,
                                 name = "${details.name} - ${item.name}",
-                                description = "${item.description}\n\n(Resume info limited)"
+                                description = "${item.description}\n\n(Resume info limited)",
+                                isWatched = isWatched,
+                                progress = watchProgress,
+                                duration = duration
                             )
-                        } else item
+                        } else item.copy(isWatched = isWatched, progress = watchProgress, duration = duration)
                     } else {
                         val parts = item.id.removePrefix("tmdb:").split(":")
                         val tmdbId = parts[0].toIntOrNull()
@@ -934,23 +948,51 @@ class MainViewModel(
                                 val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
                                 val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                 val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
-                                item.copy(poster = poster, background = background, description = details.overview)
+                                item.copy(
+                                    poster = poster,
+                                    background = background,
+                                    description = details.overview,
+                                    isWatched = isWatched,
+                                    progress = watchProgress,
+                                    duration = duration
+                                )
                             } else if (item.type == "episode") {
                                 // For episodes, preserve episode description and use show poster/background
                                 val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
                                 val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                 val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
-                                item.copy(poster = poster, background = background)
+                                item.copy(
+                                    poster = poster,
+                                    background = background,
+                                    isWatched = isWatched,
+                                    progress = watchProgress,
+                                    duration = duration
+                                )
                             } else {
                                 // For series, use show description
                                 val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
                                 val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                 val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
-                                item.copy(poster = poster, background = background, description = details.overview)
+                                item.copy(
+                                    poster = poster,
+                                    background = background,
+                                    description = details.overview,
+                                    isWatched = isWatched,
+                                    progress = watchProgress,
+                                    duration = duration
+                                )
                             }
-                        } else item
+                        } else item.copy(isWatched = isWatched, progress = watchProgress, duration = duration)
                     }
-                } catch (e: Exception) { item }
+                } catch (e: Exception) {
+                    // Even on error, try to apply watched status
+                    val progress = progressMap[item.id]
+                    item.copy(
+                        isWatched = progress?.isWatched ?: false,
+                        progress = progress?.progress ?: 0,
+                        duration = progress?.duration ?: 0
+                    )
+                }
             }
         }.awaitAll()
     }
