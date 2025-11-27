@@ -1227,13 +1227,13 @@ class MainViewModel(
             withContext(Dispatchers.IO) {
                 try {
                     val userId = prefsManager.getCurrentUserId() ?: return@withContext
+
+                    // 1. Remove duplicate library items (CollectedItem)
                     val allCollectedItems = catalogRepository.getAllLibraryItems(userId)
+                    val groupedItems = allCollectedItems.groupBy { it.itemId }
+                    var removedItemsCount = 0
 
-                    // Group by itemId to find duplicates
-                    val grouped = allCollectedItems.groupBy { it.itemId }
-                    var removedCount = 0
-
-                    grouped.forEach { (itemId, items) ->
+                    groupedItems.forEach { (itemId, items) ->
                         if (items.size > 1) {
                             // Keep the first one (oldest), remove the rest
                             val toKeep = items.minByOrNull { it.collectedDate }
@@ -1241,16 +1241,37 @@ class MainViewModel(
 
                             toRemove.forEach { duplicate ->
                                 catalogRepository.removeFromLibrary(duplicate.itemId, userId)
-                                removedCount++
-                                Log.d("DuplicateCleanup", "Removed duplicate item: ${duplicate.name} (${duplicate.id})")
+                                removedItemsCount++
+                                Log.d("DuplicateCleanup", "Removed duplicate library item: ${duplicate.name} (${duplicate.id})")
                             }
                         }
                     }
 
-                    if (removedCount > 0) {
-                        Log.i("DuplicateCleanup", "Removed $removedCount duplicate library items")
+                    // 2. Remove duplicate catalog lists (UserCatalog)
+                    val allCatalogs = _allCatalogsRaw.value ?: emptyList()
+                    val groupedCatalogs = allCatalogs
+                        .filter { it.userId == userId }
+                        .groupBy { "${it.catalogId}_${it.catalogType}_${it.pageType}" }
+                    var removedCatalogsCount = 0
+
+                    groupedCatalogs.forEach { (key, catalogs) ->
+                        if (catalogs.size > 1) {
+                            // Keep the first one (oldest by dateAdded), remove the rest
+                            val toKeep = catalogs.minByOrNull { it.dateAdded }
+                            val toRemove = catalogs.filter { it.id != toKeep?.id }
+
+                            toRemove.forEach { duplicate ->
+                                catalogRepository.deleteCatalog(duplicate)
+                                removedCatalogsCount++
+                                Log.d("DuplicateCleanup", "Removed duplicate catalog: ${duplicate.displayName} (id=${duplicate.id}, catalogId=${duplicate.catalogId})")
+                            }
+                        }
+                    }
+
+                    if (removedItemsCount > 0 || removedCatalogsCount > 0) {
+                        Log.i("DuplicateCleanup", "Removed $removedItemsCount duplicate library items and $removedCatalogsCount duplicate catalogs")
                     } else {
-                        Log.d("DuplicateCleanup", "No duplicate library items found")
+                        Log.d("DuplicateCleanup", "No duplicates found")
                     }
                 } catch (e: Exception) {
                     Log.e("DuplicateCleanup", "Error removing duplicates", e)
