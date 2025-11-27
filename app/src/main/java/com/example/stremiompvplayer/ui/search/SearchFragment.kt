@@ -452,7 +452,7 @@ class SearchFragment : Fragment() {
     }
 
     fun setSearchText(text: String) { binding.searchEditText.setText(text) }
-    fun searchByPersonId(id: Int) { binding.chipMixed.isChecked = true; viewModel.loadPersonCredits(id) }
+    fun searchByPersonId(id: Int) { viewModel.loadPersonCredits(id) }
     private fun hideKeyboard() { (requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(binding.searchEditText.windowToken, 0) }
 
     override fun onDestroyView() {
