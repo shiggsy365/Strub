@@ -275,7 +275,12 @@ class LiveTVFragment : Fragment() {
                 when (keyCode) {
                     android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
                         // Move focus back to the selected channel in the list
-                        val selectedIndex = tvGuideAdapter.currentList.indexOf(selectedChannel)
+                        val filteredChannels = if (selectedGroup != null) {
+                            channelsWithPrograms.filter { it.channel.group == selectedGroup }
+                        } else {
+                            channelsWithPrograms
+                        }
+                        val selectedIndex = filteredChannels.indexOf(selectedChannel)
                         if (selectedIndex >= 0) {
                             binding.rvTVGuide.scrollToPosition(selectedIndex)
                             binding.rvTVGuide.post {
