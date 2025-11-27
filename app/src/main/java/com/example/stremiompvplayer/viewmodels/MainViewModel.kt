@@ -324,7 +324,8 @@ class MainViewModel(
             try {
                 // Fetch Movies with full TMDB metadata
                 val movies = TraktClient.api.getMovieCollection(bearer, clientId)
-                val metaMovies = movies.mapNotNull { it.movie }.mapNotNull { movie ->
+                val metaMovies = movies.mapNotNull { collectionItem ->
+                    val movie = collectionItem.movie ?: return@mapNotNull null
                     val tmdbId = movie.ids.tmdb ?: return@mapNotNull null
                     try {
                         // Fetch full metadata from TMDB (like performTraktSync does)
@@ -346,8 +347,18 @@ class MainViewModel(
                             }
                         )
 
-                        // Also add to local library with full metadata
-                        catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
+                        // Parse Trakt collection date (ISO 8601 format)
+                        val collectedDate = try {
+                            collectionItem.last_collected_at?.let { dateStr ->
+                                java.time.Instant.parse(dateStr).toEpochMilli()
+                            } ?: System.currentTimeMillis()
+                        } catch (e: Exception) {
+                            System.currentTimeMillis()
+                        }
+
+                        // Also add to local library with Trakt collection date
+                        val collectedItem = CollectedItem.fromMetaItem(userId, meta).copy(collectedDate = collectedDate)
+                        catalogRepository.addToLibrary(collectedItem)
                         meta
                     } catch (e: Exception) {
                         Log.e("TraktSync", "Error fetching metadata for movie ${movie.title}", e)
@@ -367,7 +378,8 @@ class MainViewModel(
 
                 // Fetch Shows with full TMDB metadata
                 val shows = TraktClient.api.getShowCollection(bearer, clientId)
-                val metaShows = shows.mapNotNull { it.show }.mapNotNull { show ->
+                val metaShows = shows.mapNotNull { collectionItem ->
+                    val show = collectionItem.show ?: return@mapNotNull null
                     val tmdbId = show.ids.tmdb ?: return@mapNotNull null
                     try {
                         // Fetch full metadata from TMDB (like performTraktSync does)
@@ -389,8 +401,18 @@ class MainViewModel(
                             }
                         )
 
-                        // Also add to local library with full metadata
-                        catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
+                        // Parse Trakt collection date (ISO 8601 format)
+                        val collectedDate = try {
+                            collectionItem.last_collected_at?.let { dateStr ->
+                                java.time.Instant.parse(dateStr).toEpochMilli()
+                            } ?: System.currentTimeMillis()
+                        } catch (e: Exception) {
+                            System.currentTimeMillis()
+                        }
+
+                        // Also add to local library with Trakt collection date
+                        val collectedItem = CollectedItem.fromMetaItem(userId, meta).copy(collectedDate = collectedDate)
+                        catalogRepository.addToLibrary(collectedItem)
                         meta
                     } catch (e: Exception) {
                         Log.e("TraktSync", "Error fetching metadata for show ${show.title}", e)
@@ -2199,8 +2221,44 @@ class MainViewModel(
         val currentUserId = prefsManager.getCurrentUserId() ?: return
         viewModelScope.launch {
             try {
+                // For episodes or seasons, add the parent series instead
+                val itemToAdd = when {
+                    meta.type == "episode" || meta.type == "season" -> {
+                        // Extract parent series ID from episode/season ID (format: tmdb:12345:1:5 or tmdb:12345:1)
+                        val parts = meta.id.split(":")
+                        if (parts.size >= 2 && parts[0] == "tmdb") {
+                            val seriesId = "tmdb:${parts[1]}"
+                            val tmdbId = parts[1].toIntOrNull()
+
+                            // Try to fetch series metadata from TMDB
+                            if (tmdbId != null) {
+                                try {
+                                    val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                                    MetaItem(
+                                        id = seriesId,
+                                        type = "series",
+                                        name = details.name ?: meta.name,
+                                        poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" } ?: meta.poster,
+                                        background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" } ?: meta.background,
+                                        description = details.overview ?: meta.description
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e("AddToLibrary", "Failed to fetch series metadata, using basic info", e)
+                                    // Fallback: create a basic series meta item
+                                    MetaItem(id = seriesId, type = "series", name = meta.name, poster = meta.poster, background = meta.background, description = meta.description)
+                                }
+                            } else {
+                                meta // Fallback to original item if parsing fails
+                            }
+                        } else {
+                            meta // Fallback to original item if format is unexpected
+                        }
+                    }
+                    else -> meta // For movies and series, use as-is
+                }
+
                 // 1. Add to local library
-                val item = CollectedItem.fromMetaItem(currentUserId, meta)
+                val item = CollectedItem.fromMetaItem(currentUserId, itemToAdd)
                 catalogRepository.addToLibrary(item)
                 _isItemInLibrary.postValue(true)
 
@@ -2211,13 +2269,13 @@ class MainViewModel(
                         val clientId = Secrets.TRAKT_CLIENT_ID
                         if (token != null) {
                             val bearer = "Bearer $token"
-                            val body: TraktHistoryBody? = when (meta.type) {
+                            val body: TraktHistoryBody? = when (itemToAdd.type) {
                                 "movie" -> {
-                                    val id = meta.id.removePrefix("tmdb:").toIntOrNull()
+                                    val id = itemToAdd.id.removePrefix("tmdb:").toIntOrNull()
                                     if (id != null) TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, id, null, null)))) else null
                                 }
                                 "series" -> {
-                                    val id = meta.id.removePrefix("tmdb:").toIntOrNull()
+                                    val id = itemToAdd.id.removePrefix("tmdb:").toIntOrNull()
                                     if (id != null) TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, id, null, null)))) else null
                                 }
                                 else -> null
@@ -2225,7 +2283,7 @@ class MainViewModel(
 
                             if (body != null) {
                                 TraktClient.api.addToCollection(bearer, clientId, body)
-                                Log.d("TraktSync", "Added to Trakt collection: ${meta.id}")
+                                Log.d("TraktSync", "Added to Trakt collection: ${itemToAdd.id}")
                             }
                         }
                     } catch (e: Exception) {
@@ -2234,7 +2292,8 @@ class MainViewModel(
                     }
                 }
 
-                _actionResult.postValue(ActionResult.Success("Added to library"))
+                val itemTypeName = if (itemToAdd.type == "series") "series" else "library"
+                _actionResult.postValue(ActionResult.Success("Added to $itemTypeName"))
             } catch (e: Exception) { _actionResult.postValue(ActionResult.Error("Failed to add to library: ${e.message}")) }
         }
     }
@@ -2304,17 +2363,32 @@ class MainViewModel(
         }
         viewModelScope.launch {
             try {
+                // For episodes or seasons, add the parent series instead
+                val itemToAdd = when {
+                    meta.type == "episode" || meta.type == "season" -> {
+                        // Extract parent series ID from episode/season ID
+                        val parts = meta.id.split(":")
+                        if (parts.size >= 2 && parts[0] == "tmdb") {
+                            val seriesId = "tmdb:${parts[1]}"
+                            MetaItem(id = seriesId, type = "series", name = meta.name, poster = meta.poster, background = meta.background, description = meta.description)
+                        } else {
+                            meta
+                        }
+                    }
+                    else -> meta
+                }
+
                 val token = prefsManager.getTraktAccessToken()
                 val clientId = Secrets.TRAKT_CLIENT_ID
                 if (token != null) {
                     val bearer = "Bearer $token"
-                    val body: TraktHistoryBody? = when (meta.type) {
-                        "movie", "episode" -> {
-                            val id = meta.id.removePrefix("tmdb:").split(":")[0].toIntOrNull()
+                    val body: TraktHistoryBody? = when (itemToAdd.type) {
+                        "movie" -> {
+                            val id = itemToAdd.id.removePrefix("tmdb:").toIntOrNull()
                             if (id != null) TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, id, null, null)))) else null
                         }
                         "series" -> {
-                            val id = meta.id.removePrefix("tmdb:").toIntOrNull()
+                            val id = itemToAdd.id.removePrefix("tmdb:").toIntOrNull()
                             if (id != null) TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, id, null, null)))) else null
                         }
                         else -> null
@@ -2322,8 +2396,9 @@ class MainViewModel(
 
                     if (body != null) {
                         TraktClient.api.addToWatchlist(bearer, clientId, body)
-                        _actionResult.postValue(ActionResult.Success("Added to Trakt Watchlist"))
-                        Log.d("TraktSync", "Added to Trakt watchlist: ${meta.id}")
+                        val itemTypeName = if (itemToAdd.type == "series") "series" else itemToAdd.type
+                        _actionResult.postValue(ActionResult.Success("Added $itemTypeName to Trakt Watchlist"))
+                        Log.d("TraktSync", "Added to Trakt watchlist: ${itemToAdd.id}")
                     } else {
                         _actionResult.postValue(ActionResult.Error("Invalid item type for watchlist"))
                     }
