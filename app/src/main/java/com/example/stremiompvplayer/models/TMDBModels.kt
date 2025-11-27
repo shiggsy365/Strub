@@ -129,6 +129,7 @@ data class TMDBMovie(
     val overview: String?,
     val release_date: String?,
     val vote_average: Double?,
+    val popularity: Double? = null,
     val genre_ids: List<Int>? = null
 ) {
     fun toMetaItem(): MetaItem {
@@ -141,7 +142,8 @@ data class TMDBMovie(
             description = overview,
             // MAP NEW FIELDS
             releaseDate = release_date,
-            rating = vote_average?.let { String.format("%.1f", it) }
+            rating = vote_average?.let { String.format("%.1f", it) },
+            popularity = popularity
         )
     }
 }
@@ -177,6 +179,7 @@ data class TMDBSeries(
     val overview: String?,
     val first_air_date: String?,
     val vote_average: Double?,
+    val popularity: Double? = null,
     val genre_ids: List<Int>? = null
 ) {
     fun toMetaItem(): MetaItem {
@@ -189,7 +192,8 @@ data class TMDBSeries(
             description = overview,
             // MAP NEW FIELDS
             releaseDate = first_air_date,
-            rating = vote_average?.let { String.format("%.1f", it) }
+            rating = vote_average?.let { String.format("%.1f", it) },
+            popularity = popularity
         )
     }
 }
@@ -210,6 +214,7 @@ data class TMDBMultiSearchResult(
     val release_date: String?,
     val first_air_date: String?,
     val vote_average: Double?,
+    val popularity: Double? = null,
     val genre_ids: List<Int>? = null
 ) {
     val mediaType: String get() = media_type
@@ -225,7 +230,8 @@ data class TMDBMultiSearchResult(
             background = if (backdrop_path != null) "https://image.tmdb.org/t/p/original$backdrop_path" else null,
             description = overview,
             releaseDate = date,
-            rating = vote_average?.let { String.format("%.1f", it) }
+            rating = vote_average?.let { String.format("%.1f", it) },
+            popularity = popularity
         )
     }
 }
@@ -307,6 +313,7 @@ data class TMDBPersonCastItem(
     @Json(name = "backdrop_path") val backdropPath: String?,
     val overview: String?,
     @Json(name = "vote_average") val voteAverage: Double?,
+    val popularity: Double? = null,
     @Json(name = "release_date") val releaseDate: String?,
     @Json(name = "first_air_date") val firstAirDate: String?
 ) : Serializable {
@@ -317,7 +324,10 @@ data class TMDBPersonCastItem(
             name = title ?: name ?: "Unknown",
             poster = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
             background = backdropPath?.let { "https://image.tmdb.org/t/p/original$it" },
-            description = overview
+            description = overview,
+            releaseDate = releaseDate ?: firstAirDate,
+            rating = voteAverage?.let { String.format("%.1f", it) },
+            popularity = popularity
         )
     }
 }

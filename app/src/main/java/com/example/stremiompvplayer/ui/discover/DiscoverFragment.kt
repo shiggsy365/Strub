@@ -106,52 +106,21 @@ class DiscoverFragment : Fragment() {
                         return@setOnKeyListener true
                     }
                     KeyEvent.KEYCODE_DPAD_UP -> {
-                        // Focus on Play button if available, otherwise Related button
+                        // Focus on actor chips first, then Play button, then Related button
+                        val actorChips = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
                         val btnPlay = binding.root.findViewById<View>(R.id.btnPlay)
                         val btnRelated = binding.root.findViewById<View>(R.id.btnRelated)
+
                         when {
+                            actorChips != null && actorChips.childCount > 0 -> {
+                                // Focus first actor chip
+                                actorChips.getChildAt(0).requestFocus()
+                            }
                             btnPlay?.visibility == View.VISIBLE -> btnPlay.requestFocus()
                             btnRelated?.visibility == View.VISIBLE -> btnRelated.requestFocus()
                             else -> btnPlay?.requestFocus() // Fallback to play even if hidden
                         }
                         return@setOnKeyListener true
-                    }
-                    else -> false
-                }
-            } else {
-                false
-            }
-        }
-
-        // Set unhandled key event listener on the fragment root as fallback
-        binding.root.setOnKeyListener { _, keyCode, event ->
-            if (event.action == KeyEvent.ACTION_DOWN) {
-                when (keyCode) {
-                    KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        // Check if a poster item has focus in the carousel
-                        val focusedChild = binding.rvContent.focusedChild
-                        if (focusedChild != null) {
-                            // Cycle to next list when down is pressed on carousel
-                            cycleToNextList()
-                            return@setOnKeyListener true
-                        }
-                        false
-                    }
-                    KeyEvent.KEYCODE_DPAD_UP -> {
-                        // Check if a poster item has focus
-                        val focusedChild = binding.rvContent.focusedChild
-                        if (focusedChild != null) {
-                            // Focus on Play button if available, otherwise Related button
-                            val btnPlay = binding.root.findViewById<View>(R.id.btnPlay)
-                            val btnRelated = binding.root.findViewById<View>(R.id.btnRelated)
-                            when {
-                                btnPlay?.visibility == View.VISIBLE -> btnPlay.requestFocus()
-                                btnRelated?.visibility == View.VISIBLE -> btnRelated.requestFocus()
-                                else -> btnPlay?.requestFocus() // Fallback to play even if hidden
-                            }
-                            return@setOnKeyListener true
-                        }
-                        false
                     }
                     else -> false
                 }
