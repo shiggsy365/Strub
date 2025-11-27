@@ -39,6 +39,18 @@ class SearchFragment : Fragment() {
     private var _binding: FragmentSearchNewBinding? = null
     private val binding get() = _binding!!
 
+    companion object {
+        private const val ARG_TYPE = "type"
+
+        fun newInstance(type: String = "movie"): SearchFragment {
+            return SearchFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_TYPE, type)
+                }
+            }
+        }
+    }
+
     private val viewModel: MainViewModel by activityViewModels {
         MainViewModelFactory(
             ServiceLocator.getInstance(requireContext()),
@@ -76,7 +88,31 @@ class SearchFragment : Fragment() {
         setupRecyclerView()
         setupObservers()
         setupKeyHandling()
+        setupSearchListeners()
         binding.searchEditText.requestFocus()
+    }
+
+    private fun setupSearchListeners() {
+        binding.searchEditText.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                val query = binding.searchEditText.text.toString()
+                if (query.isNotBlank()) {
+                    performSearch(query)
+                    hideKeyboard()
+                }
+                true
+            } else {
+                false
+            }
+        }
+
+        binding.searchButton.setOnClickListener {
+            val query = binding.searchEditText.text.toString()
+            if (query.isNotBlank()) {
+                performSearch(query)
+                hideKeyboard()
+            }
+        }
     }
 
     private fun setupKeyHandling() {
@@ -300,27 +336,33 @@ class SearchFragment : Fragment() {
         if (query.isBlank()) return
         currentSearchQuery = query
 
-        // Perform combined search - both movies and series together, sorted by popularity
+        val type = arguments?.getString(ARG_TYPE) ?: "movie"
+
         lifecycleScope.launch {
             try {
-                // Search movies
-                viewModel.searchMovies(query)
-                val tempMovieResults = viewModel.searchResults.value ?: emptyList()
-                val movies = tempMovieResults.filter { it.type == "movie" }
+                if (type == "movie") {
+                    // Search movies only
+                    viewModel.searchMovies(query)
+                    val tempResults = viewModel.searchResults.value ?: emptyList()
+                    val movies = tempResults.filter { it.type == "movie" }
 
-                // Search series
-                viewModel.searchSeries(query)
-                val tempSeriesResults = viewModel.searchResults.value ?: emptyList()
-                val series = tempSeriesResults.filter { it.type == "series" || it.type == "tv" }
+                    movieResults = movies.sortedByDescending {
+                        it.rating?.toDoubleOrNull() ?: 0.0
+                    }
+                    seriesResults = emptyList()
+                } else {
+                    // Search series only
+                    viewModel.searchSeries(query)
+                    val tempResults = viewModel.searchResults.value ?: emptyList()
+                    val series = tempResults.filter { it.type == "series" || it.type == "tv" }
 
-                // Combine and sort by popularity (rating)
-                val combinedResults = (movies + series).sortedByDescending {
-                    it.rating?.toDoubleOrNull() ?: 0.0
+                    seriesResults = series.sortedByDescending {
+                        it.rating?.toDoubleOrNull() ?: 0.0
+                    }
+                    movieResults = emptyList()
                 }
 
-                movieResults = combinedResults
-                seriesResults = emptyList()
-                currentResultIndex = 0
+                currentResultIndex = if (type == "movie") 0 else 1
                 updateDisplayedResults()
             } catch (e: Exception) {
                 // Fallback to mixed search

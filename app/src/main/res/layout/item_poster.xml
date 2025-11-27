@@ -7,8 +7,8 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardRoot"
-        android:layout_width="@dimen/poster_width"
-        android:layout_height="@dimen/poster_height_standard"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
         android:layout_margin="4dp"
         android:focusable="true"
         android:clickable="true"
@@ -26,11 +26,11 @@
             android:layout_height="match_parent">
 
             <!--
-                 Fixed width poster with 2:3 aspect ratio
+                 Poster with 2:3 aspect ratio, height matches parent (RecyclerView)
             -->
             <ImageView
                 android:id="@+id/poster"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
                 android:adjustViewBounds="false"
@@ -39,6 +39,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintDimensionRatio="2:3"
                 tools:src="@drawable/movie"
                 tools:layout_width="100dp" />
 
