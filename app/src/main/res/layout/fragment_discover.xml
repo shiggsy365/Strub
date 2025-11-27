@@ -74,6 +74,21 @@
                         android:layout_height="120dp"
                         android:layout_marginEnd="16dp">
 
+                        <!-- Text Title Fallback -->
+                        <TextView
+                            android:id="@+id/detailTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:textColor="@color/text_primary"
+                            android:textStyle="bold"
+                            android:maxLines="3"
+                            android:ellipsize="end"
+                            android:visibility="gone"
+                            tools:text="The Amazing Adventure"
+                            tools:visibility="visible" />
+
                         <!-- CHANGED: Width wrap_content to allow adjustViewBounds to work -->
                         <ImageView
                             android:id="@+id/detailLogo"
