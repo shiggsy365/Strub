@@ -515,11 +515,14 @@ class DiscoverFragment : Fragment() {
                         // Create synthetic catalog for movie genres
                         val genreCatalog = UserCatalog(
                             userId = "",
-                            url = "genres_movie",
-                            type = "genre",
-                            displayName = "Movie Genres",
-                            name = "Movie Genres",
-                            customSort = ""
+                            catalogId = "genres_movie",
+                            catalogType = "genre",
+                            catalogName = "Movie Genres",
+                            customName = null,
+                            displayOrder = catalogsList.size,
+                            pageType = "movie",
+                            addonUrl = "",
+                            manifestId = "genres_movie"
                         )
                         catalogsList.add(genreCatalog)
                         allCatalogs = catalogsList
@@ -531,11 +534,14 @@ class DiscoverFragment : Fragment() {
                         // Create synthetic catalog for series genres
                         val genreCatalog = UserCatalog(
                             userId = "",
-                            url = "genres_series",
-                            type = "genre",
-                            displayName = "Series Genres",
-                            name = "Series Genres",
-                            customSort = ""
+                            catalogId = "genres_series",
+                            catalogType = "genre",
+                            catalogName = "Series Genres",
+                            customName = null,
+                            displayOrder = catalogsList.size,
+                            pageType = "series",
+                            addonUrl = "",
+                            manifestId = "genres_series"
                         )
                         catalogsList.add(genreCatalog)
                         allCatalogs = catalogsList
@@ -594,9 +600,9 @@ class DiscoverFragment : Fragment() {
         updateCurrentListLabel(nextCatalog.displayName)
 
         // Check if this is a genre catalog
-        if (nextCatalog.type == "genre") {
+        if (nextCatalog.catalogType == "genre") {
             // Load genre items instead of regular catalog content
-            loadGenreItems(nextCatalog.url.endsWith("series"))
+            loadGenreItems(nextCatalog.catalogId.endsWith("series"))
         } else {
             viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
         }
