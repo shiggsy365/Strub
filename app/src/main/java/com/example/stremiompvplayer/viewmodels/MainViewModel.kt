@@ -2199,9 +2199,41 @@ class MainViewModel(
         val currentUserId = prefsManager.getCurrentUserId() ?: return
         viewModelScope.launch {
             try {
+                // 1. Add to local library
                 val item = CollectedItem.fromMetaItem(currentUserId, meta)
                 catalogRepository.addToLibrary(item)
                 _isItemInLibrary.postValue(true)
+
+                // 2. Sync to Trakt Collection
+                if (syncToTrakt && prefsManager.isTraktEnabled()) {
+                    try {
+                        val token = prefsManager.getTraktAccessToken()
+                        val clientId = Secrets.TRAKT_CLIENT_ID
+                        if (token != null) {
+                            val bearer = "Bearer $token"
+                            val body: TraktHistoryBody? = when (meta.type) {
+                                "movie" -> {
+                                    val id = meta.id.removePrefix("tmdb:").toIntOrNull()
+                                    if (id != null) TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, id, null, null)))) else null
+                                }
+                                "series" -> {
+                                    val id = meta.id.removePrefix("tmdb:").toIntOrNull()
+                                    if (id != null) TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, id, null, null)))) else null
+                                }
+                                else -> null
+                            }
+
+                            if (body != null) {
+                                TraktClient.api.addToCollection(bearer, clientId, body)
+                                Log.d("TraktSync", "Added to Trakt collection: ${meta.id}")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("TraktSync", "Failed to sync to Trakt collection", e)
+                        // Don't fail the whole operation if Trakt sync fails
+                    }
+                }
+
                 _actionResult.postValue(ActionResult.Success("Added to library"))
             } catch (e: Exception) { _actionResult.postValue(ActionResult.Error("Failed to add to library: ${e.message}")) }
         }
@@ -2211,8 +2243,47 @@ class MainViewModel(
         val currentUserId = prefsManager.getCurrentUserId() ?: return
         viewModelScope.launch {
             try {
+                // 1. Get item type before removing (needed for Trakt sync)
+                val itemType = try {
+                    val existingItem = catalogRepository.getAllLibraryItems(currentUserId).find { it.itemId == itemId }
+                    existingItem?.itemType
+                } catch (e: Exception) {
+                    null
+                }
+
+                // 2. Remove from local library
                 catalogRepository.removeFromLibrary(itemId, currentUserId)
                 _isItemInLibrary.postValue(false)
+
+                // 3. Sync to Trakt Collection
+                if (syncToTrakt && prefsManager.isTraktEnabled() && itemType != null) {
+                    try {
+                        val token = prefsManager.getTraktAccessToken()
+                        val clientId = Secrets.TRAKT_CLIENT_ID
+                        if (token != null) {
+                            val bearer = "Bearer $token"
+                            val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull()
+                            val body: TraktHistoryBody? = when (itemType) {
+                                "movie" -> {
+                                    if (tmdbId != null) TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, tmdbId, null, null)))) else null
+                                }
+                                "series" -> {
+                                    if (tmdbId != null) TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, tmdbId, null, null)))) else null
+                                }
+                                else -> null
+                            }
+
+                            if (body != null) {
+                                TraktClient.api.removeFromCollection(bearer, clientId, body)
+                                Log.d("TraktSync", "Removed from Trakt collection: $itemId")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("TraktSync", "Failed to sync removal to Trakt collection", e)
+                        // Don't fail the whole operation if Trakt sync fails
+                    }
+                }
+
                 _actionResult.postValue(ActionResult.Success("Removed from library"))
             } catch (e: Exception) { _actionResult.postValue(ActionResult.Error("Failed to remove from library: ${e.message}")) }
         }
@@ -2222,6 +2293,87 @@ class MainViewModel(
         val currentUserId = prefsManager.getCurrentUserId() ?: return
         viewModelScope.launch {
             if (catalogRepository.isItemCollected(meta.id, currentUserId)) removeFromLibrary(meta.id) else addToLibrary(meta)
+        }
+    }
+
+    // === WATCHLIST MANAGEMENT ===
+    fun addToWatchlist(meta: MetaItem) {
+        if (!prefsManager.isTraktEnabled()) {
+            _actionResult.postValue(ActionResult.Error("Trakt is not enabled"))
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val token = prefsManager.getTraktAccessToken()
+                val clientId = Secrets.TRAKT_CLIENT_ID
+                if (token != null) {
+                    val bearer = "Bearer $token"
+                    val body: TraktHistoryBody? = when (meta.type) {
+                        "movie", "episode" -> {
+                            val id = meta.id.removePrefix("tmdb:").split(":")[0].toIntOrNull()
+                            if (id != null) TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, id, null, null)))) else null
+                        }
+                        "series" -> {
+                            val id = meta.id.removePrefix("tmdb:").toIntOrNull()
+                            if (id != null) TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, id, null, null)))) else null
+                        }
+                        else -> null
+                    }
+
+                    if (body != null) {
+                        TraktClient.api.addToWatchlist(bearer, clientId, body)
+                        _actionResult.postValue(ActionResult.Success("Added to Trakt Watchlist"))
+                        Log.d("TraktSync", "Added to Trakt watchlist: ${meta.id}")
+                    } else {
+                        _actionResult.postValue(ActionResult.Error("Invalid item type for watchlist"))
+                    }
+                } else {
+                    _actionResult.postValue(ActionResult.Error("Not authenticated with Trakt"))
+                }
+            } catch (e: Exception) {
+                Log.e("TraktSync", "Failed to add to Trakt watchlist", e)
+                _actionResult.postValue(ActionResult.Error("Failed to add to watchlist: ${e.message}"))
+            }
+        }
+    }
+
+    fun removeFromWatchlist(meta: MetaItem) {
+        if (!prefsManager.isTraktEnabled()) {
+            _actionResult.postValue(ActionResult.Error("Trakt is not enabled"))
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val token = prefsManager.getTraktAccessToken()
+                val clientId = Secrets.TRAKT_CLIENT_ID
+                if (token != null) {
+                    val bearer = "Bearer $token"
+                    val body: TraktHistoryBody? = when (meta.type) {
+                        "movie", "episode" -> {
+                            val id = meta.id.removePrefix("tmdb:").split(":")[0].toIntOrNull()
+                            if (id != null) TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, id, null, null)))) else null
+                        }
+                        "series" -> {
+                            val id = meta.id.removePrefix("tmdb:").toIntOrNull()
+                            if (id != null) TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, id, null, null)))) else null
+                        }
+                        else -> null
+                    }
+
+                    if (body != null) {
+                        TraktClient.api.removeFromWatchlist(bearer, clientId, body)
+                        _actionResult.postValue(ActionResult.Success("Removed from Trakt Watchlist"))
+                        Log.d("TraktSync", "Removed from Trakt watchlist: ${meta.id}")
+                    } else {
+                        _actionResult.postValue(ActionResult.Error("Invalid item type for watchlist"))
+                    }
+                } else {
+                    _actionResult.postValue(ActionResult.Error("Not authenticated with Trakt"))
+                }
+            } catch (e: Exception) {
+                Log.e("TraktSync", "Failed to remove from Trakt watchlist", e)
+                _actionResult.postValue(ActionResult.Error("Failed to remove from watchlist: ${e.message}"))
+            }
         }
     }
 

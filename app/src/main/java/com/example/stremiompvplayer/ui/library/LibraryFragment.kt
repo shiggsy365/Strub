@@ -318,6 +318,8 @@ class LibraryFragment : Fragment() {
             popup.menu.add("Mark as Watched")
             popup.menu.add("Clear Progress")
             popup.menu.add("Not Watching")
+            popup.menu.add("Add to Trakt Watchlist")
+            popup.menu.add("Remove from Trakt Watchlist")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -345,6 +347,14 @@ class LibraryFragment : Fragment() {
                     }
                     "Not Watching" -> {
                         viewModel.markAsNotWatching(item)
+                        true
+                    }
+                    "Add to Trakt Watchlist" -> {
+                        viewModel.addToWatchlist(item)
+                        true
+                    }
+                    "Remove from Trakt Watchlist" -> {
+                        viewModel.removeFromWatchlist(item)
                         true
                     }
                     else -> false

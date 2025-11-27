@@ -203,6 +203,8 @@ class HomeFragment : Fragment() {
 
             popup.menu.add("Mark as Watched")
             popup.menu.add("Not Watching")
+            popup.menu.add("Add to Trakt Watchlist")
+            popup.menu.add("Remove from Trakt Watchlist")
 
             // Add "Browse Show" for episodes
             if (item.type == "episode") {
@@ -225,6 +227,14 @@ class HomeFragment : Fragment() {
                     }
                     "Not Watching" -> {
                         viewModel.markAsNotWatching(item)
+                        true
+                    }
+                    "Add to Trakt Watchlist" -> {
+                        viewModel.addToWatchlist(item)
+                        true
+                    }
+                    "Remove from Trakt Watchlist" -> {
+                        viewModel.removeFromWatchlist(item)
                         true
                     }
                     "Browse Show" -> {

@@ -119,6 +119,29 @@ interface TraktApi {
         @retrofit2.http.Path("id") playbackId: Long
     )
 
+    // --- COLLECTION MANAGEMENT ---
+    @POST("sync/collection")
+    suspend fun addToCollection(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
+
+    // --- WATCHLIST MANAGEMENT ---
+    @POST("sync/watchlist")
+    suspend fun addToWatchlist(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
+
+    @POST("sync/watchlist/remove")
+    suspend fun removeFromWatchlist(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
+
     // --- DISCOVER ---
     @GET("movies/popular")
     suspend fun getPopularMovies(@Header("trakt-api-key") clientId: String): List<TraktMovie>
