@@ -81,7 +81,11 @@ class DiscoverFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupAdapters()
         setupObservers()
-        loadCatalogs()
+
+        // Get the media type from arguments, default to "movie"
+        val type = arguments?.getString(ARG_TYPE) ?: "movie"
+        loadCatalogs(type)
+
         setupKeyHandling()
     }
 
@@ -495,21 +499,17 @@ class DiscoverFragment : Fragment() {
         }
     }
 
-    private fun loadCatalogs() {
-        // Fetch genres for both movies and series
-        viewModel.fetchGenres("movie")
-        viewModel.fetchGenres("series")
+    private fun loadCatalogs(type: String = "movie") {
+        // Fetch genres for the specified type only
+        viewModel.fetchGenres(type)
 
-        // Load both movie and series catalogs
-        viewModel.getDiscoverCatalogs("movie").observe(viewLifecycleOwner) { movieCatalogs ->
-            viewModel.getDiscoverCatalogs("series").observe(viewLifecycleOwner) { seriesCatalogs ->
-                // Combine movie and series catalogs
-                allCatalogs = movieCatalogs + seriesCatalogs
-                currentCatalogIndex = 0
-                if (allCatalogs.isNotEmpty()) {
-                    updateCurrentListLabel(allCatalogs[0].displayName)
-                    viewModel.loadContentForCatalog(allCatalogs[0], isInitialLoad = true)
-                }
+        // Load catalogs for the specified type only
+        viewModel.getDiscoverCatalogs(type).observe(viewLifecycleOwner) { catalogs ->
+            allCatalogs = catalogs
+            currentCatalogIndex = 0
+            if (allCatalogs.isNotEmpty()) {
+                updateCurrentListLabel(allCatalogs[0].displayName)
+                viewModel.loadContentForCatalog(allCatalogs[0], isInitialLoad = true)
             }
         }
     }

@@ -75,7 +75,10 @@ class LibraryFragment : Fragment() {
         setupAdapters()
         setupObservers()
         setupKeyHandling()
-        loadLibrary()
+
+        // Get the media type from arguments, default to "movie"
+        val type = arguments?.getString(ARG_TYPE) ?: "movie"
+        loadLibrary(type)
     }
 
     override fun onResume() {
@@ -189,10 +192,9 @@ class LibraryFragment : Fragment() {
         }
     }
 
-    private fun loadLibrary() {
-        // Load both movie and series libraries
-        viewModel.filterAndSortLibrary("movie")
-        viewModel.filterAndSortLibrary("series")
+    private fun loadLibrary(type: String = "movie") {
+        // Load library for the specified type only
+        viewModel.filterAndSortLibrary(type)
     }
 
     private fun cycleToNextList() {
@@ -536,6 +538,25 @@ class LibraryFragment : Fragment() {
                 }
 
                 actorChipGroup?.addView(chip)
+            }
+        }
+
+        // [ADD] Observer for logo loading - same as DiscoverFragment
+        viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
+            when (logoUrl) {
+                "" -> { // Loading
+                    binding.detailLogo.visibility = View.GONE
+                }
+                null -> { // No Logo
+                    binding.detailLogo.visibility = View.GONE
+                }
+                else -> { // Has Logo
+                    binding.detailLogo.visibility = View.VISIBLE
+                    Glide.with(this)
+                        .load(logoUrl)
+                        .fitCenter()
+                        .into(binding.detailLogo)
+                }
             }
         }
     }
