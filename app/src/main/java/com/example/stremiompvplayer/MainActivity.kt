@@ -175,6 +175,9 @@ class MainActivity : AppCompatActivity() {
             is LibraryFragment -> {
                 loadFragment(LibraryFragment.newInstance(currentMediaType))
             }
+            is SearchFragment -> {
+                loadFragment(SearchFragment.newInstance(currentMediaType))
+            }
             // Add other fragments that support type filtering here if needed
         }
     }

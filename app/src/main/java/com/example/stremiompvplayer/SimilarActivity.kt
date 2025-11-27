@@ -29,7 +29,7 @@ class SimilarActivity : AppCompatActivity() {
     private lateinit var posterAdapter: PosterAdapter
     private var movieResults = listOf<MetaItem>()
     private var seriesResults = listOf<MetaItem>()
-    private var currentResultIndex = 0  // 0 for movies, 1 for series
+    private var currentResultIndex = -1  // -1 for all, 0 for movies, 1 for series
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,8 +69,28 @@ class SimilarActivity : AppCompatActivity() {
             finish()
         }
 
+        // Set up filter chips
+        setupFilterChips()
+
         // Set up key handling for cycling
         setupKeyHandling()
+    }
+
+    private fun setupFilterChips() {
+        binding.chipAll.setOnClickListener {
+            currentResultIndex = -1  // Show all
+            updateDisplayedResults()
+        }
+
+        binding.chipMovies.setOnClickListener {
+            currentResultIndex = 0  // Show movies only
+            updateDisplayedResults()
+        }
+
+        binding.chipSeries.setOnClickListener {
+            currentResultIndex = 1  // Show series only
+            updateDisplayedResults()
+        }
     }
 
     private fun setupKeyHandling() {
@@ -112,14 +132,22 @@ class SimilarActivity : AppCompatActivity() {
     }
 
     private fun updateDisplayedResults() {
-        val results = if (currentResultIndex == 0 && movieResults.isNotEmpty()) {
-            movieResults
-        } else if (currentResultIndex == 1 && seriesResults.isNotEmpty()) {
-            seriesResults
-        } else if (movieResults.isNotEmpty()) {
-            movieResults
-        } else {
-            seriesResults
+        val results = when (currentResultIndex) {
+            -1 -> {
+                // Show all (combined and sorted)
+                (movieResults + seriesResults).sortedByDescending {
+                    it.rating?.toDoubleOrNull() ?: 0.0
+                }
+            }
+            0 -> {
+                // Show movies only
+                movieResults
+            }
+            1 -> {
+                // Show series only
+                seriesResults
+            }
+            else -> emptyList()
         }
 
         posterAdapter.updateData(results)
@@ -146,14 +174,16 @@ class SimilarActivity : AppCompatActivity() {
             // Fetch similar content for both movies and series
             val allItems = viewModel.fetchSimilarContent(metaId, type)
 
-            // Combine and sort by popularity (rating)
-            val combinedResults = allItems.sortedByDescending {
+            // Separate by type
+            movieResults = allItems.filter { it.type == "movie" }.sortedByDescending {
+                it.rating?.toDoubleOrNull() ?: 0.0
+            }
+            seriesResults = allItems.filter { it.type == "series" || it.type == "tv" }.sortedByDescending {
                 it.rating?.toDoubleOrNull() ?: 0.0
             }
 
-            movieResults = combinedResults
-            seriesResults = emptyList()
-            currentResultIndex = 0
+            // Default to showing all
+            currentResultIndex = -1
             updateDisplayedResults()
         }
     }
