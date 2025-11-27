@@ -431,14 +431,32 @@ class HomeFragment : Fragment() {
             }
         }
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading -> binding.loadingCard.visibility = if (isLoading) View.VISIBLE else View.GONE }
+
+        viewModel.isCastLoading.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
+                actorChipGroup?.removeAllViews()
+                val placeholderChip = com.google.android.material.chip.Chip(requireContext()).apply {
+                    text = "No Cast Returned"
+                    isClickable = false
+                    isFocusable = false
+                    setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+                    setTextColor(resources.getColor(R.color.text_primary, null))
+                }
+                actorChipGroup?.addView(placeholderChip)
+            }
+        }
+
         viewModel.castList.observe(viewLifecycleOwner) { castList ->
             val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
             actorChipGroup?.removeAllViews()
-            castList.take(5).forEach { actor ->
-                val chip = com.google.android.material.chip.Chip(requireContext())
-                chip.text = actor.name
-                // ... set properties ...
-                actorChipGroup?.addView(chip)
+            if (castList.isNotEmpty()) {
+                castList.take(5).forEach { actor ->
+                    val chip = com.google.android.material.chip.Chip(requireContext())
+                    chip.text = actor.name
+                    // ... set properties ...
+                    actorChipGroup?.addView(chip)
+                }
             }
         }
     }

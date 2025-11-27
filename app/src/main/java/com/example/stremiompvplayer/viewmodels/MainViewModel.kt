@@ -110,6 +110,8 @@ class MainViewModel(
     val castList: LiveData<List<MetaItem>> = _castList
     private val _director = MutableLiveData<MetaItem?>()
     val director: LiveData<MetaItem?> = _director
+    private val _isCastLoading = MutableLiveData<Boolean>(false)
+    val isCastLoading: LiveData<Boolean> = _isCastLoading
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
     private val _isLoading = MutableLiveData<Boolean>()
@@ -1160,7 +1162,13 @@ class MainViewModel(
                 var errorCount = 0
 
                 libraryItems.forEach { item ->
-                    if (item.poster.isNullOrEmpty() || item.background.isNullOrEmpty()) {
+                    // Check if item is missing any metadata (poster, background, or description)
+                    val needsMetadata = item.poster.isNullOrEmpty() ||
+                                       item.background.isNullOrEmpty() ||
+                                       item.description.isNullOrEmpty() ||
+                                       item.itemName.isNullOrEmpty()
+
+                    if (needsMetadata) {
                         checkedCount++
                         val tmdbId = item.itemId.removePrefix("tmdb:").split(":").firstOrNull()?.toIntOrNull()
                         if (tmdbId != null) {
@@ -1170,7 +1178,16 @@ class MainViewModel(
                                         val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
                                         val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                         val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
-                                        val enrichedMeta = MetaItem("tmdb:$tmdbId", "movie", details.title, poster, background, details.overview, details.release_date)
+                                        val enrichedMeta = MetaItem(
+                                            id = "tmdb:$tmdbId",
+                                            type = "movie",
+                                            name = details.title,
+                                            poster = poster,
+                                            background = background,
+                                            description = details.overview,
+                                            releaseDate = details.release_date,
+                                            rating = details.vote_average?.toString()
+                                        )
                                         catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
                                         updatedCount++
                                     }
@@ -1178,7 +1195,16 @@ class MainViewModel(
                                         val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
                                         val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                                         val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
-                                        val enrichedMeta = MetaItem("tmdb:$tmdbId", "series", details.name, poster, background, details.overview, null)
+                                        val enrichedMeta = MetaItem(
+                                            id = "tmdb:$tmdbId",
+                                            type = "series",
+                                            name = details.name,
+                                            poster = poster,
+                                            background = background,
+                                            description = details.overview,
+                                            releaseDate = details.first_air_date,
+                                            rating = details.vote_average?.toString()
+                                        )
                                         catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, enrichedMeta))
                                         updatedCount++
                                     }
@@ -1627,6 +1653,7 @@ class MainViewModel(
         if (apiKey.isEmpty()) return
         viewModelScope.launch {
             try {
+                _isCastLoading.postValue(true)
                 val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull() ?: return@launch
                 val credits = if (type == "movie") TMDBClient.api.getMovieCredits(tmdbId, apiKey) else TMDBClient.api.getTVCredits(tmdbId, apiKey)
                 val cast = credits.cast.take(10).map { member ->
@@ -1637,7 +1664,11 @@ class MainViewModel(
                 }
                 _castList.postValue(cast)
                 _director.postValue(director)
-            } catch (e: Exception) { Log.e("MainViewModel", "Failed to fetch cast", e) }
+                _isCastLoading.postValue(false)
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Failed to fetch cast", e)
+                _isCastLoading.postValue(false)
+            }
         }
     }
 
@@ -1854,10 +1885,21 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val response = TMDBClient.api.getPersonCombinedCredits(personId, apiKey)
-                // Preserve TMDB order (already sorted by relevance)
-                val results = response.cast
-                    .map { it.toMetaItem() }
-                _searchResults.postValue(results)
+                // Separate movies and series, then interleave them
+                val allCredits = response.cast.mapIndexed { index, it ->
+                    it.toMetaItem().copy(popularity = index.toDouble())
+                }
+                val movies = allCredits.filter { it.type == "movie" }
+                val series = allCredits.filter { it.type == "series" || it.type == "tv" }
+
+                // Interleave results: movie 0, series 0, movie 1, series 1, etc.
+                val interleaved = mutableListOf<MetaItem>()
+                val maxSize = maxOf(movies.size, series.size)
+                for (i in 0 until maxSize) {
+                    if (i < movies.size) interleaved.add(movies[i])
+                    if (i < series.size) interleaved.add(series[i])
+                }
+                _searchResults.postValue(interleaved)
             } catch (e: Exception) {
                 _error.postValue("Person credits failed: ${e.message}")
                 _searchResults.postValue(emptyList())
@@ -2145,45 +2187,19 @@ class MainViewModel(
         }
     }
 
-    // Fetch similar content for a movie or series - merged and sorted by popularity
+    // Fetch similar content for a movie or series - returns same type only
     suspend fun fetchSimilarContent(itemId: String, type: String): List<MetaItem> {
         if (apiKey.isEmpty()) return emptyList()
         return try {
             val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull() ?: return emptyList()
 
-            // Fetch both similar movies and series, merge them
-            val movieResults = try {
-                if (type == "movie") {
-                    val response = TMDBClient.api.getSimilarMovies(tmdbId, apiKey)
-                    response.results.map { it.toMetaItem() }
-                } else {
-                    // For series, also get similar movies for more variety
-                    emptyList()
-                }
-            } catch (e: Exception) {
-                emptyList()
+            if (type == "movie") {
+                val response = TMDBClient.api.getSimilarMovies(tmdbId, apiKey)
+                response.results.map { it.toMetaItem() }
+            } else {
+                val response = TMDBClient.api.getSimilarTV(tmdbId, apiKey)
+                response.results.map { it.toMetaItem() }
             }
-
-            val seriesResults = try {
-                if (type == "series") {
-                    val response = TMDBClient.api.getSimilarTV(tmdbId, apiKey)
-                    response.results.map { it.toMetaItem() }
-                } else {
-                    // For movies, also get similar series for more variety
-                    emptyList()
-                }
-            } catch (e: Exception) {
-                emptyList()
-            }
-
-            // Preserve TMDB order by interleaving results
-            val merged = mutableListOf<MetaItem>()
-            val maxSize = maxOf(movieResults.size, seriesResults.size)
-            for (i in 0 until maxSize) {
-                if (i < movieResults.size) merged.add(movieResults[i])
-                if (i < seriesResults.size) merged.add(seriesResults[i])
-            }
-            merged
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to fetch similar content", e)
             emptyList()

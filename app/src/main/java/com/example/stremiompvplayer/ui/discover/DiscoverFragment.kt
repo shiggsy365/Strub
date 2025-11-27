@@ -50,6 +50,7 @@ class DiscoverFragment : Fragment() {
     private var allCatalogs = listOf<UserCatalog>()  // Combined movie + series catalogs
     private var currentCatalogIndex = 0
     private var isShowingGenre = false
+    private var isCycling = false  // Prevents double press on DPAD_DOWN
 
     private var detailsUpdateJob: Job? = null
     private val focusMemoryManager = FocusMemoryManager.getInstance()
@@ -580,7 +581,9 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun cycleToNextList() {
-        if (allCatalogs.isEmpty()) return
+        if (allCatalogs.isEmpty() || isCycling) return
+
+        isCycling = true
 
         // Reset drill-down state when cycling lists
         currentDrillDownLevel = DrillDownLevel.CATALOG
@@ -608,6 +611,7 @@ class DiscoverFragment : Fragment() {
             binding.rvContent.post {
                 val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
                 firstView?.requestFocus()
+                isCycling = false  // Reset flag after focus is set
             }
         }, 1000)
     }
@@ -886,36 +890,54 @@ class DiscoverFragment : Fragment() {
             }
         }
 
+        // Observe cast loading state
+        viewModel.isCastLoading.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
+                actorChipGroup?.removeAllViews()
+                val placeholderChip = com.google.android.material.chip.Chip(requireContext()).apply {
+                    text = "No Cast Returned"
+                    isClickable = false
+                    isFocusable = false
+                    setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+                    setTextColor(resources.getColor(R.color.text_primary, null))
+                }
+                actorChipGroup?.addView(placeholderChip)
+            }
+        }
+
         // Observe cast list and update actor chips
         viewModel.castList.observe(viewLifecycleOwner) { castList ->
             val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
             actorChipGroup?.removeAllViews()
 
-            castList.take(5).forEach { actor ->
-                val chip = com.google.android.material.chip.Chip(requireContext())
-                chip.text = actor.name
-                chip.isClickable = true
-                chip.isFocusable = true
-                chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
-                chip.setTextColor(resources.getColor(R.color.text_primary, null))
+            if (castList.isNotEmpty()) {
+                castList.take(5).forEach { actor ->
+                    val chip = com.google.android.material.chip.Chip(requireContext())
+                    chip.text = actor.name
+                    chip.isClickable = true
+                    chip.isFocusable = true
+                    chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+                    chip.setTextColor(resources.getColor(R.color.text_primary, null))
 
-                // Show actor's content in Discover layout
-                chip.setOnClickListener {
-                    val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
-                    if (personId != null) {
-                        // Reset drill-down state
-                        currentDrillDownLevel = DrillDownLevel.CATALOG
-                        currentSeriesId = null
-                        currentSeasonNumber = null
+                    // Show actor's content in Discover layout
+                    chip.setOnClickListener {
+                        val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
+                        if (personId != null) {
+                            // Reset drill-down state
+                            currentDrillDownLevel = DrillDownLevel.CATALOG
+                            currentSeriesId = null
+                            currentSeasonNumber = null
 
-                        // Load person's credits (movies/shows they appeared in)
-                        viewModel.loadPersonCredits(personId)
-                        updateCurrentListLabel("${actor.name} - Filmography")
-                        updatePlayButtonVisibility()
+                            // Load person's credits (movies/shows they appeared in)
+                            viewModel.loadPersonCredits(personId)
+                            updateCurrentListLabel("${actor.name} - Filmography")
+                            updatePlayButtonVisibility()
+                        }
                     }
-                }
 
-                actorChipGroup?.addView(chip)
+                    actorChipGroup?.addView(chip)
+                }
             }
         }
 
