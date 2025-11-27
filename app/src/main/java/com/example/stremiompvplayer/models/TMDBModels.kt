@@ -87,7 +87,8 @@ data class TMDBTVDetails(
     val backdrop_path: String?,
     val first_air_date: String?,
     val vote_average: Double?,
-    val seasons: List<TMDBSeason>?
+    val seasons: List<TMDBSeason>?,
+    val genres: List<TMDBGenre>? = null
 )
 
 data class TMDBSeason(
@@ -130,7 +131,8 @@ data class TMDBMovie(
     val release_date: String?,
     val vote_average: Double?,
     val popularity: Double? = null,
-    val genre_ids: List<Int>? = null
+    val genre_ids: List<Int>? = null,
+    val genres: List<TMDBGenre>? = null  // Full genre details from /movie/{id} endpoint
 ) {
     fun toMetaItem(): MetaItem {
         return MetaItem(
@@ -143,7 +145,10 @@ data class TMDBMovie(
             // MAP NEW FIELDS
             releaseDate = release_date,
             rating = vote_average?.let { String.format("%.1f", it) },
-            popularity = popularity
+            popularity = popularity,
+            genres = genres?.let { genreList ->
+                "[${genreList.joinToString(",") { "\"${it.id}\"" }}]"
+            }
         )
     }
 }
@@ -180,7 +185,8 @@ data class TMDBSeries(
     val first_air_date: String?,
     val vote_average: Double?,
     val popularity: Double? = null,
-    val genre_ids: List<Int>? = null
+    val genre_ids: List<Int>? = null,
+    val genres: List<TMDBGenre>? = null  // Full genre details from /tv/{id} endpoint
 ) {
     fun toMetaItem(): MetaItem {
         return MetaItem(
@@ -193,7 +199,10 @@ data class TMDBSeries(
             // MAP NEW FIELDS
             releaseDate = first_air_date,
             rating = vote_average?.let { String.format("%.1f", it) },
-            popularity = popularity
+            popularity = popularity,
+            genres = genres?.let { genreList ->
+                "[${genreList.joinToString(",") { "\"${it.id}\"" }}]"
+            }
         )
     }
 }

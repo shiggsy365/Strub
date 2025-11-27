@@ -188,7 +188,17 @@ class MainViewModel(
 
     // === HELPER FUNCTIONS ===
     private fun toMetaItem(item: CollectedItem): MetaItem {
-        return MetaItem(item.itemId, item.itemType, item.name, item.poster, item.background, item.description)
+        return MetaItem(
+            id = item.itemId,
+            type = item.itemType,
+            name = item.name,
+            poster = item.poster,
+            background = item.background,
+            description = item.description,
+            releaseDate = item.year,
+            rating = item.rating,
+            genres = item.genres
+        )
     }
 
     fun getHomeCatalogs(): List<UserCatalog> {
@@ -315,21 +325,25 @@ class MainViewModel(
                 // Fetch Movies with full TMDB metadata
                 val movies = TraktClient.api.getMovieCollection(bearer, clientId)
                 val metaMovies = movies.mapNotNull { it.movie }.mapNotNull { movie ->
+                    val tmdbId = movie.ids.tmdb ?: return@mapNotNull null
                     try {
                         // Fetch full metadata from TMDB (like performTraktSync does)
-                        val details = TMDBClient.api.getMovieDetails(movie.ids.tmdb, apiKey)
+                        val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
                         val posterUrl = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                         val backgroundUrl = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
 
                         val meta = MetaItem(
-                            id = "tmdb:${movie.ids.tmdb}",
+                            id = "tmdb:$tmdbId",
                             type = "movie",
                             name = details.title ?: movie.title,
                             poster = posterUrl,
                             background = backgroundUrl,
                             description = details.overview,
                             releaseDate = details.release_date,
-                            rating = details.vote_average?.toString()
+                            rating = details.vote_average?.toString(),
+                            genres = details.genres?.let { genreList ->
+                                "[${genreList.joinToString(",") { "\"${it.id}\"" }}]"
+                            }
                         )
 
                         // Also add to local library with full metadata
@@ -339,7 +353,7 @@ class MainViewModel(
                         Log.e("TraktSync", "Error fetching metadata for movie ${movie.title}", e)
                         // Fallback to minimal metadata
                         MetaItem(
-                            id = "tmdb:${movie.ids.tmdb}",
+                            id = "tmdb:$tmdbId",
                             type = "movie",
                             name = movie.title,
                             poster = null,
@@ -354,21 +368,25 @@ class MainViewModel(
                 // Fetch Shows with full TMDB metadata
                 val shows = TraktClient.api.getShowCollection(bearer, clientId)
                 val metaShows = shows.mapNotNull { it.show }.mapNotNull { show ->
+                    val tmdbId = show.ids.tmdb ?: return@mapNotNull null
                     try {
                         // Fetch full metadata from TMDB (like performTraktSync does)
-                        val details = TMDBClient.api.getTVDetails(show.ids.tmdb, apiKey)
+                        val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
                         val posterUrl = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
                         val backgroundUrl = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
 
                         val meta = MetaItem(
-                            id = "tmdb:${show.ids.tmdb}",
+                            id = "tmdb:$tmdbId",
                             type = "series",
                             name = details.name ?: show.title,
                             poster = posterUrl,
                             background = backgroundUrl,
                             description = details.overview,
                             releaseDate = details.first_air_date,
-                            rating = details.vote_average?.toString()
+                            rating = details.vote_average?.toString(),
+                            genres = details.genres?.let { genreList ->
+                                "[${genreList.joinToString(",") { "\"${it.id}\"" }}]"
+                            }
                         )
 
                         // Also add to local library with full metadata
@@ -378,7 +396,7 @@ class MainViewModel(
                         Log.e("TraktSync", "Error fetching metadata for show ${show.title}", e)
                         // Fallback to minimal metadata
                         MetaItem(
-                            id = "tmdb:${show.ids.tmdb}",
+                            id = "tmdb:$tmdbId",
                             type = "series",
                             name = show.title,
                             poster = null,
@@ -2126,7 +2144,8 @@ class MainViewModel(
             val filtered = if (genre != null) {
                 rawItems.filter { item ->
                     // Check if the item's genres contain the selected genre ID
-                    item.genres?.contains(genre) == true
+                    // Genres are stored as JSON array string like ["28", "12"]
+                    item.genres?.contains("\"$genre\"") == true
                 }
             } else {
                 rawItems

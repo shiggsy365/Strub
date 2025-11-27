@@ -77,7 +77,9 @@ data class MetaItem(
     var isLandscape: Boolean = false,
     // Genre fields for genre items
     val genreId: Int? = null,
-    val genreType: String? = null
+    val genreType: String? = null,
+    // Genres for movies/series (JSON array stored as string, same format as CollectedItem)
+    val genres: String? = null
 ) : Serializable
 
 data class Manifest(val id: String, val version: String, val name: String, val description: String?, val types: List<String>, val catalogs: List<Catalog>) : Serializable
