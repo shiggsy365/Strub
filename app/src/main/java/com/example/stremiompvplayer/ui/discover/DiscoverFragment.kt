@@ -96,7 +96,34 @@ class DiscoverFragment : Fragment() {
         binding.posterCarousel.isFocusable = true
         binding.posterCarousel.isFocusableInTouchMode = true
 
-        // Set unhandled key event listener on the fragment root to catch down/up before RecyclerView consumes them
+        // Add key listener directly to RecyclerView to intercept keys before it processes them
+        binding.rvContent.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        // Cycle to next list when down is pressed on carousel
+                        cycleToNextList()
+                        return@setOnKeyListener true
+                    }
+                    KeyEvent.KEYCODE_DPAD_UP -> {
+                        // Focus on Play button if available, otherwise Related button
+                        val btnPlay = binding.root.findViewById<View>(R.id.btnPlay)
+                        val btnRelated = binding.root.findViewById<View>(R.id.btnRelated)
+                        when {
+                            btnPlay?.visibility == View.VISIBLE -> btnPlay.requestFocus()
+                            btnRelated?.visibility == View.VISIBLE -> btnRelated.requestFocus()
+                            else -> btnPlay?.requestFocus() // Fallback to play even if hidden
+                        }
+                        return@setOnKeyListener true
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
+
+        // Set unhandled key event listener on the fragment root as fallback
         binding.root.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN) {
                 when (keyCode) {
@@ -665,7 +692,7 @@ class DiscoverFragment : Fragment() {
                     binding.rvContent.scrollToPosition(0)
                     val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
                     firstView?.requestFocus()
-                }, 200)
+                }, 1000)
 
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error loading genre content", Toast.LENGTH_SHORT).show()
@@ -760,7 +787,7 @@ class DiscoverFragment : Fragment() {
                 binding.root.postDelayed({
                     binding.rvContent.scrollToPosition(0)
                     binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
-                }, 200)
+                }, 1000)
             }
             "season" -> {
                 // Drill down into season to show episodes
@@ -778,7 +805,7 @@ class DiscoverFragment : Fragment() {
                     binding.root.postDelayed({
                         binding.rvContent.scrollToPosition(0)
                         binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
-                    }, 200)
+                    }, 1000)
                 }
             }
             "episode" -> {
@@ -996,7 +1023,7 @@ class DiscoverFragment : Fragment() {
                 binding.root.postDelayed({
                     binding.rvContent.scrollToPosition(0)
                     binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
-                }, 200)
+                }, 1000)
             }
         }
     }

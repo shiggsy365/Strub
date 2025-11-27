@@ -269,6 +269,32 @@ class LiveTVFragment : Fragment() {
             }
         }
 
+        // Add key listener to details card for back navigation
+        binding.detailsCard.setOnKeyListener { _, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        // Move focus back to the selected channel in the list
+                        val selectedIndex = tvGuideAdapter.currentList.indexOf(selectedChannel)
+                        if (selectedIndex >= 0) {
+                            binding.rvTVGuide.scrollToPosition(selectedIndex)
+                            binding.rvTVGuide.post {
+                                val view = binding.rvTVGuide.layoutManager?.findViewByPosition(selectedIndex)
+                                view?.requestFocus()
+                            }
+                        } else {
+                            // Fallback to first item if selected channel not found
+                            binding.rvTVGuide.layoutManager?.findViewByPosition(0)?.requestFocus()
+                        }
+                        true
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
+
         // Upcoming Programs Adapter
         upcomingAdapter = UpcomingProgramAdapter()
         binding.rvUpcoming.layoutManager = LinearLayoutManager(context)

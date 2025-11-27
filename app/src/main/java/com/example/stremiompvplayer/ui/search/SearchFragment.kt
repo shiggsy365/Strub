@@ -89,6 +89,7 @@ class SearchFragment : Fragment() {
         setupObservers()
         setupKeyHandling()
         setupSearchListeners()
+        setupActionButtons()
         binding.searchEditText.requestFocus()
     }
 
@@ -183,7 +184,7 @@ class SearchFragment : Fragment() {
                 val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
                 firstView?.requestFocus()
             }
-        }, 200)
+        }, 1000)
     }
 
     private fun setupRecyclerView() {
@@ -191,6 +192,8 @@ class SearchFragment : Fragment() {
             items = emptyList(),
             onClick = { item ->
                 updateDetailsPane(item)
+                // For series, allow drilling into episodes via DetailsActivity2
+                // For movies, can play directly or go to details
                 val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
                     putExtra("metaId", item.id)
                     putExtra("title", item.name)
@@ -274,6 +277,69 @@ class SearchFragment : Fragment() {
         binding.detailLogo.visibility = View.GONE
 
         viewModel.fetchItemLogo(item)
+
+        // Update play button visibility based on content type
+        updatePlayButtonVisibility(item)
+    }
+
+    private fun updatePlayButtonVisibility(item: MetaItem) {
+        val playButton = binding.btnPlay
+        val shouldShowPlay = when (item.type) {
+            "movie" -> true  // Show for movies
+            "series", "tv" -> false  // Hide for series (need to drill down to episodes)
+            else -> false
+        }
+        playButton?.visibility = if (shouldShowPlay) View.VISIBLE else View.GONE
+    }
+
+    private fun setupActionButtons() {
+        // Setup Play button
+        binding.btnPlay?.setOnClickListener {
+            currentSelectedItem?.let { item ->
+                if (item.type == "movie") {
+                    showStreamDialog(item)
+                }
+            }
+        }
+
+        // Setup Related button
+        binding.btnRelated?.setOnClickListener {
+            currentSelectedItem?.let { item ->
+                showRelatedContent(item)
+            }
+        }
+    }
+
+    private fun showStreamDialog(item: MetaItem) {
+        // Navigate to DetailsActivity2 which handles stream selection
+        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
+            putExtra("metaId", item.id)
+            putExtra("title", item.name)
+            putExtra("poster", item.poster)
+            putExtra("background", item.background)
+            putExtra("description", item.description)
+            putExtra("type", item.type)
+        }
+        startActivity(intent)
+    }
+
+    private fun showRelatedContent(item: MetaItem) {
+        lifecycleScope.launch {
+            try {
+                val similarContent = viewModel.fetchSimilarContent(item.id, item.type)
+                if (similarContent.isNotEmpty()) {
+                    // Update search results with related content
+                    movieResults = similarContent
+                    seriesResults = emptyList()
+                    currentResultIndex = 0
+                    updateDisplayedResults()
+                } else {
+                    Toast.makeText(requireContext(), "No related content found", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error loading related content", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun showItemMenu(view: View, item: MetaItem) {
