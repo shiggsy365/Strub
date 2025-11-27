@@ -188,7 +188,17 @@ class MainViewModel(
 
     // === HELPER FUNCTIONS ===
     private fun toMetaItem(item: CollectedItem): MetaItem {
-        return MetaItem(item.itemId, item.itemType, item.name, item.poster, item.background, item.description)
+        return MetaItem(
+            id = item.itemId,
+            type = item.itemType,
+            name = item.name,
+            poster = item.poster,
+            background = item.background,
+            description = item.description,
+            releaseDate = item.year,
+            rating = item.rating,
+            genres = item.genres
+        )
     }
 
     fun getHomeCatalogs(): List<UserCatalog> {
@@ -330,7 +340,10 @@ class MainViewModel(
                             background = backgroundUrl,
                             description = details.overview,
                             releaseDate = details.release_date,
-                            rating = details.vote_average?.toString()
+                            rating = details.vote_average?.toString(),
+                            genres = details.genres?.let { genreList ->
+                                "[${genreList.joinToString(",") { "\"${it.id}\"" }}]"
+                            }
                         )
 
                         // Also add to local library with full metadata
@@ -370,7 +383,10 @@ class MainViewModel(
                             background = backgroundUrl,
                             description = details.overview,
                             releaseDate = details.first_air_date,
-                            rating = details.vote_average?.toString()
+                            rating = details.vote_average?.toString(),
+                            genres = details.genres?.let { genreList ->
+                                "[${genreList.joinToString(",") { "\"${it.id}\"" }}]"
+                            }
                         )
 
                         // Also add to local library with full metadata
@@ -2124,9 +2140,16 @@ class MainViewModel(
             val rawItems = if (type == "movie") libraryMovies.value else librarySeries.value
             if (rawItems == null) return@launch
 
-            // Note: Genre filtering not yet implemented as MetaItem doesn't contain genre information
-            // This would require refactoring to query CollectedItem directly or add genres to MetaItem
-            val filtered = rawItems
+            // Apply genre filter if specified
+            val filtered = if (genre != null) {
+                rawItems.filter { item ->
+                    // Check if the item's genres contain the selected genre ID
+                    // Genres are stored as JSON array string like ["28", "12"]
+                    item.genres?.contains("\"$genre\"") == true
+                }
+            } else {
+                rawItems
+            }
 
             // Apply sorting
             val sorted = when (sortBy) {
