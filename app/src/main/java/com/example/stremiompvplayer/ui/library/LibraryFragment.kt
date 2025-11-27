@@ -691,7 +691,7 @@ class LibraryFragment : Fragment() {
             actorChipGroup?.removeAllViews()
 
             if (castList.isNotEmpty()) {
-                castList.take(5).forEach { actor ->
+                castList.take(3).forEach { actor ->
                     val chip = com.google.android.material.chip.Chip(requireContext())
                     chip.text = actor.name
                     chip.isClickable = true

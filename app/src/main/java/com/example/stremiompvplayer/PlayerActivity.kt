@@ -286,10 +286,21 @@ class PlayerActivity : AppCompatActivity() {
 
                     // Build MediaItem with subtitles
                     val subtitleConfigurations = subtitles.map { subtitle ->
+                        // Detect MIME type from URL extension
+                        val mimeType = when {
+                            subtitle.url.endsWith(".vtt", ignoreCase = true) -> MimeTypes.TEXT_VTT
+                            subtitle.url.endsWith(".srt", ignoreCase = true) -> MimeTypes.APPLICATION_SUBRIP
+                            subtitle.url.endsWith(".ass", ignoreCase = true) || subtitle.url.endsWith(".ssa", ignoreCase = true) -> MimeTypes.TEXT_SSA
+                            else -> {
+                                Log.w("PlayerActivity", "Unknown subtitle format for URL: ${subtitle.url}, defaulting to VTT")
+                                MimeTypes.TEXT_VTT
+                            }
+                        }
+
                         MediaItem.SubtitleConfiguration.Builder(
                             android.net.Uri.parse(subtitle.url)
                         )
-                            .setMimeType(MimeTypes.TEXT_VTT)  // VTT format
+                            .setMimeType(mimeType)
                             .setLanguage("eng")
                             .setLabel(subtitle.formattedTitle)  // "AIO - [Title]"
                             .setSelectionFlags(0)  // Not forced, user can select
@@ -303,6 +314,11 @@ class PlayerActivity : AppCompatActivity() {
 
                     if (subtitles.isNotEmpty()) {
                         Log.d("PlayerActivity", "Added ${subtitles.size} English subtitles to player")
+                        subtitles.forEach { subtitle ->
+                            Log.d("PlayerActivity", "Subtitle: ${subtitle.formattedTitle} - ${subtitle.url}")
+                        }
+                    } else {
+                        Log.w("PlayerActivity", "No subtitles found for ${currentMeta?.name ?: "unknown"}")
                     }
 
                     // 3. Set media and prepare (on main thread)

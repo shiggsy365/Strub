@@ -602,10 +602,14 @@ class DiscoverFragment : Fragment() {
     private fun cycleToNextList() {
         if (allCatalogs.isEmpty() || isCycling) return
 
-        // Prevent infinite loops - if we've tried all catalogs, stop
-        if (cycleAttemptCount >= allCatalogs.size) {
+        // Prevent infinite loops - if we've tried all catalogs twice, stop
+        // (twice because the first round might not have loaded yet)
+        if (cycleAttemptCount >= allCatalogs.size * 2) {
             cycleAttemptCount = 0
             isCycling = false
+            // Show message that no content is available
+            currentSelectedItem = null
+            updateDetailsPane(null)
             return
         }
 
@@ -642,6 +646,9 @@ class DiscoverFragment : Fragment() {
                     isCycling = false
                     cycleAttemptCount = 0
                 }
+            } else {
+                // Reset isCycling even if empty, so the observer can trigger another cycle
+                isCycling = false
             }
             // If empty, the observer will trigger another cycle
         }, 1000)
@@ -952,7 +959,7 @@ class DiscoverFragment : Fragment() {
             actorChipGroup?.removeAllViews()
 
             if (castList.isNotEmpty()) {
-                castList.take(5).forEach { actor ->
+                castList.take(3).forEach { actor ->
                     val chip = com.google.android.material.chip.Chip(requireContext())
                     chip.text = actor.name
                     chip.isClickable = true

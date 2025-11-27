@@ -1797,12 +1797,15 @@ class MainViewModel(
                 }
 
                 if (subtitleUrl != null) {
+                    Log.d("MainViewModel", "Fetching subtitles from: $subtitleUrl")
                     val response = aioApi.getSubtitles(subtitleUrl)
+                    Log.d("MainViewModel", "Received ${response.subtitles.size} total subtitles")
                     // Filter for English subtitles only
                     val englishSubtitles = response.subtitles.filter { it.lang == "eng" }
-                    Log.d("MainViewModel", "Found ${englishSubtitles.size} English subtitles")
+                    Log.d("MainViewModel", "Found ${englishSubtitles.size} English subtitles for ${meta.name}")
                     englishSubtitles
                 } else {
+                    Log.w("MainViewModel", "No subtitle URL generated for ${meta.name}")
                     emptyList()
                 }
             } catch (e: Exception) {

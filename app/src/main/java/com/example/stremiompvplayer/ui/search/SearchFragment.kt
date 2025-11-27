@@ -451,7 +451,16 @@ class SearchFragment : Fragment() {
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
             // Combined results sorted by popularity
             if (currentSearchQuery != null) {
-                val combinedResults = results.sortedByDescending {
+                // Normalize "tv" type to "series" for consistency
+                val normalizedResults = results.map { item ->
+                    if (item.type == "tv") {
+                        item.copy(type = "series")
+                    } else {
+                        item
+                    }
+                }
+
+                val combinedResults = normalizedResults.sortedByDescending {
                     it.rating?.toDoubleOrNull() ?: 0.0
                 }
 
@@ -474,8 +483,16 @@ class SearchFragment : Fragment() {
                 binding.resultsRecycler.requestFocus()
             } else {
                 // Initial empty state
-                searchAdapter.updateData(results)
-                if (results.isEmpty()) {
+                // Normalize "tv" type to "series" for consistency
+                val normalizedResults = results.map { item ->
+                    if (item.type == "tv") {
+                        item.copy(type = "series")
+                    } else {
+                        item
+                    }
+                }
+                searchAdapter.updateData(normalizedResults)
+                if (normalizedResults.isEmpty()) {
                     binding.emptyState.visibility = View.GONE
                     binding.noResultsState.visibility = View.VISIBLE
                     binding.contentGrid.visibility = View.GONE
@@ -485,7 +502,7 @@ class SearchFragment : Fragment() {
                     binding.noResultsState.visibility = View.GONE
                     binding.contentGrid.visibility = View.VISIBLE
                     binding.heroCard.visibility = View.VISIBLE
-                    if (results.isNotEmpty()) updateDetailsPane(results[0])
+                    if (normalizedResults.isNotEmpty()) updateDetailsPane(normalizedResults[0])
                 }
                 binding.resultsRecycler.requestFocus()
             }
