@@ -64,10 +64,13 @@ class DiscoverFragment : Fragment() {
 
     companion object {
         private const val ARG_TYPE = "media_type"
-        fun newInstance(type: String): DiscoverFragment {
+        private const val ARG_SERIES_ID = "series_id"
+
+        fun newInstance(type: String, seriesId: String? = null): DiscoverFragment {
             val fragment = DiscoverFragment()
             val args = Bundle()
             args.putString(ARG_TYPE, type)
+            seriesId?.let { args.putString(ARG_SERIES_ID, it) }
             fragment.arguments = args
             return fragment
         }
@@ -85,7 +88,18 @@ class DiscoverFragment : Fragment() {
 
         // Get the media type from arguments, default to "movie"
         val type = arguments?.getString(ARG_TYPE) ?: "movie"
-        loadCatalogs(type)
+
+        // Check if we should navigate directly to a series
+        val seriesId = arguments?.getString(ARG_SERIES_ID)
+        if (seriesId != null) {
+            // Navigate directly to series drill-down
+            currentDrillDownLevel = DrillDownLevel.SERIES
+            currentSeriesId = seriesId
+            viewModel.loadSeriesMeta(seriesId)
+            updatePlayButtonVisibility()
+        } else {
+            loadCatalogs(type)
+        }
 
         setupKeyHandling()
     }

@@ -202,6 +202,11 @@ class HomeFragment : Fragment() {
             popup.menu.add("Mark as Watched")
             popup.menu.add("Not Watching")
 
+            // Add "Browse Show" for episodes
+            if (item.type == "episode") {
+                popup.menu.add("Browse Show")
+            }
+
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
                     "Add to Library" -> {
@@ -220,10 +225,25 @@ class HomeFragment : Fragment() {
                         viewModel.markAsNotWatching(item)
                         true
                     }
+                    "Browse Show" -> {
+                        browseShow(item)
+                        true
+                    }
                     else -> false
                 }
             }
             popup.show()
+        }
+    }
+
+    private fun browseShow(item: MetaItem) {
+        // Extract series ID from episode ID (format: "tmdb:12345:1:1" -> "tmdb:12345")
+        val parts = item.id.split(":")
+        if (parts.size >= 2) {
+            val seriesId = "${parts[0]}:${parts[1]}"
+            // Navigate to discover fragment with series ID
+            val discoverFragment = com.example.stremiompvplayer.ui.discover.DiscoverFragment.newInstance("series", seriesId)
+            (activity as? com.example.stremiompvplayer.MainActivity)?.loadFragment(discoverFragment)
         }
     }
 

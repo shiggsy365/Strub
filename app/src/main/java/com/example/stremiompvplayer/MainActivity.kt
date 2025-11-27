@@ -301,7 +301,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadFragment(fragment: Fragment, fragmentKey: String? = null, addToStack: Boolean = true) {
+    fun loadFragment(fragment: Fragment, fragmentKey: String? = null, addToStack: Boolean = true) {
         // Save focus state before loading new fragment
         currentFragmentKey?.let { key ->
             currentFocus?.let { view ->
