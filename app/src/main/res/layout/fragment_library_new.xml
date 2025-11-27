@@ -75,7 +75,7 @@
                         android:minWidth="150dp"
                         android:layout_marginEnd="16dp">
 
-                        <!-- CHANGED: Wrap content width -->
+                        <!-- Logo Image - Fixed Dimensions -->
                         <ImageView
                             android:id="@+id/detailLogo"
                             android:layout_width="300dp"
@@ -87,10 +87,11 @@
                             tools:src="@drawable/movie"
                             tools:visibility="visible" />
 
+                        <!-- Title Text - Same Dimensions as Logo -->
                         <TextView
                             android:id="@+id/detailTitle"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                            android:layout_width="300dp"
+                            android:layout_height="120dp"
                             android:ellipsize="end"
                             android:gravity="start|center_vertical"
                             android:lineSpacingExtra="4dp"
@@ -101,11 +102,23 @@
                             tools:text="The Matrix" />
                     </FrameLayout>
 
-                    <!-- Rating and Date Stacked to the RIGHT of Logo -->
+                    <!-- Episode, Rating and Date Stacked to the RIGHT of Logo -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
+
+                        <!-- Episode Info (shown only for episodes) - MOVED ABOVE RATING -->
+                        <TextView
+                            android:id="@+id/detailEpisode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="@color/text_secondary"
+                            android:visibility="gone"
+                            tools:text="S01E01"
+                            tools:visibility="visible" />
 
                         <TextView
                             android:id="@+id/detailRating"
@@ -131,17 +144,6 @@
                     </LinearLayout>
 
                 </LinearLayout>
-
-                <!-- Episode Info (shown only for episodes) -->
-                <TextView
-                    android:id="@+id/detailEpisode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:textAppearance="?attr/textAppearanceBodyLarge"
-                    android:textColor="@color/text_secondary"
-                    android:visibility="gone"
-                    tools:text="S01E01" />
 
                 <!-- Description - CHANGED: Fixed Height 120dp -->
                 <ScrollView
@@ -250,8 +252,29 @@
             android:textColor="@color/text_primary"
             android:layout_marginEnd="32dp"
             android:layout_marginBottom="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/sortFilterButton"
             app:layout_constraintBottom_toTopOf="@id/posterCarousel" />
+
+        <!-- Sort/Filter Button (Top Right) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sortFilterButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:padding="8dp"
+            android:focusable="true"
+            android:background="@drawable/selector_button_outlined_focus"
+            app:backgroundTint="@null"
+            app:icon="@drawable/ic_menu"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="24dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/posterCarousel"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
 
         <!-- Horizontal Poster Carousel (Bottom 30%) -->
         <com.google.android.material.card.MaterialCardView

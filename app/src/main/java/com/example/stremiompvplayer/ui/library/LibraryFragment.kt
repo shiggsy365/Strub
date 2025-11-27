@@ -53,6 +53,17 @@ class LibraryFragment : Fragment() {
 
     private var detailsUpdateJob: Job? = null
 
+    // Sorting and filtering state
+    private var currentSortBy = "dateAdded"
+    private var currentSortAscending = false
+    private var currentGenreFilter: String? = null
+
+    // Drill-down navigation state (like DiscoverFragment)
+    private enum class DrillDownLevel { CATALOG, SERIES, SEASON }
+    private var currentDrillDownLevel = DrillDownLevel.CATALOG
+    private var currentSeriesId: String? = null
+    private var currentSeasonNumber: Int? = null
+
     companion object {
         private const val ARG_TYPE = "media_type"
         fun newInstance(type: String): LibraryFragment {
@@ -131,15 +142,7 @@ class LibraryFragment : Fragment() {
     private fun setupAdapters() {
         contentAdapter = PosterAdapter(
             items = emptyList(),
-            onClick = { item ->
-                // For playable items, focus play button; for non-playable, open details
-                if (item.type == "movie" || item.type == "episode") {
-                    updateDetailsPane(item)
-                    binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
-                } else {
-                    onContentClicked(item)
-                }
-            },
+            onClick = { item -> onContentClicked(item) },
             onLongClick = { item ->
                 val pos = contentAdapter.getItemPosition(item)
                 val holder = binding.rvContent.findViewHolderForAdapterPosition(pos)
@@ -196,6 +199,11 @@ class LibraryFragment : Fragment() {
             currentSelectedItem?.let { item ->
                 showRelatedContent(item)
             }
+        }
+
+        // Setup Sort/Filter button
+        binding.root.findViewById<View>(R.id.sortFilterButton)?.setOnClickListener { view ->
+            showSortFilterMenu(view)
         }
     }
 
@@ -355,15 +363,104 @@ class LibraryFragment : Fragment() {
 
     private fun onContentClicked(item: MetaItem) {
         updateDetailsPane(item)
-        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-            putExtra("metaId", item.id)
-            putExtra("title", item.name)
-            putExtra("poster", item.poster)
-            putExtra("background", item.background)
-            putExtra("description", item.description)
-            putExtra("type", item.type)
+
+        when (item.type) {
+            "series" -> {
+                // Drill down into series to show seasons (like DiscoverFragment)
+                currentDrillDownLevel = DrillDownLevel.SERIES
+                currentSeriesId = item.id
+                currentSeasonNumber = null
+                viewModel.loadSeriesMeta(item.id)
+                updatePlayButtonVisibility()
+
+                // Focus first item of seasons list
+                binding.root.postDelayed({
+                    binding.rvContent.scrollToPosition(0)
+                    binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }, 1000)
+            }
+            "season" -> {
+                // Drill down into season to show episodes
+                val parts = item.id.split(":")
+                if (parts.size >= 2) {
+                    val seriesId = parts.dropLast(1).joinToString(":")
+                    val seasonNum = parts.last().toIntOrNull() ?: 1
+                    currentDrillDownLevel = DrillDownLevel.SEASON
+                    currentSeriesId = seriesId
+                    currentSeasonNumber = seasonNum
+                    viewModel.loadSeasonEpisodes(seriesId, seasonNum)
+                    updatePlayButtonVisibility()
+
+                    // Focus first item of episodes list
+                    binding.root.postDelayed({
+                        binding.rvContent.scrollToPosition(0)
+                        binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
+                    }, 1000)
+                }
+            }
+            "episode" -> {
+                // Focus play button for playable episode
+                binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+            }
+            "movie" -> {
+                // Focus play button for playable movie
+                binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+            }
+            else -> {
+                // Unknown type - do nothing
+            }
         }
-        startActivity(intent)
+    }
+
+    private fun updatePlayButtonVisibility() {
+        val btnPlay = binding.root.findViewById<View>(R.id.btnPlay)
+        when (currentDrillDownLevel) {
+            DrillDownLevel.CATALOG -> {
+                // At catalog level, show play for movies, hide for series
+                val type = arguments?.getString(ARG_TYPE) ?: "movie"
+                btnPlay?.visibility = if (type == "movie") View.VISIBLE else View.GONE
+            }
+            DrillDownLevel.SERIES -> {
+                // At series level (showing seasons), hide play button
+                btnPlay?.visibility = View.GONE
+            }
+            DrillDownLevel.SEASON -> {
+                // At season level (showing episodes), show play button
+                btnPlay?.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    fun handleBackPress(): Boolean {
+        // Handle drill-down navigation back
+        when (currentDrillDownLevel) {
+            DrillDownLevel.SEASON -> {
+                // Go back to seasons view
+                currentSeriesId?.let { seriesId ->
+                    currentDrillDownLevel = DrillDownLevel.SERIES
+                    currentSeasonNumber = null
+                    viewModel.loadSeriesMeta(seriesId)
+                    updatePlayButtonVisibility()
+                    return true
+                }
+            }
+            DrillDownLevel.SERIES -> {
+                // Go back to library view
+                currentDrillDownLevel = DrillDownLevel.CATALOG
+                currentSeriesId = null
+                currentSeasonNumber = null
+                // Reload the library
+                val type = arguments?.getString(ARG_TYPE) ?: "movie"
+                loadLibrary(type)
+                updatePlayButtonVisibility()
+                return true
+            }
+            DrillDownLevel.CATALOG -> {
+                // At top level, don't consume back press
+                return false
+            }
+        }
+        return false
     }
 
     private fun showStreamDialog(item: MetaItem) {
@@ -605,6 +702,155 @@ class LibraryFragment : Fragment() {
                         .into(binding.detailLogo)
                 }
             }
+        }
+
+        // Observer for series metadata (for drill-down navigation)
+        viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
+            if (meta != null && meta.type == "series" && currentDrillDownLevel == DrillDownLevel.SERIES) {
+                // Display seasons in the carousel
+                val seasons = meta.videos?.mapNotNull { video ->
+                    video.season?.let { seasonNum ->
+                        MetaItem(
+                            id = "${meta.id}:$seasonNum",
+                            type = "season",
+                            name = video.title,
+                            poster = video.thumbnail,
+                            background = meta.background,
+                            description = "Season $seasonNum"
+                        )
+                    }
+                } ?: emptyList()
+
+                contentAdapter.updateData(seasons)
+                if (seasons.isNotEmpty()) {
+                    updateDetailsPane(seasons[0])
+                }
+                updateCurrentListLabel("${meta.name} - Seasons")
+            }
+        }
+
+        // Observer for season episodes (for drill-down navigation)
+        viewModel.seasonEpisodes.observe(viewLifecycleOwner) { episodes ->
+            if (currentDrillDownLevel == DrillDownLevel.SEASON && episodes.isNotEmpty()) {
+                contentAdapter.updateData(episodes)
+                updateDetailsPane(episodes[0])
+                currentSeriesId?.let { seriesId ->
+                    currentSeasonNumber?.let { seasonNum ->
+                        updateCurrentListLabel("Season $seasonNum - Episodes")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showSortFilterMenu(view: View) {
+        val wrapper = ContextThemeWrapper(requireContext(),
+            android.R.style.Theme_DeviceDefault_Light_NoActionBar)
+        val popup = PopupMenu(wrapper, view)
+
+        // Add sorting options
+        popup.menu.add("Sort by Release Date (Newest First)")
+        popup.menu.add("Sort by Release Date (Oldest First)")
+        popup.menu.add("Sort by Name (A-Z)")
+        popup.menu.add("Sort by Name (Z-A)")
+        popup.menu.add("Sort by Date Added (Newest First)")
+        popup.menu.add("Sort by Date Added (Oldest First)")
+
+        // Add genre filter option
+        popup.menu.add("Filter by Genre...")
+
+        popup.setOnMenuItemClickListener { menuItem ->
+            val type = arguments?.getString(ARG_TYPE) ?: "movie"
+            when (menuItem.title) {
+                "Sort by Release Date (Newest First)" -> {
+                    currentSortBy = "releaseDate"
+                    currentSortAscending = false
+                    viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
+                    true
+                }
+                "Sort by Release Date (Oldest First)" -> {
+                    currentSortBy = "releaseDate"
+                    currentSortAscending = true
+                    viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
+                    true
+                }
+                "Sort by Name (A-Z)" -> {
+                    currentSortBy = "title"
+                    currentSortAscending = true
+                    viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
+                    true
+                }
+                "Sort by Name (Z-A)" -> {
+                    currentSortBy = "title"
+                    currentSortAscending = false
+                    viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
+                    true
+                }
+                "Sort by Date Added (Newest First)" -> {
+                    currentSortBy = "dateAdded"
+                    currentSortAscending = false
+                    viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
+                    true
+                }
+                "Sort by Date Added (Oldest First)" -> {
+                    currentSortBy = "dateAdded"
+                    currentSortAscending = true
+                    viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
+                    true
+                }
+                "Filter by Genre..." -> {
+                    showGenreFilterDialog()
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
+    }
+
+    private fun showGenreFilterDialog() {
+        // Fetch genres for the current type
+        val type = arguments?.getString(ARG_TYPE) ?: "movie"
+        viewModel.fetchGenres(type)
+
+        // Show loading dialog while genres are being fetched
+        val builder = android.app.AlertDialog.Builder(requireContext())
+        builder.setTitle("Select Genre")
+        builder.setMessage("Loading genres...")
+        val loadingDialog = builder.create()
+        loadingDialog.show()
+
+        // Observe genres and show selection dialog
+        viewModel.genreList.observe(viewLifecycleOwner) { genres ->
+            loadingDialog.dismiss()
+
+            if (genres.isEmpty()) {
+                Toast.makeText(requireContext(), "No genres available", Toast.LENGTH_SHORT).show()
+                return@observe
+            }
+
+            val genreNames = listOf("All Genres") + genres.map { it.name }
+            val genreIds = listOf(null) + genres.map { it.id.toString() }
+
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("Select Genre")
+                .setItems(genreNames.toTypedArray()) { _, which ->
+                    currentGenreFilter = genreIds[which]
+                    val selectedGenreName = genreNames[which]
+
+                    // Update label to show filter
+                    val label = if (currentGenreFilter == null) {
+                        if (type == "movie") "My Movies" else "My Series"
+                    } else {
+                        if (type == "movie") "My Movies - $selectedGenreName" else "My Series - $selectedGenreName"
+                    }
+                    updateCurrentListLabel(label)
+
+                    // Apply filter
+                    viewModel.filterAndSortLibrary(type, currentGenreFilter, currentSortBy, currentSortAscending)
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
     }
 

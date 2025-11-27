@@ -58,6 +58,10 @@ class MainViewModel(
     private val _selectedGenre = MutableLiveData<TMDBGenre?>()
     val selectedGenre: LiveData<TMDBGenre?> = _selectedGenre
 
+    // Combined genre list (for library filter dialog)
+    private val _genreList = MutableLiveData<List<TMDBGenre>>()
+    val genreList: LiveData<List<TMDBGenre>> = _genreList
+
     private val apiKey: String get() = prefsManager.getTMDBApiKey() ?: ""
 
     // Session cache for performance optimization (5-min TTL)
@@ -303,37 +307,86 @@ class MainViewModel(
         val token = prefsManager.getTraktAccessToken() ?: return
         val bearer = "Bearer $token"
         val clientId = Secrets.TRAKT_CLIENT_ID
+        val userId = prefsManager.getCurrentUserId() ?: "default"
 
         _isLoading.postValue(true)
         viewModelScope.launch {
             try {
-                // Fetch Movies
+                // Fetch Movies with full TMDB metadata
                 val movies = TraktClient.api.getMovieCollection(bearer, clientId)
-                val metaMovies = movies.mapNotNull { it.movie }.map { movie ->
-                    MetaItem(
-                        id = "tmdb:${movie.ids.tmdb}",
-                        type = "movie",
-                        name = movie.title,
-                        poster = null,
-                        background = null,
-                        description = null,
-                        releaseDate = movie.year?.toString()
-                    )
+                val metaMovies = movies.mapNotNull { it.movie }.mapNotNull { movie ->
+                    try {
+                        // Fetch full metadata from TMDB (like performTraktSync does)
+                        val details = TMDBClient.api.getMovieDetails(movie.ids.tmdb, apiKey)
+                        val posterUrl = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                        val backgroundUrl = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+
+                        val meta = MetaItem(
+                            id = "tmdb:${movie.ids.tmdb}",
+                            type = "movie",
+                            name = details.title ?: movie.title,
+                            poster = posterUrl,
+                            background = backgroundUrl,
+                            description = details.overview,
+                            releaseDate = details.release_date,
+                            rating = details.vote_average?.toString()
+                        )
+
+                        // Also add to local library with full metadata
+                        catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
+                        meta
+                    } catch (e: Exception) {
+                        Log.e("TraktSync", "Error fetching metadata for movie ${movie.title}", e)
+                        // Fallback to minimal metadata
+                        MetaItem(
+                            id = "tmdb:${movie.ids.tmdb}",
+                            type = "movie",
+                            name = movie.title,
+                            poster = null,
+                            background = null,
+                            description = null,
+                            releaseDate = movie.year?.toString()
+                        )
+                    }
                 }
                 _traktMoviesRaw.postValue(metaMovies)
 
-                // Fetch Shows
+                // Fetch Shows with full TMDB metadata
                 val shows = TraktClient.api.getShowCollection(bearer, clientId)
-                val metaShows = shows.mapNotNull { it.show }.map { show ->
-                    MetaItem(
-                        id = "tmdb:${show.ids.tmdb}",
-                        type = "series",
-                        name = show.title,
-                        poster = null,
-                        background = null,
-                        description = null,
-                        releaseDate = show.year?.toString()
-                    )
+                val metaShows = shows.mapNotNull { it.show }.mapNotNull { show ->
+                    try {
+                        // Fetch full metadata from TMDB (like performTraktSync does)
+                        val details = TMDBClient.api.getTVDetails(show.ids.tmdb, apiKey)
+                        val posterUrl = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                        val backgroundUrl = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+
+                        val meta = MetaItem(
+                            id = "tmdb:${show.ids.tmdb}",
+                            type = "series",
+                            name = details.name ?: show.title,
+                            poster = posterUrl,
+                            background = backgroundUrl,
+                            description = details.overview,
+                            releaseDate = details.first_air_date,
+                            rating = details.vote_average?.toString()
+                        )
+
+                        // Also add to local library with full metadata
+                        catalogRepository.addToLibrary(CollectedItem.fromMetaItem(userId, meta))
+                        meta
+                    } catch (e: Exception) {
+                        Log.e("TraktSync", "Error fetching metadata for show ${show.title}", e)
+                        // Fallback to minimal metadata
+                        MetaItem(
+                            id = "tmdb:${show.ids.tmdb}",
+                            type = "series",
+                            name = show.title,
+                            poster = null,
+                            background = null,
+                            description = null,
+                            releaseDate = show.year?.toString()
+                        )
+                    }
                 }
                 _traktSeriesRaw.postValue(metaShows)
 
@@ -363,9 +416,11 @@ class MainViewModel(
 
                 if (catalogType == "movie") {
                     _movieGenres.postValue(response.genres)
+                    _genreList.postValue(response.genres)
                     Log.d("GenreFetch", "Loaded ${response.genres.size} movie genres")
                 } else {
                     _tvGenres.postValue(response.genres)
+                    _genreList.postValue(response.genres)
                     Log.d("GenreFetch", "Loaded ${response.genres.size} TV genres")
                 }
             } catch (e: Exception) {
@@ -1145,6 +1200,44 @@ class MainViewModel(
     fun ensureLibraryMetadata() {
         viewModelScope.launch {
             ensureAllLibraryItemsHaveMetadata()
+        }
+    }
+
+    // === DUPLICATE DETECTION AND REMOVAL ===
+    fun removeDuplicateLists() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val userId = prefsManager.getCurrentUserId() ?: return@withContext
+                    val allCollectedItems = catalogRepository.getAllLibraryItems(userId)
+
+                    // Group by itemId to find duplicates
+                    val grouped = allCollectedItems.groupBy { it.itemId }
+                    var removedCount = 0
+
+                    grouped.forEach { (itemId, items) ->
+                        if (items.size > 1) {
+                            // Keep the first one (oldest), remove the rest
+                            val toKeep = items.minByOrNull { it.collectedDate }
+                            val toRemove = items.filter { it.id != toKeep?.id }
+
+                            toRemove.forEach { duplicate ->
+                                catalogRepository.removeFromLibrary(duplicate.itemId, userId)
+                                removedCount++
+                                Log.d("DuplicateCleanup", "Removed duplicate item: ${duplicate.name} (${duplicate.id})")
+                            }
+                        }
+                    }
+
+                    if (removedCount > 0) {
+                        Log.i("DuplicateCleanup", "Removed $removedCount duplicate library items")
+                    } else {
+                        Log.d("DuplicateCleanup", "No duplicate library items found")
+                    }
+                } catch (e: Exception) {
+                    Log.e("DuplicateCleanup", "Error removing duplicates", e)
+                }
+            }
         }
     }
 
@@ -2028,7 +2121,18 @@ class MainViewModel(
         viewModelScope.launch {
             val rawItems = if (type == "movie") libraryMovies.value else librarySeries.value
             if (rawItems == null) return@launch
-            val filtered = rawItems
+
+            // Apply genre filter if specified
+            val filtered = if (genre != null) {
+                rawItems.filter { item ->
+                    // Check if the item's genres contain the selected genre ID
+                    item.genres?.contains(genre) == true
+                }
+            } else {
+                rawItems
+            }
+
+            // Apply sorting
             val sorted = when (sortBy) {
                 "dateAdded" -> if (ascending) filtered else filtered.reversed()
                 "releaseDate" -> if (ascending) filtered.sortedBy { it.releaseDate ?: "" } else filtered.sortedByDescending { it.releaseDate ?: "" }
