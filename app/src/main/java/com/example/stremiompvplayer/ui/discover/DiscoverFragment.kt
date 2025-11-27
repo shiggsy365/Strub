@@ -505,7 +505,45 @@ class DiscoverFragment : Fragment() {
 
         // Load catalogs for the specified type only
         viewModel.getDiscoverCatalogs(type).observe(viewLifecycleOwner) { catalogs ->
-            allCatalogs = catalogs
+            // Start with regular catalogs
+            val catalogsList = catalogs.toMutableList()
+
+            // Add genre catalog at the end
+            if (type == "movie") {
+                viewModel.movieGenres.observe(viewLifecycleOwner) { genres ->
+                    if (genres.isNotEmpty()) {
+                        // Create synthetic catalog for movie genres
+                        val genreCatalog = UserCatalog(
+                            userId = "",
+                            url = "genres_movie",
+                            type = "genre",
+                            displayName = "Movie Genres",
+                            name = "Movie Genres",
+                            customSort = ""
+                        )
+                        catalogsList.add(genreCatalog)
+                        allCatalogs = catalogsList
+                    }
+                }
+            } else {
+                viewModel.tvGenres.observe(viewLifecycleOwner) { genres ->
+                    if (genres.isNotEmpty()) {
+                        // Create synthetic catalog for series genres
+                        val genreCatalog = UserCatalog(
+                            userId = "",
+                            url = "genres_series",
+                            type = "genre",
+                            displayName = "Series Genres",
+                            name = "Series Genres",
+                            customSort = ""
+                        )
+                        catalogsList.add(genreCatalog)
+                        allCatalogs = catalogsList
+                    }
+                }
+            }
+
+            allCatalogs = catalogsList
             currentCatalogIndex = 0
             if (allCatalogs.isNotEmpty()) {
                 updateCurrentListLabel(allCatalogs[0].displayName)
@@ -519,6 +557,30 @@ class DiscoverFragment : Fragment() {
         label?.text = labelText
     }
 
+    private fun loadGenreItems(isSeries: Boolean) {
+        val genreItems = mutableListOf<MetaItem>()
+        val genres = if (isSeries) viewModel.tvGenres.value else viewModel.movieGenres.value
+        val mediaType = if (isSeries) "series" else "movie"
+
+        genres?.forEach { genre ->
+            genreItems.add(MetaItem(
+                id = "genre_${genre.id}_$mediaType",
+                type = "genre",
+                name = genre.name,
+                poster = null,
+                background = null,
+                description = if (isSeries) "${genre.name} Series" else "${genre.name} Movies",
+                genreId = genre.id,
+                genreType = mediaType
+            ))
+        }
+
+        contentAdapter.updateData(genreItems)
+        if (genreItems.isNotEmpty()) {
+            updateDetailsPane(genreItems[0])
+        }
+    }
+
     private fun cycleToNextList() {
         if (allCatalogs.isEmpty()) return
 
@@ -530,7 +592,15 @@ class DiscoverFragment : Fragment() {
         currentCatalogIndex = (currentCatalogIndex + 1) % allCatalogs.size
         val nextCatalog = allCatalogs[currentCatalogIndex]
         updateCurrentListLabel(nextCatalog.displayName)
-        viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
+
+        // Check if this is a genre catalog
+        if (nextCatalog.type == "genre") {
+            // Load genre items instead of regular catalog content
+            loadGenreItems(nextCatalog.url.endsWith("series"))
+        } else {
+            viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
+        }
+
         isShowingGenre = false
         updatePlayButtonVisibility()
 
@@ -755,56 +825,13 @@ class DiscoverFragment : Fragment() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
             // Only update content if we're at catalog level (not drilled down)
             if (currentDrillDownLevel == DrillDownLevel.CATALOG) {
-                // Add genre selector as the last item in the carousel
-                val movieGenres = viewModel.movieGenres.value
-                val tvGenres = viewModel.tvGenres.value
-                val hasGenres = (movieGenres != null && movieGenres.isNotEmpty()) ||
-                        (tvGenres != null && tvGenres.isNotEmpty())
+                contentAdapter.updateData(items)
 
-                val itemsWithGenres = if (hasGenres && !isShowingGenre) {
-                    // Create individual genre items for each genre
-                    val genreItems = mutableListOf<MetaItem>()
-
-                    // Add movie genres
-                    movieGenres?.forEach { genre ->
-                        genreItems.add(MetaItem(
-                            id = "genre_${genre.id}_movie",
-                            type = "genre",
-                            name = genre.name,
-                            poster = null,
-                            background = null,
-                            description = "${genre.name} Movies",
-                            genreId = genre.id,
-                            genreType = "movie"
-                        ))
-                    }
-
-                    // Add TV genres
-                    tvGenres?.forEach { genre ->
-                        genreItems.add(MetaItem(
-                            id = "genre_${genre.id}_tv",
-                            type = "genre",
-                            name = genre.name,
-                            poster = null,
-                            background = null,
-                            description = "${genre.name} Series",
-                            genreId = genre.id,
-                            genreType = "series"
-                        ))
-                    }
-
-                    items + genreItems
-                } else {
-                    items
+                if (items.isNotEmpty()) {
+                    updateDetailsPane(items[0])
                 }
 
-                contentAdapter.updateData(itemsWithGenres)
-
-                if (itemsWithGenres.isNotEmpty()) {
-                    updateDetailsPane(itemsWithGenres[0])
-                }
-
-                if (itemsWithGenres.isEmpty()) {
+                if (items.isEmpty()) {
                     currentSelectedItem = null
                 }
                 updatePlayButtonVisibility()
