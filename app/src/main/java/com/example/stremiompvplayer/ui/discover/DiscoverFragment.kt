@@ -607,9 +607,8 @@ class DiscoverFragment : Fragment() {
         if (cycleAttemptCount >= allCatalogs.size * 2) {
             cycleAttemptCount = 0
             isCycling = false
-            // Show message that no content is available
+            // Clear selected item when no content is available
             currentSelectedItem = null
-            updateDetailsPane(null)
             return
         }
 
