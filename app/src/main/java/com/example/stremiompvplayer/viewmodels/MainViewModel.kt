@@ -1166,7 +1166,7 @@ class MainViewModel(
                     val needsMetadata = item.poster.isNullOrEmpty() ||
                                        item.background.isNullOrEmpty() ||
                                        item.description.isNullOrEmpty() ||
-                                       item.itemName.isNullOrEmpty()
+                                       item.name.isNullOrEmpty()
 
                     if (needsMetadata) {
                         checkedCount++
