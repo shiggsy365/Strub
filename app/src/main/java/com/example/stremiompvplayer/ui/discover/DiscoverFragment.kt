@@ -84,11 +84,15 @@ class DiscoverFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupAdapters()
-        setupObservers()
 
         // Get the media type from arguments, default to "movie"
         val type = arguments?.getString(ARG_TYPE) ?: "movie"
+
+        // Sync the media type toggle with current content type
+        (activity as? MainActivity)?.syncMediaTypeToggle(type)
+
+        setupAdapters()
+        setupObservers()
 
         // Check if we should navigate directly to a series
         val seriesId = arguments?.getString(ARG_SERIES_ID)
@@ -864,11 +868,12 @@ class DiscoverFragment : Fragment() {
                     }
                 } else {
                     currentSelectedItem = null
-                    // If we're cycling and the list is empty, automatically cycle to the next list
-                    if (isCycling && cycleAttemptCount < allCatalogs.size) {
+                    // If the list is empty, automatically cycle to the next list (even when not actively cycling)
+                    // This effectively hides empty lists from the discover page
+                    if (cycleAttemptCount < allCatalogs.size) {
                         binding.root.postDelayed({
                             cycleToNextList()
-                        }, 500)
+                        }, 200)  // Shorter delay for smoother experience
                     }
                 }
                 updatePlayButtonVisibility()

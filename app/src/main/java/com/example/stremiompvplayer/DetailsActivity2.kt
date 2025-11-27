@@ -585,9 +585,22 @@ class DetailsActivity2 : AppCompatActivity() {
                 lifecycleScope.launch {
                     val trailerUrl = viewModel.fetchTrailer(idToCheck, typeToCheck)
                     if (trailerUrl != null) {
-                        // Open YouTube URL in an external app
-                        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(trailerUrl))
-                        startActivity(intent)
+                        // Extract YouTube video key from URL
+                        val youtubeKey = extractYouTubeKey(trailerUrl)
+                        if (youtubeKey != null) {
+                            // Launch YouTube player activity
+                            val intent = Intent(this@DetailsActivity2, YouTubePlayerActivity::class.java).apply {
+                                putExtra("YOUTUBE_KEY", youtubeKey)
+                                putExtra("TITLE", "${item.name} - Trailer")
+                            }
+                            startActivity(intent)
+                        } else {
+                            android.widget.Toast.makeText(
+                                this@DetailsActivity2,
+                                "Invalid trailer URL",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     } else {
                         // Show a toast or error message
                         android.widget.Toast.makeText(
@@ -619,5 +632,25 @@ class DetailsActivity2 : AppCompatActivity() {
                 startActivity(intent)
             }
         }
+    }
+
+    /**
+     * Extract YouTube video key from various YouTube URL formats
+     * Supports: youtube.com/watch?v=KEY, youtu.be/KEY, youtube.com/embed/KEY
+     */
+    private fun extractYouTubeKey(url: String): String? {
+        val patterns = listOf(
+            "(?:youtube\\.com/watch\\?v=|youtu\\.be/|youtube\\.com/embed/)([a-zA-Z0-9_-]{11})".toRegex(),
+            "[?&]v=([a-zA-Z0-9_-]{11})".toRegex()
+        )
+
+        for (pattern in patterns) {
+            val matchResult = pattern.find(url)
+            if (matchResult != null && matchResult.groupValues.size > 1) {
+                return matchResult.groupValues[1]
+            }
+        }
+
+        return null
     }
 }

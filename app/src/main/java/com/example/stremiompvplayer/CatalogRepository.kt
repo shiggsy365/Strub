@@ -18,17 +18,21 @@ class CatalogRepository(
 
     val allCatalogs: LiveData<List<UserCatalog>> = userCatalogDao.getAllCatalogs()
 
-    suspend fun initializeDefaultsIfNeeded() {
+    suspend fun initializeDefaultsIfNeeded(userId: String = "default") {
         withContext(Dispatchers.IO) {
-            if (userCatalogDao.getCount() == 0) {
-                // Create default catalogs for TMDB
+            // Check if this specific user has any TMDB catalogs
+            val userCatalogCount = userCatalogDao.getCatalogsForPageSync(userId, "movies").size +
+                                   userCatalogDao.getCatalogsForPageSync(userId, "series").size
+
+            if (userCatalogCount == 0) {
+                // Create default catalogs for TMDB for this user
                 val defaults = listOf(
-                    UserCatalog(id = 0, userId = "default", catalogId = "popular", catalogType = "movie", catalogName = "Popular Movies", customName = null, displayOrder = 0, pageType = "movies", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
-                    UserCatalog(id = 0, userId = "default", catalogId = "latest", catalogType = "movie", catalogName = "Latest Movies", customName = null, displayOrder = 1, pageType = "movies", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
-                    UserCatalog(id = 0, userId = "default", catalogId = "trending", catalogType = "movie", catalogName = "Trending Movies", customName = null, displayOrder = 2, pageType = "movies", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
-                    UserCatalog(id = 0, userId = "default", catalogId = "popular", catalogType = "series", catalogName = "Popular Series", customName = null, displayOrder = 0, pageType = "series", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
-                    UserCatalog(id = 0, userId = "default", catalogId = "latest", catalogType = "series", catalogName = "Latest Series", customName = null, displayOrder = 1, pageType = "series", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
-                    UserCatalog(id = 0, userId = "default", catalogId = "trending", catalogType = "series", catalogName = "Trending Series", customName = null, displayOrder = 2, pageType = "series", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis())
+                    UserCatalog(id = 0, userId = userId, catalogId = "popular", catalogType = "movie", catalogName = "Popular Movies", customName = null, displayOrder = 0, pageType = "movies", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = userId, catalogId = "latest", catalogType = "movie", catalogName = "Latest Movies", customName = null, displayOrder = 1, pageType = "movies", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = userId, catalogId = "trending", catalogType = "movie", catalogName = "Trending Movies", customName = null, displayOrder = 2, pageType = "movies", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = userId, catalogId = "popular", catalogType = "series", catalogName = "Popular Series", customName = null, displayOrder = 0, pageType = "series", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = userId, catalogId = "latest", catalogType = "series", catalogName = "Latest Series", customName = null, displayOrder = 1, pageType = "series", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis()),
+                    UserCatalog(id = 0, userId = userId, catalogId = "trending", catalogType = "series", catalogName = "Trending Series", customName = null, displayOrder = 2, pageType = "series", addonUrl = "tmdb", manifestId = "tmdb", dateAdded = System.currentTimeMillis())
                 )
 
                 defaults.forEach { catalog ->

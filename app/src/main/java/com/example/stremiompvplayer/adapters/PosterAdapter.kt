@@ -21,6 +21,7 @@ class PosterAdapter(
         val poster: ImageView = binding.poster
         val iconWatched: ImageView = binding.iconWatched
         val iconInProgress: ImageView = binding.iconInProgress
+        val genreText: android.widget.TextView = binding.genreText
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -52,6 +53,14 @@ class PosterAdapter(
         // Watched Ticks
         holder.iconWatched.visibility = if (item.isWatched) View.VISIBLE else View.GONE
         holder.iconInProgress.visibility = if (!item.isWatched && item.progress > 0) View.VISIBLE else View.GONE
+
+        // Genre Text (show for genre items)
+        if (item.type == "genre") {
+            holder.genreText.text = item.name
+            holder.genreText.visibility = View.VISIBLE
+        } else {
+            holder.genreText.visibility = View.GONE
+        }
 
         holder.itemView.setOnClickListener { onClick(item) }
 

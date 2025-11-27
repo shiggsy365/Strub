@@ -271,7 +271,19 @@ class SearchFragment : Fragment() {
 
         binding.detailDescription.text = item.description ?: "No description available."
 
-        binding.detailTitle.text = item.name
+        // Extract episode number if this is an episode (format: "Show Name - S01E05" or similar)
+        val episodePattern = Regex("(S\\d+E\\d+)")
+        val episodeMatch = episodePattern.find(item.name)
+        if (episodeMatch != null && item.type == "episode") {
+            binding.detailEpisodeNumber.text = episodeMatch.value
+            binding.detailEpisodeNumber.visibility = View.VISIBLE
+            // Remove episode number from title for cleaner display
+            binding.detailTitle.text = item.name.replace(episodePattern, "").replace(" - ", "").trim()
+        } else {
+            binding.detailEpisodeNumber.visibility = View.GONE
+            binding.detailTitle.text = item.name
+        }
+
         // [CHANGE] Initial state is hidden for both title and logo to prevent flash
         binding.detailTitle.visibility = View.GONE
         binding.detailLogo.visibility = View.GONE
@@ -415,7 +427,7 @@ class SearchFragment : Fragment() {
 
                 val series = tempResults.filter { it.type == "series" || it.type == "tv" }
                     .sortedByDescending { it.rating?.toDoubleOrNull() ?: 0.0 }
-                    .mapIndexed { index, item -> item.copy(popularity = index.toDouble()) }
+                    .mapIndexed { index, item -> item.copy(type = "series", popularity = index.toDouble()) }
 
                 // Interleave results: movie 0, series 0, movie 1, series 1, etc.
                 val interleaved = mutableListOf<MetaItem>()

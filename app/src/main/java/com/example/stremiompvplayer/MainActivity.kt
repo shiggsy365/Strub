@@ -137,14 +137,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         sidebar.findViewById<View>(R.id.sidebarDiscover).setOnClickListener {
-            // REMOVED dropdown check, defaulting to "movie" for now.
-            // Fragment will handle its own type switching if needed.
-            loadFragment(DiscoverFragment.newInstance("movie"))
+            // Use currentMediaType to maintain toggle state
+            loadFragment(DiscoverFragment.newInstance(currentMediaType))
         }
 
         sidebar.findViewById<View>(R.id.sidebarLibrary).setOnClickListener {
-            // REMOVED dropdown check
-            loadFragment(LibraryFragment.newInstance("movie"))
+            // Use currentMediaType to maintain toggle state
+            loadFragment(LibraryFragment.newInstance(currentMediaType))
         }
 
         sidebar.findViewById<View>(R.id.sidebarSearch).setOnClickListener {
@@ -220,6 +219,14 @@ class MainActivity : AppCompatActivity() {
         } else {
             textMediaType.text = "TV"
             iconMediaType.setImageResource(R.drawable.ic_tv)
+        }
+    }
+
+    // Public method that fragments can call to sync the toggle with their content type
+    fun syncMediaTypeToggle(mediaType: String) {
+        if (currentMediaType != mediaType) {
+            currentMediaType = mediaType
+            updateMediaTypeToggleUI()
         }
     }
 
