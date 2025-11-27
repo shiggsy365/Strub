@@ -318,6 +318,9 @@ class LibraryFragment : Fragment() {
             popup.menu.add("Mark as Watched")
             popup.menu.add("Clear Progress")
             popup.menu.add("Not Watching")
+            popup.menu.add("Add to Trakt Watchlist")
+            popup.menu.add("Remove from Trakt Watchlist")
+            popup.menu.add("Rate on Trakt")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
@@ -347,11 +350,35 @@ class LibraryFragment : Fragment() {
                         viewModel.markAsNotWatching(item)
                         true
                     }
+                    "Add to Trakt Watchlist" -> {
+                        viewModel.addToWatchlist(item)
+                        true
+                    }
+                    "Remove from Trakt Watchlist" -> {
+                        viewModel.removeFromWatchlist(item)
+                        true
+                    }
+                    "Rate on Trakt" -> {
+                        showRatingDialog(item)
+                        true
+                    }
                     else -> false
                 }
             }
             popup.show()
         }
+    }
+
+    private fun showRatingDialog(item: MetaItem) {
+        val ratings = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Rate ${item.name} on Trakt")
+            .setItems(ratings) { _, which ->
+                val rating = which + 1
+                viewModel.rateOnTrakt(item, rating)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun refreshItem(item: MetaItem) {

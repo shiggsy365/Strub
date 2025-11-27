@@ -235,6 +235,21 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnTraktSync.setOnClickListener {
             showTraktSyncDialog()
         }
+
+        // Trakt Settings Button
+        binding.btnTraktSettings.setOnClickListener {
+            showTraktSettingsDialog()
+        }
+
+        // Library Health Check Button
+        binding.btnLibraryHealth.setOnClickListener {
+            showLibraryHealthDialog()
+        }
+
+        // Sync Analytics Button
+        binding.btnSyncAnalytics.setOnClickListener {
+            showSyncAnalyticsDialog()
+        }
     }
 
     private fun updateTraktUI(isEnabled: Boolean) {
@@ -242,12 +257,18 @@ class SettingsActivity : AppCompatActivity() {
             binding.tvTraktStatus.text = "Trakt: Connected"
             binding.tvTraktStatus.setTextColor(getColor(android.R.color.holo_green_light))
             binding.btnTraktAuth.text = "Disconnect Trakt"
-            binding.btnTraktSync.visibility = View.VISIBLE // Show Sync
+            binding.btnTraktSync.visibility = View.VISIBLE
+            binding.btnTraktSettings.visibility = View.VISIBLE
+            binding.btnLibraryHealth.visibility = View.VISIBLE
+            binding.btnSyncAnalytics.visibility = View.VISIBLE
         } else {
             binding.tvTraktStatus.text = "Trakt: Disconnected"
             binding.tvTraktStatus.setTextColor(getColor(android.R.color.holo_red_light))
             binding.btnTraktAuth.text = "Connect Trakt"
-            binding.btnTraktSync.visibility = View.GONE // Hide Sync
+            binding.btnTraktSync.visibility = View.GONE
+            binding.btnTraktSettings.visibility = View.GONE
+            binding.btnLibraryHealth.visibility = View.GONE
+            binding.btnSyncAnalytics.visibility = View.GONE
         }
     }
 
@@ -344,6 +365,305 @@ class SettingsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Fast sync started (no posters)...", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showTraktSettingsDialog() {
+        val dialogView = layoutInflater.inflate(android.R.layout.select_dialog_item, null)
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 40)
+        }
+
+        // Auto-sync on startup
+        val cbAutoSync = CheckBox(this).apply {
+            text = "Auto-sync on app startup"
+            isChecked = prefsManager.isAutoSyncOnStartup()
+            setOnCheckedChangeListener { _, isChecked ->
+                prefsManager.setAutoSyncOnStartup(isChecked)
+            }
+        }
+
+        // Background sync enabled
+        val cbBackgroundSync = CheckBox(this).apply {
+            text = "Enable background sync"
+            isChecked = prefsManager.isBackgroundSyncEnabled()
+            setOnCheckedChangeListener { _, isChecked ->
+                prefsManager.setBackgroundSyncEnabled(isChecked)
+                if (isChecked) {
+                    com.example.stremiompvplayer.utils.TraktSyncScheduler.schedulePeriodicSync(this@SettingsActivity)
+                } else {
+                    com.example.stremiompvplayer.utils.TraktSyncScheduler.cancelPeriodicSync(this@SettingsActivity)
+                }
+            }
+        }
+
+        // Wi-Fi only
+        val cbWifiOnly = CheckBox(this).apply {
+            text = "Sync on Wi-Fi only"
+            isChecked = prefsManager.isSyncOnWifiOnly()
+            setOnCheckedChangeListener { _, isChecked ->
+                prefsManager.setSyncOnWifiOnly(isChecked)
+            }
+        }
+
+        // Sync interval section
+        val intervalLabel = TextView(this).apply {
+            text = "Background sync interval:"
+            textSize = 16f
+            setPadding(0, 40, 0, 10)
+        }
+
+        val intervalValue = TextView(this).apply {
+            val hours = prefsManager.getBackgroundSyncInterval() / (60 * 60 * 1000)
+            text = "$hours hours"
+            textSize = 14f
+            setTextColor(getColor(R.color.text_secondary))
+            setPadding(0, 0, 0, 20)
+        }
+
+        val interval6h = com.google.android.material.button.MaterialButton(this).apply {
+            text = "6 hours"
+            setOnClickListener {
+                prefsManager.setBackgroundSyncInterval(6 * 60 * 60 * 1000L)
+                intervalValue.text = "6 hours"
+                com.example.stremiompvplayer.utils.TraktSyncScheduler.schedulePeriodicSync(this@SettingsActivity)
+            }
+        }
+
+        val interval12h = com.google.android.material.button.MaterialButton(this).apply {
+            text = "12 hours"
+            setOnClickListener {
+                prefsManager.setBackgroundSyncInterval(12 * 60 * 60 * 1000L)
+                intervalValue.text = "12 hours"
+                com.example.stremiompvplayer.utils.TraktSyncScheduler.schedulePeriodicSync(this@SettingsActivity)
+            }
+        }
+
+        val interval24h = com.google.android.material.button.MaterialButton(this).apply {
+            text = "24 hours"
+            setOnClickListener {
+                prefsManager.setBackgroundSyncInterval(24 * 60 * 60 * 1000L)
+                intervalValue.text = "24 hours"
+                com.example.stremiompvplayer.utils.TraktSyncScheduler.schedulePeriodicSync(this@SettingsActivity)
+            }
+        }
+
+        val intervalButtons = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(interval6h, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(interval12h, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(interval24h, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
+        // Last sync time
+        val lastSyncLabel = TextView(this).apply {
+            val lastSync = prefsManager.getLastTraktSyncTime()
+            val text = if (lastSync > 0) {
+                val format = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+                "Last sync: ${format.format(Date(lastSync))}"
+            } else {
+                "Last sync: Never"
+            }
+            this.text = text
+            textSize = 12f
+            setTextColor(getColor(R.color.text_secondary))
+            setPadding(0, 20, 0, 0)
+        }
+
+        container.addView(cbAutoSync)
+        container.addView(cbBackgroundSync)
+        container.addView(cbWifiOnly)
+        container.addView(intervalLabel)
+        container.addView(intervalValue)
+        container.addView(intervalButtons)
+        container.addView(lastSyncLabel)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Trakt Sync Settings")
+            .setView(container)
+            .setPositiveButton("Close", null)
+            .show()
+    }
+
+    private fun showLibraryHealthDialog() {
+        val progressDialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Library Health Check")
+            .setMessage("Analyzing library...")
+            .setCancelable(false)
+            .create()
+
+        progressDialog.show()
+
+        // Perform health check
+        viewModel.performLibraryHealthCheck()
+
+        // Observer for health report
+        viewModel.libraryHealthReport.observe(this) { report ->
+            if (report != null) {
+                progressDialog.dismiss()
+                showHealthReportDialog(report)
+                // Remove observer after showing dialog
+                viewModel.libraryHealthReport.removeObservers(this)
+            }
+        }
+    }
+
+    private fun showHealthReportDialog(report: MainViewModel.LibraryHealthReport) {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 40)
+        }
+
+        // Summary
+        val totalIssues = report.traktOnlyMovies.size + report.traktOnlySeries.size +
+                         report.localOnlyMovies.size + report.localOnlySeries.size
+
+        val summaryText = TextView(this).apply {
+            text = if (totalIssues == 0) {
+                "✓ Library is fully synced with Trakt!"
+            } else {
+                "Found $totalIssues sync discrepancies:"
+            }
+            textSize = 16f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(0, 0, 0, 20)
+            setTextColor(if (totalIssues == 0) getColor(android.R.color.holo_green_light) else getColor(android.R.color.holo_orange_light))
+        }
+
+        // Statistics
+        val statsText = TextView(this).apply {
+            text = """
+                Movies:
+                  • Trakt: ${report.totalTraktMovies}
+                  • Local: ${report.totalLocalMovies}
+                  • In Trakt only: ${report.traktOnlyMovies.size}
+                  • In Local only: ${report.localOnlyMovies.size}
+
+                Series:
+                  • Trakt: ${report.totalTraktSeries}
+                  • Local: ${report.totalLocalSeries}
+                  • In Trakt only: ${report.traktOnlySeries.size}
+                  • In Local only: ${report.localOnlySeries.size}
+            """.trimIndent()
+            textSize = 14f
+            setTextColor(getColor(R.color.text_secondary))
+        }
+
+        container.addView(summaryText)
+        container.addView(statsText)
+
+        val builder = MaterialAlertDialogBuilder(this)
+            .setTitle("Library Health Report")
+            .setView(container)
+            .setNegativeButton("Close", null)
+
+        // Add action buttons if there are issues
+        if (totalIssues > 0) {
+            if (report.traktOnlyMovies.isNotEmpty() || report.traktOnlySeries.isNotEmpty()) {
+                builder.setNeutralButton("Import from Trakt") { _, _ ->
+                    viewModel.importMissingFromTrakt()
+                    Toast.makeText(this, "Importing ${report.traktOnlyMovies.size + report.traktOnlySeries.size} items from Trakt...", Toast.LENGTH_SHORT).show()
+                }
+            }
+            if (report.localOnlyMovies.isNotEmpty() || report.localOnlySeries.isNotEmpty()) {
+                builder.setPositiveButton("Export to Trakt") { _, _ ->
+                    viewModel.exportMissingToTrakt()
+                    Toast.makeText(this, "Exporting ${report.localOnlyMovies.size + report.localOnlySeries.size} items to Trakt...", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        builder.show()
+    }
+
+    private fun showSyncAnalyticsDialog() {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 40)
+        }
+
+        // Sync Statistics
+        val lastSync = prefsManager.getLastTraktSyncTime()
+        val syncInterval = prefsManager.getBackgroundSyncInterval() / (60 * 60 * 1000)
+        val backgroundSyncEnabled = prefsManager.isBackgroundSyncEnabled()
+        val autoSyncEnabled = prefsManager.isAutoSyncOnStartup()
+        val wifiOnly = prefsManager.isSyncOnWifiOnly()
+
+        val statsText = TextView(this).apply {
+            val lastSyncText = if (lastSync > 0) {
+                val format = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+                format.format(Date(lastSync))
+            } else {
+                "Never"
+            }
+
+            val timeSinceSync = if (lastSync > 0) {
+                val hours = (System.currentTimeMillis() - lastSync) / (60 * 60 * 1000)
+                "$hours hours ago"
+            } else {
+                "N/A"
+            }
+
+            text = """
+                📊 Sync Statistics
+
+                Last Sync: $lastSyncText
+                Time Since Last Sync: $timeSinceSync
+
+                ⚙️ Settings
+                Auto-sync on Startup: ${if (autoSyncEnabled) "✓ Enabled" else "✗ Disabled"}
+                Background Sync: ${if (backgroundSyncEnabled) "✓ Enabled" else "✗ Disabled"}
+                Sync Interval: $syncInterval hours
+                Wi-Fi Only: ${if (wifiOnly) "✓ Yes" else "✗ No"}
+
+                📦 Database
+                Database Version: 7
+                Pending Sync Actions: Queued for offline
+
+                🔄 Sync Coverage
+                • Collection sync: ✓ Bidirectional
+                • Watchlist sync: ✓ Bidirectional
+                • Watched history: ✓ Bidirectional
+                • Continue watching: ✓ Import
+                • Ratings: ✓ Export
+                • Custom lists: ✓ Management
+            """.trimIndent()
+            textSize = 14f
+            setTextColor(getColor(R.color.text_secondary))
+        }
+
+        // Next Sync Time
+        val nextSyncText = TextView(this).apply {
+            if (backgroundSyncEnabled && lastSync > 0) {
+                val nextSync = lastSync + prefsManager.getBackgroundSyncInterval()
+                val format = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+                text = "\n⏰ Next Background Sync: ${format.format(Date(nextSync))}"
+                textSize = 12f
+                setTextColor(getColor(android.R.color.holo_blue_light))
+                setTypeface(null, android.graphics.Typeface.BOLD)
+            } else if (backgroundSyncEnabled) {
+                text = "\n⏰ Next Background Sync: On next app restart"
+                textSize = 12f
+                setTextColor(getColor(android.R.color.holo_blue_light))
+            } else {
+                text = "\n⏰ Background Sync: Disabled"
+                textSize = 12f
+                setTextColor(getColor(android.R.color.holo_orange_light))
+            }
+        }
+
+        container.addView(statsText)
+        container.addView(nextSyncText)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Sync Analytics")
+            .setView(container)
+            .setPositiveButton("Close", null)
+            .setNeutralButton("Sync Now") { _, _ ->
+                viewModel.syncTraktLibrary()
+                Toast.makeText(this, "Manual sync started...", Toast.LENGTH_SHORT).show()
+            }
             .show()
     }
 

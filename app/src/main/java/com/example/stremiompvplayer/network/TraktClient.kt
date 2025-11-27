@@ -119,6 +119,78 @@ interface TraktApi {
         @retrofit2.http.Path("id") playbackId: Long
     )
 
+    // --- COLLECTION MANAGEMENT ---
+    @POST("sync/collection")
+    suspend fun addToCollection(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
+
+    // --- WATCHLIST MANAGEMENT ---
+    @POST("sync/watchlist")
+    suspend fun addToWatchlist(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
+
+    @POST("sync/watchlist/remove")
+    suspend fun removeFromWatchlist(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
+
+    // --- RATINGS ---
+    @POST("sync/ratings")
+    suspend fun addRatings(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Body body: TraktRatingBody
+    ): TraktSyncResponse
+
+    @POST("sync/ratings/remove")
+    suspend fun removeRatings(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
+
+    // --- CUSTOM LISTS ---
+    @GET("users/{username}/lists")
+    suspend fun getUserLists(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @retrofit2.http.Path("username") username: String
+    ): List<TraktList>
+
+    @POST("users/{username}/lists")
+    suspend fun createList(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @retrofit2.http.Path("username") username: String,
+        @Body body: TraktCreateListBody
+    ): TraktList
+
+    @POST("users/{username}/lists/{list_id}/items")
+    suspend fun addItemsToList(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @retrofit2.http.Path("username") username: String,
+        @retrofit2.http.Path("list_id") listId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
+
+    @POST("users/{username}/lists/{list_id}/items/remove")
+    suspend fun removeItemsFromList(
+        @Header("Authorization") token: String,
+        @Header("trakt-api-key") clientId: String,
+        @retrofit2.http.Path("username") username: String,
+        @retrofit2.http.Path("list_id") listId: String,
+        @Body body: TraktHistoryBody
+    ): TraktSyncResponse
+
     // --- DISCOVER ---
     @GET("movies/popular")
     suspend fun getPopularMovies(@Header("trakt-api-key") clientId: String): List<TraktMovie>
@@ -192,3 +264,45 @@ data class TraktSyncNotFound(val movies: List<TraktIds>?, val shows: List<TraktI
 
 data class TraktScrobbleBody(val progress: Float, val movie: TraktMovie? = null, val show: TraktShow? = null, val episode: TraktEpisode? = null)
 data class TraktScrobbleResponse(val action: String?, val progress: Float?)
+
+// --- RATINGS ---
+data class TraktRatingBody(
+    val movies: List<TraktMovieRating>? = null,
+    val shows: List<TraktShowRating>? = null,
+    val episodes: List<TraktEpisodeRating>? = null
+)
+
+data class TraktMovieRating(val rating: Int, val rated_at: String? = null, val ids: TraktIds)
+data class TraktShowRating(val rating: Int, val rated_at: String? = null, val ids: TraktIds)
+data class TraktEpisodeRating(val rating: Int, val rated_at: String? = null, val ids: TraktIds)
+
+// --- CUSTOM LISTS ---
+data class TraktList(
+    val name: String,
+    val description: String?,
+    val privacy: String, // "private", "friends", "public"
+    val display_numbers: Boolean,
+    val allow_comments: Boolean,
+    val sort_by: String, // "rank", "added", "title", "released", "runtime", "popularity", "percentage", "votes"
+    val sort_how: String, // "asc", "desc"
+    val created_at: String,
+    val updated_at: String,
+    val item_count: Int,
+    val comment_count: Int,
+    val likes: Int,
+    val ids: TraktListIds,
+    val user: TraktUser?
+)
+
+data class TraktListIds(val trakt: Int, val slug: String)
+data class TraktUser(val username: String, val private: Boolean, val name: String?, val vip: Boolean?, val vip_ep: Boolean?)
+
+data class TraktCreateListBody(
+    val name: String,
+    val description: String? = null,
+    val privacy: String = "private",
+    val display_numbers: Boolean = false,
+    val allow_comments: Boolean = true,
+    val sort_by: String = "rank",
+    val sort_how: String = "asc"
+)

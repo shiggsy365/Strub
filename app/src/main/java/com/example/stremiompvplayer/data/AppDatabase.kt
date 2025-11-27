@@ -22,6 +22,8 @@ import com.example.stremiompvplayer.models.FeedList
 import com.example.stremiompvplayer.models.HubSlot
 import com.example.stremiompvplayer.models.LibraryItem
 import com.example.stremiompvplayer.models.NextUpItem
+import com.example.stremiompvplayer.models.PendingSyncAction
+import com.example.stremiompvplayer.models.PendingSyncActionDao
 import com.example.stremiompvplayer.models.TMDBMetadataCache
 import com.example.stremiompvplayer.models.UserCatalog
 import com.example.stremiompvplayer.models.UserCatalogDao
@@ -38,9 +40,10 @@ import com.example.stremiompvplayer.models.WatchProgress
         CollectedItem::class,
         TMDBMetadataCache::class,
         ChannelGroup::class,
-        ChannelMapping::class
+        ChannelMapping::class,
+        PendingSyncAction::class
     ],
-    version = 6, // Incremented version for TV settings tables
+    version = 7, // Incremented version for PendingSyncAction table
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -55,6 +58,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tmdbMetadataCacheDao(): TMDBMetadataCacheDao
     abstract fun channelGroupDao(): ChannelGroupDao
     abstract fun channelMappingDao(): ChannelMappingDao
+    abstract fun pendingSyncActionDao(): PendingSyncActionDao
 
     companion object {
         @Volatile
@@ -89,6 +93,7 @@ abstract class AppDatabase : RoomDatabase() {
         watchProgressDao().deleteByUser(userId)
         channelGroupDao().deleteByUser(userId)
         channelMappingDao().deleteByUser(userId)
+        pendingSyncActionDao().deleteAllForUser(userId)
     }
 }
 

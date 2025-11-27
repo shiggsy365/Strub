@@ -23,6 +23,7 @@ import com.example.stremiompvplayer.ui.search.SearchFragment
 import com.example.stremiompvplayer.ui.series.SeriesFragment
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.utils.FocusMemoryManager
+import com.example.stremiompvplayer.utils.TraktSyncScheduler
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.google.android.material.chip.Chip
@@ -71,9 +72,14 @@ class MainActivity : AppCompatActivity() {
                 viewModel.checkTMDBAuthAndSync()
 
                 // Sync Trakt on app startup if enabled
-                if (SharedPreferencesManager.getInstance(this@MainActivity).isTraktEnabled()) {
+                val prefsManager = SharedPreferencesManager.getInstance(this@MainActivity)
+                if (prefsManager.isTraktEnabled() && prefsManager.isAutoSyncOnStartup()) {
                     viewModel.syncTraktLibrary()
+                    prefsManager.setLastTraktSyncTime(System.currentTimeMillis())
                 }
+
+                // Schedule background sync if enabled
+                TraktSyncScheduler.schedulePeriodicSync(this@MainActivity)
 
                 // Refresh home content (discover lists) on app startup
                 viewModel.loadHomeContent()

@@ -90,6 +90,70 @@ class SharedPreferencesManager private constructor(context: Context) {
             .apply()
     }
 
+    fun getTraktClientId(): String {
+        return Secrets.TRAKT_CLIENT_ID
+    }
+
+    // --- TRAKT SYNC SETTINGS ---
+    fun isAutoSyncOnStartup(): Boolean {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getBoolean("trakt_auto_sync_startup_$userId", true) // Default: enabled
+    }
+
+    fun setAutoSyncOnStartup(enabled: Boolean) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putBoolean("trakt_auto_sync_startup_$userId", enabled).apply()
+    }
+
+    fun isBackgroundSyncEnabled(): Boolean {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getBoolean("trakt_background_sync_$userId", false) // Default: disabled
+    }
+
+    fun setBackgroundSyncEnabled(enabled: Boolean) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putBoolean("trakt_background_sync_$userId", enabled).apply()
+    }
+
+    fun getBackgroundSyncInterval(): Long {
+        val userId = getCurrentUserId() ?: "default"
+        // Default: 12 hours in milliseconds
+        return prefs.getLong("trakt_sync_interval_$userId", 12 * 60 * 60 * 1000L)
+    }
+
+    fun setBackgroundSyncInterval(intervalMillis: Long) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putLong("trakt_sync_interval_$userId", intervalMillis).apply()
+    }
+
+    fun getLastTraktSyncTime(): Long {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getLong("last_trakt_sync_$userId", 0L)
+    }
+
+    fun setLastTraktSyncTime(time: Long) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putLong("last_trakt_sync_$userId", time).apply()
+    }
+
+    fun shouldPerformBackgroundSync(): Boolean {
+        if (!isBackgroundSyncEnabled() || !isTraktEnabled()) return false
+        val lastSync = getLastTraktSyncTime()
+        val currentTime = System.currentTimeMillis()
+        val interval = getBackgroundSyncInterval()
+        return (currentTime - lastSync) >= interval
+    }
+
+    fun isSyncOnWifiOnly(): Boolean {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getBoolean("trakt_sync_wifi_only_$userId", true) // Default: Wi-Fi only
+    }
+
+    fun setSyncOnWifiOnly(wifiOnly: Boolean) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putBoolean("trakt_sync_wifi_only_$userId", wifiOnly).apply()
+    }
+
     // --- AIOStreams ---
     fun saveAIOStreamsManifestUrl(manifestUrl: String) {
         prefs.edit().putString("aiostreams_manifest_url", manifestUrl).apply()
