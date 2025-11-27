@@ -1016,7 +1016,7 @@ class SettingsActivity : AppCompatActivity() {
                     0 -> showListUrlDialog("mdblist", pageType)
                     1 -> showListUrlDialog("imdb", pageType)
                     2 -> showListUrlDialog("tmdb", pageType)
-                    3 -> showListUrlDialog("trakt", pageType)
+                    3 -> showTraktListsDialog(pageType)
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -1069,6 +1069,77 @@ class SettingsActivity : AppCompatActivity() {
     private fun addCustomList(listType: String, urlOrId: String, customName: String, pageType: String) {
         viewModel.addCustomList(listType, urlOrId, customName, pageType)
         Toast.makeText(this, "Custom list added", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showTraktListsDialog(pageType: String) {
+        // Check if Trakt is enabled
+        if (!prefsManager.isTraktEnabled()) {
+            Toast.makeText(this, "Please connect your Trakt account first", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val accessToken = prefsManager.getTraktAccessToken()
+        if (accessToken.isNullOrEmpty()) {
+            Toast.makeText(this, "Trakt authentication required", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Show loading dialog
+        val loadingDialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Loading Trakt Lists")
+            .setMessage("Fetching your lists from Trakt...")
+            .setCancelable(false)
+            .create()
+        loadingDialog.show()
+
+        // Fetch lists from Trakt
+        lifecycleScope.launch {
+            try {
+                val lists = withContext(Dispatchers.IO) {
+                    com.example.stremiompvplayer.network.TraktClient.api.getUserLists(
+                        token = "Bearer $accessToken",
+                        clientId = com.example.stremiompvplayer.utils.Secrets.TRAKT_CLIENT_ID,
+                        username = "me" // "me" refers to the authenticated user
+                    )
+                }
+
+                loadingDialog.dismiss()
+
+                if (lists.isEmpty()) {
+                    MaterialAlertDialogBuilder(this@SettingsActivity)
+                        .setTitle("No Lists Found")
+                        .setMessage("You don't have any custom lists on Trakt yet. Create lists on Trakt.tv to add them here.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                    return@launch
+                }
+
+                // Show list selection dialog
+                val listNames = lists.map { "${it.name} (${it.item_count} items)" }.toTypedArray()
+                MaterialAlertDialogBuilder(this@SettingsActivity)
+                    .setTitle("Select Trakt List - ${pageType.capitalize()}")
+                    .setItems(listNames) { _, which ->
+                        val selectedList = lists[which]
+                        addTraktList(selectedList, pageType)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+
+            } catch (e: Exception) {
+                loadingDialog.dismiss()
+                MaterialAlertDialogBuilder(this@SettingsActivity)
+                    .setTitle("Error")
+                    .setMessage("Failed to fetch Trakt lists: ${e.message}")
+                    .setPositiveButton("OK", null)
+                    .show()
+            }
+        }
+    }
+
+    private fun addTraktList(traktList: com.example.stremiompvplayer.network.TraktList, pageType: String) {
+        // The list slug is used as the identifier
+        viewModel.addCustomList("trakt", "me/${traktList.ids.slug}", traktList.name, pageType)
+        Toast.makeText(this, "${traktList.name} added to $pageType", Toast.LENGTH_SHORT).show()
     }
 
     private fun setupUserSection() {

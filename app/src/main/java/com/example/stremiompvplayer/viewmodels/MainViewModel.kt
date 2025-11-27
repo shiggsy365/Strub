@@ -1046,9 +1046,9 @@ class MainViewModel(
             }
         }.awaitAll().filterNotNull()
 
-        // Sort by lastUpdated (most recent first) and return only the MetaItems
+        // Sort by lastUpdated (oldest first - longest ago watched) and return only the MetaItems
         val result = nextUpItems
-            .sortedByDescending { it.second }
+            .sortedBy { it.second }
             .map { it.first }
             .distinctBy { it.id }  // Remove any duplicate episodes
 
@@ -2142,7 +2142,8 @@ class MainViewModel(
     }
 
     fun initDefaultCatalogs() {
-        viewModelScope.launch { catalogRepository.initializeDefaultsIfNeeded() }
+        val userId = prefsManager.getCurrentUserId() ?: "default"
+        viewModelScope.launch { catalogRepository.initializeDefaultsIfNeeded(userId) }
     }
 
     fun updateCatalogConfig(catalog: UserCatalog) {

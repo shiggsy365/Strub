@@ -532,7 +532,23 @@ class HomeFragment : Fragment() {
                 castList.take(5).forEach { actor ->
                     val chip = com.google.android.material.chip.Chip(requireContext())
                     chip.text = actor.name
-                    // ... set properties ...
+                    chip.isClickable = true
+                    chip.isFocusable = true
+                    chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+                    chip.setTextColor(resources.getColor(R.color.text_primary, null))
+
+                    chip.setOnClickListener {
+                        val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
+                        if (personId != null) {
+                            // Navigate to search with person
+                            val intent = Intent(requireContext(), com.example.stremiompvplayer.MainActivity::class.java).apply {
+                                putExtra("SEARCH_PERSON_ID", personId)
+                                putExtra("SEARCH_QUERY", actor.name)
+                            }
+                            startActivity(intent)
+                        }
+                    }
+
                     actorChipGroup?.addView(chip)
                 }
             }
