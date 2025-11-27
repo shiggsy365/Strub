@@ -771,7 +771,7 @@ class SettingsActivity : AppCompatActivity() {
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Configure AIOStreams")
-            .setMessage("Enter your AIOStreams manifest.json URL\n\nExample:\nhttps://aiostreams.shiggsy.co.uk/stremio/[uuid]/[token]/manifest.json")
+            .setMessage("Enter your AIOStreams manifest.json URL")
             .setView(input)
             .setPositiveButton("Save") { _, _ ->
                 val url = input.text.toString().trim()

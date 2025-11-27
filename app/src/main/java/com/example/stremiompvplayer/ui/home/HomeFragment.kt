@@ -529,7 +529,7 @@ class HomeFragment : Fragment() {
             val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
             actorChipGroup?.removeAllViews()
             if (castList.isNotEmpty()) {
-                castList.take(5).forEach { actor ->
+                castList.take(3).forEach { actor ->
                     val chip = com.google.android.material.chip.Chip(requireContext())
                     chip.text = actor.name
                     chip.isClickable = true
@@ -540,17 +540,28 @@ class HomeFragment : Fragment() {
                     chip.setOnClickListener {
                         val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
                         if (personId != null) {
-                            // Navigate to search with person
-                            val intent = Intent(requireContext(), com.example.stremiompvplayer.MainActivity::class.java).apply {
-                                putExtra("SEARCH_PERSON_ID", personId)
-                                putExtra("SEARCH_QUERY", actor.name)
-                            }
-                            startActivity(intent)
+                            // Load person's credits (movies/shows they appeared in)
+                            viewModel.loadPersonCredits(personId)
+                            updateCurrentListLabel("${actor.name} - Filmography")
                         }
                     }
 
                     actorChipGroup?.addView(chip)
                 }
+            }
+        }
+
+        // Observe search results for actor/person content
+        viewModel.searchResults.observe(viewLifecycleOwner) { results ->
+            if (results.isNotEmpty()) {
+                contentAdapter.updateData(results)
+                updateDetailsPane(results[0])
+
+                // Focus first item
+                binding.root.postDelayed({
+                    binding.rvContent.scrollToPosition(0)
+                    binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
+                }, 100)
             }
         }
     }

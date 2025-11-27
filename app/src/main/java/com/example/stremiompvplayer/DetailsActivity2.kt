@@ -236,7 +236,7 @@ class DetailsActivity2 : AppCompatActivity() {
         viewModel.castList.observe(this) { cast ->
             binding.castChipGroup.removeAllViews()
             if (cast.isNotEmpty()) {
-                cast.forEach { c ->
+                cast.take(3).forEach { c ->
                     val chip = createStyledChip(c)
                     binding.castChipGroup.addView(chip)
                 }

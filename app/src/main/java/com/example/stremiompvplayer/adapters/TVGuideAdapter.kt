@@ -6,6 +6,8 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.R
@@ -15,9 +17,17 @@ import java.util.*
 
 class TVGuideAdapter(
     private val onClick: (ChannelWithPrograms) -> Unit
-) : RecyclerView.Adapter<TVGuideAdapter.ViewHolder>() {
+) : ListAdapter<ChannelWithPrograms, TVGuideAdapter.ViewHolder>(ChannelDiffCallback()) {
 
-    private var channels = listOf<ChannelWithPrograms>()
+    private class ChannelDiffCallback : DiffUtil.ItemCallback<ChannelWithPrograms>() {
+        override fun areItemsTheSame(oldItem: ChannelWithPrograms, newItem: ChannelWithPrograms): Boolean {
+            return oldItem.channel.url == newItem.channel.url
+        }
+
+        override fun areContentsTheSame(oldItem: ChannelWithPrograms, newItem: ChannelWithPrograms): Boolean {
+            return oldItem == newItem
+        }
+    }
     private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -31,7 +41,7 @@ class TVGuideAdapter(
             view.setOnClickListener {
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
-                    onClick(channels[position])
+                    onClick(getItem(position))
                 }
             }
         }
@@ -44,7 +54,7 @@ class TVGuideAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = channels[position]
+        val item = getItem(position)
 
         holder.channelName.text = item.channel.name
 
@@ -76,16 +86,13 @@ class TVGuideAdapter(
         }
     }
 
-    override fun getItemCount() = channels.size
-
     fun updateChannels(newChannels: List<ChannelWithPrograms>) {
-        channels = newChannels
-        notifyDataSetChanged()
+        submitList(newChannels)
     }
 
     fun getItemAtPosition(position: Int): ChannelWithPrograms? {
-        return if (position >= 0 && position < channels.size) {
-            channels[position]
+        return if (position >= 0 && position < itemCount) {
+            getItem(position)
         } else {
             null
         }
