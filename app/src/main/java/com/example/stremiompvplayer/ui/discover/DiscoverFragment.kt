@@ -114,8 +114,14 @@ class DiscoverFragment : Fragment() {
                         // Check if a poster item has focus
                         val focusedChild = binding.rvContent.focusedChild
                         if (focusedChild != null) {
-                            // Focus on Play button when up is pressed on carousel
-                            binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                            // Focus on Play button if available, otherwise Related button
+                            val btnPlay = binding.root.findViewById<View>(R.id.btnPlay)
+                            val btnRelated = binding.root.findViewById<View>(R.id.btnRelated)
+                            when {
+                                btnPlay?.visibility == View.VISIBLE -> btnPlay.requestFocus()
+                                btnRelated?.visibility == View.VISIBLE -> btnRelated.requestFocus()
+                                else -> btnPlay?.requestFocus() // Fallback to play even if hidden
+                            }
                             return@setOnKeyListener true
                         }
                         false
@@ -167,7 +173,14 @@ class DiscoverFragment : Fragment() {
                 }
                 KeyEvent.KEYCODE_DPAD_UP -> {
                     if (binding.rvContent.hasFocus() || binding.rvContent.focusedChild != null) {
-                        binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                        // Focus on Play button if available, otherwise Related button
+                        val btnPlay = binding.root.findViewById<View>(R.id.btnPlay)
+                        val btnRelated = binding.root.findViewById<View>(R.id.btnRelated)
+                        when {
+                            btnPlay?.visibility == View.VISIBLE -> btnPlay.requestFocus()
+                            btnRelated?.visibility == View.VISIBLE -> btnRelated.requestFocus()
+                            else -> btnPlay?.requestFocus() // Fallback to play even if hidden
+                        }
                         return true
                     }
                 }
@@ -382,6 +395,9 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun showStreamDialog(item: MetaItem) {
+        // Clear any previous streams BEFORE creating the dialog to prevent stale data
+        viewModel.clearStreams()
+
         // Create dialog
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_stream_selection, null)
         val dialog = android.app.AlertDialog.Builder(requireContext())
@@ -411,26 +427,29 @@ class DiscoverFragment : Fragment() {
             viewModel.clearStreams()
         }
 
-        // Load streams
+        // Show loading state
         progressBar.visibility = View.VISIBLE
         rvStreams.visibility = View.GONE
 
-        viewModel.loadStreams(item.type, item.id)
-
-        // Observe streams
+        // Observe streams BEFORE loading to ensure we catch the update
+        var hasReceivedUpdate = false
         val streamObserver = androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.Stream>> { streams ->
-            progressBar.visibility = View.GONE
-            rvStreams.visibility = View.VISIBLE
-            if (streams.isEmpty()) {
-                Toast.makeText(requireContext(), "No streams available", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            } else {
-                streamAdapter.submitList(streams)
-                // Focus first item after list is populated
-                rvStreams.post {
-                    rvStreams.layoutManager?.findViewByPosition(0)?.requestFocus()
+            // Only process if this is an update after loadStreams() call
+            if (hasReceivedUpdate || streams.isNotEmpty()) {
+                progressBar.visibility = View.GONE
+                rvStreams.visibility = View.VISIBLE
+                if (streams.isEmpty()) {
+                    Toast.makeText(requireContext(), "No streams available", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                } else {
+                    streamAdapter.submitList(streams)
+                    // Focus first item after list is populated
+                    rvStreams.post {
+                        rvStreams.layoutManager?.findViewByPosition(0)?.requestFocus()
+                    }
                 }
             }
+            hasReceivedUpdate = true
         }
         viewModel.streams.observe(viewLifecycleOwner, streamObserver)
 
@@ -440,6 +459,9 @@ class DiscoverFragment : Fragment() {
         }
 
         dialog.show()
+
+        // Load streams AFTER setting up observer
+        viewModel.loadStreams(item.type, item.id)
     }
 
     private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {

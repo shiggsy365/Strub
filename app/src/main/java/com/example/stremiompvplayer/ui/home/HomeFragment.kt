@@ -110,7 +110,14 @@ class HomeFragment : Fragment() {
                 }
                 KeyEvent.KEYCODE_DPAD_UP -> {
                     if (binding.rvContent.hasFocus() || binding.rvContent.focusedChild != null) {
-                        binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
+                        // Focus on Play button if available, otherwise Related button
+                        val btnPlay = binding.root.findViewById<View>(R.id.btnPlay)
+                        val btnRelated = binding.root.findViewById<View>(R.id.btnRelated)
+                        when {
+                            btnPlay?.visibility == View.VISIBLE -> btnPlay.requestFocus()
+                            btnRelated?.visibility == View.VISIBLE -> btnRelated.requestFocus()
+                            else -> btnPlay?.requestFocus() // Fallback to play even if hidden
+                        }
                         return true
                     }
                 }
@@ -240,6 +247,15 @@ class HomeFragment : Fragment() {
         val nextCatalog = currentCatalogs[currentCatalogIndex]
         updateCurrentListLabel(nextCatalog.displayName)
         viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
+
+        // Focus first item when cycling lists
+        binding.root.postDelayed({
+            binding.rvContent.scrollToPosition(0)
+            binding.rvContent.post {
+                val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                firstView?.requestFocus()
+            }
+        }, 200)
     }
 
     private fun updateDetailsPane(item: MetaItem) {
@@ -294,6 +310,9 @@ class HomeFragment : Fragment() {
     }
 
     private fun showStreamDialog(item: MetaItem) {
+        // Clear any previous streams BEFORE creating the dialog to prevent stale data
+        viewModel.clearStreams()
+
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_stream_selection, null)
         val dialog = android.app.AlertDialog.Builder(requireContext())
             .setView(dialogView)
@@ -319,24 +338,29 @@ class HomeFragment : Fragment() {
             viewModel.clearStreams()
         }
 
+        // Show loading state
         progressBar.visibility = View.VISIBLE
         rvStreams.visibility = View.GONE
 
-        viewModel.loadStreams(item.type, item.id)
-
+        // Observe streams BEFORE loading to ensure we catch the update
+        var hasReceivedUpdate = false
         val streamObserver = androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.Stream>> { streams ->
-            progressBar.visibility = View.GONE
-            rvStreams.visibility = View.VISIBLE
-            if (streams.isEmpty()) {
-                android.widget.Toast.makeText(requireContext(), "No streams available", android.widget.Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            } else {
-                streamAdapter.submitList(streams)
-                // Focus first item after list is populated
-                rvStreams.post {
-                    rvStreams.layoutManager?.findViewByPosition(0)?.requestFocus()
+            // Only process if this is an update after loadStreams() call
+            if (hasReceivedUpdate || streams.isNotEmpty()) {
+                progressBar.visibility = View.GONE
+                rvStreams.visibility = View.VISIBLE
+                if (streams.isEmpty()) {
+                    android.widget.Toast.makeText(requireContext(), "No streams available", android.widget.Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                } else {
+                    streamAdapter.submitList(streams)
+                    // Focus first item after list is populated
+                    rvStreams.post {
+                        rvStreams.layoutManager?.findViewByPosition(0)?.requestFocus()
+                    }
                 }
             }
+            hasReceivedUpdate = true
         }
         viewModel.streams.observe(viewLifecycleOwner, streamObserver)
 
@@ -346,6 +370,9 @@ class HomeFragment : Fragment() {
         }
 
         dialog.show()
+
+        // Load streams AFTER setting up observer
+        viewModel.loadStreams(item.type, item.id)
     }
 
     private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {

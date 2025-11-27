@@ -332,7 +332,7 @@ class SearchFragment : Fragment() {
         }
     }
 
-    private fun performSearch(query: String) {
+    fun performSearch(query: String) {
         if (query.isBlank()) return
         currentSearchQuery = query
 
@@ -452,6 +452,7 @@ class SearchFragment : Fragment() {
     }
 
     fun setSearchText(text: String) { binding.searchEditText.setText(text) }
+    fun getSearchQuery(): String? = currentSearchQuery
     fun searchByPersonId(id: Int) { viewModel.loadPersonCredits(id) }
     private fun hideKeyboard() { (requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(binding.searchEditText.windowToken, 0) }
 
