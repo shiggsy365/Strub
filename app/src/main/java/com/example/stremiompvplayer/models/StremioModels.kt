@@ -69,6 +69,7 @@ data class MetaItem(
     val description: String?,
     val releaseDate: String? = null,
     val rating: String? = null,
+    val popularity: Double? = null,  // For sorting search/similar/actor results
     var isWatched: Boolean = false,
     var progress: Long = 0,
     var duration: Long = 0,

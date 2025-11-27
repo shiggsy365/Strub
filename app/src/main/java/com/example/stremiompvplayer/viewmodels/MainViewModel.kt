@@ -1854,10 +1854,10 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val response = TMDBClient.api.getPersonCombinedCredits(personId, apiKey)
-                // Merge movies and series, sort by popularity (rating)
+                // Merge movies and series, sort by popularity (lower is more popular)
                 val results = response.cast
                     .map { it.toMetaItem() }
-                    .sortedByDescending { it.rating?.toDoubleOrNull() ?: 0.0 }
+                    .sortedBy { it.popularity ?: Double.MAX_VALUE }
                 _searchResults.postValue(results)
             } catch (e: Exception) {
                 _error.postValue("Person credits failed: ${e.message}")
@@ -2177,9 +2177,9 @@ class MainViewModel(
                 emptyList()
             }
 
-            // Merge and sort by popularity (rating)
-            (movieResults + seriesResults).sortedByDescending {
-                it.rating?.toDoubleOrNull() ?: 0.0
+            // Merge and sort by popularity (lower is more popular)
+            (movieResults + seriesResults).sortedBy {
+                it.popularity ?: Double.MAX_VALUE
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to fetch similar content", e)
