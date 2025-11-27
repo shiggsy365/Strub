@@ -402,37 +402,35 @@ class SearchFragment : Fragment() {
         if (query.isBlank()) return
         currentSearchQuery = query
 
-        val type = arguments?.getString(ARG_TYPE) ?: "movie"
-
         lifecycleScope.launch {
             try {
-                if (type == "movie") {
-                    // Search movies only
-                    viewModel.searchMovies(query)
-                    val tempResults = viewModel.searchResults.value ?: emptyList()
-                    val movies = tempResults.filter { it.type == "movie" }
+                // Search both movies and series
+                viewModel.searchTMDB(query)
+                val tempResults = viewModel.searchResults.value ?: emptyList()
 
-                    movieResults = movies.sortedByDescending {
-                        it.rating?.toDoubleOrNull() ?: 0.0
-                    }
-                    seriesResults = emptyList()
-                } else {
-                    // Search series only
-                    viewModel.searchSeries(query)
-                    val tempResults = viewModel.searchResults.value ?: emptyList()
-                    val series = tempResults.filter { it.type == "series" || it.type == "tv" }
+                // Separate and sort by rating
+                val movies = tempResults.filter { it.type == "movie" }
+                    .sortedByDescending { it.rating?.toDoubleOrNull() ?: 0.0 }
+                    .mapIndexed { index, item -> item.copy(popularity = index.toDouble()) }
 
-                    seriesResults = series.sortedByDescending {
-                        it.rating?.toDoubleOrNull() ?: 0.0
-                    }
-                    movieResults = emptyList()
+                val series = tempResults.filter { it.type == "series" || it.type == "tv" }
+                    .sortedByDescending { it.rating?.toDoubleOrNull() ?: 0.0 }
+                    .mapIndexed { index, item -> item.copy(popularity = index.toDouble()) }
+
+                // Interleave results: movie 0, series 0, movie 1, series 1, etc.
+                val interleaved = mutableListOf<MetaItem>()
+                val maxSize = maxOf(movies.size, series.size)
+                for (i in 0 until maxSize) {
+                    if (i < movies.size) interleaved.add(movies[i])
+                    if (i < series.size) interleaved.add(series[i])
                 }
 
-                currentResultIndex = if (type == "movie") 0 else 1
+                movieResults = interleaved
+                seriesResults = emptyList()
+                currentResultIndex = 0
                 updateDisplayedResults()
             } catch (e: Exception) {
-                // Fallback to mixed search
-                viewModel.searchTMDB(query)
+                Toast.makeText(requireContext(), "Search failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

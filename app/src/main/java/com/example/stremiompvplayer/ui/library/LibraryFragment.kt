@@ -491,34 +491,45 @@ class LibraryFragment : Fragment() {
             }
         }
 
-        // Observe both movie and series libraries
-        viewModel.filteredLibraryMovies.observe(viewLifecycleOwner) { movieItems ->
-            viewModel.filteredLibrarySeries.observe(viewLifecycleOwner) { seriesItems ->
-                // Create catalogs for cycling
-                currentCatalogs = buildList {
-                    if (movieItems.isNotEmpty()) {
-                        add(Pair("My Movies", movieItems))
-                    }
-                    if (seriesItems.isNotEmpty()) {
-                        add(Pair("My Series", seriesItems))
-                    }
+        // Get the media type from arguments
+        val selectedType = arguments?.getString(ARG_TYPE) ?: "movie"
+
+        // Observe the appropriate library based on selected type
+        if (selectedType == "movie") {
+            viewModel.filteredLibraryMovies.observe(viewLifecycleOwner) { movieItems ->
+                // Create catalog for movies only
+                currentCatalogs = listOf(Pair("My Movies", movieItems))
+
+                // Show the movie catalog
+                currentCatalogIndex = 0
+                val (label, items) = currentCatalogs[0]
+                updateCurrentListLabel(label)
+                contentAdapter.updateData(items)
+
+                if (items.isNotEmpty()) {
+                    binding.emptyText.visibility = View.GONE
+                    binding.rvContent.visibility = View.VISIBLE
+                    updateDetailsPane(items[0])
+                } else {
+                    binding.emptyText.visibility = View.VISIBLE
+                    binding.rvContent.visibility = View.GONE
                 }
+            }
+        } else {
+            viewModel.filteredLibrarySeries.observe(viewLifecycleOwner) { seriesItems ->
+                // Create catalog for series only
+                currentCatalogs = listOf(Pair("My Series", seriesItems))
 
-                // Show first catalog by default
-                if (currentCatalogs.isNotEmpty()) {
-                    currentCatalogIndex = 0
-                    val (label, items) = currentCatalogs[0]
-                    updateCurrentListLabel(label)
-                    contentAdapter.updateData(items)
+                // Show the series catalog
+                currentCatalogIndex = 0
+                val (label, items) = currentCatalogs[0]
+                updateCurrentListLabel(label)
+                contentAdapter.updateData(items)
 
-                    if (items.isNotEmpty()) {
-                        binding.emptyText.visibility = View.GONE
-                        binding.rvContent.visibility = View.VISIBLE
-                        updateDetailsPane(items[0])
-                    } else {
-                        binding.emptyText.visibility = View.VISIBLE
-                        binding.rvContent.visibility = View.GONE
-                    }
+                if (items.isNotEmpty()) {
+                    binding.emptyText.visibility = View.GONE
+                    binding.rvContent.visibility = View.VISIBLE
+                    updateDetailsPane(items[0])
                 } else {
                     binding.emptyText.visibility = View.VISIBLE
                     binding.rvContent.visibility = View.GONE
@@ -530,32 +541,50 @@ class LibraryFragment : Fragment() {
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
 
+        // Observe cast loading state
+        viewModel.isCastLoading.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
+                actorChipGroup?.removeAllViews()
+                val placeholderChip = com.google.android.material.chip.Chip(requireContext()).apply {
+                    text = "No Cast Returned"
+                    isClickable = false
+                    isFocusable = false
+                    setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+                    setTextColor(resources.getColor(R.color.text_primary, null))
+                }
+                actorChipGroup?.addView(placeholderChip)
+            }
+        }
+
         // Observe cast list and update actor chips
         viewModel.castList.observe(viewLifecycleOwner) { castList ->
             val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
             actorChipGroup?.removeAllViews()
 
-            castList.take(5).forEach { actor ->
-                val chip = com.google.android.material.chip.Chip(requireContext())
-                chip.text = actor.name
-                chip.isClickable = true
-                chip.isFocusable = true
-                chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
-                chip.setTextColor(resources.getColor(R.color.text_primary, null))
+            if (castList.isNotEmpty()) {
+                castList.take(5).forEach { actor ->
+                    val chip = com.google.android.material.chip.Chip(requireContext())
+                    chip.text = actor.name
+                    chip.isClickable = true
+                    chip.isFocusable = true
+                    chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+                    chip.setTextColor(resources.getColor(R.color.text_primary, null))
 
-                chip.setOnClickListener {
-                    val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
-                    if (personId != null) {
-                        // Navigate to search with person
-                        val intent = Intent(requireContext(), com.example.stremiompvplayer.MainActivity::class.java).apply {
-                            putExtra("SEARCH_PERSON_ID", personId)
-                            putExtra("SEARCH_QUERY", actor.name)
+                    chip.setOnClickListener {
+                        val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
+                        if (personId != null) {
+                            // Navigate to search with person
+                            val intent = Intent(requireContext(), com.example.stremiompvplayer.MainActivity::class.java).apply {
+                                putExtra("SEARCH_PERSON_ID", personId)
+                                putExtra("SEARCH_QUERY", actor.name)
+                            }
+                            startActivity(intent)
                         }
-                        startActivity(intent)
                     }
-                }
 
-                actorChipGroup?.addView(chip)
+                    actorChipGroup?.addView(chip)
+                }
             }
         }
 

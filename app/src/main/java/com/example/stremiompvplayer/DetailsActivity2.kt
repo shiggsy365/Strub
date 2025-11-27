@@ -217,11 +217,29 @@ class DetailsActivity2 : AppCompatActivity() {
             }
         }
 
+        viewModel.isCastLoading.observe(this) { isLoading ->
+            if (isLoading) {
+                binding.castChipGroup.removeAllViews()
+                val placeholderChip = Chip(this).apply {
+                    text = "No Cast Returned"
+                    setChipBackgroundColorResource(R.color.chip_background_selector)
+                    setTextColor(getColor(R.color.chip_text_color))
+                    setChipStrokeColorResource(R.color.selector_focus_stroke)
+                    chipStrokeWidth = 3 * resources.displayMetrics.density
+                    isClickable = false
+                    isFocusable = false
+                }
+                binding.castChipGroup.addView(placeholderChip)
+            }
+        }
+
         viewModel.castList.observe(this) { cast ->
             binding.castChipGroup.removeAllViews()
-            cast.forEach { c ->
-                val chip = createStyledChip(c)
-                binding.castChipGroup.addView(chip)
+            if (cast.isNotEmpty()) {
+                cast.forEach { c ->
+                    val chip = createStyledChip(c)
+                    binding.castChipGroup.addView(chip)
+                }
             }
         }
 

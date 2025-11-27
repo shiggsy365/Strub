@@ -58,11 +58,11 @@ class MainActivity : AppCompatActivity() {
         val loadingDialog = StartupLoadingDialog(this)
         loadingDialog.show()
 
-        // Load everything in parallel
+        // Load everything with proper sequencing
         lifecycleScope.launch {
-            // Task 1: Load user lists
+            // Task 1: Load user lists and sync Trakt
             loadingDialog.setUserListsLoading()
-            launch {
+            val traktSyncJob = launch {
                 viewModel.checkTMDBAuthAndSync()
 
                 // Sync Trakt on app startup if enabled
@@ -76,14 +76,17 @@ class MainActivity : AppCompatActivity() {
                 loadingDialog.setUserListsComplete()
             }
 
-            // Task 2: Load missing metadata
+            // Task 2: Load missing metadata AFTER Trakt sync completes
             loadingDialog.setMetadataLoading()
             launch {
+                // Wait for Trakt sync to complete first
+                traktSyncJob.join()
+                // Now ensure all library items have TMDB metadata
                 viewModel.ensureLibraryMetadata()
                 loadingDialog.setMetadataComplete()
             }
 
-            // Task 3: Parse TV channels (only if 24 hours have passed)
+            // Task 3: Parse TV channels (only if 24 hours have passed) - runs in parallel
             launch {
                 val prefsManager = SharedPreferencesManager.getInstance(this@MainActivity)
                 if (prefsManager.shouldRefreshTV()) {
