@@ -864,11 +864,12 @@ class DiscoverFragment : Fragment() {
                     }
                 } else {
                     currentSelectedItem = null
-                    // If we're cycling and the list is empty, automatically cycle to the next list
-                    if (isCycling && cycleAttemptCount < allCatalogs.size) {
+                    // If the list is empty, automatically cycle to the next list (even when not actively cycling)
+                    // This effectively hides empty lists from the discover page
+                    if (cycleAttemptCount < allCatalogs.size) {
                         binding.root.postDelayed({
                             cycleToNextList()
-                        }, 500)
+                        }, 200)  // Shorter delay for smoother experience
                     }
                 }
                 updatePlayButtonVisibility()

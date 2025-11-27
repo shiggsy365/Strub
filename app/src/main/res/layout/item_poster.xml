@@ -77,6 +77,25 @@
                 android:contentDescription="In Progress"
                 tools:visibility="gone" />
 
+            <!-- Genre Name Text (for genre items) -->
+            <TextView
+                android:id="@+id/genreText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:padding="12dp"
+                android:gravity="center"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:background="#99000000"
+                app:layout_constraintBottom_toBottomOf="@id/poster"
+                app:layout_constraintStart_toStartOf="@id/poster"
+                app:layout_constraintEnd_toEndOf="@id/poster"
+                android:elevation="4dp"
+                tools:text="Action"
+                tools:visibility="visible" />
+
             <!-- Hover Overlay -->
             <View
                 android:layout_width="0dp"

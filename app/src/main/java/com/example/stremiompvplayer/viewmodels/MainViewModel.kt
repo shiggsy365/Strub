@@ -2336,6 +2336,9 @@ class MainViewModel(
                             if (body != null) {
                                 TraktClient.api.removeFromCollection(bearer, clientId, body)
                                 Log.d("TraktSync", "Removed from Trakt collection: $itemId")
+
+                                // Refresh Trakt library to update UI immediately
+                                syncTraktLibrary()
                             }
                         }
                     } catch (e: Exception) {
