@@ -176,7 +176,20 @@ class MainActivity : AppCompatActivity() {
                 loadFragment(LibraryFragment.newInstance(currentMediaType))
             }
             is SearchFragment -> {
-                loadFragment(SearchFragment.newInstance(currentMediaType))
+                // Preserve search query when toggling media type
+                val searchQuery = currentFragment.getSearchQuery()
+                val newSearchFragment = SearchFragment.newInstance(currentMediaType)
+                loadFragment(newSearchFragment)
+                // Re-perform the search if there was one
+                if (!searchQuery.isNullOrBlank()) {
+                    binding.root.postDelayed({
+                        newSearchFragment.setSearchText(searchQuery)
+                        binding.root.postDelayed({
+                            // Trigger the search programmatically
+                            newSearchFragment.performSearch(searchQuery)
+                        }, 100)
+                    }, 200)
+                }
             }
             // Add other fragments that support type filtering here if needed
         }
@@ -272,7 +285,10 @@ class MainActivity : AppCompatActivity() {
             else -> {
                 val discoverFragment = DiscoverFragment.newInstance("movie")
                 loadFragment(discoverFragment)
-                discoverFragment.view?.post { discoverFragment.performSearch(query) }
+                // Use postDelayed with longer delay to ensure fragment view is ready
+                binding.root.postDelayed({
+                    discoverFragment.performSearch(query)
+                }, 300)
             }
         }
     }
@@ -376,17 +392,44 @@ class MainActivity : AppCompatActivity() {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
 
-        // 2. Handle Sidebar Unhide (Left Press)
+        // 2. Handle Sidebar Unhide (Left Press) and Hide (Right Press)
+        val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
+
+        // Handle RIGHT press from sidebar - hide the sidebar
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && event?.action == KeyEvent.ACTION_DOWN) {
+            val currentFocus = currentFocus
+            if (currentFocus != null && isViewInSidebar(currentFocus, sidebar)) {
+                // Hide sidebar and move focus to fragment content
+                sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(300).start()
+                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+                when (currentFragment) {
+                    is HomeFragment -> currentFragment.focusSidebar()
+                    is DiscoverFragment -> currentFragment.focusSidebar()
+                    is LibraryFragment -> currentFragment.focusSidebar()
+                }
+                return true
+            }
+        }
+
+        // Handle LEFT press to show sidebar
         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && event?.action == KeyEvent.ACTION_DOWN) {
-            val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
             // Check if sidebar is effectively hidden (translated off mostly)
             if (sidebar.translationX < -50) {
                 val currentFocus = currentFocus
                 if (currentFocus != null && !isViewInSidebar(currentFocus, sidebar)) {
                     // Check if the focused view is inside a RecyclerView (poster carousel)
-                    val isInRecyclerView = isViewInRecyclerView(currentFocus)
+                    val recyclerView = getParentRecyclerView(currentFocus)
 
-                    if (!isInRecyclerView) {
+                    if (recyclerView != null) {
+                        // We are in a RecyclerView. Check if we're at the first item
+                        val position = recyclerView.getChildAdapterPosition(currentFocus)
+                        if (position == 0) {
+                            // At first item, show sidebar
+                            showSidebar(sidebar)
+                            return true
+                        }
+                        // Not at first item, let RecyclerView handle horizontal scrolling
+                    } else {
                         // We are not in a RecyclerView. Check if next focus left is null (wall) or the sidebar itself
                         val nextFocus = FocusFinder.getInstance().findNextFocus(binding.root as ViewGroup, currentFocus, View.FOCUS_LEFT)
 
@@ -396,7 +439,6 @@ class MainActivity : AppCompatActivity() {
                             return true
                         }
                     }
-                    // If in RecyclerView, let it handle horizontal scrolling
                 }
             }
         }
@@ -472,6 +514,17 @@ class MainActivity : AppCompatActivity() {
             parent = parent.parent
         }
         return false
+    }
+
+    private fun getParentRecyclerView(view: View): androidx.recyclerview.widget.RecyclerView? {
+        var parent = view.parent
+        while (parent != null) {
+            if (parent is androidx.recyclerview.widget.RecyclerView) {
+                return parent
+            }
+            parent = parent.parent
+        }
+        return null
     }
 
     private fun showSidebar(sidebar: View) {
