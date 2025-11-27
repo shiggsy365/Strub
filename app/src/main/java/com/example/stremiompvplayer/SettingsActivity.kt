@@ -245,6 +245,11 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnLibraryHealth.setOnClickListener {
             showLibraryHealthDialog()
         }
+
+        // Sync Analytics Button
+        binding.btnSyncAnalytics.setOnClickListener {
+            showSyncAnalyticsDialog()
+        }
     }
 
     private fun updateTraktUI(isEnabled: Boolean) {
@@ -255,6 +260,7 @@ class SettingsActivity : AppCompatActivity() {
             binding.btnTraktSync.visibility = View.VISIBLE
             binding.btnTraktSettings.visibility = View.VISIBLE
             binding.btnLibraryHealth.visibility = View.VISIBLE
+            binding.btnSyncAnalytics.visibility = View.VISIBLE
         } else {
             binding.tvTraktStatus.text = "Trakt: Disconnected"
             binding.tvTraktStatus.setTextColor(getColor(android.R.color.holo_red_light))
@@ -262,6 +268,7 @@ class SettingsActivity : AppCompatActivity() {
             binding.btnTraktSync.visibility = View.GONE
             binding.btnTraktSettings.visibility = View.GONE
             binding.btnLibraryHealth.visibility = View.GONE
+            binding.btnSyncAnalytics.visibility = View.GONE
         }
     }
 
@@ -568,6 +575,96 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         builder.show()
+    }
+
+    private fun showSyncAnalyticsDialog() {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 40)
+        }
+
+        // Sync Statistics
+        val lastSync = prefsManager.getLastTraktSyncTime()
+        val syncInterval = prefsManager.getBackgroundSyncInterval() / (60 * 60 * 1000)
+        val backgroundSyncEnabled = prefsManager.isBackgroundSyncEnabled()
+        val autoSyncEnabled = prefsManager.isAutoSyncOnStartup()
+        val wifiOnly = prefsManager.isSyncOnWifiOnly()
+
+        val statsText = TextView(this).apply {
+            val lastSyncText = if (lastSync > 0) {
+                val format = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+                format.format(Date(lastSync))
+            } else {
+                "Never"
+            }
+
+            val timeSinceSync = if (lastSync > 0) {
+                val hours = (System.currentTimeMillis() - lastSync) / (60 * 60 * 1000)
+                "$hours hours ago"
+            } else {
+                "N/A"
+            }
+
+            text = """
+                📊 Sync Statistics
+
+                Last Sync: $lastSyncText
+                Time Since Last Sync: $timeSinceSync
+
+                ⚙️ Settings
+                Auto-sync on Startup: ${if (autoSyncEnabled) "✓ Enabled" else "✗ Disabled"}
+                Background Sync: ${if (backgroundSyncEnabled) "✓ Enabled" else "✗ Disabled"}
+                Sync Interval: $syncInterval hours
+                Wi-Fi Only: ${if (wifiOnly) "✓ Yes" else "✗ No"}
+
+                📦 Database
+                Database Version: 7
+                Pending Sync Actions: Queued for offline
+
+                🔄 Sync Coverage
+                • Collection sync: ✓ Bidirectional
+                • Watchlist sync: ✓ Bidirectional
+                • Watched history: ✓ Bidirectional
+                • Continue watching: ✓ Import
+                • Ratings: ✓ Export
+                • Custom lists: ✓ Management
+            """.trimIndent()
+            textSize = 14f
+            setTextColor(getColor(R.color.text_secondary))
+        }
+
+        // Next Sync Time
+        val nextSyncText = TextView(this).apply {
+            if (backgroundSyncEnabled && lastSync > 0) {
+                val nextSync = lastSync + prefsManager.getBackgroundSyncInterval()
+                val format = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+                text = "\n⏰ Next Background Sync: ${format.format(Date(nextSync))}"
+                textSize = 12f
+                setTextColor(getColor(android.R.color.holo_blue_light))
+                setTypeface(null, android.graphics.Typeface.BOLD)
+            } else if (backgroundSyncEnabled) {
+                text = "\n⏰ Next Background Sync: On next app restart"
+                textSize = 12f
+                setTextColor(getColor(android.R.color.holo_blue_light))
+            } else {
+                text = "\n⏰ Background Sync: Disabled"
+                textSize = 12f
+                setTextColor(getColor(android.R.color.holo_orange_light))
+            }
+        }
+
+        container.addView(statsText)
+        container.addView(nextSyncText)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Sync Analytics")
+            .setView(container)
+            .setPositiveButton("Close", null)
+            .setNeutralButton("Sync Now") { _, _ ->
+                viewModel.syncTraktLibrary()
+                Toast.makeText(this, "Manual sync started...", Toast.LENGTH_SHORT).show()
+            }
+            .show()
     }
 
     // ==============================

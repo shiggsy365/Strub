@@ -2377,6 +2377,165 @@ class MainViewModel(
         }
     }
 
+    // === RATING SYSTEM ===
+    fun rateOnTrakt(meta: MetaItem, rating: Int) {
+        if (!prefsManager.isTraktEnabled()) {
+            _actionResult.postValue(ActionResult.Error("Trakt is not enabled"))
+            return
+        }
+        if (rating < 1 || rating > 10) {
+            _actionResult.postValue(ActionResult.Error("Rating must be between 1 and 10"))
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val token = prefsManager.getTraktAccessToken()
+                val clientId = Secrets.TRAKT_CLIENT_ID
+                if (token != null) {
+                    val bearer = "Bearer $token"
+                    val tmdbId = meta.id.removePrefix("tmdb:").split(":")[0].toIntOrNull()
+
+                    val body: TraktRatingBody? = when (meta.type) {
+                        "movie" -> {
+                            if (tmdbId != null) {
+                                TraktRatingBody(
+                                    movies = listOf(
+                                        TraktMovieRating(
+                                            rating = rating,
+                                            ids = TraktIds(0, tmdbId, null, null)
+                                        )
+                                    )
+                                )
+                            } else null
+                        }
+                        "series" -> {
+                            if (tmdbId != null) {
+                                TraktRatingBody(
+                                    shows = listOf(
+                                        TraktShowRating(
+                                            rating = rating,
+                                            ids = TraktIds(0, tmdbId, null, null)
+                                        )
+                                    )
+                                )
+                            } else null
+                        }
+                        else -> null
+                    }
+
+                    if (body != null) {
+                        TraktClient.api.addRatings(bearer, clientId, body)
+                        _actionResult.postValue(ActionResult.Success("Rated ${meta.name} $rating/10 on Trakt"))
+                        Log.d("TraktRating", "Rated ${meta.id} with $rating/10")
+                    } else {
+                        _actionResult.postValue(ActionResult.Error("Invalid item for rating"))
+                    }
+                } else {
+                    _actionResult.postValue(ActionResult.Error("Not authenticated with Trakt"))
+                }
+            } catch (e: Exception) {
+                Log.e("TraktRating", "Failed to rate on Trakt", e)
+                _actionResult.postValue(ActionResult.Error("Failed to rate: ${e.message}"))
+            }
+        }
+    }
+
+    // === CUSTOM LIST MANAGEMENT ===
+    private val _userLists = MutableLiveData<List<TraktList>>()
+    val userLists: LiveData<List<TraktList>> get() = _userLists
+
+    fun loadUserLists(username: String) {
+        if (!prefsManager.isTraktEnabled()) return
+
+        viewModelScope.launch {
+            try {
+                val token = prefsManager.getTraktAccessToken()
+                val clientId = Secrets.TRAKT_CLIENT_ID
+                if (token != null) {
+                    val bearer = "Bearer $token"
+                    val lists = TraktClient.api.getUserLists(bearer, clientId, username)
+                    _userLists.postValue(lists)
+                    Log.d("TraktLists", "Loaded ${lists.size} lists for $username")
+                }
+            } catch (e: Exception) {
+                Log.e("TraktLists", "Failed to load user lists", e)
+                _actionResult.postValue(ActionResult.Error("Failed to load lists: ${e.message}"))
+            }
+        }
+    }
+
+    fun createCustomList(username: String, name: String, description: String?, privacy: String = "private") {
+        if (!prefsManager.isTraktEnabled()) {
+            _actionResult.postValue(ActionResult.Error("Trakt is not enabled"))
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val token = prefsManager.getTraktAccessToken()
+                val clientId = Secrets.TRAKT_CLIENT_ID
+                if (token != null) {
+                    val bearer = "Bearer $token"
+                    val body = TraktCreateListBody(
+                        name = name,
+                        description = description,
+                        privacy = privacy
+                    )
+                    val list = TraktClient.api.createList(bearer, clientId, username, body)
+                    _actionResult.postValue(ActionResult.Success("Created list: ${list.name}"))
+                    Log.d("TraktLists", "Created list: ${list.name}")
+                    // Reload lists
+                    loadUserLists(username)
+                } else {
+                    _actionResult.postValue(ActionResult.Error("Not authenticated with Trakt"))
+                }
+            } catch (e: Exception) {
+                Log.e("TraktLists", "Failed to create list", e)
+                _actionResult.postValue(ActionResult.Error("Failed to create list: ${e.message}"))
+            }
+        }
+    }
+
+    fun addToCustomList(username: String, listId: String, meta: MetaItem) {
+        if (!prefsManager.isTraktEnabled()) {
+            _actionResult.postValue(ActionResult.Error("Trakt is not enabled"))
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val token = prefsManager.getTraktAccessToken()
+                val clientId = Secrets.TRAKT_CLIENT_ID
+                if (token != null) {
+                    val bearer = "Bearer $token"
+                    val tmdbId = meta.id.removePrefix("tmdb:").toIntOrNull()
+
+                    val body: TraktHistoryBody? = when (meta.type) {
+                        "movie" -> {
+                            if (tmdbId != null) TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, tmdbId, null, null)))) else null
+                        }
+                        "series" -> {
+                            if (tmdbId != null) TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, tmdbId, null, null)))) else null
+                        }
+                        else -> null
+                    }
+
+                    if (body != null) {
+                        TraktClient.api.addItemsToList(bearer, clientId, username, listId, body)
+                        _actionResult.postValue(ActionResult.Success("Added to list"))
+                        Log.d("TraktLists", "Added ${meta.id} to list $listId")
+                    }
+                } else {
+                    _actionResult.postValue(ActionResult.Error("Not authenticated with Trakt"))
+                }
+            } catch (e: Exception) {
+                Log.e("TraktLists", "Failed to add to list", e)
+                _actionResult.postValue(ActionResult.Error("Failed to add to list: ${e.message}"))
+            }
+        }
+    }
+
     // === LIBRARY HEALTH CHECK ===
     data class LibraryHealthReport(
         val traktOnlyMovies: List<String>,
