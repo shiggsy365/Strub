@@ -96,38 +96,7 @@ class DiscoverFragment : Fragment() {
         binding.posterCarousel.isFocusable = true
         binding.posterCarousel.isFocusableInTouchMode = true
 
-        // Add key listener directly to RecyclerView to intercept keys before it processes them
-        binding.rvContent.setOnKeyListener { _, keyCode, event ->
-            if (event.action == KeyEvent.ACTION_DOWN) {
-                when (keyCode) {
-                    KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        // Cycle to next list when down is pressed on carousel
-                        cycleToNextList()
-                        return@setOnKeyListener true
-                    }
-                    KeyEvent.KEYCODE_DPAD_UP -> {
-                        // Focus on actor chips first, then Play button, then Related button
-                        val actorChips = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
-                        val btnPlay = binding.root.findViewById<View>(R.id.btnPlay)
-                        val btnRelated = binding.root.findViewById<View>(R.id.btnRelated)
-
-                        when {
-                            actorChips != null && actorChips.childCount > 0 -> {
-                                // Focus first actor chip
-                                actorChips.getChildAt(0).requestFocus()
-                            }
-                            btnPlay?.visibility == View.VISIBLE -> btnPlay.requestFocus()
-                            btnRelated?.visibility == View.VISIBLE -> btnRelated.requestFocus()
-                            else -> btnPlay?.requestFocus() // Fallback to play even if hidden
-                        }
-                        return@setOnKeyListener true
-                    }
-                    else -> false
-                }
-            } else {
-                false
-            }
-        }
+        // Key handling is done in handleKeyDown() method to avoid duplicate event processing
     }
 
     override fun onResume() {
@@ -321,6 +290,9 @@ class DiscoverFragment : Fragment() {
             .load(item.background ?: item.poster)
             .into(binding.pageBackground)
 
+        // Set title (visibility controlled by logo observer)
+        binding.detailTitle.text = item.name
+
         val formattedDate = try {
             item.releaseDate?.let { dateStr ->
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -366,6 +338,9 @@ class DiscoverFragment : Fragment() {
         updateActorChips(item)
 
         refreshWatchStatus(item)
+
+        // Update play button visibility based on item type and drill-down level
+        updatePlayButtonVisibility()
     }
 
     private fun updateActorChips(item: MetaItem) {
@@ -883,15 +858,15 @@ class DiscoverFragment : Fragment() {
         viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
             when (logoUrl) {
                 "" -> { // Loading
-
+                    binding.detailTitle.visibility = View.GONE
                     binding.detailLogo.visibility = View.GONE
                 }
-                null -> { // No Logo
-
+                null -> { // No Logo - show text title fallback
+                    binding.detailTitle.visibility = View.VISIBLE
                     binding.detailLogo.visibility = View.GONE
                 }
-                else -> { // Has Logo
-
+                else -> { // Has Logo - hide text title
+                    binding.detailTitle.visibility = View.GONE
                     binding.detailLogo.visibility = View.VISIBLE
                     Glide.with(this)
                         .load(logoUrl)
