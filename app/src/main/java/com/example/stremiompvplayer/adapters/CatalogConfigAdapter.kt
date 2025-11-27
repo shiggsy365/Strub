@@ -47,9 +47,8 @@ class CatalogConfigAdapter(
                 onUpdate(item.copy(showInDiscover = isChecked))
             }
 
-            // Show delete button for custom lists (not from tmdb or built-in local lists)
-            val isCustomList = item.addonUrl != "tmdb" &&
-                               item.catalogId !in listOf("continue_movies", "continue_episodes", "next_up")
+            // Show delete button for all lists except built-in local lists
+            val isCustomList = item.catalogId !in listOf("continue_movies", "continue_episodes", "next_up")
             binding.btnDelete.visibility = if (isCustomList && onDelete != null) View.VISIBLE else View.GONE
             binding.btnDelete.setOnClickListener {
                 onDelete?.invoke(item)

@@ -73,7 +73,7 @@
             tools:listitem="@layout/item_tv_channel" />
 
         <!-- Details Pane -->
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/detailsCard"
             android:layout_width="400dp"
             android:layout_height="match_parent"
@@ -81,7 +81,9 @@
             app:cardBackgroundColor="@color/md_theme_surfaceContainer"
             app:cardCornerRadius="@dimen/corner_radius_medium"
             android:nextFocusLeft="@id/rvTVGuide"
-            app:cardElevation="8dp">
+            app:cardElevation="8dp"
+            app:strokeWidth="0dp"
+            app:strokeColor="@android:color/transparent">
 
             <ScrollView
                 android:layout_width="match_parent"
@@ -181,7 +183,7 @@
 
                 </LinearLayout>
             </ScrollView>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 
