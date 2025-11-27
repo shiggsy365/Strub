@@ -380,14 +380,20 @@ class MainActivity : AppCompatActivity() {
             if (sidebar.translationX < -50) {
                 val currentFocus = currentFocus
                 if (currentFocus != null && !isViewInSidebar(currentFocus, sidebar)) {
-                    // We are in content. Check if next focus left is null (wall) or the sidebar itself
-                    val nextFocus = FocusFinder.getInstance().findNextFocus(binding.root as ViewGroup, currentFocus, View.FOCUS_LEFT)
+                    // Check if the focused view is inside a RecyclerView (poster carousel)
+                    val isInRecyclerView = isViewInRecyclerView(currentFocus)
 
-                    if (nextFocus == null || isViewInSidebar(nextFocus, sidebar)) {
-                        // We hit the left edge, show sidebar
-                        showSidebar(sidebar)
-                        return true
+                    if (!isInRecyclerView) {
+                        // We are not in a RecyclerView. Check if next focus left is null (wall) or the sidebar itself
+                        val nextFocus = FocusFinder.getInstance().findNextFocus(binding.root as ViewGroup, currentFocus, View.FOCUS_LEFT)
+
+                        if (nextFocus == null || isViewInSidebar(nextFocus, sidebar)) {
+                            // We hit the left edge, show sidebar
+                            showSidebar(sidebar)
+                            return true
+                        }
                     }
+                    // If in RecyclerView, let it handle horizontal scrolling
                 }
             }
         }
@@ -451,6 +457,17 @@ class MainActivity : AppCompatActivity() {
         if (view == sidebar) return true
         if (view.parent == sidebar) return true
         if (view.parent is View) return isViewInSidebar(view.parent as View, sidebar)
+        return false
+    }
+
+    private fun isViewInRecyclerView(view: View): Boolean {
+        var parent = view.parent
+        while (parent != null) {
+            if (parent is androidx.recyclerview.widget.RecyclerView) {
+                return true
+            }
+            parent = parent.parent
+        }
         return false
     }
 
