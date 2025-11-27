@@ -406,6 +406,7 @@ class MainActivity : AppCompatActivity() {
                     is HomeFragment -> currentFragment.focusSidebar()
                     is DiscoverFragment -> currentFragment.focusSidebar()
                     is LibraryFragment -> currentFragment.focusSidebar()
+                    is com.example.stremiompvplayer.ui.livetv.LiveTVFragment -> currentFragment.focusSidebar()
                 }
                 return true
             }
