@@ -195,8 +195,8 @@ class LiveTVFragment : Fragment() {
                         false
                     }
                     android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                        // Prevent left from opening sidebar when in channel list
-                        true  // Consume the event
+                        // Allow left navigation to re-open main menu
+                        false  // Let the event propagate to open the main menu
                     }
                     else -> false
                 }
@@ -232,9 +232,8 @@ class LiveTVFragment : Fragment() {
                                 true
                             }
                             android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                                // Prevent focus from moving to sidebar when scrolling channels
-                                // Only allow left navigation if we're not at the leftmost position
-                                false  // Let RecyclerView handle scrolling
+                                // Allow left navigation to re-open main menu
+                                false  // Let the event propagate to open the main menu
                             }
                             android.view.KeyEvent.KEYCODE_DPAD_UP,
                             android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
@@ -261,9 +260,15 @@ class LiveTVFragment : Fragment() {
         binding.detailsCard.isFocusableInTouchMode = true
         binding.detailsCard.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus && selectedChannel != null) {
+                // Add red border when focused
+                binding.detailsCard.strokeWidth = 6
+                binding.detailsCard.strokeColor = android.graphics.Color.RED
                 // Expand to show full TV guide when details pane is focused
                 updateDetailsPane(selectedChannel!!, expanded = true)
             } else if (!hasFocus && selectedChannel != null) {
+                // Remove border when not focused
+                binding.detailsCard.strokeWidth = 0
+                binding.detailsCard.strokeColor = android.graphics.Color.TRANSPARENT
                 // Collapse when focus leaves
                 updateDetailsPane(selectedChannel!!, expanded = false)
             }
@@ -547,12 +552,16 @@ class LiveTVFragment : Fragment() {
 
         // Upcoming Programs - show more when expanded (TV guide mode)
         if (expanded) {
-            // Fetch extended program list for TV guide view
+            // Fetch extended program list for next 6 hours
             val currentTime = System.currentTimeMillis()
+            val sixHoursLater = currentTime + (6 * 60 * 60 * 1000) // 6 hours in milliseconds
             val channelPrograms = allPrograms.filter { program ->
                 program.channelId == channel.tvgId || program.channelId == channel.id
             }
-            val extendedPrograms = EPGParser.getUpcomingPrograms(channelPrograms, currentTime, 20)
+            // Get all programs within the next 6 hours
+            val extendedPrograms = channelPrograms
+                .filter { it.startTime >= currentTime && it.startTime <= sixHoursLater }
+                .sortedBy { it.startTime }
             upcomingAdapter.updatePrograms(extendedPrograms)
         } else {
             // Show compact list (5 programs)
@@ -631,10 +640,9 @@ class LiveTVFragment : Fragment() {
                     }
                 }
                 KeyEvent.KEYCODE_DPAD_LEFT -> {
-                    // Prevent left key from moving to sidebar when in channel list
-                    if (binding.rvTVGuide.hasFocus() || binding.rvTVGuide.focusedChild != null) {
-                        return true  // Consume the event to prevent sidebar activation
-                    }
+                    // Allow left navigation to re-open main menu from channel list
+                    // No longer blocking left navigation
+                    return false  // Let the event propagate to open the main menu
                 }
             }
         }
