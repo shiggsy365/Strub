@@ -255,7 +255,7 @@ class HomeFragment : Fragment() {
                 val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
                 firstView?.requestFocus()
             }
-        }, 200)
+        }, 1000)
     }
 
     private fun updateDetailsPane(item: MetaItem) {
