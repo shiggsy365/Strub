@@ -10,6 +10,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.C
+import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.CaptionStyleCompat
 import com.example.stremiompvplayer.databinding.ActivityPlayerBinding
@@ -362,10 +365,18 @@ class PlayerActivity : AppCompatActivity() {
                                 binding.loadingProgress.visibility = View.GONE
                                 // Apply subtitle styling when player is ready
                                 applySubtitleStyling()
+                                // Auto-select English tracks when player is ready
+                                selectEnglishTracks()
                             }
                             Player.STATE_ENDED -> { /* Finish activity or play next */ }
                             Player.STATE_IDLE -> binding.loadingProgress.visibility = View.GONE
                         }
+                    }
+
+                    override fun onTracksChanged(tracks: Tracks) {
+                        // Called when tracks become available or change
+                        // Re-apply English track selection when tracks change
+                        selectEnglishTracks()
                     }
 
                     override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
@@ -415,25 +426,13 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun saveProgress() {
-        if (usingVLC) {
-            // Save VLC progress
-            vlcPlayer?.let { vlc ->
-                val position = vlc.time
-                val duration = vlc.length
+        // Save ExoPlayer progress
+        player?.let { exoPlayer ->
+            val position = exoPlayer.currentPosition
+            val duration = exoPlayer.duration
 
-                if (currentMeta != null && duration > 0) {
-                    viewModel.saveWatchProgress(currentMeta!!, position, duration)
-                }
-            }
-        } else {
-            // Save ExoPlayer progress
-            player?.let { exoPlayer ->
-                val position = exoPlayer.currentPosition
-                val duration = exoPlayer.duration
-
-                if (currentMeta != null && duration > 0) {
-                    viewModel.saveWatchProgress(currentMeta!!, position, duration)
-                }
+            if (currentMeta != null && duration > 0) {
+                viewModel.saveWatchProgress(currentMeta!!, position, duration)
             }
         }
     }
@@ -482,6 +481,57 @@ class PlayerActivity : AppCompatActivity() {
             Log.d("PlayerActivity", "Applied subtitle styling - Size: $textSize, Color: $textColor, Edge: $edgeType")
         } catch (e: Exception) {
             Log.e("PlayerActivity", "Error applying subtitle styling", e)
+        }
+    }
+
+    /**
+     * Automatically select first English subtitle and English audio track
+     */
+    private fun selectEnglishTracks() {
+        player?.let { exoPlayer ->
+            try {
+                val currentTracks = exoPlayer.currentTracks
+
+                Log.d("PlayerActivity", "=== AUTO TRACK SELECTION START ===")
+                Log.d("PlayerActivity", "Total track groups: ${currentTracks.groups.size}")
+
+                // Build track selection parameters
+                val trackSelectionParameters = exoPlayer.trackSelectionParameters
+                    .buildUpon()
+                    .setPreferredAudioLanguage("eng")  // Prefer English audio
+                    .setPreferredTextLanguage("eng")   // Prefer English subtitles
+                    .setSelectUndeterminedTextLanguage(true)  // Also select undetermined language subtitles
+                    .build()
+
+                exoPlayer.trackSelectionParameters = trackSelectionParameters
+
+                // Log available tracks for debugging
+                currentTracks.groups.forEachIndexed { groupIndex, trackGroup ->
+                    val trackType = trackGroup.type
+                    val trackTypeName = when (trackType) {
+                        C.TRACK_TYPE_AUDIO -> "AUDIO"
+                        C.TRACK_TYPE_TEXT -> "SUBTITLE"
+                        C.TRACK_TYPE_VIDEO -> "VIDEO"
+                        else -> "OTHER($trackType)"
+                    }
+
+                    Log.d("PlayerActivity", "Track group $groupIndex: $trackTypeName")
+
+                    for (i in 0 until trackGroup.length) {
+                        val format = trackGroup.getTrackFormat(i)
+                        val isSelected = trackGroup.isTrackSelected(i)
+                        val language = format.language ?: "unknown"
+                        val label = format.label ?: "no label"
+
+                        Log.d("PlayerActivity", "  Track $i: Lang=$language, Label=$label, Selected=$isSelected")
+                    }
+                }
+
+                Log.i("PlayerActivity", "✓ Set track preferences to English audio and subtitles")
+                Log.d("PlayerActivity", "=== AUTO TRACK SELECTION END ===")
+            } catch (e: Exception) {
+                Log.e("PlayerActivity", "Error selecting English tracks", e)
+            }
         }
     }
 
