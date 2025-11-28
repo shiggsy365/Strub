@@ -14,7 +14,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
@@ -360,27 +359,6 @@ class HomeFragment : Fragment() {
             // If empty, the observer will trigger another cycle
         }, 1000)
     }
-
-
-    private fun openDetails(item: MetaItem) {
-        val type = when {
-            item.type == "episode" -> {
-                val parts = item.id.split(":")
-                if (parts.size >= 2) "series" else item.type
-            }
-            else -> item.type
-        }
-        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-            putExtra("metaId", item.id)
-            putExtra("title", item.name)
-            putExtra("poster", item.poster)
-            putExtra("background", item.background)
-            putExtra("description", item.description)
-            putExtra("type", type)
-        }
-        startActivity(intent)
-    }
-
 
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->

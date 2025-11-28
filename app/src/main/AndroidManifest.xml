@@ -73,20 +73,6 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
 
-        <!-- Details View -->
-        <activity
-            android:name=".DetailsActivity2"
-            android:exported="false"
-            android:screenOrientation="landscape"
-            android:theme="@style/Theme.StremioMPVPlayer" />
-
-        <!-- Similar Content View -->
-        <activity
-            android:name=".SimilarActivity"
-            android:exported="false"
-            android:screenOrientation="landscape"
-            android:theme="@style/Theme.StremioMPVPlayer" />
-
         <!-- YouTube Trailer Player -->
         <activity
             android:name=".YouTubePlayerActivity"
