@@ -295,14 +295,23 @@ class PlayerActivity : AppCompatActivity() {
 
                 // Fetch and add subtitles asynchronously
                 lifecycleScope.launch {
+                    Log.d("PlayerActivity", "=== SUBTITLE FETCH START ===")
+                    Log.d("PlayerActivity", "Meta: ${currentMeta?.name} (ID: ${currentMeta?.id}, Type: ${currentMeta?.type})")
+
                     val subtitles = currentMeta?.let { meta ->
                         try {
-                            viewModel.fetchSubtitles(meta)
+                            Log.d("PlayerActivity", "Calling viewModel.fetchSubtitles()...")
+                            val result = viewModel.fetchSubtitles(meta)
+                            Log.d("PlayerActivity", "fetchSubtitles() returned ${result.size} subtitles")
+                            result
                         } catch (e: Exception) {
-                            Log.e("PlayerActivity", "Error fetching subtitles", e)
+                            Log.e("PlayerActivity", "Error fetching subtitles: ${e.message}", e)
+                            e.printStackTrace()
                             emptyList()
                         }
                     } ?: emptyList()
+
+                    Log.d("PlayerActivity", "Processing ${subtitles.size} subtitles for ExoPlayer")
 
                     // Build MediaItem with subtitles
                     val subtitleConfigurations = subtitles.map { subtitle ->
@@ -316,6 +325,8 @@ class PlayerActivity : AppCompatActivity() {
                                 MimeTypes.TEXT_VTT
                             }
                         }
+
+                        Log.d("PlayerActivity", "Creating subtitle config: ${subtitle.formattedTitle} ($mimeType)")
 
                         MediaItem.SubtitleConfiguration.Builder(
                             android.net.Uri.parse(subtitle.url)
@@ -333,13 +344,17 @@ class PlayerActivity : AppCompatActivity() {
                         .build()
 
                     if (subtitles.isNotEmpty()) {
-                        Log.d("PlayerActivity", "Added ${subtitles.size} English subtitles to player")
-                        subtitles.forEach { subtitle ->
-                            Log.d("PlayerActivity", "Subtitle: ${subtitle.formattedTitle} - ${subtitle.url}")
+                        Log.i("PlayerActivity", "✓ Successfully added ${subtitles.size} English subtitles to ExoPlayer")
+                        subtitles.forEachIndexed { index, subtitle ->
+                            Log.i("PlayerActivity", "  [$index] ${subtitle.formattedTitle}")
+                            Log.d("PlayerActivity", "       URL: ${subtitle.url}")
                         }
                     } else {
-                        Log.w("PlayerActivity", "No subtitles found for ${currentMeta?.name ?: "unknown"}")
+                        Log.w("PlayerActivity", "⚠ No subtitles found for ${currentMeta?.name ?: "unknown"}")
+                        Log.w("PlayerActivity", "   Check AIOStreams manifest URL configuration and IMDb ID lookup")
                     }
+
+                    Log.d("PlayerActivity", "=== SUBTITLE FETCH END ===")
 
                     // 3. Set media and prepare (on main thread)
                     withContext(Dispatchers.Main) {
