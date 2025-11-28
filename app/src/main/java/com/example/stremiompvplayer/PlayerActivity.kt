@@ -10,6 +10,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.decoder.ffmpeg.FfmpegAudioRenderer
+import androidx.media3.decoder.ffmpeg.FfmpegVideoRenderer
 import com.example.stremiompvplayer.databinding.ActivityPlayerBinding
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.models.Stream
@@ -262,8 +265,11 @@ class PlayerActivity : AppCompatActivity() {
     @OptIn(UnstableApi::class) private fun initializePlayer() {
         if (player != null) return
 
-        // 1. Create the player
-        player = ExoPlayer.Builder(this)
+        // 1. Create the player with FFmpeg extension for better codec support
+        val renderersFactory = DefaultRenderersFactory(this)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+
+        player = ExoPlayer.Builder(this, renderersFactory)
             .setSeekForwardIncrementMs(10000)
             .setSeekBackIncrementMs(10000)
             .build()
@@ -350,9 +356,22 @@ class PlayerActivity : AppCompatActivity() {
                         Log.e("PlayerActivity", "Playback error: ${error.message}", error)
                         Log.e("PlayerActivity", "Error code: ${error.errorCode}")
                         Log.e("PlayerActivity", "Stream URL: ${currentStream?.url}")
+
+                        // Provide user-friendly error message
+                        val errorMessage = when {
+                            error.message?.contains("Invalid NAL length") == true ->
+                                "Video file appears to be corrupted or incompatible. Try selecting a different stream quality."
+                            error.message?.contains("Source error") == true ->
+                                "Unable to load video stream. The source may be unavailable or the file format is not supported."
+                            error.errorCode == 3001 ->
+                                "Stream source error. Try selecting a different quality or stream provider."
+                            else ->
+                                "Playback error: ${error.message}"
+                        }
+
                         android.widget.Toast.makeText(
                             this@PlayerActivity,
-                            "Playback error: ${error.message}",
+                            errorMessage,
                             android.widget.Toast.LENGTH_LONG
                         ).show()
                     }
