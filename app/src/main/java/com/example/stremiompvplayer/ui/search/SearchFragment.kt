@@ -365,6 +365,11 @@ class SearchFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
+            // Don't update if we're in drill-down mode
+            if (displayModule.currentDrillDownLevel != ResultsDisplayModule.DrillDownLevel.CATALOG) {
+                return@observe
+            }
+
             // Combined results sorted by popularity
             if (currentSearchQuery != null) {
                 // Normalize "tv" type to "series" for consistency
