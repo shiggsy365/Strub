@@ -319,6 +319,68 @@ class SharedPreferencesManager private constructor(context: Context) {
         }
     }
 
+    // --- SUBTITLE STYLING PREFERENCES ---
+    fun getSubtitleTextSize(): Float {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getFloat("subtitle_text_size_$userId", 1.0f) // Default: medium (1.0)
+    }
+
+    fun setSubtitleTextSize(size: Float) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putFloat("subtitle_text_size_$userId", size).apply()
+    }
+
+    fun getSubtitleTextColor(): Int {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getInt("subtitle_text_color_$userId", android.graphics.Color.WHITE)
+    }
+
+    fun setSubtitleTextColor(color: Int) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putInt("subtitle_text_color_$userId", color).apply()
+    }
+
+    fun getSubtitleBackgroundColor(): Int {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getInt("subtitle_background_color_$userId", android.graphics.Color.TRANSPARENT)
+    }
+
+    fun setSubtitleBackgroundColor(color: Int) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putInt("subtitle_background_color_$userId", color).apply()
+    }
+
+    fun getSubtitleWindowColor(): Int {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getInt("subtitle_window_color_$userId", android.graphics.Color.TRANSPARENT)
+    }
+
+    fun setSubtitleWindowColor(color: Int) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putInt("subtitle_window_color_$userId", color).apply()
+    }
+
+    fun getSubtitleEdgeType(): Int {
+        val userId = getCurrentUserId() ?: "default"
+        // Default: EDGE_TYPE_OUTLINE (1)
+        return prefs.getInt("subtitle_edge_type_$userId", 1)
+    }
+
+    fun setSubtitleEdgeType(edgeType: Int) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putInt("subtitle_edge_type_$userId", edgeType).apply()
+    }
+
+    fun getSubtitleEdgeColor(): Int {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getInt("subtitle_edge_color_$userId", android.graphics.Color.BLACK)
+    }
+
+    fun setSubtitleEdgeColor(color: Int) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putInt("subtitle_edge_color_$userId", color).apply()
+    }
+
     // Export all profile settings to JSON
     fun exportProfileSettings(): String {
         val tmdbAccountId = getTMDBAccountId()

@@ -352,6 +352,24 @@
                     android:visibility="gone"
                     tools:text="Parsing EPG data..." />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Subtitle Settings"
+                    android:textAppearance="@style/TextAppearance.App.TitleMedium"
+                    android:textColor="@color/md_theme_primary"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="8dp" />
+
+                <Button
+                    android:id="@+id/btnSubtitleSettings"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Customize Subtitles"
+                    android:textColor="@android:color/white"
+                    android:focusable="true" />
+
             </LinearLayout>
         </ScrollView>
     </com.google.android.material.card.MaterialCardView>

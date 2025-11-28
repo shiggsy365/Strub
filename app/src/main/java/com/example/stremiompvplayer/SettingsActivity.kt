@@ -80,6 +80,7 @@ class SettingsActivity : AppCompatActivity() {
         setupTraktSection()
         setupAIOStreamsSection()
         setupLiveTVSection()
+        setupSubtitleSettings()
         setupCatalogList()
         setupObservers()
 
@@ -938,6 +939,247 @@ class SettingsActivity : AppCompatActivity() {
                 android.util.Log.e("Settings", "Error clearing TV settings mappings", e)
             }
         }
+    }
+
+    // ==============================
+    //      SUBTITLE SETTINGS
+    // ==============================
+
+    private fun setupSubtitleSettings() {
+        binding.btnSubtitleSettings.setOnClickListener {
+            showSubtitleCustomizationDialog()
+        }
+    }
+
+    private fun showSubtitleCustomizationDialog() {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 16, 48, 16)
+        }
+
+        // Current values
+        val currentTextSize = prefsManager.getSubtitleTextSize()
+        val currentTextColor = prefsManager.getSubtitleTextColor()
+        val currentBackgroundColor = prefsManager.getSubtitleBackgroundColor()
+        val currentWindowColor = prefsManager.getSubtitleWindowColor()
+        val currentEdgeType = prefsManager.getSubtitleEdgeType()
+        val currentEdgeColor = prefsManager.getSubtitleEdgeColor()
+
+        // Text Size Section
+        val textSizeLabel = TextView(this).apply {
+            text = "Text Size"
+            textSize = 16f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(0, 0, 0, 8)
+        }
+
+        val textSizeValue = TextView(this).apply {
+            val sizeText = when {
+                currentTextSize < 0.75f -> "Very Small"
+                currentTextSize < 1.0f -> "Small"
+                currentTextSize == 1.0f -> "Medium"
+                currentTextSize < 1.5f -> "Large"
+                else -> "Very Large"
+            }
+            text = sizeText
+            textSize = 14f
+            setTextColor(getColor(R.color.text_secondary))
+            setPadding(0, 0, 0, 12)
+        }
+
+        val sizeVerySmall = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Very Small"
+            setOnClickListener {
+                prefsManager.setSubtitleTextSize(0.5f)
+                textSizeValue.text = "Very Small"
+            }
+        }
+
+        val sizeSmall = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Small"
+            setOnClickListener {
+                prefsManager.setSubtitleTextSize(0.75f)
+                textSizeValue.text = "Small"
+            }
+        }
+
+        val sizeMedium = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Medium"
+            setOnClickListener {
+                prefsManager.setSubtitleTextSize(1.0f)
+                textSizeValue.text = "Medium"
+            }
+        }
+
+        val sizeLarge = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Large"
+            setOnClickListener {
+                prefsManager.setSubtitleTextSize(1.25f)
+                textSizeValue.text = "Large"
+            }
+        }
+
+        val sizeVeryLarge = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Very Large"
+            setOnClickListener {
+                prefsManager.setSubtitleTextSize(1.5f)
+                textSizeValue.text = "Very Large"
+            }
+        }
+
+        val sizeButtonsRow1 = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(sizeVerySmall, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(sizeSmall, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(sizeMedium, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
+        val sizeButtonsRow2 = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(sizeLarge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(sizeVeryLarge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
+        // Text Color Section
+        val textColorLabel = TextView(this).apply {
+            text = "Text Color"
+            textSize = 16f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(0, 24, 0, 12)
+        }
+
+        val colorWhite = com.google.android.material.button.MaterialButton(this).apply {
+            text = "White"
+            setOnClickListener { prefsManager.setSubtitleTextColor(android.graphics.Color.WHITE) }
+        }
+
+        val colorYellow = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Yellow"
+            setOnClickListener { prefsManager.setSubtitleTextColor(android.graphics.Color.YELLOW) }
+        }
+
+        val colorCyan = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Cyan"
+            setOnClickListener { prefsManager.setSubtitleTextColor(android.graphics.Color.CYAN) }
+        }
+
+        val colorGreen = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Green"
+            setOnClickListener { prefsManager.setSubtitleTextColor(android.graphics.Color.GREEN) }
+        }
+
+        val textColorButtons = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(colorWhite, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(colorYellow, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(colorCyan, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(colorGreen, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
+        // Background Color Section
+        val bgColorLabel = TextView(this).apply {
+            text = "Background"
+            textSize = 16f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(0, 24, 0, 12)
+        }
+
+        val bgTransparent = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Transparent"
+            setOnClickListener { prefsManager.setSubtitleBackgroundColor(android.graphics.Color.TRANSPARENT) }
+        }
+
+        val bgSemiBlack = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Semi-Black"
+            setOnClickListener {
+                prefsManager.setSubtitleBackgroundColor(android.graphics.Color.argb(128, 0, 0, 0))
+            }
+        }
+
+        val bgBlack = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Black"
+            setOnClickListener { prefsManager.setSubtitleBackgroundColor(android.graphics.Color.BLACK) }
+        }
+
+        val bgColorButtons = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(bgTransparent, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(bgSemiBlack, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(bgBlack, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
+        // Edge Type Section
+        val edgeTypeLabel = TextView(this).apply {
+            text = "Edge Style"
+            textSize = 16f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(0, 24, 0, 12)
+        }
+
+        val edgeNone = com.google.android.material.button.MaterialButton(this).apply {
+            text = "None"
+            setOnClickListener { prefsManager.setSubtitleEdgeType(0) } // EDGE_TYPE_NONE
+        }
+
+        val edgeOutline = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Outline"
+            setOnClickListener { prefsManager.setSubtitleEdgeType(1) } // EDGE_TYPE_OUTLINE
+        }
+
+        val edgeDropShadow = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Shadow"
+            setOnClickListener { prefsManager.setSubtitleEdgeType(2) } // EDGE_TYPE_DROP_SHADOW
+        }
+
+        val edgeRaised = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Raised"
+            setOnClickListener { prefsManager.setSubtitleEdgeType(3) } // EDGE_TYPE_RAISED
+        }
+
+        val edgeTypeButtons = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(edgeNone, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(edgeOutline, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(edgeDropShadow, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(edgeRaised, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
+        // Reset to Defaults Button
+        val resetButton = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Reset to Defaults"
+            setPadding(0, 24, 0, 0)
+            setOnClickListener {
+                prefsManager.setSubtitleTextSize(1.0f)
+                prefsManager.setSubtitleTextColor(android.graphics.Color.WHITE)
+                prefsManager.setSubtitleBackgroundColor(android.graphics.Color.TRANSPARENT)
+                prefsManager.setSubtitleWindowColor(android.graphics.Color.TRANSPARENT)
+                prefsManager.setSubtitleEdgeType(1)
+                prefsManager.setSubtitleEdgeColor(android.graphics.Color.BLACK)
+                textSizeValue.text = "Medium"
+                Toast.makeText(this@SettingsActivity, "Subtitle settings reset to defaults", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Add all views to container
+        container.addView(textSizeLabel)
+        container.addView(textSizeValue)
+        container.addView(sizeButtonsRow1)
+        container.addView(sizeButtonsRow2)
+        container.addView(textColorLabel)
+        container.addView(textColorButtons)
+        container.addView(bgColorLabel)
+        container.addView(bgColorButtons)
+        container.addView(edgeTypeLabel)
+        container.addView(edgeTypeButtons)
+        container.addView(resetButton)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Customize Subtitles")
+            .setView(container)
+            .setPositiveButton("Done") { _, _ ->
+                Toast.makeText(this, "Subtitle settings saved", Toast.LENGTH_SHORT).show()
+            }
+            .show()
     }
 
     // ==============================
