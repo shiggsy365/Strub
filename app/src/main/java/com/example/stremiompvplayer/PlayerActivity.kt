@@ -1,5 +1,6 @@
 package com.example.stremiompvplayer
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
@@ -28,6 +29,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.util.Log
 import kotlinx.coroutines.isActive
+import org.videolan.libvlc.LibVLC
+import org.videolan.libvlc.Media
+import org.videolan.libvlc.MediaPlayer
 
 class PlayerActivity : AppCompatActivity() {
 
@@ -417,12 +421,25 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun saveProgress() {
-        player?.let { exoPlayer ->
-            val position = exoPlayer.currentPosition
-            val duration = exoPlayer.duration
+        if (usingVLC) {
+            // Save VLC progress
+            vlcPlayer?.let { vlc ->
+                val position = vlc.time
+                val duration = vlc.length
 
-            if (currentMeta != null && duration > 0) {
-                viewModel.saveWatchProgress(currentMeta!!, position, duration)
+                if (currentMeta != null && duration > 0) {
+                    viewModel.saveWatchProgress(currentMeta!!, position, duration)
+                }
+            }
+        } else {
+            // Save ExoPlayer progress
+            player?.let { exoPlayer ->
+                val position = exoPlayer.currentPosition
+                val duration = exoPlayer.duration
+
+                if (currentMeta != null && duration > 0) {
+                    viewModel.saveWatchProgress(currentMeta!!, position, duration)
+                }
             }
         }
     }
@@ -449,6 +466,10 @@ class PlayerActivity : AppCompatActivity() {
         // Mark that we're using VLC
         usingVLC = true
 
+        // Hide ExoPlayer view, show VLC surface
+        binding.playerView.visibility = View.GONE
+        binding.vlcSurfaceView.visibility = View.VISIBLE
+
         // Initialize VLC player
         initializeVLCPlayer()
     }
@@ -467,8 +488,8 @@ class PlayerActivity : AppCompatActivity() {
             libVLC = LibVLC(this, options)
             vlcPlayer = MediaPlayer(libVLC)
 
-            // Attach to the player view surface
-            vlcPlayer?.attachViews(binding.playerView.videoSurfaceView as android.view.SurfaceView, null, false, false)
+            // Attach to the dedicated VLC surface view
+            vlcPlayer?.attachViews(binding.vlcSurfaceView, null, false, false)
 
             // Set media
             val streamUrl = currentStream?.url ?: ""

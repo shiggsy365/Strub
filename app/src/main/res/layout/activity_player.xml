@@ -11,6 +11,7 @@
         android:background="#000000"
         android:keepScreenOn="true">
 
+        <!-- ExoPlayer View -->
         <androidx.media3.ui.PlayerView
             android:id="@+id/playerView"
             android:layout_width="match_parent"
@@ -23,6 +24,14 @@
             app:show_fastforward_button="true"
             app:show_rewind_button="true"
             />
+
+        <!-- VLC Player Surface View (hidden by default) -->
+        <SurfaceView
+            android:id="@+id/vlcSurfaceView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:visibility="gone" />
 
         <ProgressBar
             android:id="@+id/loadingProgress"
