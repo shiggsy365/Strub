@@ -562,6 +562,7 @@ class LibraryFragment : Fragment() {
     private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {
         val intent = Intent(requireContext(), com.example.stremiompvplayer.PlayerActivity::class.java).apply {
             putExtra("stream", stream)
+            putExtra("meta", currentSelectedItem)  // Pass full MetaItem for subtitles
             putExtra("title", currentSelectedItem?.name ?: "Unknown")
             putExtra("metaId", currentSelectedItem?.id)
         }

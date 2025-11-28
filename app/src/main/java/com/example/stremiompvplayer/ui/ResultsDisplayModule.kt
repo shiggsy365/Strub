@@ -328,6 +328,7 @@ class ResultsDisplayModule(
     private fun playStream(stream: Stream) {
         val intent = Intent(fragment.requireContext(), PlayerActivity::class.java).apply {
             putExtra("stream", stream)
+            putExtra("meta", currentSelectedItem)  // Pass full MetaItem for subtitles
             putExtra("title", currentSelectedItem?.name ?: "Unknown")
             putExtra("metaId", currentSelectedItem?.id)
         }
