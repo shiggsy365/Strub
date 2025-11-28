@@ -107,13 +107,18 @@ class SearchFragment : Fragment() {
             btnPlay = binding.btnPlay,
             btnTrailer = null,  // Search doesn't have trailer button
             btnRelated = binding.btnRelated,
-            enableDrillDown = false,  // Search doesn't use drill-down
-            useGridLayout = true,      // Search uses grid layout
+            enableDrillDown = true,  // Enable drill-down for series navigation
+            useGridLayout = true,
             showEpisodeDescription = false
         )
         displayModule = ResultsDisplayModule(this, viewModel, config)
 
         // Setup callbacks
+        displayModule.onActorClicked = { personId, actorName ->
+            viewModel.loadPersonCredits(personId)
+            // Label update could be added if needed
+        }
+
         displayModule.onRelatedContentLoaded = { similarContent ->
             // Update search results with related content
             movieResults = similarContent
@@ -220,20 +225,7 @@ class SearchFragment : Fragment() {
     private fun setupRecyclerView() {
         searchAdapter = PosterAdapter(
             items = emptyList(),
-            onClick = { item ->
-                displayModule.updateDetailsPane(item)
-                // For series, allow drilling into episodes via DetailsActivity2
-                // For movies, can play directly or go to details
-                val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-                    putExtra("metaId", item.id)
-                    putExtra("title", item.name)
-                    putExtra("poster", item.poster)
-                    putExtra("background", item.background)
-                    putExtra("description", item.description)
-                    putExtra("type", item.type)
-                }
-                startActivity(intent)
-            },
+            onClick = { item -> displayModule.onContentClicked(item) },  // Use standard navigation
             onLongClick = { item ->
                 val pos = searchAdapter.getItemPosition(item)
                 val holder = binding.resultsRecycler.findViewHolderForAdapterPosition(pos)
@@ -332,6 +324,11 @@ class SearchFragment : Fragment() {
     fun performSearch(query: String) {
         if (query.isBlank()) return
         currentSearchQuery = query
+
+        // Reset drill-down state when performing new search
+        displayModule.currentDrillDownLevel = ResultsDisplayModule.DrillDownLevel.CATALOG
+        displayModule.currentSeriesId = null
+        displayModule.currentSeasonNumber = null
 
         lifecycleScope.launch {
             try {
@@ -443,6 +440,51 @@ class SearchFragment : Fragment() {
                 }
             }
         }
+
+        // Observe series meta details for drill-down navigation
+        viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
+            if (meta != null && meta.type == "series" && displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SERIES) {
+                // Display seasons in the grid
+                val seasons = meta.videos?.mapNotNull { video ->
+                    video.season?.let { seasonNum ->
+                        MetaItem(
+                            id = "${meta.id}:$seasonNum",
+                            type = "season",
+                            name = video.title,
+                            poster = video.thumbnail,
+                            background = meta.background,
+                            description = "Season $seasonNum"
+                        )
+                    }
+                } ?: emptyList()
+
+                searchAdapter.updateData(seasons)
+                if (seasons.isNotEmpty()) {
+                    displayModule.updateDetailsPane(seasons[0])
+                }
+            }
+        }
+
+        // Observe season episodes for drill-down navigation
+        viewModel.seasonEpisodes.observe(viewLifecycleOwner) { episodes ->
+            if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SEASON && episodes.isNotEmpty()) {
+                searchAdapter.updateData(episodes)
+                displayModule.updateDetailsPane(episodes[0])
+            }
+        }
+    }
+
+    fun handleBackPress(): Boolean {
+        val handled = displayModule.handleBackPress()
+        if (handled) {
+            // If going back to catalog, reload search results
+            if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.CATALOG) {
+                currentSearchQuery?.let { query ->
+                    performSearch(query)
+                }
+            }
+        }
+        return handled
     }
 
     fun setSearchText(text: String) { binding.searchEditText.setText(text) }
