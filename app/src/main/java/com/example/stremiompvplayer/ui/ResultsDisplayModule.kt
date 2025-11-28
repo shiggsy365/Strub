@@ -189,14 +189,8 @@ class ResultsDisplayModule(
             // Movie: always show play button
             currentSelectedItem?.type == "movie" && currentDrillDownLevel == DrillDownLevel.CATALOG -> true
 
-            // Episode: show play button (at season level for drill-down, or always for non-drill-down)
-            currentSelectedItem?.type == "episode" -> {
-                if (config.enableDrillDown) {
-                    currentDrillDownLevel == DrillDownLevel.SEASON
-                } else {
-                    true
-                }
-            }
+            // Episode: always show play button (episodes are already playable content)
+            currentSelectedItem?.type == "episode" -> true
 
             // Series: only show at season level (episodes)
             config.enableDrillDown && currentDrillDownLevel == DrillDownLevel.SEASON -> true

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.stremiompvplayer.MainActivity
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentDiscoverBinding
@@ -171,9 +172,18 @@ class DiscoverFragment : Fragment() {
         // Save current focus before leaving fragment
         val currentView = view?.findFocus()
         if (currentView != null) {
-            val position = binding.rvContent.getChildAdapterPosition(currentView)
-            if (position != RecyclerView.NO_POSITION) {
-                focusMemoryManager.saveFocus(fragmentKey, currentView, position)
+            // Find the RecyclerView item view (walk up the view hierarchy)
+            var itemView = currentView
+            while (itemView != null && itemView.parent != binding.rvContent) {
+                itemView = itemView.parent as? android.view.View
+            }
+
+            // Only try to get position if we found a valid RecyclerView child
+            if (itemView != null && itemView.parent == binding.rvContent) {
+                val position = binding.rvContent.getChildAdapterPosition(itemView)
+                if (position != RecyclerView.NO_POSITION) {
+                    focusMemoryManager.saveFocus(fragmentKey, currentView, position)
+                }
             }
         }
     }

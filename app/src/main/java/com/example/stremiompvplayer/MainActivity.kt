@@ -18,9 +18,7 @@ import com.example.stremiompvplayer.databinding.ActivityMainBinding
 import com.example.stremiompvplayer.ui.discover.DiscoverFragment
 import com.example.stremiompvplayer.ui.library.LibraryFragment
 import com.example.stremiompvplayer.ui.livetv.LiveTVFragment
-import com.example.stremiompvplayer.ui.movies.MoviesFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
-import com.example.stremiompvplayer.ui.series.SeriesFragment
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.utils.FocusMemoryManager
 import com.example.stremiompvplayer.utils.TraktSyncScheduler
@@ -341,7 +339,6 @@ class MainActivity : AppCompatActivity() {
             is LibraryFragment -> focusMemoryManager.getFragmentKey("library", fragment.arguments?.getString("type") ?: "movie")
             is SearchFragment -> "search"
             is LiveTVFragment -> "livetv"
-            is SeriesFragment -> focusMemoryManager.getFragmentKey("series", fragment.arguments?.getString("seriesId") ?: "unknown")
             else -> fragment.javaClass.simpleName
         }
 
@@ -490,7 +487,6 @@ class MainActivity : AppCompatActivity() {
 
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
             // Allow specific fragments to intercept back press
-            if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is LibraryFragment && currentFragment.handleBackPress()) return true
 

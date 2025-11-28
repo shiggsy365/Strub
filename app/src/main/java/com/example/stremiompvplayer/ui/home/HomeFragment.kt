@@ -126,10 +126,19 @@ class HomeFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         val currentView = view?.findFocus()
-        if (currentView != null && currentView.parent == binding.rvContent) {
-            val position = binding.rvContent.getChildAdapterPosition(currentView)
-            if (position != RecyclerView.NO_POSITION) {
-                focusMemoryManager.saveFocus(fragmentKey, currentView, position)
+        if (currentView != null) {
+            // Find the RecyclerView item view (walk up the view hierarchy)
+            var itemView = currentView
+            while (itemView != null && itemView.parent != binding.rvContent) {
+                itemView = itemView.parent as? android.view.View
+            }
+
+            // Only try to get position if we found a valid RecyclerView child
+            if (itemView != null && itemView.parent == binding.rvContent) {
+                val position = binding.rvContent.getChildAdapterPosition(itemView)
+                if (position != RecyclerView.NO_POSITION) {
+                    focusMemoryManager.saveFocus(fragmentKey, currentView, position)
+                }
             }
         }
     }

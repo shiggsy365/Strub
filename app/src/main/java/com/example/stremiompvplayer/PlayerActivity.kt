@@ -346,6 +346,17 @@ class PlayerActivity : AppCompatActivity() {
                         }
                     }
 
+                    override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                        Log.e("PlayerActivity", "Playback error: ${error.message}", error)
+                        Log.e("PlayerActivity", "Error code: ${error.errorCode}")
+                        Log.e("PlayerActivity", "Stream URL: ${currentStream?.url}")
+                        android.widget.Toast.makeText(
+                            this@PlayerActivity,
+                            "Playback error: ${error.message}",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                    }
+
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         currentMeta?.let { meta ->
                             val duration = player?.duration ?: 0L
@@ -375,12 +386,15 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        // Stop playback, scrobble, and return to the previous activity
-        // onPause() will be called automatically, which handles:
+        // Stop playback and return to the previous activity
+        // onStop() will be called automatically, which handles:
         // 1. Saving progress
         // 2. Releasing player
         // 3. Scrobbling to Trakt
+
+        // Just finish this activity to return to the calling activity
         finish()
     }
 
