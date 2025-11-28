@@ -350,9 +350,22 @@ class PlayerActivity : AppCompatActivity() {
                         Log.e("PlayerActivity", "Playback error: ${error.message}", error)
                         Log.e("PlayerActivity", "Error code: ${error.errorCode}")
                         Log.e("PlayerActivity", "Stream URL: ${currentStream?.url}")
+
+                        // Provide user-friendly error message
+                        val errorMessage = when {
+                            error.message?.contains("Invalid NAL length") == true ->
+                                "Video file appears to be corrupted or incompatible. Try selecting a different stream quality."
+                            error.message?.contains("Source error") == true ->
+                                "Unable to load video stream. The source may be unavailable or the file format is not supported."
+                            error.errorCode == 3001 ->
+                                "Stream source error. Try selecting a different quality or stream provider."
+                            else ->
+                                "Playback error: ${error.message}"
+                        }
+
                         android.widget.Toast.makeText(
                             this@PlayerActivity,
-                            "Playback error: ${error.message}",
+                            errorMessage,
                             android.widget.Toast.LENGTH_LONG
                         ).show()
                     }
