@@ -718,7 +718,7 @@ class LiveTVFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         // Remove any pending callbacks to prevent crashes
-        _binding?.root?.removeCallbacksAndMessages(null)
+        _binding?.root?.handler?.removeCallbacksAndMessages(null)
         _binding = null
     }
 }
