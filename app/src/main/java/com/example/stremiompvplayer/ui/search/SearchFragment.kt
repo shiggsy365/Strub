@@ -72,9 +72,6 @@ class SearchFragment : Fragment() {
     private lateinit var contentAdapter: PosterAdapter
     private lateinit var searchAdapter: PosterAdapter
     private lateinit var displayModule: ResultsDisplayModule
-    private var movieResults = listOf<MetaItem>()
-    private var seriesResults = listOf<MetaItem>()
-    private var currentResultIndex = 0  // 0 for movies, 1 for series
     private var currentSearchQuery: String? = null
 
     private var detailsUpdateJob: Job? = null
@@ -89,7 +86,6 @@ class SearchFragment : Fragment() {
         setupDisplayModule()
         setupRecyclerView()
         setupObservers()
-        setupKeyHandling()
         setupSearchListeners()
         binding.searchEditText.requestFocus()
     }
@@ -121,10 +117,10 @@ class SearchFragment : Fragment() {
 
         displayModule.onRelatedContentLoaded = { similarContent ->
             // Update search results with related content
-            movieResults = similarContent
-            seriesResults = emptyList()
-            currentResultIndex = 0
-            updateDisplayedResults()
+            searchAdapter.updateData(similarContent)
+            if (similarContent.isNotEmpty()) {
+                displayModule.updateDetailsPane(similarContent[0])
+            }
         }
     }
 
@@ -149,82 +145,6 @@ class SearchFragment : Fragment() {
                 hideKeyboard()
             }
         }
-    }
-
-    private fun setupKeyHandling() {
-        // Set key listener for cycling through movie/series results
-        binding.root.setOnKeyListener { _, keyCode, event ->
-            if (event.action == KeyEvent.ACTION_DOWN) {
-                when (keyCode) {
-                    KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        val focusedChild = binding.resultsRecycler.focusedChild
-                        if (focusedChild != null && (movieResults.isNotEmpty() || seriesResults.isNotEmpty())) {
-                            cycleToNextResultType()
-                            return@setOnKeyListener true
-                        }
-                        false
-                    }
-                    else -> false
-                }
-            } else {
-                false
-            }
-        }
-    }
-
-    private fun cycleToNextResultType() {
-        val hasMovies = movieResults.isNotEmpty()
-        val hasSeries = seriesResults.isNotEmpty()
-
-        if (!hasMovies && !hasSeries) return
-
-        // Cycle between movies (0) and series (1)
-        if (hasMovies && hasSeries) {
-            currentResultIndex = (currentResultIndex + 1) % 2
-        } else if (hasMovies) {
-            currentResultIndex = 0
-        } else {
-            currentResultIndex = 1
-        }
-
-        updateDisplayedResults()
-    }
-
-    private fun updateDisplayedResults() {
-        // Don't update if we're in drill-down mode
-        if (displayModule.currentDrillDownLevel != ResultsDisplayModule.DrillDownLevel.CATALOG) {
-            return
-        }
-
-        val results = if (currentResultIndex == 0 && movieResults.isNotEmpty()) {
-            movieResults
-        } else if (currentResultIndex == 1 && seriesResults.isNotEmpty()) {
-            seriesResults
-        } else if (movieResults.isNotEmpty()) {
-            movieResults
-        } else {
-            seriesResults
-        }
-
-        searchAdapter.updateData(results)
-        if (results.isNotEmpty()) {
-            displayModule.updateDetailsPane(results[0])
-
-            // Update label to show current type
-            binding.root.post {
-                val label = if (currentResultIndex == 0) "Movies" else "Series"
-                // You might want to add a label TextView to show this
-            }
-        }
-
-        // [FIX] Force focus to the first item when switching types
-        binding.root.postDelayed({
-            binding.resultsRecycler.scrollToPosition(0)
-            binding.resultsRecycler.post {
-                val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
-                firstView?.requestFocus()
-            }
-        }, 1000)
     }
 
     private fun setupRecyclerView() {
@@ -340,14 +260,9 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupObservers() {
+        // Observe search results for actor/person content and search
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            // Don't update if we're in drill-down mode
-            if (displayModule.currentDrillDownLevel != ResultsDisplayModule.DrillDownLevel.CATALOG) {
-                return@observe
-            }
-
-            // Combined results sorted by popularity
-            if (currentSearchQuery != null) {
+            if (results.isNotEmpty() && displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.CATALOG) {
                 // Normalize "tv" type to "series" for consistency
                 val normalizedResults = results.map { item ->
                     if (item.type == "tv") {
@@ -357,70 +272,24 @@ class SearchFragment : Fragment() {
                     }
                 }
 
-                // Separate and sort by rating
-                val movies = normalizedResults.filter { it.type == "movie" }
-                    .sortedByDescending { it.rating?.toDoubleOrNull() ?: 0.0 }
-
-                val series = normalizedResults.filter { it.type == "series" }
-                    .sortedByDescending { it.rating?.toDoubleOrNull() ?: 0.0 }
-
-                // Interleave results: movie 0, series 0, movie 1, series 1, etc.
-                val interleaved = mutableListOf<MetaItem>()
-                val maxSize = maxOf(movies.size, series.size)
-                for (i in 0 until maxSize) {
-                    if (i < movies.size) interleaved.add(movies[i])
-                    if (i < series.size) interleaved.add(series[i])
-                }
-
-                movieResults = interleaved
-                seriesResults = emptyList()
-                val combinedResults = interleaved
-
-                if (combinedResults.isEmpty()) {
-                    binding.emptyState.visibility = View.GONE
-                    binding.noResultsState.visibility = View.VISIBLE
-                    binding.contentGrid.visibility = View.GONE
-                    binding.heroCard.visibility = View.GONE
-                } else {
-                    binding.emptyState.visibility = View.GONE
-                    binding.noResultsState.visibility = View.GONE
-                    binding.contentGrid.visibility = View.VISIBLE
-                    binding.heroCard.visibility = View.VISIBLE
-                    currentResultIndex = 0
-                    updateDisplayedResults()
-
-                    // Auto-focus first item when results load
-                    binding.root.postDelayed({
-                        if (binding.resultsRecycler.childCount > 0) {
-                            val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
-                            firstView?.requestFocus()
-                        }
-                    }, 100)
-                }
-            } else {
-                // Initial empty state
-                // Normalize "tv" type to "series" for consistency
-                val normalizedResults = results.map { item ->
-                    if (item.type == "tv") {
-                        item.copy(type = "series")
-                    } else {
-                        item
-                    }
-                }
                 searchAdapter.updateData(normalizedResults)
-                if (normalizedResults.isEmpty()) {
-                    binding.emptyState.visibility = View.GONE
-                    binding.noResultsState.visibility = View.VISIBLE
-                    binding.contentGrid.visibility = View.GONE
-                    binding.heroCard.visibility = View.GONE
-                } else {
-                    binding.emptyState.visibility = View.GONE
-                    binding.noResultsState.visibility = View.GONE
-                    binding.contentGrid.visibility = View.VISIBLE
-                    binding.heroCard.visibility = View.VISIBLE
-                    if (normalizedResults.isNotEmpty()) displayModule.updateDetailsPane(normalizedResults[0])
+                if (normalizedResults.isNotEmpty()) {
+                    displayModule.updateDetailsPane(normalizedResults[0])
                 }
-                binding.resultsRecycler.requestFocus()
+
+                // Update visibility
+                binding.emptyState.visibility = View.GONE
+                binding.noResultsState.visibility = View.GONE
+                binding.contentGrid.visibility = View.VISIBLE
+                binding.heroCard.visibility = View.VISIBLE
+
+                // Auto-focus first item when results load
+                binding.root.postDelayed({
+                    if (binding.resultsRecycler.childCount > 0) {
+                        val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
+                        firstView?.requestFocus()
+                    }
+                }, 100)
             }
         }
         viewModel.isSearching.observe(viewLifecycleOwner) { isSearching ->
