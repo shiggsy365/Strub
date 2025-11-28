@@ -497,7 +497,7 @@ class MainActivity : AppCompatActivity() {
 
             // Use navigation stack for back navigation - NEVER exit app
             if (navigationStack.isNotEmpty()) {
-                val (previousKey, previousFragment) = navigationStack.removeLast()
+                val (previousKey, previousFragment) = navigationStack.removeAt(navigationStack.size - 1)
                 currentFragmentKey = previousKey
                 supportFragmentManager.beginTransaction().replace(R.id.fragmentContainer, previousFragment).commit()
                 binding.root.postDelayed({
