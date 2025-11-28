@@ -121,10 +121,6 @@ dependencies {
     implementation "androidx.media3:media3-exoplayer-hls:$media3_version"
     implementation "androidx.media3:media3-exoplayer-dash:$media3_version"
 
-    // LibVLC - fallback player for advanced codecs (HEVC/x265, VP9, etc.)
-    // Note: Adds ~20-25MB to APK size but provides universal codec support
-    implementation 'org.videolan.android:libvlc-all:4.0.0-eap9'
-
     // Retrofit for API calls
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
