@@ -306,15 +306,21 @@ class PlayerActivity : AppCompatActivity() {
                     Log.d("PlayerActivity", "Processing ${subtitles.size} subtitles for ExoPlayer")
 
                     // Build MediaItem with subtitles
-                    val subtitleConfigurations = subtitles.map { subtitle ->
-                        // Detect MIME type from URL extension
+                    val subtitleConfigurations = subtitles.mapIndexed { index, subtitle ->
+                        // Detect MIME type from URL extension or SubEncoding
+                        // OpenSubtitles via Stremio typically serves SRT format
                         val mimeType = when {
                             subtitle.url.endsWith(".vtt", ignoreCase = true) -> MimeTypes.TEXT_VTT
                             subtitle.url.endsWith(".srt", ignoreCase = true) -> MimeTypes.APPLICATION_SUBRIP
                             subtitle.url.endsWith(".ass", ignoreCase = true) || subtitle.url.endsWith(".ssa", ignoreCase = true) -> MimeTypes.TEXT_SSA
+                            subtitle.url.contains("stremio", ignoreCase = true) || subtitle.url.contains("opensubtitles", ignoreCase = true) -> {
+                                // Stremio/OpenSubtitles typically serve SRT format
+                                Log.d("PlayerActivity", "Detected Stremio/OpenSubtitles URL, using SRT format")
+                                MimeTypes.APPLICATION_SUBRIP
+                            }
                             else -> {
-                                Log.w("PlayerActivity", "Unknown subtitle format for URL: ${subtitle.url}, defaulting to VTT")
-                                MimeTypes.TEXT_VTT
+                                Log.w("PlayerActivity", "Unknown subtitle format for URL: ${subtitle.url}, defaulting to SRT")
+                                MimeTypes.APPLICATION_SUBRIP  // Changed default from VTT to SRT
                             }
                         }
 
@@ -326,7 +332,7 @@ class PlayerActivity : AppCompatActivity() {
                             .setMimeType(mimeType)
                             .setLanguage("eng")
                             .setLabel(subtitle.formattedTitle)  // "AIO - [Title]"
-                            .setSelectionFlags(0)  // Not forced, user can select
+                            .setSelectionFlags(if (index == 0) androidx.media3.common.C.SELECTION_FLAG_DEFAULT else 0)  // Auto-select first subtitle
                             .build()
                     }
 
@@ -501,22 +507,27 @@ class PlayerActivity : AppCompatActivity() {
                 Log.d("PlayerActivity", "=== AUTO TRACK SELECTION START ===")
                 Log.d("PlayerActivity", "Total track groups: ${currentTracks.groups.size}")
 
-                // Build track selection parameters
+                // Build track selection parameters with subtitle rendering enabled
                 val trackSelectionParameters = exoPlayer.trackSelectionParameters
                     .buildUpon()
                     .setPreferredAudioLanguage("eng")  // Prefer English audio
                     .setPreferredTextLanguage("eng")   // Prefer English subtitles
                     .setSelectUndeterminedTextLanguage(true)  // Also select undetermined language subtitles
+                    .setIgnoredTextSelectionFlags(0)  // Don't ignore any text selection flags
                     .build()
 
                 exoPlayer.trackSelectionParameters = trackSelectionParameters
 
                 // Log available tracks for debugging
+                var hasSubtitleTracks = false
                 currentTracks.groups.forEachIndexed { groupIndex, trackGroup ->
                     val trackType = trackGroup.type
                     val trackTypeName = when (trackType) {
                         C.TRACK_TYPE_AUDIO -> "AUDIO"
-                        C.TRACK_TYPE_TEXT -> "SUBTITLE"
+                        C.TRACK_TYPE_TEXT -> {
+                            hasSubtitleTracks = true
+                            "SUBTITLE"
+                        }
                         C.TRACK_TYPE_VIDEO -> "VIDEO"
                         else -> "OTHER($trackType)"
                     }
@@ -530,7 +541,15 @@ class PlayerActivity : AppCompatActivity() {
                         val label = format.label ?: "no label"
 
                         Log.d("PlayerActivity", "  Track $i: Lang=$language, Label=$label, Selected=$isSelected")
+
+                        if (trackType == C.TRACK_TYPE_TEXT && isSelected) {
+                            Log.i("PlayerActivity", "✓ Subtitle track selected: $label")
+                        }
                     }
+                }
+
+                if (!hasSubtitleTracks) {
+                    Log.w("PlayerActivity", "⚠ No subtitle tracks found in player")
                 }
 
                 Log.i("PlayerActivity", "✓ Set track preferences to English audio and subtitles")
