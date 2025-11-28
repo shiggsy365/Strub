@@ -73,14 +73,6 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
 
-        <!-- YouTube Trailer Player -->
-        <activity
-            android:name=".YouTubePlayerActivity"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:screenOrientation="landscape"
-            android:theme="@style/Theme.StremioMPVPlayer.Fullscreen" />
-
     </application>
 
 </manifest>
