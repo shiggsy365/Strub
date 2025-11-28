@@ -242,6 +242,7 @@ class HomeFragment : Fragment() {
             }
 
             popup.menu.add("Mark as Watched")
+            popup.menu.add("Clear Progress")
             popup.menu.add("Not Watching")
             popup.menu.add("Add to Trakt Watchlist")
             popup.menu.add("Remove from Trakt Watchlist")
@@ -264,6 +265,10 @@ class HomeFragment : Fragment() {
                     }
                     "Mark as Watched" -> {
                         viewModel.markAsWatched(item)
+                        true
+                    }
+                    "Clear Progress" -> {
+                        viewModel.clearWatchedStatus(item)
                         true
                     }
                     "Not Watching" -> {
