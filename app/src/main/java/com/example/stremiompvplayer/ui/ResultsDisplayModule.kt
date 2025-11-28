@@ -11,7 +11,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.example.stremiompvplayer.DetailsActivity2
 import com.example.stremiompvplayer.PlayerActivity
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.models.MetaItem
@@ -231,9 +230,6 @@ class ResultsDisplayModule(
                     currentSeasonNumber = null
                     viewModel.loadSeriesMeta(item.id)
                     updatePlayButtonVisibility()
-                } else {
-                    // For non-drill-down pages, open details activity
-                    openDetailsActivity(item)
                 }
             }
             "season" -> {
@@ -260,29 +256,6 @@ class ResultsDisplayModule(
                 config.btnPlay?.requestFocus()
             }
         }
-    }
-
-    /**
-     * Opens the details activity for an item
-     */
-    private fun openDetailsActivity(item: MetaItem) {
-        val type = when {
-            item.type == "episode" -> {
-                val parts = item.id.split(":")
-                if (parts.size >= 2) "series" else item.type
-            }
-            else -> item.type
-        }
-
-        val intent = Intent(fragment.requireContext(), DetailsActivity2::class.java).apply {
-            putExtra("metaId", item.id)
-            putExtra("title", item.name)
-            putExtra("poster", item.poster)
-            putExtra("background", item.background)
-            putExtra("description", item.description)
-            putExtra("type", type)
-        }
-        fragment.startActivity(intent)
     }
 
     /**
