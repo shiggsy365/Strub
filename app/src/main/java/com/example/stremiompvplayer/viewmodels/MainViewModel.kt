@@ -1129,7 +1129,9 @@ class MainViewModel(
                                             name = nextEpDetails.name,
                                             poster = poster,
                                             background = background,
-                                            description = nextEpDetails.overview ?: "Next episode"
+                                            description = nextEpDetails.overview ?: "Next episode",
+                                            releaseDate = nextEpDetails.airDate,
+                                            rating = nextEpDetails.voteAverage?.let { String.format("%.1f", it) }
                                         )
                                         return@async Pair(metaItem, latestEpisode.lastUpdated)
                                     }
