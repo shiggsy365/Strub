@@ -954,16 +954,16 @@ class SettingsActivity : AppCompatActivity() {
     private fun showSubtitleCustomizationDialog() {
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(48, 16, 48, 16)
+            setPadding(48, 32, 48, 32)
         }
 
-        // Current values
-        val currentTextSize = prefsManager.getSubtitleTextSize()
-        val currentTextColor = prefsManager.getSubtitleTextColor()
-        val currentBackgroundColor = prefsManager.getSubtitleBackgroundColor()
-        val currentWindowColor = prefsManager.getSubtitleWindowColor()
-        val currentEdgeType = prefsManager.getSubtitleEdgeType()
-        val currentEdgeColor = prefsManager.getSubtitleEdgeColor()
+        // Current values (mutable for tracking selections)
+        var currentTextSize = prefsManager.getSubtitleTextSize()
+        var currentTextColor = prefsManager.getSubtitleTextColor()
+        var currentBackgroundColor = prefsManager.getSubtitleBackgroundColor()
+        var currentWindowColor = prefsManager.getSubtitleWindowColor()
+        var currentEdgeType = prefsManager.getSubtitleEdgeType()
+        var currentEdgeColor = prefsManager.getSubtitleEdgeColor()
 
         // Text Size Section
         val textSizeLabel = TextView(this).apply {
@@ -987,57 +987,108 @@ class SettingsActivity : AppCompatActivity() {
             setPadding(0, 0, 0, 12)
         }
 
-        val sizeVerySmall = com.google.android.material.button.MaterialButton(this).apply {
+        // Helper function to update button selection states
+        fun updateSizeButtonStates(buttons: List<com.google.android.material.button.MaterialButton>, selectedSize: Float) {
+            buttons.forEach { btn ->
+                val isSelected = when (btn.text.toString()) {
+                    "Very Small" -> selectedSize < 0.75f
+                    "Small" -> selectedSize >= 0.75f && selectedSize < 1.0f
+                    "Medium" -> selectedSize == 1.0f
+                    "Large" -> selectedSize > 1.0f && selectedSize < 1.5f
+                    "Very Large" -> selectedSize >= 1.5f
+                    else -> false
+                }
+                if (isSelected) {
+                    btn.strokeWidth = dpToPx(3)
+                    btn.strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.md_theme_primary))
+                } else {
+                    btn.strokeWidth = dpToPx(1)
+                    btn.strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.md_theme_outline))
+                }
+            }
+        }
+
+        val sizeVerySmall = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Very Small"
-            setOnClickListener {
-                prefsManager.setSubtitleTextSize(0.5f)
-                textSizeValue.text = "Very Small"
-            }
         }
 
-        val sizeSmall = com.google.android.material.button.MaterialButton(this).apply {
+        val sizeSmall = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Small"
-            setOnClickListener {
-                prefsManager.setSubtitleTextSize(0.75f)
-                textSizeValue.text = "Small"
-            }
         }
 
-        val sizeMedium = com.google.android.material.button.MaterialButton(this).apply {
+        val sizeMedium = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Medium"
-            setOnClickListener {
-                prefsManager.setSubtitleTextSize(1.0f)
-                textSizeValue.text = "Medium"
-            }
         }
 
-        val sizeLarge = com.google.android.material.button.MaterialButton(this).apply {
+        val sizeLarge = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Large"
-            setOnClickListener {
-                prefsManager.setSubtitleTextSize(1.25f)
-                textSizeValue.text = "Large"
-            }
         }
 
-        val sizeVeryLarge = com.google.android.material.button.MaterialButton(this).apply {
+        val sizeVeryLarge = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Very Large"
-            setOnClickListener {
-                prefsManager.setSubtitleTextSize(1.5f)
-                textSizeValue.text = "Very Large"
-            }
         }
+
+        val sizeButtons = listOf(sizeVerySmall, sizeSmall, sizeMedium, sizeLarge, sizeVeryLarge)
+
+        // Set click listeners
+        sizeVerySmall.setOnClickListener {
+            currentTextSize = 0.5f
+            prefsManager.setSubtitleTextSize(currentTextSize)
+            textSizeValue.text = "Very Small"
+            updateSizeButtonStates(sizeButtons, currentTextSize)
+        }
+
+        sizeSmall.setOnClickListener {
+            currentTextSize = 0.75f
+            prefsManager.setSubtitleTextSize(currentTextSize)
+            textSizeValue.text = "Small"
+            updateSizeButtonStates(sizeButtons, currentTextSize)
+        }
+
+        sizeMedium.setOnClickListener {
+            currentTextSize = 1.0f
+            prefsManager.setSubtitleTextSize(currentTextSize)
+            textSizeValue.text = "Medium"
+            updateSizeButtonStates(sizeButtons, currentTextSize)
+        }
+
+        sizeLarge.setOnClickListener {
+            currentTextSize = 1.25f
+            prefsManager.setSubtitleTextSize(currentTextSize)
+            textSizeValue.text = "Large"
+            updateSizeButtonStates(sizeButtons, currentTextSize)
+        }
+
+        sizeVeryLarge.setOnClickListener {
+            currentTextSize = 1.5f
+            prefsManager.setSubtitleTextSize(currentTextSize)
+            textSizeValue.text = "Very Large"
+            updateSizeButtonStates(sizeButtons, currentTextSize)
+        }
+
+        // Initialize selection states
+        updateSizeButtonStates(sizeButtons, currentTextSize)
 
         val sizeButtonsRow1 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            addView(sizeVerySmall, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(sizeSmall, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(sizeVerySmall, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
+            addView(sizeSmall, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
             addView(sizeMedium, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
 
         val sizeButtonsRow2 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            addView(sizeLarge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            setPadding(0, dpToPx(8), 0, 0)
+            addView(sizeLarge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
             addView(sizeVeryLarge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            // Add spacer to balance layout
+            addView(View(this@SettingsActivity), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
 
         // Text Color Section
@@ -1048,31 +1099,80 @@ class SettingsActivity : AppCompatActivity() {
             setPadding(0, 24, 0, 12)
         }
 
-        val colorWhite = com.google.android.material.button.MaterialButton(this).apply {
+        fun updateColorButtonStates(buttons: List<com.google.android.material.button.MaterialButton>, selectedColor: Int) {
+            buttons.forEach { btn ->
+                val btnColor = when (btn.text.toString()) {
+                    "White" -> android.graphics.Color.WHITE
+                    "Yellow" -> android.graphics.Color.YELLOW
+                    "Cyan" -> android.graphics.Color.CYAN
+                    "Green" -> android.graphics.Color.GREEN
+                    else -> android.graphics.Color.WHITE
+                }
+                if (btnColor == selectedColor) {
+                    btn.strokeWidth = dpToPx(3)
+                    btn.strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.md_theme_primary))
+                } else {
+                    btn.strokeWidth = dpToPx(1)
+                    btn.strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.md_theme_outline))
+                }
+            }
+        }
+
+        val colorWhite = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "White"
-            setOnClickListener { prefsManager.setSubtitleTextColor(android.graphics.Color.WHITE) }
         }
 
-        val colorYellow = com.google.android.material.button.MaterialButton(this).apply {
+        val colorYellow = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Yellow"
-            setOnClickListener { prefsManager.setSubtitleTextColor(android.graphics.Color.YELLOW) }
         }
 
-        val colorCyan = com.google.android.material.button.MaterialButton(this).apply {
+        val colorCyan = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Cyan"
-            setOnClickListener { prefsManager.setSubtitleTextColor(android.graphics.Color.CYAN) }
         }
 
-        val colorGreen = com.google.android.material.button.MaterialButton(this).apply {
+        val colorGreen = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Green"
-            setOnClickListener { prefsManager.setSubtitleTextColor(android.graphics.Color.GREEN) }
         }
+
+        val colorButtons = listOf(colorWhite, colorYellow, colorCyan, colorGreen)
+
+        colorWhite.setOnClickListener {
+            currentTextColor = android.graphics.Color.WHITE
+            prefsManager.setSubtitleTextColor(currentTextColor)
+            updateColorButtonStates(colorButtons, currentTextColor)
+        }
+
+        colorYellow.setOnClickListener {
+            currentTextColor = android.graphics.Color.YELLOW
+            prefsManager.setSubtitleTextColor(currentTextColor)
+            updateColorButtonStates(colorButtons, currentTextColor)
+        }
+
+        colorCyan.setOnClickListener {
+            currentTextColor = android.graphics.Color.CYAN
+            prefsManager.setSubtitleTextColor(currentTextColor)
+            updateColorButtonStates(colorButtons, currentTextColor)
+        }
+
+        colorGreen.setOnClickListener {
+            currentTextColor = android.graphics.Color.GREEN
+            prefsManager.setSubtitleTextColor(currentTextColor)
+            updateColorButtonStates(colorButtons, currentTextColor)
+        }
+
+        updateColorButtonStates(colorButtons, currentTextColor)
 
         val textColorButtons = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            addView(colorWhite, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(colorYellow, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(colorCyan, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(colorWhite, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
+            addView(colorYellow, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
+            addView(colorCyan, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
             addView(colorGreen, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
 
@@ -1084,27 +1184,66 @@ class SettingsActivity : AppCompatActivity() {
             setPadding(0, 24, 0, 12)
         }
 
-        val bgTransparent = com.google.android.material.button.MaterialButton(this).apply {
-            text = "Transparent"
-            setOnClickListener { prefsManager.setSubtitleBackgroundColor(android.graphics.Color.TRANSPARENT) }
-        }
-
-        val bgSemiBlack = com.google.android.material.button.MaterialButton(this).apply {
-            text = "Semi-Black"
-            setOnClickListener {
-                prefsManager.setSubtitleBackgroundColor(android.graphics.Color.argb(128, 0, 0, 0))
+        fun updateBgButtonStates(buttons: List<com.google.android.material.button.MaterialButton>, selectedBg: Int) {
+            buttons.forEach { btn ->
+                val btnBg = when (btn.text.toString()) {
+                    "Transparent" -> android.graphics.Color.TRANSPARENT
+                    "Semi-Black" -> android.graphics.Color.argb(128, 0, 0, 0)
+                    "Black" -> android.graphics.Color.BLACK
+                    else -> android.graphics.Color.TRANSPARENT
+                }
+                if (btnBg == selectedBg) {
+                    btn.strokeWidth = dpToPx(3)
+                    btn.strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.md_theme_primary))
+                } else {
+                    btn.strokeWidth = dpToPx(1)
+                    btn.strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.md_theme_outline))
+                }
             }
         }
 
-        val bgBlack = com.google.android.material.button.MaterialButton(this).apply {
-            text = "Black"
-            setOnClickListener { prefsManager.setSubtitleBackgroundColor(android.graphics.Color.BLACK) }
+        val bgTransparent = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = "Transparent"
         }
+
+        val bgSemiBlack = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = "Semi-Black"
+        }
+
+        val bgBlack = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = "Black"
+        }
+
+        val bgButtons = listOf(bgTransparent, bgSemiBlack, bgBlack)
+
+        bgTransparent.setOnClickListener {
+            currentBackgroundColor = android.graphics.Color.TRANSPARENT
+            prefsManager.setSubtitleBackgroundColor(currentBackgroundColor)
+            updateBgButtonStates(bgButtons, currentBackgroundColor)
+        }
+
+        bgSemiBlack.setOnClickListener {
+            currentBackgroundColor = android.graphics.Color.argb(128, 0, 0, 0)
+            prefsManager.setSubtitleBackgroundColor(currentBackgroundColor)
+            updateBgButtonStates(bgButtons, currentBackgroundColor)
+        }
+
+        bgBlack.setOnClickListener {
+            currentBackgroundColor = android.graphics.Color.BLACK
+            prefsManager.setSubtitleBackgroundColor(currentBackgroundColor)
+            updateBgButtonStates(bgButtons, currentBackgroundColor)
+        }
+
+        updateBgButtonStates(bgButtons, currentBackgroundColor)
 
         val bgColorButtons = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            addView(bgTransparent, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(bgSemiBlack, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(bgTransparent, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
+            addView(bgSemiBlack, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
             addView(bgBlack, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
 
@@ -1116,48 +1255,116 @@ class SettingsActivity : AppCompatActivity() {
             setPadding(0, 24, 0, 12)
         }
 
-        val edgeNone = com.google.android.material.button.MaterialButton(this).apply {
+        fun updateEdgeButtonStates(buttons: List<com.google.android.material.button.MaterialButton>, selectedEdge: Int) {
+            buttons.forEach { btn ->
+                val btnEdge = when (btn.text.toString()) {
+                    "None" -> 0
+                    "Outline" -> 1
+                    "Shadow" -> 2
+                    "Raised" -> 3
+                    else -> 1
+                }
+                if (btnEdge == selectedEdge) {
+                    btn.strokeWidth = dpToPx(3)
+                    btn.strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.md_theme_primary))
+                } else {
+                    btn.strokeWidth = dpToPx(1)
+                    btn.strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.md_theme_outline))
+                }
+            }
+        }
+
+        val edgeNone = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "None"
-            setOnClickListener { prefsManager.setSubtitleEdgeType(0) } // EDGE_TYPE_NONE
         }
 
-        val edgeOutline = com.google.android.material.button.MaterialButton(this).apply {
+        val edgeOutline = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Outline"
-            setOnClickListener { prefsManager.setSubtitleEdgeType(1) } // EDGE_TYPE_OUTLINE
         }
 
-        val edgeDropShadow = com.google.android.material.button.MaterialButton(this).apply {
+        val edgeDropShadow = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Shadow"
-            setOnClickListener { prefsManager.setSubtitleEdgeType(2) } // EDGE_TYPE_DROP_SHADOW
         }
 
-        val edgeRaised = com.google.android.material.button.MaterialButton(this).apply {
+        val edgeRaised = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Raised"
-            setOnClickListener { prefsManager.setSubtitleEdgeType(3) } // EDGE_TYPE_RAISED
         }
+
+        val edgeButtons = listOf(edgeNone, edgeOutline, edgeDropShadow, edgeRaised)
+
+        edgeNone.setOnClickListener {
+            currentEdgeType = 0
+            prefsManager.setSubtitleEdgeType(currentEdgeType)
+            updateEdgeButtonStates(edgeButtons, currentEdgeType)
+        }
+
+        edgeOutline.setOnClickListener {
+            currentEdgeType = 1
+            prefsManager.setSubtitleEdgeType(currentEdgeType)
+            updateEdgeButtonStates(edgeButtons, currentEdgeType)
+        }
+
+        edgeDropShadow.setOnClickListener {
+            currentEdgeType = 2
+            prefsManager.setSubtitleEdgeType(currentEdgeType)
+            updateEdgeButtonStates(edgeButtons, currentEdgeType)
+        }
+
+        edgeRaised.setOnClickListener {
+            currentEdgeType = 3
+            prefsManager.setSubtitleEdgeType(currentEdgeType)
+            updateEdgeButtonStates(edgeButtons, currentEdgeType)
+        }
+
+        updateEdgeButtonStates(edgeButtons, currentEdgeType)
 
         val edgeTypeButtons = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            addView(edgeNone, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(edgeOutline, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(edgeDropShadow, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(edgeNone, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
+            addView(edgeOutline, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
+            addView(edgeDropShadow, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(8), 0)
+            })
             addView(edgeRaised, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
 
         // Reset to Defaults Button
-        val resetButton = com.google.android.material.button.MaterialButton(this).apply {
+        val resetButton = com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Reset to Defaults"
-            setPadding(0, 24, 0, 0)
             setOnClickListener {
-                prefsManager.setSubtitleTextSize(1.0f)
-                prefsManager.setSubtitleTextColor(android.graphics.Color.WHITE)
-                prefsManager.setSubtitleBackgroundColor(android.graphics.Color.TRANSPARENT)
-                prefsManager.setSubtitleWindowColor(android.graphics.Color.TRANSPARENT)
-                prefsManager.setSubtitleEdgeType(1)
-                prefsManager.setSubtitleEdgeColor(android.graphics.Color.BLACK)
+                currentTextSize = 1.0f
+                currentTextColor = android.graphics.Color.WHITE
+                currentBackgroundColor = android.graphics.Color.TRANSPARENT
+                currentWindowColor = android.graphics.Color.TRANSPARENT
+                currentEdgeType = 1
+                currentEdgeColor = android.graphics.Color.BLACK
+
+                prefsManager.setSubtitleTextSize(currentTextSize)
+                prefsManager.setSubtitleTextColor(currentTextColor)
+                prefsManager.setSubtitleBackgroundColor(currentBackgroundColor)
+                prefsManager.setSubtitleWindowColor(currentWindowColor)
+                prefsManager.setSubtitleEdgeType(currentEdgeType)
+                prefsManager.setSubtitleEdgeColor(currentEdgeColor)
+
                 textSizeValue.text = "Medium"
+                updateSizeButtonStates(sizeButtons, currentTextSize)
+                updateColorButtonStates(colorButtons, currentTextColor)
+                updateBgButtonStates(bgButtons, currentBackgroundColor)
+                updateEdgeButtonStates(edgeButtons, currentEdgeType)
+
                 Toast.makeText(this@SettingsActivity, "Subtitle settings reset to defaults", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        resetButton.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            topMargin = dpToPx(24)
         }
 
         // Add all views to container
@@ -1173,13 +1380,21 @@ class SettingsActivity : AppCompatActivity() {
         container.addView(edgeTypeButtons)
         container.addView(resetButton)
 
-        MaterialAlertDialogBuilder(this)
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle("Customize Subtitles")
             .setView(container)
             .setPositiveButton("Done") { _, _ ->
                 Toast.makeText(this, "Subtitle settings saved", Toast.LENGTH_SHORT).show()
             }
-            .show()
+            .create()
+
+        dialog.show()
+
+        // Make dialog wider (90% of screen width)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.9).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
     }
 
     // ==============================
