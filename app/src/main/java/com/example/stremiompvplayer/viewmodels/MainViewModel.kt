@@ -2878,22 +2878,35 @@ class MainViewModel(
             try {
                 _isLoading.postValue(true)
                 val userId = prefsManager.getCurrentUserId() ?: return@launch
+
+                // Get the health report to know which items are actually missing
+                val report = _libraryHealthReport.value
+                if (report == null) {
+                    _actionResult.postValue(ActionResult.Error("No health report available. Please run health check first."))
+                    _isLoading.postValue(false)
+                    return@launch
+                }
+
+                // Get the list of items that are local-only (missing from Trakt)
+                val missingItemIds = report.localOnlyMovies + report.localOnlySeries
+
+                if (missingItemIds.isEmpty()) {
+                    _actionResult.postValue(ActionResult.Success("No items to export. Library is synced!"))
+                    _isLoading.postValue(false)
+                    return@launch
+                }
+
+                Log.i("ExportToTrakt", "Exporting ${missingItemIds.size} items to Trakt: $missingItemIds")
+
+                // Get local items that need to be exported
                 val localItems = catalogRepository.getAllLibraryItems(userId)
+                val itemsToExport = localItems.filter { it.itemId in missingItemIds }
 
                 var exportedCount = 0
-                for (item in localItems) {
-                    try {
-                        // Convert to MetaItem and add to Trakt
-                        val meta = MetaItem(
-                            id = item.itemId,
-                            type = item.itemType,
-                            name = item.name,
-                            poster = item.poster,
-                            background = item.background,
-                            description = item.description
-                        )
+                var failedCount = 0
 
-                        // Use existing addToLibrary logic which now syncs to Trakt
+                for (item in itemsToExport) {
+                    try {
                         val token = prefsManager.getTraktAccessToken()
                         val clientId = Secrets.TRAKT_CLIENT_ID
                         if (token != null) {
@@ -2912,19 +2925,33 @@ class MainViewModel(
                             if (body != null) {
                                 TraktClient.api.addToCollection(bearer, clientId, body)
                                 exportedCount++
+                                Log.d("ExportToTrakt", "Exported ${item.name} (${item.itemId}) to Trakt")
+                            } else {
+                                failedCount++
+                                Log.w("ExportToTrakt", "Could not create body for ${item.itemId}")
                             }
                         }
                     } catch (e: Exception) {
+                        failedCount++
                         Log.e("ExportToTrakt", "Failed to export ${item.itemId}", e)
                     }
                 }
 
                 _isLoading.postValue(false)
-                _actionResult.postValue(ActionResult.Success("Exported $exportedCount items to Trakt"))
-                Log.i("ExportToTrakt", "Exported $exportedCount items to Trakt collection")
+                val message = if (failedCount > 0) {
+                    "Exported $exportedCount items to Trakt ($failedCount failed)"
+                } else {
+                    "Successfully exported $exportedCount items to Trakt"
+                }
+                _actionResult.postValue(ActionResult.Success(message))
+                Log.i("ExportToTrakt", message)
+
+                // Clear the health report so user can run it again to verify
+                _libraryHealthReport.postValue(null)
             } catch (e: Exception) {
                 _isLoading.postValue(false)
                 _actionResult.postValue(ActionResult.Error("Export failed: ${e.message}"))
+                Log.e("ExportToTrakt", "Export failed", e)
             }
         }
     }
