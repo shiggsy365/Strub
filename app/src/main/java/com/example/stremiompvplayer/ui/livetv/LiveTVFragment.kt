@@ -271,9 +271,9 @@ class LiveTVFragment : Fragment() {
                             }
                             android.view.KeyEvent.KEYCODE_DPAD_UP,
                             android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                                // Let RecyclerView handle vertical scrolling
-                                // This ensures focus stays within the channel list
-                                false
+                                // Consume UP/DOWN to prevent focus escaping to sidebar during fast scrolling
+                                // RecyclerView will still handle the scrolling before we consume the event
+                                true
                             }
                             else -> false
                         }
@@ -681,9 +681,9 @@ class LiveTVFragment : Fragment() {
         if (event?.action == KeyEvent.ACTION_DOWN) {
             when (keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                    // Always consume UP/DOWN events in LiveTV to prevent focus escaping to sidebar
-                    // This is especially important during fast scrolling when focusedChild might be null
-                    return true  // Consume the event - don't let it propagate to MainActivity
+                    // Don't consume here - let the event reach RecyclerView items
+                    // The items will consume it to prevent focus escaping to sidebar
+                    return false
                 }
                 KeyEvent.KEYCODE_DPAD_LEFT -> {
                     // Allow left navigation to re-open main menu from channel list
