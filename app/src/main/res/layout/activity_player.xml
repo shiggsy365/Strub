@@ -26,7 +26,7 @@
             />
 
         <!-- VLC Player Surface View (hidden by default) -->
-        <SurfaceView
+        <org.videolan.libvlc.util.VLCVideoLayout
             android:id="@+id/vlcSurfaceView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
