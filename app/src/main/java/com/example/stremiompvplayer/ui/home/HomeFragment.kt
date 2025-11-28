@@ -88,7 +88,7 @@ class HomeFragment : Fragment() {
             btnPlay = binding.root.findViewById(R.id.btnPlay),
             btnTrailer = binding.root.findViewById(R.id.btnTrailer),
             btnRelated = binding.root.findViewById(R.id.btnRelated),
-            enableDrillDown = false,  // Home doesn't use drill-down
+            enableDrillDown = true,  // Enable drill-down for series navigation
             useGridLayout = false,
             showEpisodeDescription = false
         )
@@ -162,6 +162,21 @@ class HomeFragment : Fragment() {
         return false
     }
 
+    fun handleBackPress(): Boolean {
+        val handled = displayModule.handleBackPress()
+        if (handled) {
+            // If going back to catalog, reload the current catalog
+            if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.CATALOG) {
+                if (currentCatalogs.isNotEmpty() && currentCatalogIndex < currentCatalogs.size) {
+                    val currentCatalog = currentCatalogs[currentCatalogIndex]
+                    updateCurrentListLabel(currentCatalog.displayName)
+                    viewModel.loadContentForCatalog(currentCatalog, isInitialLoad = false)
+                }
+            }
+        }
+        return handled
+    }
+
     private fun setupUI() {
         // No dropdown setup needed
     }
@@ -169,14 +184,7 @@ class HomeFragment : Fragment() {
     private fun setupAdapters() {
         contentAdapter = PosterAdapter(
             items = emptyList(),
-            onClick = { item ->
-                if (item.type == "movie" || item.type == "episode") {
-                    displayModule.updateDetailsPane(item)
-                    binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
-                } else {
-                    openDetails(item)
-                }
-            },
+            onClick = { item -> displayModule.onContentClicked(item) },  // Use standard navigation
             onLongClick = { item ->
                 val pos = contentAdapter.getItemPosition(item)
                 val holder = binding.rvContent.findViewHolderForAdapterPosition(pos)
@@ -327,10 +335,16 @@ class HomeFragment : Fragment() {
         isCycling = true
         cycleAttemptCount++
 
+        // Reset drill-down state when cycling lists
+        displayModule.currentDrillDownLevel = ResultsDisplayModule.DrillDownLevel.CATALOG
+        displayModule.currentSeriesId = null
+        displayModule.currentSeasonNumber = null
+
         currentCatalogIndex = (currentCatalogIndex + 1) % currentCatalogs.size
         val nextCatalog = currentCatalogs[currentCatalogIndex]
         updateCurrentListLabel(nextCatalog.displayName)
         viewModel.loadContentForCatalog(nextCatalog, isInitialLoad = true)
+        displayModule.updatePlayButtonVisibility()
 
         // Focus will be handled in the observer after content loads
         binding.root.postDelayed({
@@ -401,6 +415,44 @@ class HomeFragment : Fragment() {
                     binding.rvContent.scrollToPosition(0)
                     binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
                 }, 100)
+            }
+        }
+
+        // Observe series meta details for drill-down navigation
+        viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
+            if (meta != null && meta.type == "series" && displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SERIES) {
+                // Display seasons in the carousel
+                val seasons = meta.videos?.mapNotNull { video ->
+                    video.season?.let { seasonNum ->
+                        MetaItem(
+                            id = "${meta.id}:$seasonNum",
+                            type = "season",
+                            name = video.title,
+                            poster = video.thumbnail,
+                            background = meta.background,
+                            description = "Season $seasonNum"
+                        )
+                    }
+                } ?: emptyList()
+
+                contentAdapter.updateData(seasons)
+                if (seasons.isNotEmpty()) {
+                    displayModule.updateDetailsPane(seasons[0])
+                }
+                updateCurrentListLabel("${meta.name} - Seasons")
+            }
+        }
+
+        // Observe season episodes for drill-down navigation
+        viewModel.seasonEpisodes.observe(viewLifecycleOwner) { episodes ->
+            if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SEASON && episodes.isNotEmpty()) {
+                contentAdapter.updateData(episodes)
+                displayModule.updateDetailsPane(episodes[0])
+                displayModule.currentSeriesId?.let { seriesId ->
+                    displayModule.currentSeasonNumber?.let { seasonNum ->
+                        updateCurrentListLabel("Season $seasonNum - Episodes")
+                    }
+                }
             }
         }
     }
