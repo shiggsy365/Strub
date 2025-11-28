@@ -57,8 +57,8 @@ data class ParsedFile(val title: String?, val year: String?, val resolution: Str
 data class ServiceInfo(val id: String?, val name: String?, val shortName: String?, val cached: Boolean?) : Serializable
 data class BehaviorHints(val notWebReady: Boolean? = false) : Serializable
 data class MetaResponse(val meta: Meta)
-data class Meta(val id: String, val type: String, val name: String, val poster: String?, val background: String?, val description: String?, val videos: List<Video>?) : Serializable
-data class Video(val id: String, val title: String, val released: String?, val thumbnail: String?, val number: Int?, val season: Int?, val overview: String? = null) : Serializable
+data class Meta(val id: String, val type: String, val name: String, val poster: String?, val background: String?, val description: String?, val videos: List<Video>?, val rating: String? = null) : Serializable
+data class Video(val id: String, val title: String, val released: String?, val thumbnail: String?, val number: Int?, val season: Int?, val overview: String? = null, val rating: String? = null) : Serializable
 
 data class MetaItem(
     val id: String,

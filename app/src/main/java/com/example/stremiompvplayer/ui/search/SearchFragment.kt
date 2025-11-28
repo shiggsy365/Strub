@@ -462,7 +462,7 @@ class SearchFragment : Fragment() {
                             background = meta.background,
                             description = "Season $seasonNum",
                             releaseDate = video.released,
-                            rating = meta.rating
+                            rating = video.rating
                         )
                     }
                 } ?: emptyList()
