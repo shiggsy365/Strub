@@ -510,9 +510,21 @@ class PlayerActivity : AppCompatActivity() {
             // Attach to the dedicated VLC surface view
             vlcPlayer?.attachViews(binding.vlcSurfaceView, null, false, false)
 
-            // Set media
+            // Set media with HTTP headers to match ExoPlayer behavior
             val streamUrl = currentStream?.url ?: ""
             val media = Media(libVLC, Uri.parse(streamUrl))
+
+            // Add HTTP headers to prevent "forbidden" errors from AIOStreams
+            // These headers make VLC requests look identical to ExoPlayer requests
+            media.addOption(":http-user-agent=ExoPlayer/2.18.1 (Linux;Android ${android.os.Build.VERSION.RELEASE}) ExoPlayerLib/2.18.1")
+            media.addOption(":http-referrer=${streamUrl}")
+
+            // Add additional options for better streaming compatibility
+            media.addOption(":network-caching=1500")
+            media.addOption(":file-caching=1500")
+
+            Log.d("PlayerActivity", "VLC media created with headers for: $streamUrl")
+
             vlcPlayer?.media = media
             media.release()
 
