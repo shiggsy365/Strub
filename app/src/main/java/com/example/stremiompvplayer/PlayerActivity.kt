@@ -30,19 +30,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.util.Log
 import kotlinx.coroutines.isActive
-import org.videolan.libvlc.LibVLC
-import org.videolan.libvlc.Media
-import org.videolan.libvlc.MediaPlayer
 
 class PlayerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPlayerBinding
     private var player: ExoPlayer? = null
-
-    // LibVLC fallback player
-    private var libVLC: LibVLC? = null
-    private var vlcPlayer: MediaPlayer? = null
-    private var usingVLC = false
 
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(
@@ -243,12 +235,6 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun releasePlayer() {
-        // Release VLC player if using VLC
-        if (usingVLC) {
-            releaseVLCPlayer()
-            return
-        }
-
         // Release ExoPlayer
         player?.let { exoPlayer ->
              playbackPosition = exoPlayer.currentPosition
@@ -286,9 +272,6 @@ class PlayerActivity : AppCompatActivity() {
             .build()
             .also { exoPlayer ->
                 binding.playerView.player = exoPlayer
-
-                // Apply subtitle styling from preferences
-                applySubtitleStyling()
 
                 // 2. Build the MediaItem with subtitles
                 val url = currentStream?.url ?: ""
@@ -375,7 +358,11 @@ class PlayerActivity : AppCompatActivity() {
                     override fun onPlaybackStateChanged(playbackState: Int) {
                         when (playbackState) {
                             Player.STATE_BUFFERING -> binding.loadingProgress.visibility = View.VISIBLE
-                            Player.STATE_READY -> binding.loadingProgress.visibility = View.GONE
+                            Player.STATE_READY -> {
+                                binding.loadingProgress.visibility = View.GONE
+                                // Apply subtitle styling when player is ready
+                                applySubtitleStyling()
+                            }
                             Player.STATE_ENDED -> { /* Finish activity or play next */ }
                             Player.STATE_IDLE -> binding.loadingProgress.visibility = View.GONE
                         }
@@ -386,30 +373,15 @@ class PlayerActivity : AppCompatActivity() {
                         Log.e("PlayerActivity", "Error code: ${error.errorCode}")
                         Log.e("PlayerActivity", "Stream URL: ${currentStream?.url}")
 
-                        // Check if this is a codec/format error that VLC might handle
-                        val isCodecError = error.message?.contains("Invalid NAL length") == true ||
-                                error.message?.contains("Source error") == true ||
-                                error.errorCode == 3001
-
-                        if (isCodecError && !usingVLC) {
-                            // Offer to switch to VLC player
-                            runOnUiThread {
-                                android.app.AlertDialog.Builder(this@PlayerActivity)
-                                    .setTitle("Playback Error")
-                                    .setMessage("This video format may not be supported by the standard player. Would you like to try the VLC player engine instead?")
-                                    .setPositiveButton("Try VLC Player") { _, _ ->
-                                        switchToVLCPlayer()
-                                    }
-                                    .setNegativeButton("Select Different Stream") { _, _ ->
-                                        finish()
-                                    }
-                                    .setCancelable(false)
-                                    .show()
-                            }
-                        } else {
-                            // Show error toast for other errors
+                        // Show error message and return to stream selection
+                        runOnUiThread {
                             val errorMessage = when {
-                                usingVLC -> "VLC Player error: ${error.message}"
+                                error.message?.contains("Invalid NAL length") == true ->
+                                    "Video codec not supported. Please select a different stream."
+                                error.message?.contains("Source error") == true ->
+                                    "Failed to load stream. Please try a different stream."
+                                error.errorCode == 3001 ->
+                                    "Media format error. Please select a different stream."
                                 else -> "Playback error: ${error.message}"
                             }
 
@@ -418,6 +390,9 @@ class PlayerActivity : AppCompatActivity() {
                                 errorMessage,
                                 android.widget.Toast.LENGTH_LONG
                             ).show()
+
+                            // Return to stream selection
+                            finish()
                         }
                     }
 
@@ -473,123 +448,6 @@ class PlayerActivity : AppCompatActivity() {
 
         // Just finish this activity to return to the calling activity
         finish()
-    }
-
-    private fun switchToVLCPlayer() {
-        Log.i("PlayerActivity", "Switching to VLC player for better codec support")
-
-        // Release ExoPlayer
-        player?.release()
-        player = null
-
-        // Mark that we're using VLC
-        usingVLC = true
-
-        // Hide ExoPlayer view, show VLC surface
-        binding.playerView.visibility = View.GONE
-        binding.vlcSurfaceView.visibility = View.VISIBLE
-
-        // Initialize VLC player
-        initializeVLCPlayer()
-    }
-
-    private fun initializeVLCPlayer() {
-        try {
-            // Create LibVLC instance with optimized options
-            val options = arrayListOf(
-                "--no-drop-late-frames",
-                "--no-skip-frames",
-                "--network-caching=1500",
-                "--clock-jitter=0",
-                "--live-caching=1500"
-            )
-
-            libVLC = LibVLC(this, options)
-            vlcPlayer = MediaPlayer(libVLC)
-
-            // Attach to the dedicated VLC surface view
-            vlcPlayer?.attachViews(binding.vlcSurfaceView, null, false, false)
-
-            // Set media with HTTP headers to match ExoPlayer behavior
-            val streamUrl = currentStream?.url ?: ""
-            val media = Media(libVLC, Uri.parse(streamUrl))
-
-            // Add HTTP headers to prevent "forbidden" errors from AIOStreams
-            // These headers make VLC requests look identical to ExoPlayer requests
-            media.addOption(":http-user-agent=ExoPlayer/2.18.1 (Linux;Android ${android.os.Build.VERSION.RELEASE}) ExoPlayerLib/2.18.1")
-            media.addOption(":http-referrer=${streamUrl}")
-
-            // Add additional options for better streaming compatibility
-            media.addOption(":network-caching=1500")
-            media.addOption(":file-caching=1500")
-
-            Log.d("PlayerActivity", "VLC media created with headers for: $streamUrl")
-
-            vlcPlayer?.media = media
-            media.release()
-
-            // Add event listener for VLC errors
-            vlcPlayer?.setEventListener { event ->
-                when (event.type) {
-                    MediaPlayer.Event.Playing -> {
-                        binding.loadingProgress.visibility = View.GONE
-                        Log.d("PlayerActivity", "VLC: Playing")
-                    }
-                    MediaPlayer.Event.Buffering -> {
-                        binding.loadingProgress.visibility = View.VISIBLE
-                        Log.d("PlayerActivity", "VLC: Buffering")
-                    }
-                    MediaPlayer.Event.EncounteredError -> {
-                        Log.e("PlayerActivity", "VLC Player error encountered")
-                        runOnUiThread {
-                            android.widget.Toast.makeText(
-                                this,
-                                "VLC Player error. Try selecting a different stream.",
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
-                    MediaPlayer.Event.EndReached -> {
-                        Log.d("PlayerActivity", "VLC: End reached")
-                        // Handle end of playback
-                    }
-                }
-            }
-
-            // Seek to saved position if any
-            if (playbackPosition > 0) {
-                vlcPlayer?.time = playbackPosition
-            } else if (currentMeta != null && currentMeta!!.progress > 0 && !currentMeta!!.isWatched) {
-                vlcPlayer?.time = currentMeta!!.progress
-            }
-
-            // Start playback
-            vlcPlayer?.play()
-
-            Log.i("PlayerActivity", "VLC player initialized successfully")
-
-        } catch (e: Exception) {
-            Log.e("PlayerActivity", "Error initializing VLC player", e)
-            android.widget.Toast.makeText(
-                this,
-                "Failed to initialize VLC player: ${e.message}",
-                android.widget.Toast.LENGTH_LONG
-            ).show()
-        }
-    }
-
-    private fun releaseVLCPlayer() {
-        if (usingVLC) {
-            // Save current position
-            vlcPlayer?.let {
-                playbackPosition = it.time
-            }
-
-            vlcPlayer?.release()
-            libVLC?.release()
-            vlcPlayer = null
-            libVLC = null
-        }
     }
 
     private fun applySubtitleStyling() {

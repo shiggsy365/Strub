@@ -335,24 +335,15 @@ class ResultsDisplayModule(
     }
 
     /**
-     * Plays trailer using VLC-based YouTubePlayerActivity
+     * Plays trailer in external app (YouTube, browser, etc.)
      */
     fun playTrailer(item: MetaItem) {
         fragment.lifecycleScope.launch {
             try {
                 val trailerUrl = viewModel.fetchTrailer(item.id, item.type)
                 if (trailerUrl != null) {
-                    // Extract YouTube video ID from URL
-                    // Format: https://www.youtube.com/watch?v=VIDEO_ID
-                    val youtubeKey = trailerUrl.substringAfter("v=").substringBefore("&")
-
-                    if (youtubeKey.isNotEmpty()) {
-                        val intent = Intent(fragment.requireContext(), com.example.stremiompvplayer.YouTubePlayerActivity::class.java)
-                        intent.putExtra("youtube_key", youtubeKey)
-                        fragment.startActivity(intent)
-                    } else {
-                        Toast.makeText(fragment.requireContext(), "Invalid trailer URL", Toast.LENGTH_SHORT).show()
-                    }
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(trailerUrl))
+                    fragment.startActivity(intent)
                 } else {
                     Toast.makeText(fragment.requireContext(), "No trailer available", Toast.LENGTH_SHORT).show()
                 }
