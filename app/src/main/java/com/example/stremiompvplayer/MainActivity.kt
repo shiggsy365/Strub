@@ -254,7 +254,7 @@ class MainActivity : AppCompatActivity() {
         sidebar.onFocusChangeListener = onFocusChange
         val childViews = listOf(
             R.id.sidebarHome, R.id.sidebarDiscover, R.id.sidebarLibrary,
-            R.id.sidebarSearch, R.id.sidebarLiveTV, R.id.sidebarSettings
+            R.id.sidebarSearch, R.id.sidebarLiveTV, R.id.sidebarSettings, R.id.mediaTypeToggle
         )
         childViews.forEach { viewId ->
             sidebar.findViewById<View>(viewId)?.onFocusChangeListener = onFocusChange

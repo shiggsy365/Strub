@@ -1829,8 +1829,18 @@ class MainViewModel(
                     background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" },
                     description = details.overview,
                     videos = details.seasons?.map { season ->
-                        Video(season.id.toString(), season.name, null, season.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }, null, season.season_number)
-                    }
+                        Video(
+                            id = season.id.toString(),
+                            title = season.name,
+                            released = season.air_date,
+                            thumbnail = season.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" },
+                            number = null,
+                            season = season.season_number,
+                            overview = null,
+                            rating = season.voteAverage?.let { String.format("%.1f", it) }
+                        )
+                    },
+                    rating = details.vote_average?.let { String.format("%.1f", it) }
                 )
                 _metaDetails.postValue(meta)
             } catch (e: Exception) { _error.postValue("Failed to load series details: ${e.message}") }
@@ -1850,7 +1860,9 @@ class MainViewModel(
                         name = episode.name,
                         poster = episode.still_path?.let { "https://image.tmdb.org/t/p/w500$it" },
                         background = null,
-                        description = episode.overview
+                        description = episode.overview,
+                        releaseDate = episode.airDate,
+                        rating = episode.voteAverage?.let { String.format("%.1f", it) }
                     )
                 }
                 _seasonEpisodes.postValue(episodes)

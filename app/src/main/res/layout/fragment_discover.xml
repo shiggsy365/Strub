@@ -102,11 +102,23 @@
                             tools:visibility="visible" />
                     </FrameLayout>
 
-                    <!-- Rating and Date Stacked to the RIGHT of Logo -->
+                    <!-- Episode, Rating and Date Stacked to the RIGHT of Logo -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
+
+                        <!-- Episode Info (shown only for episodes) - MOVED ABOVE RATING -->
+                        <TextView
+                            android:id="@+id/detailEpisode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="@color/text_secondary"
+                            android:visibility="gone"
+                            tools:text="S01E01"
+                            tools:visibility="visible" />
 
                         <TextView
                             android:id="@+id/detailRating"
@@ -132,17 +144,6 @@
                     </LinearLayout>
 
                 </LinearLayout>
-
-                <!-- Episode Info (shown only for episodes) -->
-                <TextView
-                    android:id="@+id/detailEpisode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:textAppearance="?attr/textAppearanceBodyLarge"
-                    android:textColor="@color/text_secondary"
-                    android:visibility="gone"
-                    tools:text="S01E01" />
 
                 <!-- Description - CHANGED: Fixed height 120dp -->
                 <ScrollView

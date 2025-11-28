@@ -597,6 +597,14 @@ class DiscoverFragment : Fragment() {
                     if (isCycling) {
                         cycleAttemptCount = 0
                     }
+
+                    // Auto-focus first item when content loads
+                    binding.root.postDelayed({
+                        if (binding.rvContent.childCount > 0) {
+                            val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                            firstView?.requestFocus()
+                        }
+                    }, 100)
                 } else {
                     displayModule.currentSelectedItem = null
                     // If the list is empty, automatically cycle to the next list (even when not actively cycling)
@@ -652,7 +660,9 @@ class DiscoverFragment : Fragment() {
                             name = video.title,
                             poster = video.thumbnail,
                             background = meta.background,
-                            description = "Season $seasonNum"
+                            description = "Season $seasonNum",
+                            releaseDate = video.released,
+                            rating = video.rating
                         )
                     }
                 } ?: emptyList()
@@ -660,6 +670,14 @@ class DiscoverFragment : Fragment() {
                 contentAdapter.updateData(seasons)
                 if (seasons.isNotEmpty()) {
                     displayModule.updateDetailsPane(seasons[0])
+
+                    // Auto-focus first season
+                    binding.root.postDelayed({
+                        if (binding.rvContent.childCount > 0) {
+                            val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                            firstView?.requestFocus()
+                        }
+                    }, 100)
                 }
                 updateCurrentListLabel("${meta.name} - Seasons")
             }
@@ -670,6 +688,15 @@ class DiscoverFragment : Fragment() {
             if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SEASON && episodes.isNotEmpty()) {
                 contentAdapter.updateData(episodes)
                 displayModule.updateDetailsPane(episodes[0])
+
+                // Auto-focus first episode
+                binding.root.postDelayed({
+                    if (binding.rvContent.childCount > 0) {
+                        val firstView = binding.rvContent.layoutManager?.findViewByPosition(0)
+                        firstView?.requestFocus()
+                    }
+                }, 100)
+
                 displayModule.currentSeriesId?.let { seriesId ->
                     displayModule.currentSeasonNumber?.let { seasonNum ->
                         updateCurrentListLabel("Season $seasonNum - Episodes")

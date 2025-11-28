@@ -96,13 +96,16 @@ data class TMDBSeason(
     val name: String,
     val season_number: Int,
     val episode_count: Int,
-    val poster_path: String?
+    val poster_path: String?,
+    val air_date: String?,
+    @Json(name = "vote_average") val voteAverage: Double?
 )
 
 data class TMDBSeasonDetails(
     val _id: String,
     val air_date: String?,
-    val episodes: List<TMDBEpisode>
+    val episodes: List<TMDBEpisode>,
+    val vote_average: Double?
 )
 
 data class TMDBEpisode(
@@ -112,7 +115,8 @@ data class TMDBEpisode(
     val season_number: Int,
     val still_path: String?,
     val overview: String?,
-    @Json(name = "air_date") val airDate: String? // <--- ADD THIS LINE
+    @Json(name = "air_date") val airDate: String?,
+    @Json(name = "vote_average") val voteAverage: Double?
 )
 
 // --- TV CREDITS (Aggregate) ---

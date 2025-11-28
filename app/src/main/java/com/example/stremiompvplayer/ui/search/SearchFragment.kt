@@ -395,8 +395,15 @@ class SearchFragment : Fragment() {
                     binding.heroCard.visibility = View.VISIBLE
                     currentResultIndex = 0
                     updateDisplayedResults()
+
+                    // Auto-focus first item when results load
+                    binding.root.postDelayed({
+                        if (binding.resultsRecycler.childCount > 0) {
+                            val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
+                            firstView?.requestFocus()
+                        }
+                    }, 100)
                 }
-                binding.resultsRecycler.requestFocus()
             } else {
                 // Initial empty state
                 // Normalize "tv" type to "series" for consistency
@@ -453,7 +460,9 @@ class SearchFragment : Fragment() {
                             name = video.title,
                             poster = video.thumbnail,
                             background = meta.background,
-                            description = "Season $seasonNum"
+                            description = "Season $seasonNum",
+                            releaseDate = video.released,
+                            rating = video.rating
                         )
                     }
                 } ?: emptyList()
@@ -461,6 +470,14 @@ class SearchFragment : Fragment() {
                 searchAdapter.updateData(seasons)
                 if (seasons.isNotEmpty()) {
                     displayModule.updateDetailsPane(seasons[0])
+
+                    // Auto-focus first season
+                    binding.root.postDelayed({
+                        if (binding.resultsRecycler.childCount > 0) {
+                            val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
+                            firstView?.requestFocus()
+                        }
+                    }, 100)
                 }
             }
         }
@@ -470,6 +487,14 @@ class SearchFragment : Fragment() {
             if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SEASON && episodes.isNotEmpty()) {
                 searchAdapter.updateData(episodes)
                 displayModule.updateDetailsPane(episodes[0])
+
+                // Auto-focus first episode
+                binding.root.postDelayed({
+                    if (binding.resultsRecycler.childCount > 0) {
+                        val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
+                        firstView?.requestFocus()
+                    }
+                }, 100)
             }
         }
     }
