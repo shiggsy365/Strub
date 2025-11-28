@@ -1810,62 +1810,77 @@ class MainViewModel(
     suspend fun fetchSubtitles(meta: MetaItem): List<com.example.stremiompvplayer.models.Subtitle> {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d("MainViewModel", "=== fetchSubtitles() START ===")
+                Log.d("MainViewModel", "Meta name: '${meta.name}'")
+                Log.d("MainViewModel", "Meta ID: '${meta.id}'")
+                Log.d("MainViewModel", "Meta type: '${meta.type}'")
+
                 val manifestUrl = prefsManager.getAIOStreamsManifestUrl()
+                Log.d("MainViewModel", "AIOStreams manifest URL: ${manifestUrl ?: "NOT CONFIGURED"}")
+
                 if (manifestUrl.isNullOrEmpty()) {
-                    Log.d("MainViewModel", "No AIOStreams manifest URL configured")
+                    Log.w("MainViewModel", "❌ No AIOStreams manifest URL configured - cannot fetch subtitles")
                     return@withContext emptyList()
                 }
 
                 val aioApi = AIOStreamsClient.getApi(manifestUrl)
                 val subtitleUrl = when (meta.type) {
                     "movie" -> {
+                        Log.d("MainViewModel", "Looking up IMDb ID for movie: ${meta.id}")
                         val imdbId = getImdbIdForMovie(meta.id)
                         if (imdbId != null) {
+                            Log.d("MainViewModel", "Found IMDb ID: $imdbId")
                             AIOStreamsClient.buildMovieSubtitleUrl(manifestUrl, imdbId)
                         } else {
-                            Log.e("MainViewModel", "Could not get IMDb ID for movie: ${meta.id}")
+                            Log.e("MainViewModel", "❌ Could not get IMDb ID for movie: ${meta.id}")
                             null
                         }
                     }
                     "episode" -> {
                         // Parse episode ID: tmdb:12345:season:episode
                         val parts = meta.id.split(":")
+                        Log.d("MainViewModel", "Parsed episode ID parts: ${parts.joinToString(", ")}")
                         if (parts.size >= 4) {
                             val tmdbId = parts[1].toIntOrNull()
                             val season = parts[2].toIntOrNull() ?: 1
                             val episode = parts[3].toIntOrNull() ?: 1
+                            Log.d("MainViewModel", "Looking up IMDb ID for series TMDB ID: $tmdbId")
                             val imdbId = getImdbIdForSeries(tmdbId)
                             if (imdbId != null) {
+                                Log.d("MainViewModel", "Found IMDb ID: $imdbId for S${season}E${episode}")
                                 AIOStreamsClient.buildSeriesSubtitleUrl(manifestUrl, imdbId, season, episode)
                             } else {
-                                Log.e("MainViewModel", "Could not get IMDb ID for series: ${meta.id}")
+                                Log.e("MainViewModel", "❌ Could not get IMDb ID for series TMDB ID: $tmdbId")
                                 null
                             }
                         } else {
-                            Log.e("MainViewModel", "Invalid episode ID format: ${meta.id}")
+                            Log.e("MainViewModel", "❌ Invalid episode ID format: ${meta.id} (expected tmdb:id:season:episode)")
                             null
                         }
                     }
                     else -> {
-                        Log.d("MainViewModel", "Subtitles not supported for type: ${meta.type}")
+                        Log.w("MainViewModel", "❌ Subtitles not supported for type: '${meta.type}'")
                         null
                     }
                 }
 
                 if (subtitleUrl != null) {
-                    Log.d("MainViewModel", "Fetching subtitles from: $subtitleUrl")
+                    Log.i("MainViewModel", "📥 Fetching subtitles from URL: $subtitleUrl")
                     val response = aioApi.getSubtitles(subtitleUrl)
                     Log.d("MainViewModel", "Received ${response.subtitles.size} total subtitles")
                     // Filter for English subtitles only
                     val englishSubtitles = response.subtitles.filter { it.lang == "eng" }
-                    Log.d("MainViewModel", "Found ${englishSubtitles.size} English subtitles for ${meta.name}")
+                    Log.i("MainViewModel", "✓ Found ${englishSubtitles.size} English subtitles for '${meta.name}'")
+                    Log.d("MainViewModel", "=== fetchSubtitles() END ===")
                     englishSubtitles
                 } else {
-                    Log.w("MainViewModel", "No subtitle URL generated for ${meta.name}")
+                    Log.w("MainViewModel", "❌ No subtitle URL generated for '${meta.name}'")
+                    Log.d("MainViewModel", "=== fetchSubtitles() END ===")
                     emptyList()
                 }
             } catch (e: Exception) {
-                Log.e("MainViewModel", "Error fetching subtitles", e)
+                Log.e("MainViewModel", "❌ Error fetching subtitles for '${meta.name}': ${e.message}", e)
+                Log.d("MainViewModel", "=== fetchSubtitles() END ===")
                 emptyList()
             }
         }
