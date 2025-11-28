@@ -173,11 +173,11 @@
  <color name="glass_surface_light">#2F3B4C4D</color>
  <color name="card_elevated">@android:color/transparent</color>
 
- <color name="focus_primary">#E50914</color>
- <color name="focus_secondary">#B20710</color>
- <color name="focus_glow">#E5091480</color>
- <color name="selection_highlight">#E5091430</color>
- <color name="selection_color">#E5091450</color>
+ <color name="focus_primary">#FFEB3B</color>
+ <color name="focus_secondary">#FDD835</color>
+ <color name="focus_glow">#FFEB3B80</color>
+ <color name="selection_highlight">#FFEB3B30</color>
+ <color name="selection_color">#FFEB3B50</color>
 
  <color name="text_primary">@color/md_theme_onSurface</color>
  <color name="text_secondary">@color/md_theme_onSurfaceVariant</color>
