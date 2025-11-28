@@ -218,16 +218,11 @@ class LiveTVFragment : Fragment() {
         binding.rvTVGuide.isFocusableInTouchMode = true
         binding.rvTVGuide.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 
-        // Override focus search to keep focus within RecyclerView during scrolling
+        // Don't intercept UP/DOWN on RecyclerView itself - let it handle scrolling naturally
+        // The fragment's handleKeyDown will consume events after RecyclerView processes them
         binding.rvTVGuide.setOnKeyListener { v, keyCode, event ->
             if (event.action == android.view.KeyEvent.ACTION_DOWN) {
                 when (keyCode) {
-                    android.view.KeyEvent.KEYCODE_DPAD_UP,
-                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        // Consume UP/DOWN after RecyclerView handles navigation
-                        // This prevents event from bubbling to MainActivity sidebar
-                        true
-                    }
                     android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
                         // Allow left navigation to re-open main menu
                         false  // Let the event propagate to open the main menu
@@ -256,7 +251,7 @@ class LiveTVFragment : Fragment() {
                     }
                 }
 
-                // Handle D-pad keys - ensure focus stays in channel list
+                // Handle D-pad keys for RIGHT navigation to details pane
                 view.setOnKeyListener { v, keyCode, event ->
                     if (event.action == android.view.KeyEvent.ACTION_DOWN) {
                         when (keyCode) {
@@ -265,17 +260,7 @@ class LiveTVFragment : Fragment() {
                                 binding.detailsCard.requestFocus()
                                 true
                             }
-                            android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                                // Allow left navigation to re-open main menu
-                                false  // Let the event propagate to open the main menu
-                            }
-                            android.view.KeyEvent.KEYCODE_DPAD_UP,
-                            android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                                // Let event pass through so RecyclerView can handle focus movement
-                                // RecyclerView's OnKeyListener will consume it after handling
-                                false
-                            }
-                            else -> false
+                            else -> false  // Don't intercept other keys, let RecyclerView handle them
                         }
                     } else {
                         false
@@ -681,8 +666,11 @@ class LiveTVFragment : Fragment() {
         if (event?.action == KeyEvent.ACTION_DOWN) {
             when (keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                    // Don't consume here - let the event reach RecyclerView items
-                    // The items will consume it to prevent focus escaping to sidebar
+                    // Consume UP/DOWN if RecyclerView or its children have focus
+                    // This prevents event from bubbling to MainActivity after RecyclerView handles it
+                    if (_binding != null && (binding.rvTVGuide.hasFocus() || binding.rvTVGuide.focusedChild != null)) {
+                        return true  // Consume after RecyclerView processes
+                    }
                     return false
                 }
                 KeyEvent.KEYCODE_DPAD_LEFT -> {
