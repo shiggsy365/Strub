@@ -93,13 +93,16 @@ data class Subtitle(
     val id: String,
     val url: String,
     val lang: String,
-    @Json(name = "sub_id") val subId: Int,
-    @Json(name = "ai_translated") val aiTranslated: Boolean,
-    @Json(name = "from_trusted") val fromTrusted: Boolean,
-    @Json(name = "uploader_id") val uploaderId: Int?,
-    @Json(name = "lang_code") val langCode: String,
-    val title: String,
-    val moviehash: String?
+    @Json(name = "sub_id") val subId: Int? = null,
+    @Json(name = "ai_translated") val aiTranslated: Boolean? = null,
+    @Json(name = "from_trusted") val fromTrusted: Boolean? = null,
+    @Json(name = "uploader_id") val uploaderId: Int? = null,
+    @Json(name = "lang_code") val langCode: String? = null,
+    val title: String? = null,
+    val moviehash: String? = null,
+    @Json(name = "SubEncoding") val subEncoding: String? = null,
+    val m: String? = null,  // Additional field from AIOStreams
+    val g: String? = null   // Additional field from AIOStreams
 ) : Serializable {
-    val formattedTitle: String get() = "AIO - $title"
+    val formattedTitle: String get() = if (!title.isNullOrEmpty()) "AIO - $title" else "AIO - Subtitle"
 }
