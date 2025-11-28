@@ -28,6 +28,7 @@ import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
+import com.example.stremiompvplayer.ui.ResultsDisplayModule
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -70,7 +71,7 @@ class SearchFragment : Fragment() {
 
     private lateinit var contentAdapter: PosterAdapter
     private lateinit var searchAdapter: PosterAdapter
-    private var currentSelectedItem: MetaItem? = null
+    private lateinit var displayModule: ResultsDisplayModule
     private var movieResults = listOf<MetaItem>()
     private var seriesResults = listOf<MetaItem>()
     private var currentResultIndex = 0  // 0 for movies, 1 for series
@@ -85,12 +86,41 @@ class SearchFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupDisplayModule()
         setupRecyclerView()
         setupObservers()
         setupKeyHandling()
         setupSearchListeners()
-        setupActionButtons()
         binding.searchEditText.requestFocus()
+    }
+
+    private fun setupDisplayModule() {
+        val config = ResultsDisplayModule.Configuration(
+            pageBackground = binding.pageBackground,
+            detailTitle = binding.detailTitle,
+            detailLogo = binding.detailLogo,
+            detailDescription = binding.detailDescription,
+            detailDate = binding.detailDate,
+            detailRating = binding.detailRating,
+            detailEpisode = binding.detailEpisodeNumber,
+            actorChips = binding.root.findViewById(R.id.actorChips) ?: com.google.android.material.chip.ChipGroup(requireContext()),
+            btnPlay = binding.btnPlay,
+            btnTrailer = null,  // Search doesn't have trailer button
+            btnRelated = binding.btnRelated,
+            enableDrillDown = false,  // Search doesn't use drill-down
+            useGridLayout = true,      // Search uses grid layout
+            showEpisodeDescription = false
+        )
+        displayModule = ResultsDisplayModule(this, viewModel, config)
+
+        // Setup callbacks
+        displayModule.onRelatedContentLoaded = { similarContent ->
+            // Update search results with related content
+            movieResults = similarContent
+            seriesResults = emptyList()
+            currentResultIndex = 0
+            updateDisplayedResults()
+        }
     }
 
     private fun setupSearchListeners() {
@@ -168,7 +198,7 @@ class SearchFragment : Fragment() {
 
         searchAdapter.updateData(results)
         if (results.isNotEmpty()) {
-            updateDetailsPane(results[0])
+            displayModule.updateDetailsPane(results[0])
 
             // Update label to show current type
             binding.root.post {
@@ -191,7 +221,7 @@ class SearchFragment : Fragment() {
         searchAdapter = PosterAdapter(
             items = emptyList(),
             onClick = { item ->
-                updateDetailsPane(item)
+                displayModule.updateDetailsPane(item)
                 // For series, allow drilling into episodes via DetailsActivity2
                 // For movies, can play directly or go to details
                 val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
@@ -227,7 +257,7 @@ class SearchFragment : Fragment() {
                                 detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
                                     delay(1000)
                                     if (isAdded) {
-                                        updateDetailsPane(item)
+                                        displayModule.updateDetailsPane(item)
                                     }
                                 }
                             }
@@ -242,117 +272,6 @@ class SearchFragment : Fragment() {
         })
     }
 
-    private fun updateDetailsPane(item: MetaItem) {
-        currentSelectedItem = item
-        binding.heroCard.visibility = View.VISIBLE
-
-        Glide.with(this)
-            .load(item.background ?: item.poster)
-            .into(binding.pageBackground)
-
-        val formattedDate = try {
-            item.releaseDate?.let { dateStr ->
-                val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val outputFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
-                val date = inputFormat.parse(dateStr)
-                date?.let { outputFormat.format(it) }
-            }
-        } catch (e: Exception) {
-            item.releaseDate
-        }
-
-        binding.detailDate.text = formattedDate ?: ""
-        binding.detailRating.visibility = if (item.rating != null) {
-            binding.detailRating.text = "★ ${item.rating}"
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
-
-        binding.detailDescription.text = item.description ?: "No description available."
-
-        // Extract episode number if this is an episode (format: "Show Name - S01E05" or similar)
-        val episodePattern = Regex("(S\\d+E\\d+)")
-        val episodeMatch = episodePattern.find(item.name)
-        if (episodeMatch != null && item.type == "episode") {
-            binding.detailEpisodeNumber.text = episodeMatch.value
-            binding.detailEpisodeNumber.visibility = View.VISIBLE
-            // Remove episode number from title for cleaner display
-            binding.detailTitle.text = item.name.replace(episodePattern, "").replace(" - ", "").trim()
-        } else {
-            binding.detailEpisodeNumber.visibility = View.GONE
-            binding.detailTitle.text = item.name
-        }
-
-        // [CHANGE] Initial state is hidden for both title and logo to prevent flash
-        binding.detailTitle.visibility = View.GONE
-        binding.detailLogo.visibility = View.GONE
-
-        viewModel.fetchItemLogo(item)
-
-        // Update play button visibility based on content type
-        updatePlayButtonVisibility(item)
-    }
-
-    private fun updatePlayButtonVisibility(item: MetaItem) {
-        val playButton = binding.btnPlay
-        val shouldShowPlay = when (item.type) {
-            "movie" -> true  // Show for movies
-            "series", "tv" -> false  // Hide for series (need to drill down to episodes)
-            else -> false
-        }
-        playButton?.visibility = if (shouldShowPlay) View.VISIBLE else View.GONE
-    }
-
-    private fun setupActionButtons() {
-        // Setup Play button
-        binding.btnPlay?.setOnClickListener {
-            currentSelectedItem?.let { item ->
-                if (item.type == "movie") {
-                    showStreamDialog(item)
-                }
-            }
-        }
-
-        // Setup Related button
-        binding.btnRelated?.setOnClickListener {
-            currentSelectedItem?.let { item ->
-                showRelatedContent(item)
-            }
-        }
-    }
-
-    private fun showStreamDialog(item: MetaItem) {
-        // Navigate to DetailsActivity2 which handles stream selection
-        val intent = Intent(requireContext(), DetailsActivity2::class.java).apply {
-            putExtra("metaId", item.id)
-            putExtra("title", item.name)
-            putExtra("poster", item.poster)
-            putExtra("background", item.background)
-            putExtra("description", item.description)
-            putExtra("type", item.type)
-        }
-        startActivity(intent)
-    }
-
-    private fun showRelatedContent(item: MetaItem) {
-        lifecycleScope.launch {
-            try {
-                val similarContent = viewModel.fetchSimilarContent(item.id, item.type)
-                if (similarContent.isNotEmpty()) {
-                    // Update search results with related content
-                    movieResults = similarContent
-                    seriesResults = emptyList()
-                    currentResultIndex = 0
-                    updateDisplayedResults()
-                } else {
-                    Toast.makeText(requireContext(), "No related content found", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error loading related content", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
 
     private fun showItemMenu(view: View, item: MetaItem) {
         val wrapper = ContextThemeWrapper(requireContext(),
@@ -502,7 +421,7 @@ class SearchFragment : Fragment() {
                     binding.noResultsState.visibility = View.GONE
                     binding.contentGrid.visibility = View.VISIBLE
                     binding.heroCard.visibility = View.VISIBLE
-                    if (normalizedResults.isNotEmpty()) updateDetailsPane(normalizedResults[0])
+                    if (normalizedResults.isNotEmpty()) displayModule.updateDetailsPane(normalizedResults[0])
                 }
                 binding.resultsRecycler.requestFocus()
             }
@@ -521,24 +440,6 @@ class SearchFragment : Fragment() {
                 is MainViewModel.ActionResult.Error -> {
                     Toast.makeText(requireContext(), result.message,
                         Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-
-        viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
-            when (logoUrl) {
-                "" -> {
-                    binding.detailTitle.visibility = View.GONE
-                    binding.detailLogo.visibility = View.GONE
-                }
-                null -> {
-                    binding.detailTitle.visibility = View.VISIBLE
-                    binding.detailLogo.visibility = View.GONE
-                }
-                else -> {
-                    binding.detailTitle.visibility = View.GONE
-                    binding.detailLogo.visibility = View.VISIBLE
-                    Glide.with(this).load(logoUrl).fitCenter().into(binding.detailLogo)
                 }
             }
         }
