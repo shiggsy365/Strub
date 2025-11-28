@@ -48,6 +48,32 @@ android {
         viewBinding true
         dataBinding true
     }
+
+    // Split APKs by ABI to reduce size (from 211MB to ~60MB per architecture)
+    splits {
+        abi {
+            enable true
+            reset()
+            // Include only modern architectures (covers 99% of devices)
+            include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            universalApk true  // Also generate a universal APK (for direct installs)
+        }
+    }
+
+    // Packaging options to exclude unnecessary files and reduce APK size
+    packagingOptions {
+        // Exclude duplicate files
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt',
+                         'META-INF/license.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt',
+                         'META-INF/notice.txt', 'META-INF/ASL2.0', 'META-INF/*.kotlin_module']
+        }
+
+        // Optimize native libraries
+        jniLibs {
+            useLegacyPackaging = false  // Use compressed native libraries
+        }
+    }
 }
 
 // ⭐ FIX FOR DUPLICATE ANNOTATIONS - ADD THIS BLOCK

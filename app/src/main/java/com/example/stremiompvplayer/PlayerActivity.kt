@@ -11,6 +11,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.CaptionStyleCompat
 import com.example.stremiompvplayer.databinding.ActivityPlayerBinding
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.models.Stream
@@ -286,6 +287,9 @@ class PlayerActivity : AppCompatActivity() {
             .also { exoPlayer ->
                 binding.playerView.player = exoPlayer
 
+                // Apply subtitle styling from preferences
+                applySubtitleStyling()
+
                 // 2. Build the MediaItem with subtitles
                 val url = currentStream?.url ?: ""
 
@@ -558,6 +562,41 @@ class PlayerActivity : AppCompatActivity() {
             libVLC?.release()
             vlcPlayer = null
             libVLC = null
+        }
+    }
+
+    private fun applySubtitleStyling() {
+        try {
+            val prefsManager = SharedPreferencesManager.getInstance(this)
+
+            // Get subtitle preferences
+            val textSize = prefsManager.getSubtitleTextSize()
+            val textColor = prefsManager.getSubtitleTextColor()
+            val backgroundColor = prefsManager.getSubtitleBackgroundColor()
+            val windowColor = prefsManager.getSubtitleWindowColor()
+            val edgeType = prefsManager.getSubtitleEdgeType()
+            val edgeColor = prefsManager.getSubtitleEdgeColor()
+
+            // Create CaptionStyleCompat with user preferences
+            val captionStyle = CaptionStyleCompat(
+                textColor,                    // foregroundColor
+                backgroundColor,              // backgroundColor
+                windowColor,                  // windowColor
+                edgeType,                     // edgeType (0=NONE, 1=OUTLINE, 2=DROP_SHADOW, 3=RAISED, 4=DEPRESSED)
+                edgeColor,                    // edgeColor
+                null                          // typeface (null = default)
+            )
+
+            // Apply to SubtitleView
+            val subtitleView = binding.playerView.subtitleView
+            subtitleView?.setStyle(captionStyle)
+
+            // Set text size scale
+            subtitleView?.setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 20f * textSize)
+
+            Log.d("PlayerActivity", "Applied subtitle styling - Size: $textSize, Color: $textColor, Edge: $edgeType")
+        } catch (e: Exception) {
+            Log.e("PlayerActivity", "Error applying subtitle styling", e)
         }
     }
 
