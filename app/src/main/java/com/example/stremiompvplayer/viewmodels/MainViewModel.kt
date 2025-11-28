@@ -842,8 +842,30 @@ class MainViewModel(
                     val currentUserId = prefsManager.getCurrentUserId() ?: "default"
                     catalogRepository.getContinueWatching(currentUserId, "movie")
                         .filter { !it.isWatched && (it.duration == 0L || (it.progress.toFloat() / it.duration.toFloat()) < 0.9f) }
-                        .map { progress ->
-                            MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
+                        .mapNotNull { progress ->
+                            try {
+                                val tmdbId = progress.itemId.removePrefix("tmdb:").toIntOrNull()
+                                if (tmdbId != null && apiKey.isNotEmpty()) {
+                                    val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
+                                    MetaItem(
+                                        id = progress.itemId,
+                                        type = progress.type,
+                                        name = progress.name ?: details.title,
+                                        poster = progress.poster ?: details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" },
+                                        background = progress.background ?: details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" },
+                                        description = details.overview,
+                                        releaseDate = details.release_date,
+                                        rating = details.vote_average?.let { String.format("%.1f", it) },
+                                        isWatched = progress.isWatched,
+                                        progress = progress.progress,
+                                        duration = progress.duration
+                                    )
+                                } else {
+                                    MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
+                                }
+                            } catch (e: Exception) {
+                                MetaItem(id = progress.itemId, type = progress.type, name = progress.name ?: "Unknown", poster = progress.poster, background = progress.background, description = null, isWatched = progress.isWatched, progress = progress.progress, duration = progress.duration)
+                            }
                         }
                 }
                 "continue_episodes" -> {
@@ -873,6 +895,8 @@ class MainViewModel(
                                             poster = progress.poster ?: episode.still_path?.let { "https://image.tmdb.org/t/p/w500$it" },
                                             background = progress.background,
                                             description = episode.overview,
+                                            releaseDate = episode.airDate,
+                                            rating = episode.voteAverage?.let { String.format("%.1f", it) },
                                             isWatched = progress.isWatched,
                                             progress = progress.progress,
                                             duration = progress.duration
@@ -952,15 +976,43 @@ class MainViewModel(
                                     poster = poster,
                                     background = background,
                                     description = details.overview,
+                                    releaseDate = details.release_date,
+                                    rating = details.vote_average?.let { String.format("%.1f", it) },
                                     isWatched = isWatched,
                                     progress = watchProgress,
                                     duration = duration
                                 )
                             } else if (item.type == "episode") {
-                                // For episodes, preserve episode description and use show poster/background
-                                val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
-                                val poster = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
-                                val background = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                // For episodes, fetch episode-specific data including rating and air date
+                                val showDetails = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                                val poster = showDetails.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                val background = showDetails.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+
+                                // Parse season and episode numbers from ID
+                                if (parts.size >= 4) {
+                                    val seasonNum = parts[2].toIntOrNull()
+                                    val episodeNum = parts[3].toIntOrNull()
+                                    if (seasonNum != null && episodeNum != null) {
+                                        try {
+                                            val seasonDetails = TMDBClient.api.getTVSeasonDetails(tmdbId, seasonNum, apiKey)
+                                            val episode = seasonDetails.episodes.find { it.episode_number == episodeNum }
+                                            if (episode != null) {
+                                                return@async item.copy(
+                                                    poster = poster,
+                                                    background = background,
+                                                    releaseDate = episode.airDate,
+                                                    rating = episode.voteAverage?.let { String.format("%.1f", it) },
+                                                    isWatched = isWatched,
+                                                    progress = watchProgress,
+                                                    duration = duration
+                                                )
+                                            }
+                                        } catch (e: Exception) {
+                                            // Fallback to basic episode data without rating/date
+                                        }
+                                    }
+                                }
+
                                 item.copy(
                                     poster = poster,
                                     background = background,
@@ -977,6 +1029,8 @@ class MainViewModel(
                                     poster = poster,
                                     background = background,
                                     description = details.overview,
+                                    releaseDate = details.first_air_date,
+                                    rating = details.vote_average?.let { String.format("%.1f", it) },
                                     isWatched = isWatched,
                                     progress = watchProgress,
                                     duration = duration
@@ -1875,8 +1929,31 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 _isCastLoading.postValue(true)
-                val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull() ?: return@launch
-                val credits = if (type == "movie") TMDBClient.api.getMovieCredits(tmdbId, apiKey) else TMDBClient.api.getTVCredits(tmdbId, apiKey)
+
+                val credits = when (type) {
+                    "movie" -> {
+                        val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull() ?: return@launch
+                        TMDBClient.api.getMovieCredits(tmdbId, apiKey)
+                    }
+                    "episode" -> {
+                        // Parse episode ID: tmdb:showId:season:episode
+                        val parts = itemId.split(":")
+                        if (parts.size >= 4) {
+                            val showId = parts[1].toIntOrNull() ?: return@launch
+                            val seasonNum = parts[2].toIntOrNull() ?: return@launch
+                            val episodeNum = parts[3].toIntOrNull() ?: return@launch
+                            TMDBClient.api.getTVEpisodeCredits(showId, seasonNum, episodeNum, apiKey)
+                        } else {
+                            return@launch
+                        }
+                    }
+                    else -> {
+                        // For series, use TV credits
+                        val tmdbId = itemId.removePrefix("tmdb:").toIntOrNull() ?: return@launch
+                        TMDBClient.api.getTVCredits(tmdbId, apiKey)
+                    }
+                }
+
                 val cast = credits.cast.take(10).map { member ->
                     MetaItem("tmdb:${member.id}", "person", member.name, member.profile_path?.let { "https://image.tmdb.org/t/p/w500$it" }, null, member.character)
                 }

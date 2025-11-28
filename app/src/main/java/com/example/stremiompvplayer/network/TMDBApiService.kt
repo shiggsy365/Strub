@@ -69,6 +69,14 @@ interface TMDBApiService {
         @Query("language") language: String = "en-US"
     ): TMDBSeasonDetails
 
+    @GET("tv/{id}/season/{season_number}/episode/{episode_number}/credits")
+    suspend fun getTVEpisodeCredits(
+        @Path("id") id: Int,
+        @Path("season_number") seasonNumber: Int,
+        @Path("episode_number") episodeNumber: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "en-US"
+    ): TMDBCreditsResponse
 
     // --- AUTHENTICATION ---
     @GET("authentication/token/new")

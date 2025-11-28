@@ -260,7 +260,7 @@ class LibraryFragment : Fragment() {
         val formattedDate = try {
             item.releaseDate?.let { dateStr ->
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val outputFormat = SimpleDateFormat("yyyy", Locale.getDefault())
+                val outputFormat = SimpleDateFormat("dd MMM yy", Locale.getDefault())
                 val date = inputFormat.parse(dateStr)
                 date?.let { outputFormat.format(it) }
             }
