@@ -82,6 +82,11 @@ class LiveTVFragment : Fragment() {
             lastLoadTime = 0
         }
 
+        // Check if cache has data
+        fun isCachePopulated(): Boolean {
+            return cachedChannelsWithPrograms.isNotEmpty()
+        }
+
         // Load EPG in background at app startup
         suspend fun loadEPGInBackground(context: android.content.Context) {
             val prefsManager = SharedPreferencesManager.getInstance(context)
