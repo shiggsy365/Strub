@@ -681,16 +681,12 @@ class LiveTVFragment : Fragment() {
         if (event?.action == KeyEvent.ACTION_DOWN) {
             when (keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                    // If the RecyclerView or any of its children have focus, keep focus within the list
-                    // This prevents focus from jumping to the sidebar during scrolling
-                    if (binding.rvTVGuide.hasFocus() || binding.rvTVGuide.focusedChild != null) {
-                        // Let the RecyclerView handle the scrolling naturally
-                        return false
-                    }
+                    // Always consume UP/DOWN events in LiveTV to prevent focus escaping to sidebar
+                    // This is especially important during fast scrolling when focusedChild might be null
+                    return true  // Consume the event - don't let it propagate to MainActivity
                 }
                 KeyEvent.KEYCODE_DPAD_LEFT -> {
                     // Allow left navigation to re-open main menu from channel list
-                    // No longer blocking left navigation
                     return false  // Let the event propagate to open the main menu
                 }
             }
