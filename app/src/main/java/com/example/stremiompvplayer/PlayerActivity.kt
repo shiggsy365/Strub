@@ -282,7 +282,10 @@ class PlayerActivity : AppCompatActivity() {
                 // Fetch and add subtitles asynchronously
                 lifecycleScope.launch {
                     Log.d("PlayerActivity", "=== SUBTITLE FETCH START ===")
-                    Log.d("PlayerActivity", "Meta: ${currentMeta?.name} (ID: ${currentMeta?.id}, Type: ${currentMeta?.type})")
+                    Log.d("PlayerActivity", "currentMeta is ${if (currentMeta == null) "NULL" else "not null"}")
+                    Log.d("PlayerActivity", "Meta name: ${currentMeta?.name ?: "NULL"}")
+                    Log.d("PlayerActivity", "Meta ID: ${currentMeta?.id ?: "NULL"}")
+                    Log.d("PlayerActivity", "Meta type: ${currentMeta?.type ?: "NULL"}")
 
                     val subtitles = currentMeta?.let { meta ->
                         try {
@@ -295,7 +298,10 @@ class PlayerActivity : AppCompatActivity() {
                             e.printStackTrace()
                             emptyList()
                         }
-                    } ?: emptyList()
+                    } ?: run {
+                        Log.e("PlayerActivity", "currentMeta is NULL - cannot fetch subtitles")
+                        emptyList()
+                    }
 
                     Log.d("PlayerActivity", "Processing ${subtitles.size} subtitles for ExoPlayer")
 
