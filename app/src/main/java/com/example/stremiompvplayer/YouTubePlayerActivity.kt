@@ -1,18 +1,22 @@
 package com.example.stremiompvplayer
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.stremiompvplayer.databinding.ActivityYoutubePlayerBinding
+import org.videolan.libvlc.LibVLC
+import org.videolan.libvlc.Media
+import org.videolan.libvlc.MediaPlayer
+import android.net.Uri
 
 class YouTubePlayerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityYoutubePlayerBinding
+    private var libVLC: LibVLC? = null
+    private var vlcPlayer: MediaPlayer? = null
     private var youtubeKey: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,109 +39,79 @@ class YouTubePlayerActivity : AppCompatActivity() {
         }
 
         binding.trailerTitle.text = title
-        setupWebView()
+
+        // Hide WebView, show VLC surface
+        binding.webView.visibility = View.GONE
+        binding.vlcSurfaceView.visibility = View.VISIBLE
+
+        initializeVLCPlayer()
     }
 
-    private fun setupWebView() {
-        val webView = binding.webView
-        val webSettings: WebSettings = webView.settings
+    private fun initializeVLCPlayer() {
+        try {
+            // Create LibVLC instance with YouTube-optimized options
+            val options = arrayListOf(
+                "--network-caching=1500",
+                "--live-caching=1500",
+                "--no-drop-late-frames",
+                "--no-skip-frames"
+            )
 
-        // Enable JavaScript (required for YouTube player)
-        webSettings.javaScriptEnabled = true
+            libVLC = LibVLC(this, options)
+            vlcPlayer = MediaPlayer(libVLC)
 
-        // Enable DOM storage
-        webSettings.domStorageEnabled = true
+            // Attach to surface view
+            vlcPlayer?.attachViews(binding.vlcSurfaceView, null, false, false)
 
-        // Enable media playback
-        webSettings.mediaPlaybackRequiresUserGesture = false
+            // Create YouTube URL from video key
+            val youtubeUrl = "https://www.youtube.com/watch?v=$youtubeKey"
+            Log.d("YouTubePlayer", "Playing YouTube URL: $youtubeUrl")
 
-        // Set cache mode
-        webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+            // VLC can handle YouTube URLs directly
+            val media = Media(libVLC, Uri.parse(youtubeUrl))
+            vlcPlayer?.media = media
+            media.release()
 
-        // Configure WebView clients
-        webView.webViewClient = WebViewClient()
-        webView.webChromeClient = WebChromeClient()
-
-        // Load YouTube IFrame Player
-        val html = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>
-                    body, html {
-                        margin: 0;
-                        padding: 0;
-                        width: 100%;
-                        height: 100%;
-                        background-color: #000;
-                        overflow: hidden;
+            // Add event listener
+            vlcPlayer?.setEventListener { event ->
+                when (event.type) {
+                    MediaPlayer.Event.Playing -> {
+                        binding.loadingProgress.visibility = View.GONE
+                        Log.d("YouTubePlayer", "VLC: Playing YouTube video")
                     }
-                    #player {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
+                    MediaPlayer.Event.Buffering -> {
+                        binding.loadingProgress.visibility = View.VISIBLE
                     }
-                </style>
-            </head>
-            <body>
-                <div id="player"></div>
-                <script>
-                    var tag = document.createElement('script');
-                    tag.src = "https://www.youtube.com/iframe_api";
-                    var firstScriptTag = document.getElementsByTagName('script')[0];
-                    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-                    var player;
-                    function onYouTubeIframeAPIReady() {
-                        player = new YT.Player('player', {
-                            height: '100%',
-                            width: '100%',
-                            videoId: '$youtubeKey',
-                            playerVars: {
-                                'autoplay': 1,
-                                'playsinline': 1,
-                                'controls': 1,
-                                'rel': 0,
-                                'modestbranding': 1,
-                                'fs': 1
-                            },
-                            events: {
-                                'onReady': onPlayerReady,
-                                'onStateChange': onPlayerStateChange
-                            }
-                        });
-                    }
-
-                    function onPlayerReady(event) {
-                        event.target.playVideo();
-                    }
-
-                    function onPlayerStateChange(event) {
-                        // YT.PlayerState.ENDED = 0
-                        if (event.data == 0) {
-                            // Video ended, notify Android to finish activity
-                            Android.onVideoEnded();
+                    MediaPlayer.Event.EncounteredError -> {
+                        Log.e("YouTubePlayer", "VLC error playing YouTube video")
+                        runOnUiThread {
+                            Toast.makeText(
+                                this,
+                                "Unable to play trailer. YouTube may have blocked playback.",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     }
-                </script>
-            </body>
-            </html>
-        """.trimIndent()
-
-        // Add JavaScript interface to handle video end
-        webView.addJavascriptInterface(object {
-            @android.webkit.JavascriptInterface
-            fun onVideoEnded() {
-                runOnUiThread {
-                    finish()
+                    MediaPlayer.Event.EndReached -> {
+                        Log.d("YouTubePlayer", "VLC: Video ended")
+                        runOnUiThread { finish() }
+                    }
                 }
             }
-        }, "Android")
 
-        webView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null)
+            // Start playback
+            vlcPlayer?.play()
+
+            Log.i("YouTubePlayer", "VLC YouTube player initialized successfully")
+
+        } catch (e: Exception) {
+            Log.e("YouTubePlayer", "Error initializing VLC for YouTube", e)
+            Toast.makeText(
+                this,
+                "Failed to play trailer: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     private fun hideSystemUi() {
@@ -151,13 +125,15 @@ class YouTubePlayerActivity : AppCompatActivity() {
         )
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         super.onBackPressed()
         finish()
     }
 
     override fun onDestroy() {
-        binding.webView.destroy()
         super.onDestroy()
+        vlcPlayer?.release()
+        libVLC?.release()
     }
 }
