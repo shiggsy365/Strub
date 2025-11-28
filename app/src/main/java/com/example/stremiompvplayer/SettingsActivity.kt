@@ -952,10 +952,19 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun showSubtitleCustomizationDialog() {
+        val scrollView = android.widget.ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48, 32, 48, 32)
         }
+
+        scrollView.addView(container)
 
         // Current values (mutable for tracking selections)
         var currentTextSize = prefsManager.getSubtitleTextSize()
@@ -1069,26 +1078,21 @@ class SettingsActivity : AppCompatActivity() {
         // Initialize selection states
         updateSizeButtonStates(sizeButtons, currentTextSize)
 
-        val sizeButtonsRow1 = LinearLayout(this).apply {
+        val sizeButtonsRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             addView(sizeVerySmall, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(sizeSmall, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
-            addView(sizeMedium, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-        }
-
-        val sizeButtonsRow2 = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, dpToPx(8), 0, 0)
+            addView(sizeMedium, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, dpToPx(4), 0)
+            })
             addView(sizeLarge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(sizeVeryLarge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            // Add spacer to balance layout
-            addView(View(this@SettingsActivity), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
 
         // Text Color Section
@@ -1165,13 +1169,13 @@ class SettingsActivity : AppCompatActivity() {
         val textColorButtons = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             addView(colorWhite, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(colorYellow, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(colorCyan, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(colorGreen, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
@@ -1239,10 +1243,10 @@ class SettingsActivity : AppCompatActivity() {
         val bgColorButtons = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             addView(bgTransparent, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(bgSemiBlack, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(bgBlack, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
@@ -1321,13 +1325,13 @@ class SettingsActivity : AppCompatActivity() {
         val edgeTypeButtons = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             addView(edgeNone, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(edgeOutline, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(edgeDropShadow, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                setMargins(0, 0, dpToPx(8), 0)
+                setMargins(0, 0, dpToPx(4), 0)
             })
             addView(edgeRaised, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
@@ -1370,8 +1374,7 @@ class SettingsActivity : AppCompatActivity() {
         // Add all views to container
         container.addView(textSizeLabel)
         container.addView(textSizeValue)
-        container.addView(sizeButtonsRow1)
-        container.addView(sizeButtonsRow2)
+        container.addView(sizeButtonsRow)
         container.addView(textColorLabel)
         container.addView(textColorButtons)
         container.addView(bgColorLabel)
@@ -1382,7 +1385,7 @@ class SettingsActivity : AppCompatActivity() {
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle("Customize Subtitles")
-            .setView(container)
+            .setView(scrollView)
             .setPositiveButton("Done") { _, _ ->
                 Toast.makeText(this, "Subtitle settings saved", Toast.LENGTH_SHORT).show()
             }
@@ -1390,10 +1393,11 @@ class SettingsActivity : AppCompatActivity() {
 
         dialog.show()
 
-        // Make dialog wider (90% of screen width)
+        // Make dialog wider (90% of screen width) and set max height
+        val maxHeight = (resources.displayMetrics.heightPixels * 0.8).toInt()
         dialog.window?.setLayout(
             (resources.displayMetrics.widthPixels * 0.9).toInt(),
-            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            maxHeight
         )
     }
 
