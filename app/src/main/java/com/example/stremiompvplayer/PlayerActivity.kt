@@ -34,6 +34,11 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPlayerBinding
     private var player: ExoPlayer? = null
 
+    // LibVLC fallback player
+    private var libVLC: LibVLC? = null
+    private var vlcPlayer: MediaPlayer? = null
+    private var usingVLC = false
+
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(
             ServiceLocator.getInstance(applicationContext),
@@ -233,31 +238,38 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun releasePlayer() {
-    player?.let { exoPlayer ->
-         playbackPosition = exoPlayer.currentPosition
-            currentItem = exoPlayer.currentMediaItemIndex
-            playWhenReady = exoPlayer.playWhenReady
+        // Release VLC player if using VLC
+        if (usingVLC) {
+            releaseVLCPlayer()
+            return
+        }
 
-        // Scrobble STOP
-        currentMeta?.let { meta ->
-            val duration = exoPlayer.duration
-            val position = exoPlayer.currentPosition
-            
-            // Only scrobble if meaningful duration
-            if (duration > 0) {
-                val progress = (position.toFloat() / duration.toFloat()) * 100f
-                viewModel.scrobble("stop", meta, progress)
-                
-                // OPTIONAL: If >90%, explicitly mark watched here to be safe
-                if (progress > 90f) {
-                     viewModel.markAsWatched(meta, syncToTrakt = false) // Trakt scrobble handles remote, we handle local
+        // Release ExoPlayer
+        player?.let { exoPlayer ->
+             playbackPosition = exoPlayer.currentPosition
+                currentItem = exoPlayer.currentMediaItemIndex
+                playWhenReady = exoPlayer.playWhenReady
+
+            // Scrobble STOP
+            currentMeta?.let { meta ->
+                val duration = exoPlayer.duration
+                val position = exoPlayer.currentPosition
+
+                // Only scrobble if meaningful duration
+                if (duration > 0) {
+                    val progress = (position.toFloat() / duration.toFloat()) * 100f
+                    viewModel.scrobble("stop", meta, progress)
+
+                    // OPTIONAL: If >90%, explicitly mark watched here to be safe
+                    if (progress > 90f) {
+                         viewModel.markAsWatched(meta, syncToTrakt = false) // Trakt scrobble handles remote, we handle local
+                    }
                 }
             }
+            exoPlayer.release()
         }
-        exoPlayer.release()
+        player = null
     }
-    player = null
-}
 
     @OptIn(UnstableApi::class) private fun initializePlayer() {
         if (player != null) return
@@ -351,23 +363,39 @@ class PlayerActivity : AppCompatActivity() {
                         Log.e("PlayerActivity", "Error code: ${error.errorCode}")
                         Log.e("PlayerActivity", "Stream URL: ${currentStream?.url}")
 
-                        // Provide user-friendly error message
-                        val errorMessage = when {
-                            error.message?.contains("Invalid NAL length") == true ->
-                                "Video file appears to be corrupted or incompatible. Try selecting a different stream quality."
-                            error.message?.contains("Source error") == true ->
-                                "Unable to load video stream. The source may be unavailable or the file format is not supported."
-                            error.errorCode == 3001 ->
-                                "Stream source error. Try selecting a different quality or stream provider."
-                            else ->
-                                "Playback error: ${error.message}"
-                        }
+                        // Check if this is a codec/format error that VLC might handle
+                        val isCodecError = error.message?.contains("Invalid NAL length") == true ||
+                                error.message?.contains("Source error") == true ||
+                                error.errorCode == 3001
 
-                        android.widget.Toast.makeText(
-                            this@PlayerActivity,
-                            errorMessage,
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
+                        if (isCodecError && !usingVLC) {
+                            // Offer to switch to VLC player
+                            runOnUiThread {
+                                android.app.AlertDialog.Builder(this@PlayerActivity)
+                                    .setTitle("Playback Error")
+                                    .setMessage("This video format may not be supported by the standard player. Would you like to try the VLC player engine instead?")
+                                    .setPositiveButton("Try VLC Player") { _, _ ->
+                                        switchToVLCPlayer()
+                                    }
+                                    .setNegativeButton("Select Different Stream") { _, _ ->
+                                        finish()
+                                    }
+                                    .setCancelable(false)
+                                    .show()
+                            }
+                        } else {
+                            // Show error toast for other errors
+                            val errorMessage = when {
+                                usingVLC -> "VLC Player error: ${error.message}"
+                                else -> "Playback error: ${error.message}"
+                            }
+
+                            android.widget.Toast.makeText(
+                                this@PlayerActivity,
+                                errorMessage,
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -409,6 +437,107 @@ class PlayerActivity : AppCompatActivity() {
 
         // Just finish this activity to return to the calling activity
         finish()
+    }
+
+    private fun switchToVLCPlayer() {
+        Log.i("PlayerActivity", "Switching to VLC player for better codec support")
+
+        // Release ExoPlayer
+        player?.release()
+        player = null
+
+        // Mark that we're using VLC
+        usingVLC = true
+
+        // Initialize VLC player
+        initializeVLCPlayer()
+    }
+
+    private fun initializeVLCPlayer() {
+        try {
+            // Create LibVLC instance with optimized options
+            val options = arrayListOf(
+                "--no-drop-late-frames",
+                "--no-skip-frames",
+                "--network-caching=1500",
+                "--clock-jitter=0",
+                "--live-caching=1500"
+            )
+
+            libVLC = LibVLC(this, options)
+            vlcPlayer = MediaPlayer(libVLC)
+
+            // Attach to the player view surface
+            vlcPlayer?.attachViews(binding.playerView.videoSurfaceView as android.view.SurfaceView, null, false, false)
+
+            // Set media
+            val streamUrl = currentStream?.url ?: ""
+            val media = Media(libVLC, Uri.parse(streamUrl))
+            vlcPlayer?.media = media
+            media.release()
+
+            // Add event listener for VLC errors
+            vlcPlayer?.setEventListener { event ->
+                when (event.type) {
+                    MediaPlayer.Event.Playing -> {
+                        binding.loadingProgress.visibility = View.GONE
+                        Log.d("PlayerActivity", "VLC: Playing")
+                    }
+                    MediaPlayer.Event.Buffering -> {
+                        binding.loadingProgress.visibility = View.VISIBLE
+                        Log.d("PlayerActivity", "VLC: Buffering")
+                    }
+                    MediaPlayer.Event.EncounteredError -> {
+                        Log.e("PlayerActivity", "VLC Player error encountered")
+                        runOnUiThread {
+                            android.widget.Toast.makeText(
+                                this,
+                                "VLC Player error. Try selecting a different stream.",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                    MediaPlayer.Event.EndReached -> {
+                        Log.d("PlayerActivity", "VLC: End reached")
+                        // Handle end of playback
+                    }
+                }
+            }
+
+            // Seek to saved position if any
+            if (playbackPosition > 0) {
+                vlcPlayer?.time = playbackPosition
+            } else if (currentMeta != null && currentMeta!!.progress > 0 && !currentMeta!!.isWatched) {
+                vlcPlayer?.time = currentMeta!!.progress
+            }
+
+            // Start playback
+            vlcPlayer?.play()
+
+            Log.i("PlayerActivity", "VLC player initialized successfully")
+
+        } catch (e: Exception) {
+            Log.e("PlayerActivity", "Error initializing VLC player", e)
+            android.widget.Toast.makeText(
+                this,
+                "Failed to initialize VLC player: ${e.message}",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    private fun releaseVLCPlayer() {
+        if (usingVLC) {
+            // Save current position
+            vlcPlayer?.let {
+                playbackPosition = it.time
+            }
+
+            vlcPlayer?.release()
+            libVLC?.release()
+            vlcPlayer = null
+            libVLC = null
+        }
     }
 
     private fun hideSystemUi() {
