@@ -237,7 +237,7 @@ data class TMDBMultiSearchResult(
         val date = release_date ?: first_air_date
         return MetaItem(
             id = "tmdb:$id",
-            type = media_type,
+            type = if (media_type == "tv") "series" else media_type,
             name = finalTitle,
             poster = if (poster_path != null) "https://image.tmdb.org/t/p/w500$poster_path" else null,
             background = if (backdrop_path != null) "https://image.tmdb.org/t/p/original$backdrop_path" else null,
