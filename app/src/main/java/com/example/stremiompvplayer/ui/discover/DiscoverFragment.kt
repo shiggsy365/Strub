@@ -296,13 +296,6 @@ class DiscoverFragment : Fragment() {
         }
     }
 
-    private fun refreshWatchStatus(item: MetaItem) {
-        val userId = SharedPreferencesManager.getInstance(requireContext()).getCurrentUserId()
-        if (userId != null) {
-            viewModel.checkWatchedStatus(item.id)
-        }
-    }
-
     private fun loadCatalogs(type: String = "movie") {
         // Fetch genres for the specified type only
         viewModel.fetchGenres(type)
