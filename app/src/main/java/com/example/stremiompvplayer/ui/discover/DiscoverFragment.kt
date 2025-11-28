@@ -27,6 +27,7 @@ import com.example.stremiompvplayer.utils.FocusMemoryManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.example.stremiompvplayer.adapters.PosterAdapter
+import com.example.stremiompvplayer.ui.ResultsDisplayModule
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ class DiscoverFragment : Fragment() {
     }
 
     private lateinit var contentAdapter: PosterAdapter
-    private var currentSelectedItem: MetaItem? = null
+    private lateinit var displayModule: ResultsDisplayModule
     private var allCatalogs = listOf<UserCatalog>()  // Combined movie + series catalogs
     private var currentCatalogIndex = 0
     private var isShowingGenre = false
@@ -56,12 +57,6 @@ class DiscoverFragment : Fragment() {
     private var detailsUpdateJob: Job? = null
     private val focusMemoryManager = FocusMemoryManager.getInstance()
     private val fragmentKey: String = "discover"
-
-    // Drill-down navigation state
-    private enum class DrillDownLevel { CATALOG, SERIES, SEASON }
-    private var currentDrillDownLevel = DrillDownLevel.CATALOG
-    private var currentSeriesId: String? = null
-    private var currentSeasonNumber: Int? = null
 
     companion object {
         private const val ARG_TYPE = "media_type"
@@ -91,6 +86,7 @@ class DiscoverFragment : Fragment() {
         // Sync the media type toggle with current content type
         (activity as? MainActivity)?.syncMediaTypeToggle(type)
 
+        setupDisplayModule()
         setupAdapters()
         setupObservers()
 
@@ -98,15 +94,51 @@ class DiscoverFragment : Fragment() {
         val seriesId = arguments?.getString(ARG_SERIES_ID)
         if (seriesId != null) {
             // Navigate directly to series drill-down
-            currentDrillDownLevel = DrillDownLevel.SERIES
-            currentSeriesId = seriesId
+            displayModule.currentDrillDownLevel = ResultsDisplayModule.DrillDownLevel.SERIES
+            displayModule.currentSeriesId = seriesId
             viewModel.loadSeriesMeta(seriesId)
-            updatePlayButtonVisibility()
+            displayModule.updatePlayButtonVisibility()
         } else {
             loadCatalogs(type)
         }
 
         setupKeyHandling()
+    }
+
+    private fun setupDisplayModule() {
+        val config = ResultsDisplayModule.Configuration(
+            pageBackground = binding.pageBackground,
+            detailTitle = binding.detailTitle,
+            detailLogo = binding.detailLogo,
+            detailDescription = binding.detailDescription,
+            detailDate = binding.detailDate,
+            detailRating = binding.detailRating,
+            detailEpisode = binding.detailEpisode,
+            actorChips = binding.root.findViewById(R.id.actorChips),
+            btnPlay = binding.root.findViewById(R.id.btnPlay),
+            btnTrailer = binding.root.findViewById(R.id.btnTrailer),
+            btnRelated = binding.root.findViewById(R.id.btnRelated),
+            enableDrillDown = true,  // Discover uses drill-down
+            useGridLayout = false,
+            showEpisodeDescription = false
+        )
+        displayModule = ResultsDisplayModule(this, viewModel, config)
+
+        // Setup callbacks
+        displayModule.onActorClicked = { personId, actorName ->
+            viewModel.loadPersonCredits(personId)
+            updateCurrentListLabel("$actorName - Filmography")
+        }
+
+        displayModule.onRelatedContentLoaded = { similarContent ->
+            contentAdapter.updateData(similarContent)
+            displayModule.updateDetailsPane(similarContent[0])
+            updateCurrentListLabel("Related to ${displayModule.currentSelectedItem?.name}")
+        }
+
+        displayModule.loadGenreList = { genreId, genreName, type ->
+            loadGenreList(genreId, genreName, type)
+        }
     }
 
     // Dropdown removed - now browsing both movies and series together
@@ -121,7 +153,7 @@ class DiscoverFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        currentSelectedItem?.let { updateDetailsPane(it) }
+        displayModule.currentSelectedItem?.let { displayModule.updateDetailsPane(it) }
 
         // Restore previously focused position for seamless navigation
         val savedPosition = focusMemoryManager.getSavedPosition(fragmentKey)
@@ -175,38 +207,18 @@ class DiscoverFragment : Fragment() {
     }
 
     fun handleBackPress(): Boolean {
-        // Handle drill-down navigation back
-        when (currentDrillDownLevel) {
-            DrillDownLevel.SEASON -> {
-                // Go back to seasons view
-                currentSeriesId?.let { seriesId ->
-                    currentDrillDownLevel = DrillDownLevel.SERIES
-                    currentSeasonNumber = null
-                    viewModel.loadSeriesMeta(seriesId)
-                    updatePlayButtonVisibility()
-                    return true
-                }
-            }
-            DrillDownLevel.SERIES -> {
-                // Go back to catalog view
-                currentDrillDownLevel = DrillDownLevel.CATALOG
-                currentSeriesId = null
-                currentSeasonNumber = null
-                // Reload the current catalog
+        val handled = displayModule.handleBackPress()
+        if (handled) {
+            // If going back to catalog, reload the current catalog
+            if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.CATALOG) {
                 if (allCatalogs.isNotEmpty() && currentCatalogIndex < allCatalogs.size) {
                     val currentCatalog = allCatalogs[currentCatalogIndex]
                     updateCurrentListLabel(currentCatalog.displayName)
                     viewModel.loadContentForCatalog(currentCatalog, isInitialLoad = false)
                 }
-                updatePlayButtonVisibility()
-                return true
-            }
-            DrillDownLevel.CATALOG -> {
-                // At top level, don't consume back press
-                return false
             }
         }
-        return false
+        return handled
     }
     fun focusSidebar(): Boolean {
         binding.root.post {
@@ -220,22 +232,22 @@ class DiscoverFragment : Fragment() {
         if (query.isBlank()) return
 
         // Reset drill-down state
-        currentDrillDownLevel = DrillDownLevel.CATALOG
-        currentSeriesId = null
-        currentSeasonNumber = null
+        displayModule.currentDrillDownLevel = ResultsDisplayModule.DrillDownLevel.CATALOG
+        displayModule.currentSeriesId = null
+        displayModule.currentSeasonNumber = null
 
         // Perform dual search (movies + series)
         viewModel.searchTMDB(query)
 
         // Update label to show search query
         updateCurrentListLabel("Search: $query")
-        updatePlayButtonVisibility()
+        displayModule.updatePlayButtonVisibility()
     }
 
     private fun setupAdapters() {
         contentAdapter = PosterAdapter(
             items = emptyList(),
-            onClick = { item -> onContentClicked(item) },
+            onClick = { item -> displayModule.onContentClicked(item) },
             onLongClick = { item ->
                 val pos = contentAdapter.getItemPosition(item)
                 val holder = binding.rvContent.findViewHolderForAdapterPosition(pos)
@@ -262,7 +274,7 @@ class DiscoverFragment : Fragment() {
                                 detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
                                     delay(300) // PERFORMANCE: Reduced from 1000ms for snappier UX
                                     if (isAdded) {
-                                        updateDetailsPane(item)
+                                        displayModule.updateDetailsPane(item)
                                     }
                                 }
                             }
@@ -275,232 +287,12 @@ class DiscoverFragment : Fragment() {
                 view.setOnFocusChangeListener(null)
             }
         })
-
-        // Setup Play button
-        binding.root.findViewById<View>(R.id.btnPlay)?.setOnClickListener {
-            currentSelectedItem?.let { item ->
-                // For episodes, we need to load streams using the episode ID format
-                if (item.type == "episode") {
-                    showStreamDialog(item)
-                } else {
-                    showStreamDialog(item)
-                }
-            }
-        }
-
-        // Setup Trailer button
-        binding.root.findViewById<View>(R.id.btnTrailer)?.setOnClickListener {
-            currentSelectedItem?.let { item ->
-                playTrailer(item)
-            }
-        }
-
-        // Setup Related button
-        binding.root.findViewById<View>(R.id.btnRelated)?.setOnClickListener {
-            currentSelectedItem?.let { item ->
-                showRelatedContent(item)
-            }
-        }
     }
 
-    private fun updateDetailsPane(item: MetaItem) {
-        currentSelectedItem = item
-
-        Glide.with(this)
-            .load(item.background ?: item.poster)
-            .into(binding.pageBackground)
-
-        // Set title (visibility controlled by logo observer)
-        binding.detailTitle.text = item.name
-
-        val formattedDate = try {
-            item.releaseDate?.let { dateStr ->
-                val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val outputFormat = SimpleDateFormat("yyyy", Locale.getDefault())
-                val date = inputFormat.parse(dateStr)
-                date?.let { outputFormat.format(it) }
-            }
-        } catch (e: Exception) {
-            item.releaseDate
-        }
-
-        binding.detailDate.text = formattedDate ?: ""
-        binding.detailRating.visibility = if (item.rating != null) {
-            binding.detailRating.text = "★ ${item.rating}"
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
-
-        binding.detailDescription.text = item.description ?: "No description available."
-
-        // Episode Info (Specific to episodes)
-        if (item.type == "episode") {
-            val parts = item.id.split(":")
-            if (parts.size >= 4) {
-                val season = parts[2]
-                val episode = parts[3]
-                binding.detailEpisode.text = "S${season.padStart(2, '0')}E${episode.padStart(2, '0')}"
-                binding.detailEpisode.visibility = View.VISIBLE
-            } else {
-                binding.detailEpisode.visibility = View.GONE
-            }
-        } else {
-            binding.detailEpisode.visibility = View.GONE
-        }
-
-
-        binding.detailLogo.visibility = View.GONE
-
-        viewModel.fetchItemLogo(item)
-
-        // Update actor chips
-        updateActorChips(item)
-
-        refreshWatchStatus(item)
-
-        // Update play button visibility based on item type and drill-down level
-        updatePlayButtonVisibility()
-    }
-
-    private fun updateActorChips(item: MetaItem) {
-        val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
-        actorChipGroup?.removeAllViews()
-
-        // Fetch cast information from TMDB
-        viewModel.fetchCast(item.id, item.type)
-    }
-
-    private fun updatePlayButtonVisibility() {
-        val playButton = binding.root.findViewById<View>(R.id.btnPlay)
-        val shouldShowPlay = when {
-            // Show for movies at catalog level
-            currentDrillDownLevel == DrillDownLevel.CATALOG && currentSelectedItem?.type == "movie" -> true
-            // Show for episodes (when drilled down to season level)
-            currentDrillDownLevel == DrillDownLevel.SEASON -> true
-            // Hide for series and seasons (not yet at playable level)
-            else -> false
-        }
-        playButton?.visibility = if (shouldShowPlay) View.VISIBLE else View.GONE
-    }
-
-    private fun showStreamDialog(item: MetaItem) {
-        // Clear any previous streams BEFORE creating the dialog to prevent stale data
-        viewModel.clearStreams()
-
-        // Create dialog
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_stream_selection, null)
-        val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .create()
-
-        // Get views from dialog
-        val rvStreams = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvStreams)
-        val progressBar = dialogView.findViewById<android.widget.ProgressBar>(R.id.progressBar)
-        val btnCancel = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
-        val dialogTitle = dialogView.findViewById<android.widget.TextView>(R.id.dialogTitle)
-
-        dialogTitle.text = "Select Stream - ${item.name}"
-
-        // Setup RecyclerView
-        val streamAdapter = com.example.stremiompvplayer.adapters.StreamAdapter { stream ->
-            dialog.dismiss()
-            viewModel.clearStreams()
-            playStream(stream)
-        }
-        rvStreams.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
-        rvStreams.adapter = streamAdapter
-
-        // Setup cancel button
-        btnCancel.setOnClickListener {
-            dialog.dismiss()
-            viewModel.clearStreams()
-        }
-
-        // Show loading state
-        progressBar.visibility = View.VISIBLE
-        rvStreams.visibility = View.GONE
-
-        // Observe streams BEFORE loading to ensure we catch the update
-        var hasReceivedUpdate = false
-        val streamObserver = androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.Stream>> { streams ->
-            // Only process if this is an update after loadStreams() call
-            if (hasReceivedUpdate || streams.isNotEmpty()) {
-                progressBar.visibility = View.GONE
-                rvStreams.visibility = View.VISIBLE
-                if (streams.isEmpty()) {
-                    Toast.makeText(requireContext(), "No streams available", Toast.LENGTH_SHORT).show()
-                    dialog.dismiss()
-                } else {
-                    streamAdapter.submitList(streams)
-                    // Focus first item after list is populated
-                    rvStreams.post {
-                        rvStreams.layoutManager?.findViewByPosition(0)?.requestFocus()
-                    }
-                }
-            }
-            hasReceivedUpdate = true
-        }
-        viewModel.streams.observe(viewLifecycleOwner, streamObserver)
-
-        dialog.setOnDismissListener {
-            viewModel.streams.removeObserver(streamObserver)
-            viewModel.clearStreams()
-        }
-
-        dialog.show()
-
-        // Load streams AFTER setting up observer
-        viewModel.loadStreams(item.type, item.id)
-    }
-
-    private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {
-        val intent = Intent(requireContext(), com.example.stremiompvplayer.PlayerActivity::class.java).apply {
-            putExtra("stream", stream)
-            putExtra("title", currentSelectedItem?.name ?: "Unknown")
-            putExtra("metaId", currentSelectedItem?.id)
-        }
-        startActivity(intent)
-    }
-
-    private fun playTrailer(item: MetaItem) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val trailerUrl = viewModel.fetchTrailer(item.id, item.type)
-                if (trailerUrl != null) {
-                    // Open YouTube trailer in browser or YouTube app
-                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(trailerUrl))
-                    startActivity(intent)
-                } else {
-                    Toast.makeText(requireContext(), "No trailer available", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error loading trailer", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun showRelatedContent(item: MetaItem) {
-        // Reset drill-down state
-        currentDrillDownLevel = DrillDownLevel.CATALOG
-        currentSeriesId = null
-        currentSeasonNumber = null
-
-        // Load similar content in Discover layout
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val similarContent = viewModel.fetchSimilarContent(item.id, item.type)
-                if (similarContent.isNotEmpty()) {
-                    contentAdapter.updateData(similarContent)
-                    updateDetailsPane(similarContent[0])
-                    updateCurrentListLabel("Related to ${item.name}")
-                    updatePlayButtonVisibility()
-                } else {
-                    Toast.makeText(requireContext(), "No related content found", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error loading related content", Toast.LENGTH_SHORT).show()
-            }
+    private fun refreshWatchStatus(item: MetaItem) {
+        val userId = SharedPreferencesManager.getInstance(requireContext()).getCurrentUserId()
+        if (userId != null) {
+            viewModel.checkWatchedStatus(item.id)
         }
     }
 
@@ -595,7 +387,7 @@ class DiscoverFragment : Fragment() {
 
         contentAdapter.updateData(genreItems)
         if (genreItems.isNotEmpty()) {
-            updateDetailsPane(genreItems[0])
+            displayModule.updateDetailsPane(genreItems[0])
         }
     }
 
@@ -608,7 +400,7 @@ class DiscoverFragment : Fragment() {
             cycleAttemptCount = 0
             isCycling = false
             // Clear selected item when no content is available
-            currentSelectedItem = null
+            displayModule.currentSelectedItem = null
             return
         }
 
@@ -616,9 +408,9 @@ class DiscoverFragment : Fragment() {
         cycleAttemptCount++
 
         // Reset drill-down state when cycling lists
-        currentDrillDownLevel = DrillDownLevel.CATALOG
-        currentSeriesId = null
-        currentSeasonNumber = null
+        displayModule.currentDrillDownLevel = ResultsDisplayModule.DrillDownLevel.CATALOG
+        displayModule.currentSeriesId = null
+        displayModule.currentSeasonNumber = null
 
         currentCatalogIndex = (currentCatalogIndex + 1) % allCatalogs.size
         val nextCatalog = allCatalogs[currentCatalogIndex]
@@ -633,7 +425,7 @@ class DiscoverFragment : Fragment() {
         }
 
         isShowingGenre = false
-        updatePlayButtonVisibility()
+        displayModule.updatePlayButtonVisibility()
 
         // Focus will be handled in the observer after content loads
         binding.root.postDelayed({
@@ -655,9 +447,9 @@ class DiscoverFragment : Fragment() {
 
     private fun loadGenreList(genreId: Int, genreName: String, type: String = "movie") {
         // Reset drill-down state when loading genre
-        currentDrillDownLevel = DrillDownLevel.CATALOG
-        currentSeriesId = null
-        currentSeasonNumber = null
+        displayModule.currentDrillDownLevel = ResultsDisplayModule.DrillDownLevel.CATALOG
+        displayModule.currentSeriesId = null
+        displayModule.currentSeasonNumber = null
 
         isShowingGenre = true
         updateCurrentListLabel("Genre: $genreName")
@@ -668,9 +460,9 @@ class DiscoverFragment : Fragment() {
                 val content = viewModel.fetchPopularByGenre(type, genreId)
                 contentAdapter.updateData(content)
                 if (content.isNotEmpty()) {
-                    updateDetailsPane(content[0])
+                    displayModule.updateDetailsPane(content[0])
                 }
-                updatePlayButtonVisibility()
+                displayModule.updatePlayButtonVisibility()
 
                 // [FIX] Focus first item after loading genre
                 binding.root.postDelayed({
@@ -747,66 +539,6 @@ class DiscoverFragment : Fragment() {
         }
     }
 
-    private fun onContentClicked(item: MetaItem) {
-        // Check if this is a genre item
-        if (item.type == "genre") {
-            item.genreId?.let { genreId ->
-                val genreType = item.genreType ?: "movie"
-                loadGenreList(genreId, item.name, genreType)
-            }
-            return
-        }
-
-        updateDetailsPane(item)
-
-        when (item.type) {
-            "series" -> {
-                // Drill down into series to show seasons
-                currentDrillDownLevel = DrillDownLevel.SERIES
-                currentSeriesId = item.id
-                currentSeasonNumber = null
-                viewModel.loadSeriesMeta(item.id)
-                updatePlayButtonVisibility()
-
-                // Focus first item of seasons list
-                binding.root.postDelayed({
-                    binding.rvContent.scrollToPosition(0)
-                    binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
-                }, 1000)
-            }
-            "season" -> {
-                // Drill down into season to show episodes
-                val parts = item.id.split(":")
-                if (parts.size >= 2) {
-                    val seriesId = parts.dropLast(1).joinToString(":")
-                    val seasonNum = parts.last().toIntOrNull() ?: 1
-                    currentDrillDownLevel = DrillDownLevel.SEASON
-                    currentSeriesId = seriesId
-                    currentSeasonNumber = seasonNum
-                    viewModel.loadSeasonEpisodes(seriesId, seasonNum)
-                    updatePlayButtonVisibility()
-
-                    // Focus first item of episodes list
-                    binding.root.postDelayed({
-                        binding.rvContent.scrollToPosition(0)
-                        binding.rvContent.layoutManager?.findViewByPosition(0)?.requestFocus()
-                    }, 1000)
-                }
-            }
-            "episode" -> {
-                // Focus play button for playable episode
-                binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
-            }
-            "movie" -> {
-                // Focus play button for playable movie
-                binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
-            }
-            else -> {
-                // Fallback - focus play button if possible
-                binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
-            }
-        }
-    }
 
     private fun showGenreSelectionDialog() {
         // Show combined movie and series genres
@@ -863,17 +595,17 @@ class DiscoverFragment : Fragment() {
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
             // Only update content if we're at catalog level (not drilled down)
-            if (currentDrillDownLevel == DrillDownLevel.CATALOG) {
+            if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.CATALOG) {
                 contentAdapter.updateData(items)
 
                 if (items.isNotEmpty()) {
-                    updateDetailsPane(items[0])
+                    displayModule.updateDetailsPane(items[0])
                     // Reset cycle attempt count when we find a non-empty list
                     if (isCycling) {
                         cycleAttemptCount = 0
                     }
                 } else {
-                    currentSelectedItem = null
+                    displayModule.currentSelectedItem = null
                     // If the list is empty, automatically cycle to the next list (even when not actively cycling)
                     // This effectively hides empty lists from the discover page
                     if (cycleAttemptCount < allCatalogs.size) {
@@ -882,7 +614,7 @@ class DiscoverFragment : Fragment() {
                         }, 200)  // Shorter delay for smoother experience
                     }
                 }
-                updatePlayButtonVisibility()
+                displayModule.updatePlayButtonVisibility()
             }
         }
 
@@ -904,92 +636,20 @@ class DiscoverFragment : Fragment() {
                 Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
             }
         }
-        // [CHANGE] Updated observer logic
-        viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
-            when (logoUrl) {
-                "" -> { // Loading
-                    binding.detailTitle.visibility = View.GONE
-                    binding.detailLogo.visibility = View.GONE
-                }
-                null -> { // No Logo - show text title fallback
-                    binding.detailTitle.visibility = View.VISIBLE
-                    binding.detailLogo.visibility = View.GONE
-                }
-                else -> { // Has Logo - hide text title
-                    binding.detailTitle.visibility = View.GONE
-                    binding.detailLogo.visibility = View.VISIBLE
-                    Glide.with(this)
-                        .load(logoUrl)
-                        .fitCenter()
-                        .into(binding.detailLogo)
-                }
-            }
-        }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
 
         viewModel.isItemWatched.observe(viewLifecycleOwner) { isWatched ->
-            currentSelectedItem?.let { item ->
+            displayModule.currentSelectedItem?.let { item ->
                 item.isWatched = isWatched
-            }
-        }
-
-        // Observe cast loading state
-        viewModel.isCastLoading.observe(viewLifecycleOwner) { isLoading ->
-            if (isLoading) {
-                val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
-                actorChipGroup?.removeAllViews()
-                val placeholderChip = com.google.android.material.chip.Chip(requireContext()).apply {
-                    text = "No Cast Returned"
-                    isClickable = false
-                    isFocusable = false
-                    setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
-                    setTextColor(resources.getColor(R.color.text_primary, null))
-                }
-                actorChipGroup?.addView(placeholderChip)
-            }
-        }
-
-        // Observe cast list and update actor chips
-        viewModel.castList.observe(viewLifecycleOwner) { castList ->
-            val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
-            actorChipGroup?.removeAllViews()
-
-            if (castList.isNotEmpty()) {
-                castList.take(3).forEach { actor ->
-                    val chip = com.google.android.material.chip.Chip(requireContext())
-                    chip.text = actor.name
-                    chip.isClickable = true
-                    chip.isFocusable = true
-                    chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
-                    chip.setTextColor(resources.getColor(R.color.text_primary, null))
-
-                    // Show actor's content in Discover layout
-                    chip.setOnClickListener {
-                        val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
-                        if (personId != null) {
-                            // Reset drill-down state
-                            currentDrillDownLevel = DrillDownLevel.CATALOG
-                            currentSeriesId = null
-                            currentSeasonNumber = null
-
-                            // Load person's credits (movies/shows they appeared in)
-                            viewModel.loadPersonCredits(personId)
-                            updateCurrentListLabel("${actor.name} - Filmography")
-                            updatePlayButtonVisibility()
-                        }
-                    }
-
-                    actorChipGroup?.addView(chip)
-                }
             }
         }
 
         // Observe series meta details for drill-down navigation
         viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
-            if (meta != null && meta.type == "series" && currentDrillDownLevel == DrillDownLevel.SERIES) {
+            if (meta != null && meta.type == "series" && displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SERIES) {
                 // Display seasons in the carousel
                 val seasons = meta.videos?.mapNotNull { video ->
                     video.season?.let { seasonNum ->
@@ -1006,7 +666,7 @@ class DiscoverFragment : Fragment() {
 
                 contentAdapter.updateData(seasons)
                 if (seasons.isNotEmpty()) {
-                    updateDetailsPane(seasons[0])
+                    displayModule.updateDetailsPane(seasons[0])
                 }
                 updateCurrentListLabel("${meta.name} - Seasons")
             }
@@ -1014,11 +674,11 @@ class DiscoverFragment : Fragment() {
 
         // Observe season episodes for drill-down navigation
         viewModel.seasonEpisodes.observe(viewLifecycleOwner) { episodes ->
-            if (currentDrillDownLevel == DrillDownLevel.SEASON && episodes.isNotEmpty()) {
+            if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SEASON && episodes.isNotEmpty()) {
                 contentAdapter.updateData(episodes)
-                updateDetailsPane(episodes[0])
-                currentSeriesId?.let { seriesId ->
-                    currentSeasonNumber?.let { seasonNum ->
+                displayModule.updateDetailsPane(episodes[0])
+                displayModule.currentSeriesId?.let { seriesId ->
+                    displayModule.currentSeasonNumber?.let { seasonNum ->
                         updateCurrentListLabel("Season $seasonNum - Episodes")
                     }
                 }
@@ -1027,9 +687,9 @@ class DiscoverFragment : Fragment() {
 
         // Observe search results for actor/person content and search
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            if (results.isNotEmpty() && currentDrillDownLevel == DrillDownLevel.CATALOG) {
+            if (results.isNotEmpty() && displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.CATALOG) {
                 contentAdapter.updateData(results)
-                updateDetailsPane(results[0])
+                displayModule.updateDetailsPane(results[0])
 
                 // Focus first item
                 binding.root.postDelayed({

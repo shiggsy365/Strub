@@ -25,6 +25,7 @@ import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.utils.FocusMemoryManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
+import com.example.stremiompvplayer.ui.ResultsDisplayModule
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,7 +43,7 @@ class HomeFragment : Fragment() {
     }
 
     private lateinit var contentAdapter: PosterAdapter
-    private var currentSelectedItem: MetaItem? = null
+    private lateinit var displayModule: ResultsDisplayModule
     private var detailsUpdateJob: Job? = null
 
     // Track current catalogs and index for cycling
@@ -67,15 +68,48 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupDisplayModule()
         setupUI()
         setupAdapters()
         setupObservers()
         loadHomeCatalogs()
     }
 
+    private fun setupDisplayModule() {
+        val config = ResultsDisplayModule.Configuration(
+            pageBackground = binding.pageBackground,
+            detailTitle = binding.detailTitle,
+            detailLogo = binding.detailLogo,
+            detailDescription = binding.detailDescription,
+            detailDate = binding.detailDate,
+            detailRating = binding.detailRating,
+            detailEpisode = binding.detailEpisode,
+            actorChips = binding.root.findViewById(R.id.actorChips),
+            btnPlay = binding.root.findViewById(R.id.btnPlay),
+            btnTrailer = binding.root.findViewById(R.id.btnTrailer),
+            btnRelated = binding.root.findViewById(R.id.btnRelated),
+            enableDrillDown = false,  // Home doesn't use drill-down
+            useGridLayout = false,
+            showEpisodeDescription = false
+        )
+        displayModule = ResultsDisplayModule(this, viewModel, config)
+
+        // Setup callbacks
+        displayModule.onActorClicked = { personId, actorName ->
+            viewModel.loadPersonCredits(personId)
+            updateCurrentListLabel("$actorName - Filmography")
+        }
+
+        displayModule.onRelatedContentLoaded = { similarContent ->
+            contentAdapter.updateData(similarContent)
+            displayModule.updateDetailsPane(similarContent[0])
+            updateCurrentListLabel("Related to ${displayModule.currentSelectedItem?.name}")
+        }
+    }
+
     override fun onResume() {
         super.onResume()
-        currentSelectedItem?.let { updateDetailsPane(it) }
+        displayModule.currentSelectedItem?.let { displayModule.updateDetailsPane(it) }
         if (currentCatalogs.isNotEmpty() && currentCatalogIndex < currentCatalogs.size) {
             viewModel.loadContentForCatalog(currentCatalogs[currentCatalogIndex], isInitialLoad = true)
         }
@@ -137,7 +171,7 @@ class HomeFragment : Fragment() {
             items = emptyList(),
             onClick = { item ->
                 if (item.type == "movie" || item.type == "episode") {
-                    updateDetailsPane(item)
+                    displayModule.updateDetailsPane(item)
                     binding.root.findViewById<View>(R.id.btnPlay)?.requestFocus()
                 } else {
                     openDetails(item)
@@ -165,7 +199,7 @@ class HomeFragment : Fragment() {
                                 detailsUpdateJob?.cancel()
                                 detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
                                     delay(300)
-                                    if (isAdded) updateDetailsPane(item)
+                                    if (isAdded) displayModule.updateDetailsPane(item)
                                 }
                             }
                         }
@@ -176,16 +210,6 @@ class HomeFragment : Fragment() {
                 view.setOnFocusChangeListener(null)
             }
         })
-
-        binding.root.findViewById<View>(R.id.btnPlay)?.setOnClickListener {
-            currentSelectedItem?.let { item -> showStreamDialog(item) }
-        }
-        binding.root.findViewById<View>(R.id.btnTrailer)?.setOnClickListener {
-            currentSelectedItem?.let { item -> playTrailer(item) }
-        }
-        binding.root.findViewById<View>(R.id.btnRelated)?.setOnClickListener {
-            currentSelectedItem?.let { item -> showRelatedContent(item) }
-        }
     }
 
     private fun showItemMenu(view: View, item: MetaItem) {
@@ -285,7 +309,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun updateCurrentListLabel(labelText: String) {
+    fun updateCurrentListLabel(labelText: String) {
         val label = binding.root.findViewById<android.widget.TextView>(R.id.currentListLabel)
         label?.text = labelText
     }
@@ -323,37 +347,6 @@ class HomeFragment : Fragment() {
         }, 1000)
     }
 
-    private fun updateDetailsPane(item: MetaItem) {
-        currentSelectedItem = item
-        Glide.with(this).load(item.background ?: item.poster).into(binding.pageBackground)
-        binding.detailTitle.text = item.name
-        binding.detailTitle.visibility = View.VISIBLE
-        binding.detailDescription.text = item.description ?: "No description available."
-        val formattedDate = try { item.releaseDate?.let { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).parse(it)?.let { d -> java.text.SimpleDateFormat("yyyy", java.util.Locale.getDefault()).format(d) } } } catch (e: Exception) { item.releaseDate }
-        binding.detailDate.text = formattedDate ?: ""
-        binding.detailDate.visibility = if (formattedDate.isNullOrEmpty()) View.GONE else View.VISIBLE
-        if (item.type == "episode") {
-            val parts = item.id.split(":")
-            if (parts.size >= 4) {
-                val season = parts[2]
-                val episode = parts[3]
-                binding.detailEpisode.text = "S${season.padStart(2, '0')}E${episode.padStart(2, '0')}"
-                binding.detailEpisode.visibility = View.VISIBLE
-            } else binding.detailEpisode.visibility = View.GONE
-        } else binding.detailEpisode.visibility = View.GONE
-        binding.detailRating.visibility = if (item.rating != null) {
-            binding.detailRating.text = "★ ${item.rating}"
-            View.VISIBLE
-        } else View.GONE
-        viewModel.fetchItemLogo(item)
-        updateActorChips(item)
-    }
-
-    private fun updateActorChips(item: MetaItem) {
-        val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
-        actorChipGroup?.removeAllViews()
-        viewModel.fetchCast(item.id, item.type)
-    }
 
     private fun openDetails(item: MetaItem) {
         val type = when {
@@ -374,125 +367,18 @@ class HomeFragment : Fragment() {
         startActivity(intent)
     }
 
-    private fun showStreamDialog(item: MetaItem) {
-        // Clear any previous streams BEFORE creating the dialog to prevent stale data
-        viewModel.clearStreams()
-
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_stream_selection, null)
-        val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .create()
-
-        val rvStreams = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvStreams)
-        val progressBar = dialogView.findViewById<android.widget.ProgressBar>(R.id.progressBar)
-        val btnCancel = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
-        val dialogTitle = dialogView.findViewById<android.widget.TextView>(R.id.dialogTitle)
-
-        dialogTitle.text = "Select Stream - ${item.name}"
-
-        val streamAdapter = com.example.stremiompvplayer.adapters.StreamAdapter { stream ->
-            dialog.dismiss()
-            viewModel.clearStreams()
-            playStream(stream)
-        }
-        rvStreams.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
-        rvStreams.adapter = streamAdapter
-
-        btnCancel.setOnClickListener {
-            dialog.dismiss()
-            viewModel.clearStreams()
-        }
-
-        // Show loading state
-        progressBar.visibility = View.VISIBLE
-        rvStreams.visibility = View.GONE
-
-        // Observe streams BEFORE loading to ensure we catch the update
-        var hasReceivedUpdate = false
-        val streamObserver = androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.Stream>> { streams ->
-            // Only process if this is an update after loadStreams() call
-            if (hasReceivedUpdate || streams.isNotEmpty()) {
-                progressBar.visibility = View.GONE
-                rvStreams.visibility = View.VISIBLE
-                if (streams.isEmpty()) {
-                    android.widget.Toast.makeText(requireContext(), "No streams available", android.widget.Toast.LENGTH_SHORT).show()
-                    dialog.dismiss()
-                } else {
-                    streamAdapter.submitList(streams)
-                    // Focus first item after list is populated
-                    rvStreams.post {
-                        rvStreams.layoutManager?.findViewByPosition(0)?.requestFocus()
-                    }
-                }
-            }
-            hasReceivedUpdate = true
-        }
-        viewModel.streams.observe(viewLifecycleOwner, streamObserver)
-
-        dialog.setOnDismissListener {
-            viewModel.streams.removeObserver(streamObserver)
-            viewModel.clearStreams()
-        }
-
-        dialog.show()
-
-        // Load streams AFTER setting up observer
-        viewModel.loadStreams(item.type, item.id)
-    }
-
-    private fun playStream(stream: com.example.stremiompvplayer.models.Stream) {
-        val intent = Intent(requireContext(), com.example.stremiompvplayer.PlayerActivity::class.java).apply {
-            putExtra("stream", stream)
-            putExtra("title", currentSelectedItem?.name ?: "Unknown")
-            putExtra("metaId", currentSelectedItem?.id)
-        }
-        startActivity(intent)
-    }
-
-    private fun playTrailer(item: MetaItem) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val trailerUrl = viewModel.fetchTrailer(item.id, item.type)
-                if (trailerUrl != null) {
-                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(trailerUrl))
-                    startActivity(intent)
-                } else {
-                    android.widget.Toast.makeText(requireContext(), "No trailer available", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                android.widget.Toast.makeText(requireContext(), "Error loading trailer", android.widget.Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun showRelatedContent(item: MetaItem) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val similarContent = viewModel.fetchSimilarContent(item.id, item.type)
-                if (similarContent.isNotEmpty()) {
-                    contentAdapter.updateData(similarContent)
-                    updateDetailsPane(similarContent[0])
-                    updateCurrentListLabel("Related to ${item.name}")
-                } else {
-                    android.widget.Toast.makeText(requireContext(), "No related content found", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                android.widget.Toast.makeText(requireContext(), "Error loading related content", android.widget.Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
 
     private fun setupObservers() {
         viewModel.currentCatalogContent.observe(viewLifecycleOwner) { items ->
             contentAdapter.updateData(items)
             if (items.isNotEmpty()) {
-                updateDetailsPane(items[0])
+                displayModule.updateDetailsPane(items[0])
                 // Reset cycle attempt count when we find a non-empty list
                 if (isCycling) {
                     cycleAttemptCount = 0
                 }
             } else {
-                currentSelectedItem = null
+                displayModule.currentSelectedItem = null
                 // If we're cycling and the list is empty, automatically cycle to the next list
                 if (isCycling && cycleAttemptCount < currentCatalogs.size) {
                     binding.root.postDelayed({
@@ -501,61 +387,14 @@ class HomeFragment : Fragment() {
                 }
             }
         }
-        viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
-            when (logoUrl) {
-                "" -> { binding.detailTitle.visibility = View.GONE; binding.detailLogo.visibility = View.GONE }
-                null -> { binding.detailTitle.visibility = View.VISIBLE; binding.detailLogo.visibility = View.GONE }
-                else -> { binding.detailTitle.visibility = View.GONE; binding.detailLogo.visibility = View.VISIBLE; Glide.with(this).load(logoUrl).fitCenter().into(binding.detailLogo) }
-            }
-        }
+
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading -> binding.loadingCard.visibility = if (isLoading) View.VISIBLE else View.GONE }
-
-        viewModel.isCastLoading.observe(viewLifecycleOwner) { isLoading ->
-            if (isLoading) {
-                val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
-                actorChipGroup?.removeAllViews()
-                val placeholderChip = com.google.android.material.chip.Chip(requireContext()).apply {
-                    text = "No Cast Returned"
-                    isClickable = false
-                    isFocusable = false
-                    setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
-                    setTextColor(resources.getColor(R.color.text_primary, null))
-                }
-                actorChipGroup?.addView(placeholderChip)
-            }
-        }
-
-        viewModel.castList.observe(viewLifecycleOwner) { castList ->
-            val actorChipGroup = binding.root.findViewById<com.google.android.material.chip.ChipGroup>(R.id.actorChips)
-            actorChipGroup?.removeAllViews()
-            if (castList.isNotEmpty()) {
-                castList.take(3).forEach { actor ->
-                    val chip = com.google.android.material.chip.Chip(requireContext())
-                    chip.text = actor.name
-                    chip.isClickable = true
-                    chip.isFocusable = true
-                    chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
-                    chip.setTextColor(resources.getColor(R.color.text_primary, null))
-
-                    chip.setOnClickListener {
-                        val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
-                        if (personId != null) {
-                            // Load person's credits (movies/shows they appeared in)
-                            viewModel.loadPersonCredits(personId)
-                            updateCurrentListLabel("${actor.name} - Filmography")
-                        }
-                    }
-
-                    actorChipGroup?.addView(chip)
-                }
-            }
-        }
 
         // Observe search results for actor/person content
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
             if (results.isNotEmpty()) {
                 contentAdapter.updateData(results)
-                updateDetailsPane(results[0])
+                displayModule.updateDetailsPane(results[0])
 
                 // Focus first item
                 binding.root.postDelayed({
