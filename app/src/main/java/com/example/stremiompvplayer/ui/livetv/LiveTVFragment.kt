@@ -224,9 +224,9 @@ class LiveTVFragment : Fragment() {
                 when (keyCode) {
                     android.view.KeyEvent.KEYCODE_DPAD_UP,
                     android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        // Keep focus locked within RecyclerView - don't let it escape to sidebar
-                        // Return false to let RecyclerView handle the navigation
-                        false
+                        // Consume UP/DOWN after RecyclerView handles navigation
+                        // This prevents event from bubbling to MainActivity sidebar
+                        true
                     }
                     android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
                         // Allow left navigation to re-open main menu
@@ -271,9 +271,9 @@ class LiveTVFragment : Fragment() {
                             }
                             android.view.KeyEvent.KEYCODE_DPAD_UP,
                             android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                                // Consume UP/DOWN to prevent focus escaping to sidebar during fast scrolling
-                                // RecyclerView will still handle the scrolling before we consume the event
-                                true
+                                // Let event pass through so RecyclerView can handle focus movement
+                                // RecyclerView's OnKeyListener will consume it after handling
+                                false
                             }
                             else -> false
                         }
@@ -707,7 +707,8 @@ class LiveTVFragment : Fragment() {
             } else {
                 // Try again after a delay if views aren't ready
                 binding.root.postDelayed({
-                    binding.rvTVGuide.layoutManager?.findViewByPosition(0)?.requestFocus()
+                    // Null check to prevent crash if fragment is destroyed
+                    _binding?.rvTVGuide?.layoutManager?.findViewByPosition(0)?.requestFocus()
                 }, 100)
             }
         }
@@ -716,6 +717,8 @@ class LiveTVFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Remove any pending callbacks to prevent crashes
+        _binding?.root?.removeCallbacksAndMessages(null)
         _binding = null
     }
 }
