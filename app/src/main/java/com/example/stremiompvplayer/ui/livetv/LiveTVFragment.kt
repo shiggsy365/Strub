@@ -424,7 +424,7 @@ class LiveTVFragment : Fragment() {
                 .load(channel.logo)
                 .placeholder(R.drawable.ic_tv)
                 .error(R.drawable.ic_tv)
-                .fitCenter()
+                .centerInside()
                 .into(binding.detailChannelLogo)
             binding.detailChannelLogo.visibility = View.VISIBLE
         } else {

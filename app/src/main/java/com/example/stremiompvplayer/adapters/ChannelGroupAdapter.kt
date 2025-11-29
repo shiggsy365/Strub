@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.R
@@ -113,9 +115,23 @@ class ChannelGroupAdapter(
  * Shows channel logos on black background with centered scaling.
  */
 class ChannelPosterAdapter(
-    private var channels: List<ChannelWithPrograms>,
+    channels: List<ChannelWithPrograms>,
     private val onClick: (ChannelWithPrograms) -> Unit
-) : RecyclerView.Adapter<ChannelPosterAdapter.ViewHolder>() {
+) : ListAdapter<ChannelWithPrograms, ChannelPosterAdapter.ViewHolder>(ChannelDiffCallback()) {
+
+    init {
+        submitList(channels)
+    }
+
+    private class ChannelDiffCallback : DiffUtil.ItemCallback<ChannelWithPrograms>() {
+        override fun areItemsTheSame(oldItem: ChannelWithPrograms, newItem: ChannelWithPrograms): Boolean {
+            return oldItem.channel.id == newItem.channel.id
+        }
+
+        override fun areContentsTheSame(oldItem: ChannelWithPrograms, newItem: ChannelWithPrograms): Boolean {
+            return oldItem == newItem
+        }
+    }
 
     class ViewHolder(val binding: ItemChannelPosterBinding) : RecyclerView.ViewHolder(binding.root) {
         val channelLogo: ImageView = binding.channelLogo
@@ -132,10 +148,8 @@ class ChannelPosterAdapter(
         return ViewHolder(binding)
     }
 
-    override fun getItemCount(): Int = channels.size
-
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = channels[position]
+        val item = getItem(position)
 
         // Load channel logo with Glide, centered on black background
         if (!item.channel.logo.isNullOrEmpty()) {
@@ -158,15 +172,14 @@ class ChannelPosterAdapter(
     }
 
     fun updateData(newChannels: List<ChannelWithPrograms>) {
-        this.channels = newChannels
-        notifyDataSetChanged()
+        submitList(newChannels)
     }
 
     fun getItem(position: Int): ChannelWithPrograms? {
-        return if (position in channels.indices) channels[position] else null
+        return if (position in 0 until itemCount) super.getItem(position) else null
     }
 
     fun getItemPosition(item: ChannelWithPrograms): Int {
-        return channels.indexOf(item)
+        return currentList.indexOf(item)
     }
 }

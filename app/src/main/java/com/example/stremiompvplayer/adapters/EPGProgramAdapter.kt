@@ -5,6 +5,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.models.EPGProgram
@@ -17,10 +19,20 @@ import java.util.*
  */
 class EPGProgramAdapter(
     private val onClick: ((EPGProgram) -> Unit)? = null
-) : RecyclerView.Adapter<EPGProgramAdapter.ViewHolder>() {
+) : ListAdapter<EPGProgram, EPGProgramAdapter.ViewHolder>(EPGProgramDiffCallback()) {
 
-    private var programs = listOf<EPGProgram>()
     private val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+
+    private class EPGProgramDiffCallback : DiffUtil.ItemCallback<EPGProgram>() {
+        override fun areItemsTheSame(oldItem: EPGProgram, newItem: EPGProgram): Boolean {
+            return oldItem.channelId == newItem.channelId && 
+                   oldItem.startTime == newItem.startTime
+        }
+
+        override fun areContentsTheSame(oldItem: EPGProgram, newItem: EPGProgram): Boolean {
+            return oldItem == newItem
+        }
+    }
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val programTime: TextView = view.findViewById(R.id.programTime)
@@ -32,7 +44,7 @@ class EPGProgramAdapter(
             view.setOnClickListener {
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION && onClick != null) {
-                    onClick.invoke(programs[position])
+                    onClick.invoke(getItem(position))
                 }
             }
         }
@@ -45,7 +57,7 @@ class EPGProgramAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val program = programs[position]
+        val program = getItem(position)
         val currentTime = System.currentTimeMillis()
         val isCurrentlyAiring = currentTime >= program.startTime && currentTime <= program.endTime
 
@@ -77,14 +89,11 @@ class EPGProgramAdapter(
         }
     }
 
-    override fun getItemCount(): Int = programs.size
-
     /**
-     * Updates the program list and notifies the adapter
+     * Updates the program list using DiffUtil for efficient updates
      */
     fun updatePrograms(newPrograms: List<EPGProgram>) {
-        programs = newPrograms
-        notifyDataSetChanged()
+        submitList(newPrograms)
     }
 
     /**
@@ -92,7 +101,7 @@ class EPGProgramAdapter(
      */
     fun getCurrentlyAiringIndex(): Int {
         val currentTime = System.currentTimeMillis()
-        return programs.indexOfFirst { currentTime >= it.startTime && currentTime <= it.endTime }
+        return currentList.indexOfFirst { currentTime >= it.startTime && currentTime <= it.endTime }
     }
 
     private fun formatTimeRange(startTime: Long, endTime: Long): String {

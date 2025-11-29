@@ -63,7 +63,7 @@
                 android:id="@+id/detailChannelLogo"
                 android:layout_width="120dp"
                 android:layout_height="80dp"
-                android:scaleType="fitStart"
+                android:scaleType="centerInside"
                 android:adjustViewBounds="true"
                 android:background="@android:color/black"
                 android:padding="8dp"
