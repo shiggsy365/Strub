@@ -25,7 +25,6 @@ import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.example.stremiompvplayer.viewmodels.MoviesViewModel
 import com.example.stremiompvplayer.viewmodels.MoviesViewModelFactory
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.Job
@@ -173,9 +172,13 @@ class MoviesFragment : Fragment() {
     }
 
     private fun showLongPressMenu(item: MetaItem) {
-        val dialog = BottomSheetDialog(requireContext())
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_content_options, null)
-        dialog.setContentView(view)
+        val dialog = android.app.AlertDialog.Builder(requireContext(), android.R.style.Theme_DeviceDefault_Dialog_NoActionBar)
+            .setView(view)
+            .create()
+        
+        // Make dialog background transparent to show the card background
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
         val titleView = view.findViewById<TextView>(R.id.menuTitle)
         titleView.text = item.name
@@ -188,7 +191,7 @@ class MoviesFragment : Fragment() {
             displayModule.showStreamDialog(item)
         }
 
-        // 2. Watch Trailer
+        // 2. Watch Trailer - Uses external YouTube player
         view.findViewById<View>(R.id.actionTrailer).setOnClickListener {
             dialog.dismiss()
             displayModule.playTrailer(item)
@@ -196,12 +199,13 @@ class MoviesFragment : Fragment() {
 
         // 3. Watchlist Toggle
         val actionWatchlist = view.findViewById<TextView>(R.id.actionWatchlist)
+        actionWatchlist.text = "Add to Watchlist"
         actionWatchlist.setOnClickListener {
             dialog.dismiss()
-            mainViewModel.toggleWatchlist(item)
+            mainViewModel.addToWatchlist(item)
         }
 
-        // 4. Library Toggle
+        // 4. Library Toggle - Shows proper toggle state
         val actionLibrary = view.findViewById<TextView>(R.id.actionLibrary)
         lifecycleScope.launch {
             val inLib = mainViewModel.isItemInLibrarySync(item.id)
@@ -212,15 +216,15 @@ class MoviesFragment : Fragment() {
             mainViewModel.toggleLibrary(item)
         }
 
-        // 5. Watched Toggle
+        // 5. Watched Toggle - Shows proper toggle state
         val actionWatched = view.findViewById<TextView>(R.id.actionWatched)
-        actionWatched.text = if (item.isWatched) "Mark as Not Watched" else "Mark as Watched"
+        actionWatched.text = if (item.isWatched) "Mark Unwatched" else "Mark Watched"
         actionWatched.setOnClickListener {
             dialog.dismiss()
             if (item.isWatched) mainViewModel.clearWatchedStatus(item) else mainViewModel.markAsWatched(item)
         }
 
-        // 6. Not Watching
+        // 6. Not Watching - Complete removal from all lists
         view.findViewById<View>(R.id.actionNotWatching).setOnClickListener {
             dialog.dismiss()
             mainViewModel.markAsNotWatching(item)

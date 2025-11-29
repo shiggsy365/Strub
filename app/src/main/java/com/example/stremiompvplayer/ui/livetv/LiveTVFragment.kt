@@ -219,6 +219,9 @@ class LiveTVFragment : Fragment() {
         binding.rvChannelGroups.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         binding.rvChannelGroups.adapter = channelGroupAdapter
         binding.rvChannelGroups.setItemViewCacheSize(10)
+        // Enable proper focus handling for D-pad navigation
+        binding.rvChannelGroups.isFocusable = true
+        binding.rvChannelGroups.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
 
         // EPG Program Adapter - displays TV Guide for selected channel
         epgProgramAdapter = EPGProgramAdapter()
