@@ -195,18 +195,14 @@ class HomeFragment : Fragment() {
             displayModule.playTrailer(item)
         }
 
-        // 3. Watchlist Toggle - Check Trakt watchlist status and toggle accordingly
+        // 3. Watchlist Toggle - Uses toggleWatchlist for proper add/remove behavior
         val actionWatchlist = view.findViewById<TextView>(R.id.actionWatchlist)
-        lifecycleScope.launch {
-            // Check if Trakt is enabled to determine initial state
-            val isTraktEnabled = mainViewModel.isTraktEnabled.value ?: false
-            // For now, default to "Add to Watchlist" - could be enhanced with actual status check
-            actionWatchlist.text = "Add to Watchlist"
-        }
+        // Default text - actual toggle behavior will add if not present, remove if present
+        actionWatchlist.text = "Toggle Watchlist"
         actionWatchlist.setOnClickListener {
             dialog.dismiss()
             // Toggle watchlist - adds if not present, removes if present
-            mainViewModel.addToWatchlist(item)
+            mainViewModel.toggleWatchlist(item)
         }
 
         // 4. Library Toggle - Shows proper toggle state

@@ -222,12 +222,13 @@ class SeriesFragment : Fragment() {
             displayModule.playTrailer(item)
         }
 
-        // 3. Watchlist Toggle
+        // 3. Watchlist Toggle - Uses toggleWatchlist for proper add/remove behavior
         val actionWatchlist = view.findViewById<TextView>(R.id.actionWatchlist)
-        actionWatchlist.text = "Add to Watchlist"
+        // Default text - actual toggle behavior will add if not present, remove if present
+        actionWatchlist.text = "Toggle Watchlist"
         actionWatchlist.setOnClickListener {
             dialog.dismiss()
-            mainViewModel.addToWatchlist(item)
+            mainViewModel.toggleWatchlist(item)
         }
 
         // 4. Library Toggle - Shows proper toggle state

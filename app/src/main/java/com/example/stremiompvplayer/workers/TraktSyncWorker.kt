@@ -112,13 +112,14 @@ class TraktSyncWorker(
                 Log.e(TAG, "Error syncing collection", e)
             }
 
-            // Sync Trakt watchlist (bidirectional)
+            // Sync Trakt watchlist (bidirectional sync happens at app level)
+            // The watchlist items fetched here are logged for sync tracking
+            // Actual local persistence and bidirectional sync is handled by MainViewModel
+            // when the user interacts with watchlist items through the UI
             try {
                 val watchlist = TraktClient.api.getWatchlist(bearer, clientId)
                 Log.d(TAG, "Fetched ${watchlist.size} items from Trakt watchlist")
                 syncCount += watchlist.size
-                // Note: Items from Trakt watchlist are synced to local in MainViewModel's 
-                // watchlist observers when the app loads
             } catch (e: Exception) {
                 Log.e(TAG, "Error syncing watchlist", e)
             }
