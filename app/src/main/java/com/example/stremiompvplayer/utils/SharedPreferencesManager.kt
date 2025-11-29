@@ -474,6 +474,87 @@ class SharedPreferencesManager private constructor(context: Context) {
             false
         }
     }
+
+    // --- PAGE ROW CONFIGURATION (Per User) ---
+    
+    // Reusable TypeToken for PageRowConfigData list
+    private val pageRowConfigListType = object : TypeToken<List<PageRowConfigData>>() {}.type
+    
+    /**
+     * Get the movie page row configurations for the current user.
+     * Returns default configurations if none are saved.
+     */
+    fun getMovieRowConfigs(): List<PageRowConfigData> {
+        val userId = getCurrentUserId() ?: "default"
+        val json = prefs.getString("movie_row_configs_$userId", null)
+        return if (json != null) {
+            try {
+                gson.fromJson(json, pageRowConfigListType) ?: getDefaultMovieRowConfigs()
+            } catch (e: Exception) {
+                getDefaultMovieRowConfigs()
+            }
+        } else {
+            getDefaultMovieRowConfigs()
+        }
+    }
+    
+    /**
+     * Save the movie page row configurations for the current user.
+     */
+    fun saveMovieRowConfigs(configs: List<PageRowConfigData>) {
+        val userId = getCurrentUserId() ?: "default"
+        val json = gson.toJson(configs)
+        prefs.edit().putString("movie_row_configs_$userId", json).apply()
+    }
+    
+    /**
+     * Get the series page row configurations for the current user.
+     * Returns default configurations if none are saved.
+     */
+    fun getSeriesRowConfigs(): List<PageRowConfigData> {
+        val userId = getCurrentUserId() ?: "default"
+        val json = prefs.getString("series_row_configs_$userId", null)
+        return if (json != null) {
+            try {
+                gson.fromJson(json, pageRowConfigListType) ?: getDefaultSeriesRowConfigs()
+            } catch (e: Exception) {
+                getDefaultSeriesRowConfigs()
+            }
+        } else {
+            getDefaultSeriesRowConfigs()
+        }
+    }
+    
+    /**
+     * Save the series page row configurations for the current user.
+     */
+    fun saveSeriesRowConfigs(configs: List<PageRowConfigData>) {
+        val userId = getCurrentUserId() ?: "default"
+        val json = gson.toJson(configs)
+        prefs.edit().putString("series_row_configs_$userId", json).apply()
+    }
+    
+    /**
+     * Get default movie row configurations.
+     */
+    private fun getDefaultMovieRowConfigs(): List<PageRowConfigData> = listOf(
+        PageRowConfigData("movies_trending", "Trending", "TMDB_TRENDING_MOVIES", true, 0),
+        PageRowConfigData("movies_latest", "Latest", "TMDB_LATEST_MOVIES", true, 1),
+        PageRowConfigData("movies_popular", "Popular", "TMDB_POPULAR_MOVIES", true, 2),
+        PageRowConfigData("movies_watchlist", "Watchlist", "TRAKT_WATCHLIST", true, 3),
+        PageRowConfigData("movies_genres", "Genres", "GENRES", true, 4)
+    )
+    
+    /**
+     * Get default series row configurations.
+     */
+    private fun getDefaultSeriesRowConfigs(): List<PageRowConfigData> = listOf(
+        PageRowConfigData("series_trending", "Trending", "TMDB_TRENDING_TV", true, 0),
+        PageRowConfigData("series_latest", "Latest", "TMDB_LATEST_TV", true, 1),
+        PageRowConfigData("series_popular", "Popular", "TMDB_POPULAR_TV", true, 2),
+        PageRowConfigData("series_watchlist", "Watchlist", "TRAKT_WATCHLIST", true, 3),
+        PageRowConfigData("series_genres", "Genres", "GENRES", true, 4)
+    )
 }
 
 enum class AgeRating(val displayName: String, val value: String) {
@@ -534,4 +615,13 @@ data class TraktSettings(
 data class LiveTVSettings(
     val m3uUrl: String?,
     val epgUrl: String?
+)
+
+// Data models for page row configuration
+data class PageRowConfigData(
+    val id: String,
+    val label: String,
+    val sourceType: String,
+    val isProtected: Boolean,
+    val order: Int
 )

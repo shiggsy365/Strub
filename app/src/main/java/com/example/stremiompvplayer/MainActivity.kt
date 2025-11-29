@@ -15,8 +15,8 @@ import androidx.lifecycle.lifecycleScope
 import com.example.stremiompvplayer.ui.home.HomeFragment
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivityMainBinding
-import com.example.stremiompvplayer.ui.discover.DiscoverFragment
-import com.example.stremiompvplayer.ui.library.LibraryFragment
+import com.example.stremiompvplayer.ui.movies.MoviesFragment
+import com.example.stremiompvplayer.ui.series.SeriesFragment
 import com.example.stremiompvplayer.ui.livetv.LiveTVFragment
 import com.example.stremiompvplayer.ui.search.SearchFragment
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
@@ -34,7 +34,6 @@ class MainActivity : AppCompatActivity() {
     private val focusMemoryManager = FocusMemoryManager.getInstance()
     private var currentFragmentKey: String? = null
     private val navigationStack = mutableListOf<Pair<String, Fragment>>()
-    private var currentMediaType: String = "movie"  // Track current media type: "movie" or "series"
 
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(
@@ -138,14 +137,12 @@ class MainActivity : AppCompatActivity() {
             loadFragment(HomeFragment.newInstance())
         }
 
-        sidebar.findViewById<View>(R.id.sidebarDiscover).setOnClickListener {
-            // Use currentMediaType to maintain toggle state
-            loadFragment(DiscoverFragment.newInstance(currentMediaType))
+        sidebar.findViewById<View>(R.id.sidebarMovies).setOnClickListener {
+            loadFragment(MoviesFragment.newInstance())
         }
 
-        sidebar.findViewById<View>(R.id.sidebarLibrary).setOnClickListener {
-            // Use currentMediaType to maintain toggle state
-            loadFragment(LibraryFragment.newInstance(currentMediaType))
+        sidebar.findViewById<View>(R.id.sidebarSeries).setOnClickListener {
+            loadFragment(SeriesFragment.newInstance())
         }
 
         sidebar.findViewById<View>(R.id.sidebarSearch).setOnClickListener {
@@ -166,70 +163,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
-        // Add click listener for media type toggle
-        sidebar.findViewById<View>(R.id.mediaTypeToggle).setOnClickListener {
-            toggleMediaType()
-        }
-
         setupSidebarAutoHide(sidebar)
-    }
-
-    private fun toggleMediaType() {
-        // Toggle between movie and series
-        currentMediaType = if (currentMediaType == "movie") "series" else "movie"
-
-        // Update the toggle UI
-        updateMediaTypeToggleUI()
-
-        // Reload the current fragment with the new type
-        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-        when (currentFragment) {
-            is DiscoverFragment -> {
-                loadFragment(DiscoverFragment.newInstance(currentMediaType))
-            }
-            is LibraryFragment -> {
-                loadFragment(LibraryFragment.newInstance(currentMediaType))
-            }
-            is SearchFragment -> {
-                // Preserve search query when toggling media type
-                val searchQuery = currentFragment.getSearchQuery()
-                val newSearchFragment = SearchFragment.newInstance(currentMediaType)
-                loadFragment(newSearchFragment)
-                // Re-perform the search if there was one
-                if (!searchQuery.isNullOrBlank()) {
-                    binding.root.postDelayed({
-                        newSearchFragment.setSearchText(searchQuery)
-                        binding.root.postDelayed({
-                            // Trigger the search programmatically
-                            newSearchFragment.performSearch(searchQuery)
-                        }, 100)
-                    }, 200)
-                }
-            }
-            // Add other fragments that support type filtering here if needed
-        }
-    }
-
-    private fun updateMediaTypeToggleUI() {
-        val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
-        val textMediaType = sidebar.findViewById<android.widget.TextView>(R.id.textMediaType)
-        val iconMediaType = sidebar.findViewById<android.widget.ImageView>(R.id.iconMediaType)
-
-        if (currentMediaType == "movie") {
-            textMediaType.text = "MOV"
-            iconMediaType.setImageResource(R.drawable.ic_movie)
-        } else {
-            textMediaType.text = "TV"
-            iconMediaType.setImageResource(R.drawable.ic_tv)
-        }
-    }
-
-    // Public method that fragments can call to sync the toggle with their content type
-    fun syncMediaTypeToggle(mediaType: String) {
-        if (currentMediaType != mediaType) {
-            currentMediaType = mediaType
-            updateMediaTypeToggleUI()
-        }
     }
 
     private fun setupSidebarAutoHide(sidebar: View) {
@@ -255,8 +189,8 @@ class MainActivity : AppCompatActivity() {
 
         sidebar.onFocusChangeListener = onFocusChange
         val childViews = listOf(
-            R.id.sidebarHome, R.id.sidebarDiscover, R.id.sidebarLibrary,
-            R.id.sidebarSearch, R.id.sidebarLiveTV, R.id.sidebarSettings, R.id.mediaTypeToggle
+            R.id.sidebarHome, R.id.sidebarMovies, R.id.sidebarSeries,
+            R.id.sidebarSearch, R.id.sidebarLiveTV, R.id.sidebarSettings
         )
         childViews.forEach { viewId ->
             sidebar.findViewById<View>(viewId)?.onFocusChangeListener = onFocusChange
@@ -301,19 +235,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun performSearch(query: String) {
-        // Updated to remove dropdown check
-        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-        when (currentFragment) {
-            is DiscoverFragment -> currentFragment.performSearch(query)
-            else -> {
-                val discoverFragment = DiscoverFragment.newInstance("movie")
-                loadFragment(discoverFragment)
-                // Use postDelayed with longer delay to ensure fragment view is ready
-                binding.root.postDelayed({
-                    discoverFragment.performSearch(query)
-                }, 300)
-            }
-        }
+        // Navigate to search fragment with query
+        val searchFragment = SearchFragment()
+        loadFragment(searchFragment)
+        // Use postDelayed with longer delay to ensure fragment view is ready
+        binding.root.postDelayed({
+            searchFragment.setSearchText(query)
+            searchFragment.performSearch(query)
+        }, 300)
     }
 
     fun loadFragment(fragment: Fragment, fragmentKey: String? = null, addToStack: Boolean = true) {
@@ -339,8 +268,8 @@ class MainActivity : AppCompatActivity() {
         // Update current fragment key
         currentFragmentKey = fragmentKey ?: when (fragment) {
             is HomeFragment -> "home"
-            is DiscoverFragment -> focusMemoryManager.getFragmentKey("discover", fragment.arguments?.getString("type") ?: "movie")
-            is LibraryFragment -> focusMemoryManager.getFragmentKey("library", fragment.arguments?.getString("type") ?: "movie")
+            is MoviesFragment -> "movies"
+            is SeriesFragment -> "series"
             is SearchFragment -> "search"
             is LiveTVFragment -> "livetv"
             else -> fragment.javaClass.simpleName
@@ -349,21 +278,6 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .commit()
-
-        // Update media type toggle state based on fragment type
-        val sidebar = binding.root.findViewById<View>(R.id.netflixSidebar)
-        val mediaTypeToggle = sidebar.findViewById<View>(R.id.mediaTypeToggle)
-        if (fragment is HomeFragment) {
-            // Disable toggle on Home page
-            mediaTypeToggle.isEnabled = false
-            mediaTypeToggle.isFocusable = false
-            mediaTypeToggle.alpha = 0.5f
-        } else {
-            // Enable toggle on other pages
-            mediaTypeToggle.isEnabled = true
-            mediaTypeToggle.isFocusable = true
-            mediaTypeToggle.alpha = 1.0f
-        }
 
         // Restore focus after fragment is loaded
         currentFragmentKey?.let { key ->
@@ -409,9 +323,14 @@ class MainActivity : AppCompatActivity() {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
 
-        if (currentFragment is DiscoverFragment) {
+        if (currentFragment is MoviesFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
+        
+        if (currentFragment is SeriesFragment) {
+            if (currentFragment.handleKeyDown(keyCode, event)) return true
+        }
+        
         if (currentFragment is com.example.stremiompvplayer.ui.livetv.LiveTVFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
@@ -427,12 +346,12 @@ class MainActivity : AppCompatActivity() {
                 sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(300).start()
                 val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
 
-                // [FIX] Call focusSidebar only if it exists
+                // Call focusSidebar only if it exists
                 if (currentFragment is HomeFragment) {
                     currentFragment.focusSidebar()
-                } else if (currentFragment is DiscoverFragment) {
+                } else if (currentFragment is MoviesFragment) {
                     currentFragment.focusSidebar()
-                } else if (currentFragment is LibraryFragment) {
+                } else if (currentFragment is SeriesFragment) {
                     currentFragment.focusSidebar()
                 } else if (currentFragment is com.example.stremiompvplayer.ui.livetv.LiveTVFragment) {
                     currentFragment.focusSidebar()
@@ -478,8 +397,6 @@ class MainActivity : AppCompatActivity() {
             val focus = currentFocus
             val isFocusOnMenu = focus == binding.btnAppLogo ||
                     focus == binding.chipHome ||
-                    focus == binding.chipDiscover ||
-                    focus == binding.chipLibrary ||
                     focus == binding.chipSearch ||
                     focus == binding.chipLiveTV ||
                     focus == binding.chipMore
@@ -499,8 +416,8 @@ class MainActivity : AppCompatActivity() {
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
             // Allow specific fragments to intercept back press
             if (currentFragment is HomeFragment && currentFragment.handleBackPress()) return true
-            if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
-            if (currentFragment is LibraryFragment && currentFragment.handleBackPress()) return true
+            if (currentFragment is MoviesFragment && currentFragment.handleBackPress()) return true
+            if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is SearchFragment && currentFragment.handleBackPress()) return true
 
             // Use navigation stack for back navigation - NEVER exit app
@@ -571,37 +488,8 @@ class MainActivity : AppCompatActivity() {
             loadFragment(HomeFragment.newInstance())
         }
 
-        // DISCOVER DROP DOWN
-        binding.chipDiscover.setOnClickListener { view ->
-            showMenu(view, listOf("Movies", "Series")) { selection ->
-                when (selection) {
-                    "Movies" -> {
-                        binding.chipDiscover.text = "Discover: Movies"
-                        loadFragment(DiscoverFragment.newInstance("movie"))
-                    }
-                    "Series" -> {
-                        binding.chipDiscover.text = "Discover: Series"
-                        loadFragment(DiscoverFragment.newInstance("series"))
-                    }
-                }
-            }
-        }
-
-        // LIBRARY DROP DOWN
-        binding.chipLibrary.setOnClickListener { view ->
-            showMenu(view, listOf("Movies", "Series")) { selection ->
-                when (selection) {
-                    "Movies" -> {
-                        binding.chipLibrary.text = "Library: Movies"
-                        loadFragment(LibraryFragment.newInstance("movie"))
-                    }
-                    "Series" -> {
-                        binding.chipLibrary.text = "Library: Series"
-                        loadFragment(LibraryFragment.newInstance("series"))
-                    }
-                }
-            }
-        }
+        // Legacy chips are no longer used but keeping the bindings for backward compatibility
+        // The legacy navigation container is hidden by default (visibility="gone" in XML)
 
         binding.chipSearch.setOnClickListener {
             loadFragment(SearchFragment())

@@ -36,40 +36,27 @@
         android:padding="12dp"
         app:tint="@android:color/white"
         android:contentDescription="Home"
-        android:nextFocusDown="@id/sidebarDiscover"
+        android:nextFocusDown="@id/sidebarMovies"
         android:layout_marginBottom="8dp" />
 
-    <!-- 3. Discover -->
+    <!-- 3. Movies (NEW - replaces Discover) -->
     <ImageButton
-        android:id="@+id/sidebarDiscover"
+        android:id="@+id/sidebarMovies"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_discover"
+        android:src="@drawable/ic_movie"
         android:scaleType="centerInside"
         android:padding="12dp"
         app:tint="@android:color/white"
-        android:contentDescription="Discover"
-        android:nextFocusDown="@id/sidebarLibrary"
+        android:contentDescription="Movies"
+        android:nextFocusDown="@id/sidebarSeries"
+        android:nextFocusUp="@id/sidebarHome"
         android:layout_marginBottom="8dp" />
 
-    <!-- 4. Library -->
+    <!-- 4. Series (NEW - replaces Library) -->
     <ImageButton
-        android:id="@+id/sidebarLibrary"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_library"
-        android:scaleType="centerInside"
-        android:padding="12dp"
-        app:tint="@android:color/white"
-        android:contentDescription="Library"
-        android:nextFocusDown="@id/sidebarLiveTV"
-        android:layout_marginBottom="8dp" />
-
-    <!-- 5. Live TV (Moved up) -->
-    <ImageButton
-        android:id="@+id/sidebarLiveTV"
+        android:id="@+id/sidebarSeries"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackgroundBorderless"
@@ -77,11 +64,12 @@
         android:scaleType="centerInside"
         android:padding="12dp"
         app:tint="@android:color/white"
-        android:contentDescription="Live TV"
+        android:contentDescription="Series"
         android:nextFocusDown="@id/sidebarSearch"
+        android:nextFocusUp="@id/sidebarMovies"
         android:layout_marginBottom="8dp" />
 
-    <!-- 7. Search -->
+    <!-- 5. Search -->
     <ImageButton
         android:id="@+id/sidebarSearch"
         android:layout_width="48dp"
@@ -92,8 +80,25 @@
         android:padding="12dp"
         app:tint="@android:color/white"
         android:contentDescription="Search"
-        android:nextFocusDown="@id/mediaTypeToggle"
+        android:nextFocusDown="@id/sidebarLiveTV"
+        android:nextFocusUp="@id/sidebarSeries"
         android:layout_marginBottom="8dp" />
+
+    <!-- 6. Live TV - visibility controlled dynamically in MainActivity based on configuration -->
+    <ImageButton
+        android:id="@+id/sidebarLiveTV"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_tv"
+        android:scaleType="centerInside"
+        android:padding="12dp"
+        app:tint="@android:color/white"
+        android:contentDescription="Live TV"
+        android:nextFocusDown="@id/sidebarSettings"
+        android:nextFocusUp="@id/sidebarSearch"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" />
 
     <!-- Spacer to push bottom items down -->
     <View
@@ -101,48 +106,12 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- 6. Movies/Series Toggle (Moved down) -->
-    <LinearLayout
-        android:id="@+id/mediaTypeToggle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:background="@drawable/selector_focus_border"
-        android:padding="4dp"
-        android:focusable="true"
-        android:clickable="true"
-        android:nextFocusDown="@id/sidebarSettings"
-        android:nextFocusUp="@id/sidebarSearch"
-        android:nextFocusRight="@id/fragmentContainer"
-        android:layout_marginBottom="8dp">
-
-        <ImageView
-            android:id="@+id/iconMediaType"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_movie"
-            app:tint="@color/md_theme_primary" />
-
-        <TextView
-            android:id="@+id/textMediaType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="MOV"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:layout_marginTop="2dp"/>
-    </LinearLayout>
-
-
-
-    <!-- 8. Settings -->
+    <!-- 7. Settings -->
     <ImageButton
         android:id="@+id/sidebarSettings"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:nextFocusUp="@id/mediaTypeToggle"
+        android:nextFocusUp="@id/sidebarLiveTV"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_settings"
         android:scaleType="centerInside"
