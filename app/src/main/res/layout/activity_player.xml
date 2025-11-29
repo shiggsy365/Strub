@@ -25,6 +25,7 @@
             app:show_rewind_button="true"
             />
 
+
         <ProgressBar
             android:id="@+id/loadingProgress"
             android:layout_width="wrap_content"

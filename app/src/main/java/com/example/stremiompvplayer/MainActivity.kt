@@ -30,7 +30,6 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    // ... (Existing properties) ...
     private lateinit var binding: ActivityMainBinding
     private val focusMemoryManager = FocusMemoryManager.getInstance()
     private var currentFragmentKey: String? = null
@@ -46,7 +45,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // ... (Init logic same as before) ...
         val userId = SharedPreferencesManager.getInstance(this).getCurrentUserId()
         if (userId == null) { startActivity(Intent(this, UserSelectionActivity::class.java)); finish(); return }
 
@@ -80,7 +78,8 @@ class MainActivity : AppCompatActivity() {
                 TraktSyncScheduler.schedulePeriodicSync(this@MainActivity)
 
                 // Refresh home content (discover lists) on app startup
-                viewModel.loadHomeContent()
+                // Note: HomeViewModel now handles its own loading, but MainViewModel might still be used for other things
+                // viewModel.loadHomeContent() // Removed as HomeViewModel handles this now
 
                 loadingDialog.setUserListsComplete()
             }
@@ -404,10 +403,12 @@ class MainActivity : AppCompatActivity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
 
-        // 1. Allow HomeFragment, DiscoverFragment, and LiveTVFragment to intercept keys (Fixes RecyclerView Down Press)
+        // 1. Allow specific fragments to intercept keys
+        // HomeFragment now handles key events for cast results cycling
         if (currentFragment is HomeFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
+
         if (currentFragment is DiscoverFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
@@ -425,11 +426,16 @@ class MainActivity : AppCompatActivity() {
                 // Hide sidebar and move focus to fragment content
                 sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(300).start()
                 val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-                when (currentFragment) {
-                    is HomeFragment -> currentFragment.focusSidebar()
-                    is DiscoverFragment -> currentFragment.focusSidebar()
-                    is LibraryFragment -> currentFragment.focusSidebar()
-                    is com.example.stremiompvplayer.ui.livetv.LiveTVFragment -> currentFragment.focusSidebar()
+
+                // [FIX] Call focusSidebar only if it exists
+                if (currentFragment is HomeFragment) {
+                    currentFragment.focusSidebar()
+                } else if (currentFragment is DiscoverFragment) {
+                    currentFragment.focusSidebar()
+                } else if (currentFragment is LibraryFragment) {
+                    currentFragment.focusSidebar()
+                } else if (currentFragment is com.example.stremiompvplayer.ui.livetv.LiveTVFragment) {
+                    currentFragment.focusSidebar()
                 }
                 return true
             }
@@ -492,8 +498,10 @@ class MainActivity : AppCompatActivity() {
 
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
             // Allow specific fragments to intercept back press
+            if (currentFragment is HomeFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is LibraryFragment && currentFragment.handleBackPress()) return true
+            if (currentFragment is SearchFragment && currentFragment.handleBackPress()) return true
 
             // Use navigation stack for back navigation - NEVER exit app
             if (navigationStack.isNotEmpty()) {
