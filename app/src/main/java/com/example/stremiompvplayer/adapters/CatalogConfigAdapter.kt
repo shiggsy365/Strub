@@ -55,16 +55,14 @@ class CatalogConfigAdapter(
                 "watchlist", "genres"
             )
             
-            // Check if this is a protected catalog (either by catalogId or by being a built-in local list)
-            val isProtected = item.catalogId in protectedCatalogIds || 
-                item.catalogId !in listOf("continue_movies", "continue_episodes", "next_up") && 
-                (item.addonUrl == "tmdb" && item.catalogId in listOf("popular", "latest", "trending"))
+            // Check if this is a protected catalog by catalogId
+            val isProtected = item.catalogId in protectedCatalogIds
             
-            val isCustomList = item.catalogId !in listOf("continue_movies", "continue_episodes", "next_up") &&
-                !(item.addonUrl == "tmdb" && item.catalogId in listOf("popular", "latest", "trending"))
+            // Custom list = anything not in the protected list
+            val isCustomList = !isProtected
             
-            // Show delete button only for custom lists that aren't protected
-            binding.btnDelete.visibility = if (isCustomList && onDelete != null && !isProtected) View.VISIBLE else View.GONE
+            // Show delete button only for custom lists
+            binding.btnDelete.visibility = if (isCustomList && onDelete != null) View.VISIBLE else View.GONE
             binding.btnDelete.setOnClickListener {
                 onDelete?.invoke(item)
             }

@@ -38,15 +38,7 @@ class PageRowConfigAdapter(
             // Hide the discovery switch since these are row configs, not discovery catalogs
             binding.switchDiscover.visibility = View.GONE
 
-            // Protected rows cannot be deleted - hide delete button
-            // Show lock indicator for protected rows
-            if (item.isProtected) {
-                binding.btnDelete.visibility = View.GONE
-            } else {
-                binding.btnDelete.visibility = View.VISIBLE
-            }
-
-            // Always hide delete for PageRowConfigData since all default rows are protected
+            // Protected rows cannot be deleted - always hide delete button for PageRowConfigData
             binding.btnDelete.visibility = View.GONE
 
             binding.btnUp.setOnClickListener {
