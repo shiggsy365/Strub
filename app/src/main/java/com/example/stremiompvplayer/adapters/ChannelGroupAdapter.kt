@@ -94,7 +94,7 @@ class ChannelGroupAdapter(
                         if (hasFocus) {
                             val pos = recyclerView.getChildAdapterPosition(v)
                             if (pos != RecyclerView.NO_POSITION) {
-                                val channel = adapter.getItem(pos)
+                                val channel = adapter.getItemSafe(pos)
                                 if (channel != null) {
                                     onChannelFocused(channel)
                                 }
@@ -149,7 +149,7 @@ class ChannelPosterAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = getItem(position)
+        val item = getItem(position) ?: return
 
         // Load channel logo with Glide, centered on black background
         if (!item.channel.logo.isNullOrEmpty()) {
@@ -175,7 +175,7 @@ class ChannelPosterAdapter(
         submitList(newChannels)
     }
 
-    fun getItem(position: Int): ChannelWithPrograms? {
+    fun getItemSafe(position: Int): ChannelWithPrograms? {
         return if (position in 0 until itemCount) super.getItem(position) else null
     }
 
