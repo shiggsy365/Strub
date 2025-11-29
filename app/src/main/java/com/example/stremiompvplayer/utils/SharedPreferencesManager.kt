@@ -555,6 +555,63 @@ class SharedPreferencesManager private constructor(context: Context) {
         PageRowConfigData("series_watchlist", "Watchlist", "TRAKT_WATCHLIST", true, 3),
         PageRowConfigData("series_genres", "Genres", "GENRES", true, 4)
     )
+
+    // --- LIBRARY FILTER PREFERENCES (Per User) ---
+
+    /**
+     * Get the library sort by preference.
+     * Returns "ADDED_DATE" by default.
+     */
+    fun getLibrarySortBy(): String {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getString("library_sort_by_$userId", "ADDED_DATE") ?: "ADDED_DATE"
+    }
+
+    /**
+     * Set the library sort by preference.
+     */
+    fun setLibrarySortBy(sortBy: String) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putString("library_sort_by_$userId", sortBy).apply()
+    }
+
+    /**
+     * Get the library sort ascending preference.
+     * Returns false by default (newest first).
+     */
+    fun getLibrarySortAscending(): Boolean {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getBoolean("library_sort_ascending_$userId", false)
+    }
+
+    /**
+     * Set the library sort ascending preference.
+     */
+    fun setLibrarySortAscending(ascending: Boolean) {
+        val userId = getCurrentUserId() ?: "default"
+        prefs.edit().putBoolean("library_sort_ascending_$userId", ascending).apply()
+    }
+
+    /**
+     * Get the library genre filter preference.
+     * Returns null (all genres) by default.
+     */
+    fun getLibraryGenreFilter(): String? {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getString("library_genre_filter_$userId", null)
+    }
+
+    /**
+     * Set the library genre filter preference.
+     */
+    fun setLibraryGenreFilter(genreId: String?) {
+        val userId = getCurrentUserId() ?: "default"
+        if (genreId == null) {
+            prefs.edit().remove("library_genre_filter_$userId").apply()
+        } else {
+            prefs.edit().putString("library_genre_filter_$userId", genreId).apply()
+        }
+    }
 }
 
 enum class AgeRating(val displayName: String, val value: String) {

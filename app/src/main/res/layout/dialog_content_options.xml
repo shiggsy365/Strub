@@ -105,6 +105,21 @@
         android:textColor="@color/error_red"
         android:textSize="16sp" />
 
+    <!-- Filter Action (Hidden by default, shown in Library) -->
+    <TextView
+        android:id="@+id/actionFilter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Filter"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_grid_view"
+        android:drawablePadding="16dp"
+        android:drawableTint="@color/md_theme_primary"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
