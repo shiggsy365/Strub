@@ -592,7 +592,9 @@ class SearchFragment : Fragment() {
                     chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
                     chip.setTextColor(resources.getColor(R.color.text_primary, null))
                     chip.setOnClickListener {
-                        val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
+                        // Handle both "tmdb:" prefixed IDs and plain numeric IDs
+                        val idStr = if (actor.id.startsWith("tmdb:")) actor.id.removePrefix("tmdb:") else actor.id
+                        val personId = idStr.toIntOrNull()
                         if (personId != null) {
                             viewModel.loadPersonCredits(personId)
                         }

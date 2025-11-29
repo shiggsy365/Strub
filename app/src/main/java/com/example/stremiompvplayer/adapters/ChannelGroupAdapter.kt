@@ -74,8 +74,8 @@ class ChannelGroupAdapter(
             recyclerView.layoutManager = layoutManager
             recyclerView.setRecycledViewPool(viewPool)
             recyclerView.setHasFixedSize(true)
-            // Enable nested scrolling for proper focus handling
-            recyclerView.isNestedScrollingEnabled = false
+            // Enable nested scrolling for proper scroll coordination with parent RecyclerView
+            recyclerView.isNestedScrollingEnabled = true
             recyclerView.isFocusable = false
             recyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 
