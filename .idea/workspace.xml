@@ -195,11 +195,6 @@
           <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
         </config>
       </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_details2.xml">
-        <config>
-          <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
-        </config>
-      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml">
         <config>
           <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
@@ -213,11 +208,6 @@
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_settings.xml">
         <config>
           <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_similar.xml">
-        <config>
-          <theme>@style/Theme.StremioMPVPlayer</theme>
         </config>
       </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_tv_settings.xml">
@@ -265,37 +255,12 @@
           <theme>@style/Theme.StremioMPVPlayer</theme>
         </config>
       </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_movies.xml">
-        <config>
-          <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
-        </config>
-      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_search_new.xml">
         <config>
           <theme>@style/Theme.StremioMPVPlayer</theme>
         </config>
       </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_series.xml">
-        <config>
-          <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
-        </config>
-      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/item_catalog_config.xml">
-        <config>
-          <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/item_catalog_config_settings.xml">
-        <config>
-          <theme>@style/Theme.StremioMPVPlayer</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/item_discover_catalog.xml">
-        <config>
-          <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/item_discover_sidebar.xml">
         <config>
           <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
         </config>
@@ -318,11 +283,6 @@
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/item_user_list.xml">
         <config>
           <theme>@style/Theme.StremioMPVPlayer</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/item_user_profile.xml">
-        <config>
-          <theme>@style/Theme.StremioMPVPlayer.Leanback</theme>
         </config>
       </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/netflix_sidebar.xml">
@@ -351,18 +311,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2c02766e-19a3-4317-ae82-959ae60a24cb" name="Changes" comment="Update visual assets">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/ErrorFragment.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/ui/home/HomeFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/stremiompvplayer/ui/home/HomeFragment.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/animator/button_elevation.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_discover_old.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_search_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_search_new.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/item_catalog_config_settings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/item_discover_catalog.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/item_discover_sidebar.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/item_user_profile.xml" beforeDir="false" />
-    </list>
+    <list default="true" id="2c02766e-19a3-4317-ae82-959ae60a24cb" name="Changes" comment="Update visual assets" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -371,7 +320,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=Default, isTemplate=false, identifier=serial=192.168.1.235:5555;connection=f90a9330)]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=Default, isTemplate=false, identifier=serial=192.168.1.235:5555;connection=bd7c84a1)]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -440,29 +389,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Android App.app.executor": "Run",
-    "ApkExportedModule": "BINGE.app",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "com.google.services.firebase.aqiPopupShown": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "/home/jon/AndroidStudioProjects/BINGE3/app/src/main/res/drawable",
-    "project.structure.last.edited": "Variables",
-    "project.structure.proportion": "0.17",
-    "project.structure.side.proportion": "0.0",
-    "recommended.upgrade.last.time.stamp": "1763425586759",
-    "settings.editor.selected.configurable": "memory.settings"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
+    &quot;ApkExportedModule&quot;: &quot;BINGE.app&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/jon/AndroidStudioProjects/BINGE3/app/src/main/res/drawable&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Variables&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;recommended.upgrade.last.time.stamp&quot;: &quot;1763425586759&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;memory.settings&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="android.template.326038633">
       <recent name="com.example.stremiompvplayer" />
@@ -488,7 +437,7 @@
   </component>
   <component name="RunManager">
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
-      <module name="BINGE3.app" />
+      <module name="BINGEUI.app" />
       <option name="ANDROID_RUN_CONFIGURATION_SCHEMA_VERSION" value="1" />
       <option name="DEPLOY" value="true" />
       <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
@@ -567,22 +516,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1763370382391</updated>
-    </task>
-    <task id="LOCAL-00045" summary="Update visual assets">
-      <option name="closed" value="true" />
-      <created>1763595922620</created>
-      <option name="number" value="00045" />
-      <option name="presentableId" value="LOCAL-00045" />
-      <option name="project" value="LOCAL" />
-      <updated>1763595922620</updated>
-    </task>
-    <task id="LOCAL-00046" summary="Update visual assets">
-      <option name="closed" value="true" />
-      <created>1763595971951</created>
-      <option name="number" value="00046" />
-      <option name="presentableId" value="LOCAL-00046" />
-      <option name="project" value="LOCAL" />
-      <updated>1763595971951</updated>
     </task>
     <task id="LOCAL-00047" summary="Update visual assets">
       <option name="closed" value="true" />
@@ -960,7 +893,23 @@
       <option name="project" value="LOCAL" />
       <updated>1764254096468</updated>
     </task>
-    <option name="localTasksCounter" value="94" />
+    <task id="LOCAL-00094" summary="Update visual assets">
+      <option name="closed" value="true" />
+      <created>1764420225558</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
+      <option name="project" value="LOCAL" />
+      <updated>1764420225559</updated>
+    </task>
+    <task id="LOCAL-00095" summary="Update visual assets">
+      <option name="closed" value="true" />
+      <created>1764420231043</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1764420231043</updated>
+    </task>
+    <option name="localTasksCounter" value="96" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
