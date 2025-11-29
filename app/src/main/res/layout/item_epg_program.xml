@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Time slot -->
+    <TextView
+        android:id="@+id/programTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.App.BodySmall"
+        android:textColor="@color/md_theme_primary"
+        tools:text="7:00 PM - 8:00 PM" />
+
+    <!-- Program title -->
+    <TextView
+        android:id="@+id/programTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.App.BodyMedium"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        android:layout_marginTop="2dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        tools:text="Evening News" />
+
+    <!-- Program description (optional) -->
+    <TextView
+        android:id="@+id/programDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.App.BodySmall"
+        android:textColor="@color/text_secondary"
+        android:layout_marginTop="2dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:visibility="gone"
+        tools:text="Tonight's headlines including breaking news..."
+        tools:visibility="visible" />
+
+    <!-- Currently airing indicator -->
+    <TextView
+        android:id="@+id/nowAiringLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="▶ Now Airing"
+        android:textAppearance="@style/TextAppearance.App.LabelSmall"
+        android:textColor="@color/success_green"
+        android:layout_marginTop="4dp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/md_theme_outline"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>
