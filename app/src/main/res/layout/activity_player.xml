@@ -25,13 +25,6 @@
             app:show_rewind_button="true"
             />
 
-        <!-- VLC Player Surface View (hidden by default) -->
-        <org.videolan.libvlc.util.VLCVideoLayout
-            android:id="@+id/vlcSurfaceView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:visibility="gone" />
 
         <ProgressBar
             android:id="@+id/loadingProgress"

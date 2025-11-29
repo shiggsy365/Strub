@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="36dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- Section Title -->
+    <TextView
+        android:id="@+id/rowTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trending Movies"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:fontFamily="sans-serif-medium"
+        android:paddingTop="12dp"
+        android:paddingLeft="40dp"
+        android:shadowColor="#80000000"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:shadowRadius="4" />
+
+    <!-- Horizontal List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvHorizontalList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:clipToPadding="false"
+        android:clipChildren="false"
+        android:focusable="false"
+        android:descendantFocusability="afterDescendants" />
+
+</LinearLayout>

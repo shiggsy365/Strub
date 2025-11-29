@@ -49,9 +49,9 @@
     <dimen name="card_elevation">@dimen/elevation_medium</dimen>
     <dimen name="card_corner_radius">@dimen/corner_radius_large</dimen>
 
-    <!-- Poster dimensions -->
-    <dimen name="poster_width">120dp</dimen>
-    <dimen name="poster_height_standard">180dp</dimen> <!-- 2:3 ratio -->
+    <!-- Poster dimensions (CHANGE THESE VALUES TO RESIZE POSTERS) -->
+    <dimen name="poster_width">130dp</dimen>
+    <dimen name="poster_height_standard">195dp</dimen> <!-- Approx 2:3 ratio -->
     <dimen name="poster_corner_radius">@dimen/corner_radius_medium</dimen>
 
     <!-- Button dimensions -->

@@ -266,7 +266,7 @@
             android:focusable="true"
             android:background="@drawable/selector_button_outlined_focus"
             app:backgroundTint="@null"
-            app:icon="@drawable/ic_menu"
+            app:icon="@drawable/ic_grid_view"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
             app:iconSize="24dp"
