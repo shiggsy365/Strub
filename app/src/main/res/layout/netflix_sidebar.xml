@@ -80,11 +80,26 @@
         android:padding="12dp"
         app:tint="@android:color/white"
         android:contentDescription="Search"
-        android:nextFocusDown="@id/sidebarLiveTV"
+        android:nextFocusDown="@id/sidebarLibrary"
         android:nextFocusUp="@id/sidebarSeries"
         android:layout_marginBottom="8dp" />
 
-    <!-- 6. Live TV - visibility controlled dynamically in MainActivity based on configuration -->
+    <!-- 6. Library -->
+    <ImageButton
+        android:id="@+id/sidebarLibrary"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_library"
+        android:scaleType="centerInside"
+        android:padding="12dp"
+        app:tint="@android:color/white"
+        android:contentDescription="Library"
+        android:nextFocusDown="@id/sidebarLiveTV"
+        android:nextFocusUp="@id/sidebarSearch"
+        android:layout_marginBottom="8dp" />
+
+    <!-- 7. Live TV - visibility controlled dynamically in MainActivity based on configuration -->
     <ImageButton
         android:id="@+id/sidebarLiveTV"
         android:layout_width="48dp"
@@ -96,7 +111,7 @@
         app:tint="@android:color/white"
         android:contentDescription="Live TV"
         android:nextFocusDown="@id/sidebarSettings"
-        android:nextFocusUp="@id/sidebarSearch"
+        android:nextFocusUp="@id/sidebarLibrary"
         android:layout_marginBottom="8dp"
         android:visibility="gone" />
 

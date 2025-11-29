@@ -149,6 +149,10 @@ class MainActivity : AppCompatActivity() {
             showSearchDialog()
         }
 
+        sidebar.findViewById<View>(R.id.sidebarLibrary).setOnClickListener {
+            loadFragment(com.example.stremiompvplayer.ui.library.LibraryFragment.newInstance())
+        }
+
         val liveTvConfigured = SharedPreferencesManager.getInstance(this).getLiveTVM3UUrl()?.isNotEmpty() == true
         if (liveTvConfigured) {
             sidebar.findViewById<View>(R.id.sidebarLiveTV).visibility = View.VISIBLE
@@ -190,7 +194,7 @@ class MainActivity : AppCompatActivity() {
         sidebar.onFocusChangeListener = onFocusChange
         val childViews = listOf(
             R.id.sidebarHome, R.id.sidebarMovies, R.id.sidebarSeries,
-            R.id.sidebarSearch, R.id.sidebarLiveTV, R.id.sidebarSettings
+            R.id.sidebarSearch, R.id.sidebarLibrary, R.id.sidebarLiveTV, R.id.sidebarSettings
         )
         childViews.forEach { viewId ->
             sidebar.findViewById<View>(viewId)?.onFocusChangeListener = onFocusChange
@@ -272,6 +276,7 @@ class MainActivity : AppCompatActivity() {
             is SeriesFragment -> "series"
             is SearchFragment -> "search"
             is LiveTVFragment -> "livetv"
+            is com.example.stremiompvplayer.ui.library.LibraryFragment -> "library"
             else -> fragment.javaClass.simpleName
         }
 
@@ -419,6 +424,7 @@ class MainActivity : AppCompatActivity() {
             if (currentFragment is MoviesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is SeriesFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is SearchFragment && currentFragment.handleBackPress()) return true
+            if (currentFragment is com.example.stremiompvplayer.ui.library.LibraryFragment && currentFragment.handleBackPress()) return true
 
             // Use navigation stack for back navigation - NEVER exit app
             if (navigationStack.isNotEmpty()) {
