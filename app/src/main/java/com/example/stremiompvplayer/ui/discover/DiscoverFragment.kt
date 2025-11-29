@@ -83,9 +83,6 @@ class DiscoverFragment : Fragment() {
         // Get the media type from arguments, default to "movie"
         val type = arguments?.getString(ARG_TYPE) ?: "movie"
 
-        // Sync the media type toggle with current content type
-        (activity as? MainActivity)?.syncMediaTypeToggle(type)
-
         setupDisplayModule()
         setupAdapters()
         setupObservers()
