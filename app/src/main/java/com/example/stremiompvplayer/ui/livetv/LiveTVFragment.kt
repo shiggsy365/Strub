@@ -1,7 +1,6 @@
 package com.example.stremiompvplayer.ui.livetv
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -12,14 +11,14 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.R
-import com.example.stremiompvplayer.adapters.TVGuideAdapter
-import com.example.stremiompvplayer.adapters.UpcomingProgramAdapter
+import com.example.stremiompvplayer.adapters.ChannelGroupAdapter
+import com.example.stremiompvplayer.adapters.ChannelGroupRow
+import com.example.stremiompvplayer.adapters.EPGProgramAdapter
 import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.data.ServiceLocator
-import com.example.stremiompvplayer.databinding.FragmentLivetvBinding
+import com.example.stremiompvplayer.databinding.FragmentLiveTvNewBinding
 import com.example.stremiompvplayer.models.Channel
 import com.example.stremiompvplayer.models.ChannelGroup
 import com.example.stremiompvplayer.models.ChannelMapping
@@ -30,7 +29,6 @@ import com.example.stremiompvplayer.utils.M3UParser
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
-import com.google.android.material.chip.Chip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,7 +38,7 @@ import java.util.*
 
 class LiveTVFragment : Fragment() {
 
-    private var _binding: FragmentLivetvBinding? = null
+    private var _binding: FragmentLiveTvNewBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by activityViewModels {
@@ -50,15 +48,14 @@ class LiveTVFragment : Fragment() {
         )
     }
 
-    private lateinit var tvGuideAdapter: TVGuideAdapter
-    private lateinit var upcomingAdapter: UpcomingProgramAdapter
-    private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    private lateinit var channelGroupAdapter: ChannelGroupAdapter
+    private lateinit var epgProgramAdapter: EPGProgramAdapter
+    private val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
 
     private var allChannels = listOf<Channel>()
     private var allPrograms = listOf<EPGProgram>()
     private var channelsWithPrograms = listOf<ChannelWithPrograms>()
     private var selectedChannel: ChannelWithPrograms? = null
-    private var selectedGroup: String? = null
 
     private var channelMappings = listOf<ChannelMapping>()
     private var groupsOrdering = listOf<ChannelGroup>()
@@ -140,7 +137,7 @@ class LiveTVFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = FragmentLivetvBinding.inflate(inflater, container, false)
+        _binding = FragmentLiveTvNewBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -178,11 +175,10 @@ class LiveTVFragment : Fragment() {
                     // Rebuild channels with programs using mapped channels
                     channelsWithPrograms = buildChannelsWithPrograms()
 
-                    setupGroupFilters()
-                    updateChannelList()
+                    updateChannelGroupRows()
                     if (channelsWithPrograms.isNotEmpty()) {
                         selectedChannel = channelsWithPrograms[0]
-                        updateDetailsPane(channelsWithPrograms[0], expanded = false)
+                        updateDetailsPane(channelsWithPrograms[0])
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("LiveTV", "Error applying mappings to cached data", e)
@@ -202,132 +198,28 @@ class LiveTVFragment : Fragment() {
     }
 
     private fun setupAdapters() {
-        // TV Guide Adapter - play channel on click
-        tvGuideAdapter = TVGuideAdapter { channelWithPrograms ->
-            selectedChannel = channelWithPrograms
-            updateDetailsPane(channelWithPrograms, expanded = false)
-            // Play channel directly on click
-            playChannel(channelWithPrograms.channel)
-        }
-
-        binding.rvTVGuide.layoutManager = LinearLayoutManager(context)
-        binding.rvTVGuide.adapter = tvGuideAdapter
-
-        // Ensure RecyclerView retains focus when scrolling
-        binding.rvTVGuide.isFocusable = true
-        binding.rvTVGuide.isFocusableInTouchMode = true
-        binding.rvTVGuide.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-
-        // Don't intercept UP/DOWN on RecyclerView itself - let it handle scrolling naturally
-        // The fragment's handleKeyDown will consume events after RecyclerView processes them
-        binding.rvTVGuide.setOnKeyListener { v, keyCode, event ->
-            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
-                when (keyCode) {
-                    android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                        // Allow left navigation to re-open main menu
-                        false  // Let the event propagate to open the main menu
-                    }
-                    else -> false
-                }
-            } else {
-                false
+        // Channel Group Adapter - displays rows of channels by group
+        channelGroupAdapter = ChannelGroupAdapter(
+            onChannelClick = { channelWithPrograms ->
+                selectedChannel = channelWithPrograms
+                updateDetailsPane(channelWithPrograms)
+                // Play channel directly on click
+                playChannel(channelWithPrograms.channel)
+            },
+            onChannelFocused = { channelWithPrograms ->
+                selectedChannel = channelWithPrograms
+                updateDetailsPane(channelWithPrograms)
             }
-        }
+        )
 
-        // Add focus listener to update details pane when channel is focused
-        binding.rvTVGuide.addOnChildAttachStateChangeListener(object : androidx.recyclerview.widget.RecyclerView.OnChildAttachStateChangeListener {
-            override fun onChildViewAttachedToWindow(view: View) {
-                view.setOnFocusChangeListener { v, hasFocus ->
-                    if (hasFocus) {
-                        val position = binding.rvTVGuide.getChildAdapterPosition(v)
-                        if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
-                            // Get channel from adapter's current list, not full list
-                            val channel = tvGuideAdapter.getItemAtPosition(position)
-                            if (channel != null) {
-                                selectedChannel = channel
-                                updateDetailsPane(channel, expanded = false)
-                            }
-                        }
-                    }
-                }
+        binding.rvChannelGroups.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.rvChannelGroups.adapter = channelGroupAdapter
+        binding.rvChannelGroups.setItemViewCacheSize(10)
 
-                // Handle D-pad keys for RIGHT navigation to details pane
-                view.setOnKeyListener { v, keyCode, event ->
-                    if (event.action == android.view.KeyEvent.ACTION_DOWN) {
-                        when (keyCode) {
-                            android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                                // Move focus to details card to show expanded guide
-                                binding.detailsCard.requestFocus()
-                                true
-                            }
-                            else -> false  // Don't intercept other keys, let RecyclerView handle them
-                        }
-                    } else {
-                        false
-                    }
-                }
-            }
-
-            override fun onChildViewDetachedFromWindow(view: View) {
-                view.setOnFocusChangeListener(null)
-                view.setOnKeyListener(null)
-            }
-        })
-
-        // Make details card focusable to show expanded TV guide
-        binding.detailsCard.isFocusable = true
-        binding.detailsCard.isFocusableInTouchMode = true
-        binding.detailsCard.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus && selectedChannel != null) {
-                // Add red border when focused
-                binding.detailsCard.strokeWidth = 6
-                binding.detailsCard.strokeColor = android.graphics.Color.RED
-                // Expand to show full TV guide when details pane is focused
-                updateDetailsPane(selectedChannel!!, expanded = true)
-            } else if (!hasFocus && selectedChannel != null) {
-                // Remove border when not focused
-                binding.detailsCard.strokeWidth = 0
-                binding.detailsCard.strokeColor = android.graphics.Color.TRANSPARENT
-                // Collapse when focus leaves
-                updateDetailsPane(selectedChannel!!, expanded = false)
-            }
-        }
-
-        // Add key listener to details card for back navigation
-        binding.detailsCard.setOnKeyListener { _, keyCode, event ->
-            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
-                when (keyCode) {
-                    android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                        // Move focus back to the selected channel in the list
-                        val filteredChannels = if (selectedGroup != null) {
-                            channelsWithPrograms.filter { it.channel.group == selectedGroup }
-                        } else {
-                            channelsWithPrograms
-                        }
-                        val selectedIndex = filteredChannels.indexOf(selectedChannel)
-                        if (selectedIndex >= 0) {
-                            binding.rvTVGuide.scrollToPosition(selectedIndex)
-                            binding.rvTVGuide.post {
-                                val view = binding.rvTVGuide.layoutManager?.findViewByPosition(selectedIndex)
-                                view?.requestFocus()
-                            }
-                        } else {
-                            // Fallback to first item if selected channel not found
-                            binding.rvTVGuide.layoutManager?.findViewByPosition(0)?.requestFocus()
-                        }
-                        true
-                    }
-                    else -> false
-                }
-            } else {
-                false
-            }
-        }
-
-        // Upcoming Programs Adapter
-        upcomingAdapter = UpcomingProgramAdapter()
-        binding.rvUpcoming.layoutManager = LinearLayoutManager(context)
-        binding.rvUpcoming.adapter = upcomingAdapter
+        // EPG Program Adapter - displays TV Guide for selected channel
+        epgProgramAdapter = EPGProgramAdapter()
+        binding.rvEPGPrograms.layoutManager = LinearLayoutManager(context)
+        binding.rvEPGPrograms.adapter = epgProgramAdapter
     }
 
     private fun loadLiveTVData() {
@@ -397,12 +289,11 @@ class LiveTVFragment : Fragment() {
                 // Update UI
                 withContext(Dispatchers.Main) {
                     binding.loadingCard.visibility = View.GONE
-                    setupGroupFilters()
-                    updateChannelList()
+                    updateChannelGroupRows()
 
                     if (channelsWithPrograms.isNotEmpty()) {
                         selectedChannel = channelsWithPrograms[0]
-                        updateDetailsPane(channelsWithPrograms[0], expanded = false)
+                        updateDetailsPane(channelsWithPrograms[0])
                     }
 
                     Toast.makeText(context, "Loaded ${allChannels.size} channels", Toast.LENGTH_SHORT).show()
@@ -480,100 +371,82 @@ class LiveTVFragment : Fragment() {
         }
     }
 
-    private fun setupGroupFilters() {
-        // Use database ordering if available, otherwise fall back to alphabetical
-        val groups = if (groupsOrdering.isNotEmpty()) {
+    /**
+     * Groups channels by their group name and creates rows for display.
+     * Each row represents a channel group with horizontal scrolling channels.
+     */
+    private fun updateChannelGroupRows() {
+        // Get group ordering from database or fall back to alphabetical
+        val groupNames = if (groupsOrdering.isNotEmpty()) {
             groupsOrdering.map { it.name }
         } else {
-            allChannels.mapNotNull { it.group }.distinct().sorted()
+            channelsWithPrograms.mapNotNull { it.channel.group }.distinct().sorted()
         }
 
-        binding.groupChips.removeAllViews()
-
-        // Add "All" chip
-        val allChip = Chip(requireContext()).apply {
-            text = "All"
-            isCheckable = true
-            isChecked = true
-            setOnClickListener {
-                selectedGroup = null
-                updateChannelList()
+        // Create rows for each group
+        val rows = groupNames.mapNotNull { groupName ->
+            val groupChannels = channelsWithPrograms.filter { it.channel.group == groupName }
+            if (groupChannels.isNotEmpty()) {
+                ChannelGroupRow(
+                    id = groupName,
+                    title = groupName,
+                    channels = groupChannels
+                )
+            } else {
+                null
             }
         }
-        binding.groupChips.addView(allChip)
 
-        // Add group chips in database order
-        groups.forEach { group ->
-            val chip = Chip(requireContext()).apply {
-                text = group
-                isCheckable = true
-                setOnClickListener {
-                    selectedGroup = group
-                    updateChannelList()
-                }
-            }
-            binding.groupChips.addView(chip)
+        // Add "Uncategorized" row for channels without a group
+        val uncategorizedChannels = channelsWithPrograms.filter { it.channel.group.isNullOrEmpty() }
+        val allRows = if (uncategorizedChannels.isNotEmpty()) {
+            rows + ChannelGroupRow(
+                id = "uncategorized",
+                title = "Uncategorized",
+                channels = uncategorizedChannels
+            )
+        } else {
+            rows
         }
+
+        channelGroupAdapter.updateData(allRows)
     }
 
-    private fun updateChannelList() {
-        val filteredChannels = if (selectedGroup != null) {
-            channelsWithPrograms.filter { it.channel.group == selectedGroup }
-        } else {
-            channelsWithPrograms
-        }
-
-        // Save current focus position before updating
-        val currentFocusedView = binding.rvTVGuide.focusedChild
-        val currentFocusedPosition = if (currentFocusedView != null) {
-            binding.rvTVGuide.getChildAdapterPosition(currentFocusedView)
-        } else {
-            RecyclerView.NO_POSITION
-        }
-
-        tvGuideAdapter.updateChannels(filteredChannels)
-
-        // Restore focus after update if there was a focused item
-        if (currentFocusedPosition != RecyclerView.NO_POSITION && currentFocusedPosition < filteredChannels.size) {
-            binding.rvTVGuide.post {
-                binding.rvTVGuide.layoutManager?.findViewByPosition(currentFocusedPosition)?.requestFocus()
-            }
-        }
-    }
-
-    private fun updateDetailsPane(channelWithPrograms: ChannelWithPrograms, expanded: Boolean = false) {
+    private fun updateDetailsPane(channelWithPrograms: ChannelWithPrograms) {
         val channel = channelWithPrograms.channel
 
-        // Channel Name
+        // Channel Name (large, prominent)
         binding.detailChannelName.text = channel.name
 
-        // Channel Logo
+        // Channel Logo with black background and centered logo
         if (!channel.logo.isNullOrEmpty()) {
             Glide.with(this)
                 .load(channel.logo)
-                .placeholder(R.mipmap.ic_launcher_foreground)
-                .error(R.mipmap.ic_launcher_foreground)
+                .placeholder(R.drawable.ic_tv)
+                .error(R.drawable.ic_tv)
+                .fitCenter()
                 .into(binding.detailChannelLogo)
             binding.detailChannelLogo.visibility = View.VISIBLE
         } else {
-            binding.detailChannelLogo.visibility = View.GONE
+            binding.detailChannelLogo.setImageResource(R.drawable.ic_tv)
+            binding.detailChannelLogo.visibility = View.VISIBLE
         }
 
-        // Background
+        // Background uses channel logo for hero effect
         if (!channel.logo.isNullOrEmpty()) {
             Glide.with(this)
                 .load(channel.logo)
                 .into(binding.pageBackground)
         }
 
-        // Current Program
+        // Currently Airing Program
         val currentProgram = channelWithPrograms.currentProgram
         if (currentProgram != null) {
             binding.detailCurrentTitle.text = currentProgram.title
             binding.detailCurrentTime.text = formatTimeRange(currentProgram.startTime, currentProgram.endTime)
             binding.detailCurrentDesc.text = currentProgram.description ?: "No description available"
 
-            // Calculate progress
+            // Calculate progress for current program
             val progress = calculateProgress(currentProgram.startTime, currentProgram.endTime)
             binding.detailProgressBar.progress = progress
             binding.detailProgressBar.visibility = View.VISIBLE
@@ -584,22 +457,41 @@ class LiveTVFragment : Fragment() {
             binding.detailProgressBar.visibility = View.GONE
         }
 
-        // Upcoming Programs - show more when expanded (TV guide mode)
-        if (expanded) {
-            // Fetch extended program list for next 6 hours
-            val currentTime = System.currentTimeMillis()
-            val sixHoursLater = currentTime + (6 * 60 * 60 * 1000) // 6 hours in milliseconds
-            val channelPrograms = allPrograms.filter { program ->
-                program.channelId == channel.tvgId || program.channelId == channel.id
+        // Update EPG TV Guide (Right side panel)
+        updateEPGGuide(channelWithPrograms)
+    }
+
+    /**
+     * Updates the TV Guide panel with programs for the next 12-24 hours.
+     */
+    private fun updateEPGGuide(channelWithPrograms: ChannelWithPrograms) {
+        val channel = channelWithPrograms.channel
+        val currentTime = System.currentTimeMillis()
+        val twentyFourHoursLater = currentTime + (24 * 60 * 60 * 1000) // 24 hours in milliseconds
+
+        // Get all programs for this channel within the next 24 hours
+        val channelPrograms = allPrograms.filter { program ->
+            program.channelId == channel.tvgId || program.channelId == channel.id
+        }
+
+        // Include currently airing program and upcoming programs
+        val programsToShow = channelPrograms
+            .filter { it.endTime >= currentTime && it.startTime <= twentyFourHoursLater }
+            .sortedBy { it.startTime }
+
+        if (programsToShow.isNotEmpty()) {
+            epgProgramAdapter.updatePrograms(programsToShow)
+            binding.rvEPGPrograms.visibility = View.VISIBLE
+            binding.tvNoEPG.visibility = View.GONE
+
+            // Auto-scroll to currently airing program
+            val currentIndex = epgProgramAdapter.getCurrentlyAiringIndex()
+            if (currentIndex >= 0) {
+                binding.rvEPGPrograms.scrollToPosition(currentIndex)
             }
-            // Get all programs within the next 6 hours
-            val extendedPrograms = channelPrograms
-                .filter { it.startTime >= currentTime && it.startTime <= sixHoursLater }
-                .sortedBy { it.startTime }
-            upcomingAdapter.updatePrograms(extendedPrograms)
         } else {
-            // Show compact list (5 programs)
-            upcomingAdapter.updatePrograms(channelWithPrograms.nextPrograms)
+            binding.rvEPGPrograms.visibility = View.GONE
+            binding.tvNoEPG.visibility = View.VISIBLE
         }
     }
 
@@ -668,7 +560,7 @@ class LiveTVFragment : Fragment() {
                 KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
                     // Consume UP/DOWN if RecyclerView or its children have focus
                     // This prevents event from bubbling to MainActivity after RecyclerView handles it
-                    if (_binding != null && (binding.rvTVGuide.hasFocus() || binding.rvTVGuide.focusedChild != null)) {
+                    if (_binding != null && (binding.rvChannelGroups.hasFocus() || binding.rvChannelGroups.focusedChild != null)) {
                         return true  // Consume after RecyclerView processes
                     }
                     return false
@@ -684,19 +576,16 @@ class LiveTVFragment : Fragment() {
 
     fun focusSidebar(): Boolean {
         binding.root.post {
-            val firstView = binding.rvTVGuide.layoutManager?.findViewByPosition(0)
+            val firstView = binding.rvChannelGroups.layoutManager?.findViewByPosition(0)
             if (firstView != null && firstView.isFocusable) {
                 firstView.requestFocus()
-            } else if (binding.rvTVGuide.isFocusable) {
-                binding.rvTVGuide.requestFocus()
-            } else if (binding.groupChips.childCount > 0) {
-                // Try to focus on the first chip in the filter group
-                binding.groupChips.getChildAt(0)?.requestFocus()
+            } else if (binding.rvChannelGroups.isFocusable) {
+                binding.rvChannelGroups.requestFocus()
             } else {
                 // Try again after a delay if views aren't ready
                 binding.root.postDelayed({
                     // Null check to prevent crash if fragment is destroyed
-                    _binding?.rvTVGuide?.layoutManager?.findViewByPosition(0)?.requestFocus()
+                    _binding?.rvChannelGroups?.layoutManager?.findViewByPosition(0)?.requestFocus()
                 }, 100)
             }
         }
