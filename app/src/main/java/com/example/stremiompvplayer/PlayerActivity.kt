@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
@@ -48,6 +49,11 @@ class PlayerActivity : AppCompatActivity() {
     private var currentStream: Stream? = null
     private var currentMeta: MetaItem? = null
 
+    // Auto-play / Scraper State
+    private var streamList: List<Stream> = emptyList()
+    private var currentStreamIndex = 0
+    private var isAutoPlaying = false
+
     // Save position for rotation/backgrounding
     private var playWhenReady = true
     private var currentItem = 0
@@ -69,13 +75,78 @@ class PlayerActivity : AppCompatActivity() {
         currentStream = intent.getSerializableExtra("stream") as? Stream
         currentMeta = intent.getSerializableExtra("meta") as? MetaItem
 
-        if (currentStream == null) {
+        if (currentStream == null && currentMeta == null) {
             finish()
             return
         }
 
         setupPlayNextButtons()
-        checkForNextEpisode()
+
+        if (currentStream != null) {
+            // Direct play mode (legacy)
+            checkForNextEpisode()
+        } else if (currentMeta != null) {
+            // Auto-scrape mode
+            isAutoPlaying = true
+            binding.loadingProgress.visibility = View.VISIBLE
+            showStatus("Scraping streams...")
+
+            // Observe streams
+            viewModel.streams.observe(this) { streams ->
+                if (streams.isNotEmpty()) {
+                    streamList = streams
+                    currentStreamIndex = 0
+                    playStreamAtIndex(currentStreamIndex)
+                } else {
+                    // Only show error if we are not currently loading (avoid initial empty state)
+                    if (viewModel.isLoading.value == false) {
+                        showErrorAndFinish("No streams found")
+                    }
+                }
+            }
+
+            // Trigger load
+            viewModel.loadStreams(currentMeta!!.type, currentMeta!!.id)
+        }
+    }
+
+    private fun playStreamAtIndex(index: Int) {
+        if (index >= streamList.size) {
+            showErrorAndFinish("No playable streams found")
+            return
+        }
+
+        currentStream = streamList[index]
+        val displayIndex = index + 1
+        val total = streamList.size
+
+        showStatus("Trying stream $displayIndex of $total...")
+
+        // Reset player
+        releasePlayer()
+        initializePlayer()
+    }
+
+    private fun tryNextStream(reason: String) {
+        Log.w("PlayerActivity", "Stream failed: $reason. Moving to next.")
+        currentStreamIndex++
+        playStreamAtIndex(currentStreamIndex)
+    }
+
+    private fun showStatus(message: String) {
+        // You might want a dedicated TextView for status updates overlaying the player
+        // For now, we can use a Toast or repurpose Play Next text temporarily if visible
+        // Ideally, add a status TextView to layout. I'll use Toast for simplicity or logs.
+        runOnUiThread {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showErrorAndFinish(message: String) {
+        runOnUiThread {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            finish()
+        }
     }
 
     private fun setupPlayNextButtons() {
@@ -177,15 +248,24 @@ class PlayerActivity : AppCompatActivity() {
                     val observer = object : androidx.lifecycle.Observer<List<com.example.stremiompvplayer.models.Stream>> {
                         override fun onChanged(streams: List<com.example.stremiompvplayer.models.Stream>) {
                             if (streams.isNotEmpty()) {
-                                val firstStream = streams[0]
+                                // In auto-play mode, we update the list and reset index
+                                streamList = streams
+                                currentStreamIndex = 0
+
                                 // Update current meta to next episode
                                 currentMeta = next
-                                currentStream = firstStream
+                                currentStream = streams[0]
 
                                 // Release current player and start new one
                                 releasePlayer()
                                 playbackPosition = 0L
-                                initializePlayer()
+
+                                // If we are in auto-play mode, playStreamAtIndex handles init
+                                if (isAutoPlaying) {
+                                    playStreamAtIndex(0)
+                                } else {
+                                    initializePlayer()
+                                }
 
                                 // Hide the popup
                                 binding.playNextCard.visibility = View.GONE
@@ -209,24 +289,26 @@ class PlayerActivity : AppCompatActivity() {
 
     public override fun onStart() {
         super.onStart()
-        initializePlayer()
+        if (currentStream != null) {
+            initializePlayer()
+        }
     }
 
     public override fun onResume() {
         super.onResume()
         hideSystemUi()
-        if (player == null) {
+        if (player == null && currentStream != null) {
             initializePlayer()
         }
     }
 
     override fun onStop() {
-    super.onStop()
-    monitorJob?.cancel()
-    if (player != null) {
-        saveProgress() // Ensure we save locally
-        releasePlayer() // Ensure we scrobble 'stop' to Trakt
-    }
+        super.onStop()
+        monitorJob?.cancel()
+        if (player != null) {
+            saveProgress() // Ensure we save locally
+            releasePlayer() // Ensure we scrobble 'stop' to Trakt
+        }
     }
 
     public override fun onPause() {
@@ -240,9 +322,9 @@ class PlayerActivity : AppCompatActivity() {
     private fun releasePlayer() {
         // Release ExoPlayer
         player?.let { exoPlayer ->
-             playbackPosition = exoPlayer.currentPosition
-                currentItem = exoPlayer.currentMediaItemIndex
-                playWhenReady = exoPlayer.playWhenReady
+            playbackPosition = exoPlayer.currentPosition
+            currentItem = exoPlayer.currentMediaItemIndex
+            playWhenReady = exoPlayer.playWhenReady
 
             // Scrobble STOP
             currentMeta?.let { meta ->
@@ -256,7 +338,7 @@ class PlayerActivity : AppCompatActivity() {
 
                     // OPTIONAL: If >90%, explicitly mark watched here to be safe
                     if (progress > 90f) {
-                         viewModel.markAsWatched(meta, syncToTrakt = false) // Trakt scrobble handles remote, we handle local
+                        viewModel.markAsWatched(meta, syncToTrakt = false) // Trakt scrobble handles remote, we handle local
                     }
                 }
             }
@@ -267,6 +349,8 @@ class PlayerActivity : AppCompatActivity() {
 
     @OptIn(UnstableApi::class) private fun initializePlayer() {
         if (player != null) return
+
+        binding.loadingProgress.visibility = View.VISIBLE
 
         // 1. Create the player
         player = ExoPlayer.Builder(this)
@@ -282,57 +366,33 @@ class PlayerActivity : AppCompatActivity() {
                 // Fetch and add subtitles asynchronously
                 lifecycleScope.launch {
                     Log.d("PlayerActivity", "=== SUBTITLE FETCH START ===")
-                    Log.d("PlayerActivity", "currentMeta is ${if (currentMeta == null) "NULL" else "not null"}")
-                    Log.d("PlayerActivity", "Meta name: ${currentMeta?.name ?: "NULL"}")
-                    Log.d("PlayerActivity", "Meta ID: ${currentMeta?.id ?: "NULL"}")
-                    Log.d("PlayerActivity", "Meta type: ${currentMeta?.type ?: "NULL"}")
 
+                    // Skip subtitle fetch if not needed or already failed to simplify loop
                     val subtitles = currentMeta?.let { meta ->
                         try {
-                            Log.d("PlayerActivity", "Calling viewModel.fetchSubtitles()...")
-                            val result = viewModel.fetchSubtitles(meta)
-                            Log.d("PlayerActivity", "fetchSubtitles() returned ${result.size} subtitles")
-                            result
+                            viewModel.fetchSubtitles(meta)
                         } catch (e: Exception) {
-                            Log.e("PlayerActivity", "Error fetching subtitles: ${e.message}", e)
-                            e.printStackTrace()
                             emptyList()
                         }
-                    } ?: run {
-                        Log.e("PlayerActivity", "currentMeta is NULL - cannot fetch subtitles")
-                        emptyList()
-                    }
-
-                    Log.d("PlayerActivity", "Processing ${subtitles.size} subtitles for ExoPlayer")
+                    } ?: emptyList()
 
                     // Build MediaItem with subtitles
                     val subtitleConfigurations = subtitles.mapIndexed { index, subtitle ->
-                        // Detect MIME type from URL extension or SubEncoding
-                        // OpenSubtitles via Stremio typically serves SRT format
                         val mimeType = when {
                             subtitle.url.endsWith(".vtt", ignoreCase = true) -> MimeTypes.TEXT_VTT
                             subtitle.url.endsWith(".srt", ignoreCase = true) -> MimeTypes.APPLICATION_SUBRIP
                             subtitle.url.endsWith(".ass", ignoreCase = true) || subtitle.url.endsWith(".ssa", ignoreCase = true) -> MimeTypes.TEXT_SSA
-                            subtitle.url.contains("stremio", ignoreCase = true) || subtitle.url.contains("opensubtitles", ignoreCase = true) -> {
-                                // Stremio/OpenSubtitles typically serve SRT format
-                                Log.d("PlayerActivity", "Detected Stremio/OpenSubtitles URL, using SRT format")
-                                MimeTypes.APPLICATION_SUBRIP
-                            }
-                            else -> {
-                                Log.w("PlayerActivity", "Unknown subtitle format for URL: ${subtitle.url}, defaulting to SRT")
-                                MimeTypes.APPLICATION_SUBRIP  // Changed default from VTT to SRT
-                            }
+                            subtitle.url.contains("stremio", ignoreCase = true) || subtitle.url.contains("opensubtitles", ignoreCase = true) -> MimeTypes.APPLICATION_SUBRIP
+                            else -> MimeTypes.APPLICATION_SUBRIP
                         }
-
-                        Log.d("PlayerActivity", "Creating subtitle config: ${subtitle.formattedTitle} ($mimeType)")
 
                         MediaItem.SubtitleConfiguration.Builder(
                             android.net.Uri.parse(subtitle.url)
                         )
                             .setMimeType(mimeType)
                             .setLanguage("eng")
-                            .setLabel(subtitle.formattedTitle)  // "AIO - [Title]"
-                            .setSelectionFlags(if (index == 0) androidx.media3.common.C.SELECTION_FLAG_DEFAULT else 0)  // Auto-select first subtitle
+                            .setLabel(subtitle.formattedTitle)
+                            .setSelectionFlags(if (index == 0) androidx.media3.common.C.SELECTION_FLAG_DEFAULT else 0)
                             .build()
                     }
 
@@ -340,19 +400,6 @@ class PlayerActivity : AppCompatActivity() {
                         .setUri(url)
                         .setSubtitleConfigurations(subtitleConfigurations)
                         .build()
-
-                    if (subtitles.isNotEmpty()) {
-                        Log.i("PlayerActivity", "✓ Successfully added ${subtitles.size} English subtitles to ExoPlayer")
-                        subtitles.forEachIndexed { index, subtitle ->
-                            Log.i("PlayerActivity", "  [$index] ${subtitle.formattedTitle}")
-                            Log.d("PlayerActivity", "       URL: ${subtitle.url}")
-                        }
-                    } else {
-                        Log.w("PlayerActivity", "⚠ No subtitles found for ${currentMeta?.name ?: "unknown"}")
-                        Log.w("PlayerActivity", "   Check AIOStreams manifest URL configuration and IMDb ID lookup")
-                    }
-
-                    Log.d("PlayerActivity", "=== SUBTITLE FETCH END ===")
 
                     // 3. Set media and prepare (on main thread)
                     withContext(Dispatchers.Main) {
@@ -375,6 +422,20 @@ class PlayerActivity : AppCompatActivity() {
                             Player.STATE_BUFFERING -> binding.loadingProgress.visibility = View.VISIBLE
                             Player.STATE_READY -> {
                                 binding.loadingProgress.visibility = View.GONE
+
+                                // DURATION CHECK FOR AUTO-PLAY
+                                if (isAutoPlaying) {
+                                    val durationMs = exoPlayer.duration
+                                    if (durationMs > 0 && durationMs < 120000) { // Less than 2 minutes
+                                        tryNextStream("Duration too short (${durationMs}ms)")
+                                        return // Stop processing readiness
+                                    } else {
+                                        // Valid stream found!
+                                        // Show success? Or just let it play.
+                                        checkForNextEpisode() // Start checking for next episode
+                                    }
+                                }
+
                                 // Apply subtitle styling when player is ready
                                 applySubtitleStyling()
                                 // Auto-select English tracks when player is ready
@@ -386,36 +447,22 @@ class PlayerActivity : AppCompatActivity() {
                     }
 
                     override fun onTracksChanged(tracks: Tracks) {
-                        // Called when tracks become available or change
-                        // Re-apply English track selection when tracks change
                         selectEnglishTracks()
                     }
 
                     override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                        Log.e("PlayerActivity", "Playback error: ${error.message}", error)
-                        Log.e("PlayerActivity", "Error code: ${error.errorCode}")
-                        Log.e("PlayerActivity", "Stream URL: ${currentStream?.url}")
+                        Log.e("PlayerActivity", "Playback error: ${error.message}")
 
-                        // Show error message and return to stream selection
-                        runOnUiThread {
-                            val errorMessage = when {
-                                error.message?.contains("Invalid NAL length") == true ->
-                                    "Video codec not supported. Please select a different stream."
-                                error.message?.contains("Source error") == true ->
-                                    "Failed to load stream. Please try a different stream."
-                                error.errorCode == 3001 ->
-                                    "Media format error. Please select a different stream."
-                                else -> "Playback error: ${error.message}"
+                        if (isAutoPlaying) {
+                            // Try next stream
+                            tryNextStream("Playback error: ${error.message}")
+                        } else {
+                            // Normal error handling
+                            runOnUiThread {
+                                val errorMessage = "Playback error: ${error.message}"
+                                android.widget.Toast.makeText(this@PlayerActivity, errorMessage, android.widget.Toast.LENGTH_LONG).show()
+                                finish()
                             }
-
-                            android.widget.Toast.makeText(
-                                this@PlayerActivity,
-                                errorMessage,
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-
-                            // Return to stream selection
-                            finish()
                         }
                     }
 
@@ -451,13 +498,6 @@ class PlayerActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        // Stop playback and return to the previous activity
-        // onStop() will be called automatically, which handles:
-        // 1. Saving progress
-        // 2. Releasing player
-        // 3. Scrobbling to Trakt
-
-        // Just finish this activity to return to the calling activity
         finish()
     }
 
@@ -465,7 +505,6 @@ class PlayerActivity : AppCompatActivity() {
         try {
             val prefsManager = SharedPreferencesManager.getInstance(this)
 
-            // Get subtitle preferences
             val textSize = prefsManager.getSubtitleTextSize()
             val textColor = prefsManager.getSubtitleTextColor()
             val backgroundColor = prefsManager.getSubtitleBackgroundColor()
@@ -473,87 +512,30 @@ class PlayerActivity : AppCompatActivity() {
             val edgeType = prefsManager.getSubtitleEdgeType()
             val edgeColor = prefsManager.getSubtitleEdgeColor()
 
-            // Create CaptionStyleCompat with user preferences
             val captionStyle = CaptionStyleCompat(
-                textColor,                    // foregroundColor
-                backgroundColor,              // backgroundColor
-                windowColor,                  // windowColor
-                edgeType,                     // edgeType (0=NONE, 1=OUTLINE, 2=DROP_SHADOW, 3=RAISED, 4=DEPRESSED)
-                edgeColor,                    // edgeColor
-                null                          // typeface (null = default)
+                textColor, backgroundColor, windowColor, edgeType, edgeColor, null
             )
 
-            // Apply to SubtitleView
             val subtitleView = binding.playerView.subtitleView
             subtitleView?.setStyle(captionStyle)
-
-            // Set text size scale
             subtitleView?.setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 20f * textSize)
-
-            Log.d("PlayerActivity", "Applied subtitle styling - Size: $textSize, Color: $textColor, Edge: $edgeType")
         } catch (e: Exception) {
             Log.e("PlayerActivity", "Error applying subtitle styling", e)
         }
     }
 
-    /**
-     * Automatically select first English subtitle and English audio track
-     */
     private fun selectEnglishTracks() {
         player?.let { exoPlayer ->
             try {
-                val currentTracks = exoPlayer.currentTracks
-
-                Log.d("PlayerActivity", "=== AUTO TRACK SELECTION START ===")
-                Log.d("PlayerActivity", "Total track groups: ${currentTracks.groups.size}")
-
-                // Build track selection parameters with subtitle rendering enabled
                 val trackSelectionParameters = exoPlayer.trackSelectionParameters
                     .buildUpon()
-                    .setPreferredAudioLanguage("eng")  // Prefer English audio
-                    .setPreferredTextLanguage("eng")   // Prefer English subtitles
-                    .setSelectUndeterminedTextLanguage(true)  // Also select undetermined language subtitles
-                    .setIgnoredTextSelectionFlags(0)  // Don't ignore any text selection flags
+                    .setPreferredAudioLanguage("eng")
+                    .setPreferredTextLanguage("eng")
+                    .setSelectUndeterminedTextLanguage(true)
+                    .setIgnoredTextSelectionFlags(0)
                     .build()
 
                 exoPlayer.trackSelectionParameters = trackSelectionParameters
-
-                // Log available tracks for debugging
-                var hasSubtitleTracks = false
-                currentTracks.groups.forEachIndexed { groupIndex, trackGroup ->
-                    val trackType = trackGroup.type
-                    val trackTypeName = when (trackType) {
-                        C.TRACK_TYPE_AUDIO -> "AUDIO"
-                        C.TRACK_TYPE_TEXT -> {
-                            hasSubtitleTracks = true
-                            "SUBTITLE"
-                        }
-                        C.TRACK_TYPE_VIDEO -> "VIDEO"
-                        else -> "OTHER($trackType)"
-                    }
-
-                    Log.d("PlayerActivity", "Track group $groupIndex: $trackTypeName")
-
-                    for (i in 0 until trackGroup.length) {
-                        val format = trackGroup.getTrackFormat(i)
-                        val isSelected = trackGroup.isTrackSelected(i)
-                        val language = format.language ?: "unknown"
-                        val label = format.label ?: "no label"
-
-                        Log.d("PlayerActivity", "  Track $i: Lang=$language, Label=$label, Selected=$isSelected")
-
-                        if (trackType == C.TRACK_TYPE_TEXT && isSelected) {
-                            Log.i("PlayerActivity", "✓ Subtitle track selected: $label")
-                        }
-                    }
-                }
-
-                if (!hasSubtitleTracks) {
-                    Log.w("PlayerActivity", "⚠ No subtitle tracks found in player")
-                }
-
-                Log.i("PlayerActivity", "✓ Set track preferences to English audio and subtitles")
-                Log.d("PlayerActivity", "=== AUTO TRACK SELECTION END ===")
             } catch (e: Exception) {
                 Log.e("PlayerActivity", "Error selecting English tracks", e)
             }
@@ -561,7 +543,6 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun hideSystemUi() {
-        // Immersive mode
         binding.root.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
                 or View.SYSTEM_UI_FLAG_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_LAYOUT_STABLE

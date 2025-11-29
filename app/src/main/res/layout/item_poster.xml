@@ -7,13 +7,13 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardRoot"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_margin="4dp"
+        android:layout_width="@dimen/poster_width"
+        android:layout_height="@dimen/poster_height_standard"
+        android:layout_margin="6dp"
         android:focusable="true"
         android:clickable="true"
         style="@style/Widget.App.Poster"
-        app:cardCornerRadius="8dp"
+        app:cardCornerRadius="12dp"
         app:cardElevation="4dp"
         app:cardBackgroundColor="@android:color/transparent"
         app:strokeWidth="3dp"
@@ -26,22 +26,20 @@
             android:layout_height="match_parent">
 
             <!--
-                 Poster with 2:3 aspect ratio, height matches parent (RecyclerView)
+                 Poster with 2:3 aspect ratio, fills the card
             -->
             <ImageView
                 android:id="@+id/poster"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scaleType="fitXY"
-                android:adjustViewBounds="false"
+                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
                 android:contentDescription="Poster"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintDimensionRatio="2:3"
-                tools:src="@drawable/movie"
-                tools:layout_width="100dp" />
+                tools:src="@drawable/movie" />
 
             <!-- Watched Icon (Green Checkmark) -->
             <ImageView
