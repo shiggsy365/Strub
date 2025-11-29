@@ -411,8 +411,9 @@ class HomeFragment : Fragment() {
                 
                 showDrillDownContent(displayItems, label)
                 
-                // Clear the cast person name to avoid re-triggering
-                // Note: We don't clear it yet because we need it for navigation
+                // Note: We keep currentCastPersonName set because we need it for navigation
+                // and switching between movie/show sections. It will be cleared when
+                // the user navigates back to the home rows view.
             }
         }
     }
