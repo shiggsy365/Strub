@@ -110,7 +110,7 @@ class SearchFragment : Fragment() {
         setupRecyclerView()
         setupObservers()
         setupSearchListeners()
-        binding.searchEditText.requestFocus()
+
     }
 
     private fun setupDisplayModule() {
@@ -123,9 +123,9 @@ class SearchFragment : Fragment() {
             detailRating = binding.detailRating,
             detailEpisode = binding.detailEpisodeNumber,
             actorChips = binding.root.findViewById(R.id.actorChips) ?: ChipGroup(requireContext()),
-            btnPlay = binding.btnPlay,
             btnTrailer = null,  // Search doesn't have trailer button
-            btnRelated = binding.btnRelated,
+            btnRelated = null,
+            btnPlay = null,
             enableDrillDown = false,  // We handle drill-down manually in this fragment
             useGridLayout = false,
             showEpisodeDescription = false
@@ -153,26 +153,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupSearchListeners() {
-        binding.searchEditText.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                val query = binding.searchEditText.text.toString()
-                if (query.isNotBlank()) {
-                    performSearch(query)
-                    hideKeyboard()
-                }
-                true
-            } else {
-                false
-            }
-        }
 
-        binding.searchButton.setOnClickListener {
-            val query = binding.searchEditText.text.toString()
-            if (query.isNotBlank()) {
-                performSearch(query)
-                hideKeyboard()
-            }
-        }
     }
 
     private fun setupRecyclerView() {
@@ -270,10 +251,7 @@ class SearchFragment : Fragment() {
             }
 
             // Update play button visibility based on content type
-            binding.btnPlay.visibility = when (item.type) {
-                "movie", "episode" -> View.VISIBLE
-                else -> View.GONE
-            }
+
 
             // Show hero card when we have content
             binding.heroCard.visibility = View.VISIBLE
@@ -629,10 +607,6 @@ class SearchFragment : Fragment() {
         return false
     }
 
-    fun setSearchText(text: String) { _binding?.searchEditText?.setText(text) }
-    fun getSearchQuery(): String? = currentSearchQuery
-    fun searchByPersonId(id: Int) { viewModel.loadPersonCredits(id) }
-    private fun hideKeyboard() { _binding?.searchEditText?.windowToken?.let { (requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(it, 0) } }
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -643,5 +617,5 @@ class SearchFragment : Fragment() {
         heroUpdateJob?.cancel()
     }
 
-    fun focusSearch() { _binding?.searchEditText?.requestFocus() }
+
 }

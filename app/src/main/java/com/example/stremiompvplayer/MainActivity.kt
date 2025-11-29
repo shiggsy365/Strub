@@ -175,7 +175,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupSidebarAutoHide(sidebar: View) {
         val hideRunnable = Runnable {
             if (!sidebar.hasFocus() && !hasChildFocus(sidebar)) {
-                sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(300).start()
+                sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(100).start()
             }
         }
 
@@ -186,7 +186,7 @@ class MainActivity : AppCompatActivity() {
         val onFocusChange = View.OnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
                 sidebar.removeCallbacks(hideRunnable)
-                sidebar.animate().translationX(0f).setDuration(200).start()
+                sidebar.animate().translationX(0f).setDuration(100).start()
             } else {
                 // CHANGED: 2000 -> 50 (almost instant, but safe for focus transfer)
                 sidebar.postDelayed(hideRunnable, 50)
@@ -223,7 +223,6 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .create()
-
         dialog.show()
 
         // Apply OutlinedButton style to dialog buttons
@@ -248,7 +247,7 @@ class MainActivity : AppCompatActivity() {
         binding.root.postDelayed({
             val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
             if (currentFragment is SearchFragment) {
-                currentFragment.setSearchText(query)
+
                 currentFragment.performSearch(query)
             }
         }, 300)
@@ -353,7 +352,7 @@ class MainActivity : AppCompatActivity() {
             val currentFocus = currentFocus
             if (currentFocus != null && isViewInSidebar(currentFocus, sidebar)) {
                 // Hide sidebar and move focus to fragment content
-                sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(300).start()
+                sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(100).start()
                 val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
 
                 // Call focusSidebar only if it exists
@@ -551,10 +550,7 @@ class MainActivity : AppCompatActivity() {
             binding.root.postDelayed({
                 val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
                 if (currentFragment is SearchFragment) {
-                    if (!query.isNullOrEmpty()) {
-                        currentFragment.setSearchText(query)
-                    }
-                    currentFragment.searchByPersonId(personId)
+
                 }
             }, 100)
 
@@ -567,7 +563,7 @@ class MainActivity : AppCompatActivity() {
             binding.root.postDelayed({
                 val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
                 if (currentFragment is SearchFragment) {
-                    currentFragment.setSearchText(query)
+
                     viewModel.searchTMDB(query)
                 }
             }, 100)

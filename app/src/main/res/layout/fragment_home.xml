@@ -129,7 +129,7 @@
             android:scrollbars="none"
             app:layout_constraintTop_toBottomOf="@id/metaRow"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintWidth_percent="0.6">
+            app:layout_constraintWidth_percent="1">
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/actorChips"
@@ -154,7 +154,7 @@
             android:textSize="16sp"
             app:layout_constraintTop_toBottomOf="@id/castScroll"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintWidth_percent="0.6"
+            app:layout_constraintWidth_percent="1"
             tools:text="After the fall of the Empire, a lone gunfighter makes his way through the outer reaches of the lawless galaxy." />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
