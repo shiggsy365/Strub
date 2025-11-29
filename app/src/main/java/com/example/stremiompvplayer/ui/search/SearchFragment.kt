@@ -629,10 +629,10 @@ class SearchFragment : Fragment() {
         return false
     }
 
-    fun setSearchText(text: String) { binding.searchEditText.setText(text) }
+    fun setSearchText(text: String) { _binding?.searchEditText?.setText(text) }
     fun getSearchQuery(): String? = currentSearchQuery
     fun searchByPersonId(id: Int) { viewModel.loadPersonCredits(id) }
-    private fun hideKeyboard() { (requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(binding.searchEditText.windowToken, 0) }
+    private fun hideKeyboard() { _binding?.searchEditText?.windowToken?.let { (requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(it, 0) } }
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -643,5 +643,5 @@ class SearchFragment : Fragment() {
         heroUpdateJob?.cancel()
     }
 
-    fun focusSearch() { binding.searchEditText.requestFocus() }
+    fun focusSearch() { _binding?.searchEditText?.requestFocus() }
 }

@@ -243,11 +243,14 @@ class MainActivity : AppCompatActivity() {
     private fun performSearch(query: String) {
         // Navigate to search fragment with query
         val searchFragment = SearchFragment()
-        loadFragment(SearchResultsFragment())
+        loadFragment(searchFragment)
         // Use postDelayed with longer delay to ensure fragment view is ready
         binding.root.postDelayed({
-            searchFragment.setSearchText(query)
-            searchFragment.performSearch(query)
+            val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+            if (currentFragment is SearchFragment) {
+                currentFragment.setSearchText(query)
+                currentFragment.performSearch(query)
+            }
         }, 300)
     }
 

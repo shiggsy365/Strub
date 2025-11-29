@@ -7,52 +7,62 @@
     android:padding="8dp"
     android:background="?attr/selectableItemBackground">
 
-    <!-- Time slot -->
-    <TextView
-        android:id="@+id/programTime"
+    <!-- First row: Time, Programme Name, and Status on a single line -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.App.BodySmall"
-        android:textColor="@color/md_theme_primary"
-        tools:text="7:00 PM - 8:00 PM" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <!-- Program title -->
-    <TextView
-        android:id="@+id/programTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.App.BodyMedium"
-        android:textColor="@color/text_primary"
-        android:textStyle="bold"
-        android:layout_marginTop="2dp"
-        android:maxLines="2"
-        android:ellipsize="end"
-        tools:text="Evening News" />
+        <!-- Time slot -->
+        <TextView
+            android:id="@+id/programTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.App.BodySmall"
+            android:textColor="@color/md_theme_primary"
+            android:layout_marginEnd="12dp"
+            tools:text="7:00 PM - 8:00 PM" />
 
-    <!-- Program description (optional) -->
+        <!-- Program title -->
+        <TextView
+            android:id="@+id/programTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.App.BodyMedium"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Evening News" />
+
+        <!-- Currently airing indicator (status) -->
+        <TextView
+            android:id="@+id/nowAiringLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="▶ Now"
+            android:textAppearance="@style/TextAppearance.App.LabelSmall"
+            android:textColor="@color/success_green"
+            android:layout_marginStart="8dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+    </LinearLayout>
+
+    <!-- Program description (detail below) -->
     <TextView
         android:id="@+id/programDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="@style/TextAppearance.App.BodySmall"
         android:textColor="@color/text_secondary"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="4dp"
         android:maxLines="2"
         android:ellipsize="end"
         android:visibility="gone"
         tools:text="Tonight's headlines including breaking news..."
-        tools:visibility="visible" />
-
-    <!-- Currently airing indicator -->
-    <TextView
-        android:id="@+id/nowAiringLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="▶ Now Airing"
-        android:textAppearance="@style/TextAppearance.App.LabelSmall"
-        android:textColor="@color/success_green"
-        android:layout_marginTop="4dp"
-        android:visibility="gone"
         tools:visibility="visible" />
 
     <!-- Divider -->
