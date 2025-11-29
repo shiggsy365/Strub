@@ -59,8 +59,22 @@ class HomeViewModel(
             val continueMovies = repository.getContinueWatching(userId, "movie").map {
                 MetaItem(it.itemId, "movie", it.name ?: "Unknown", it.poster, it.background, null, isWatched = false, progress = it.progress, duration = it.duration)
             }
-            val continueEpisodes = repository.getContinueWatching(userId, "episode").map {
-                MetaItem(it.itemId, "episode", it.name ?: "Unknown", it.poster, it.background, null, isWatched = false, progress = it.progress, duration = it.duration)
+            
+            // For episodes, use series poster instead of episode thumbnail
+            val continueEpisodes = repository.getContinueWatching(userId, "episode").map { progress ->
+                // Try to get series poster from parentId or extract from item ID
+                val seriesPoster = getSeriesPosterForEpisode(progress)
+                MetaItem(
+                    progress.itemId, 
+                    "episode", 
+                    progress.name ?: "Unknown", 
+                    seriesPoster ?: progress.poster,  // Use series poster if available, fallback to episode still
+                    progress.background, 
+                    null, 
+                    isWatched = false, 
+                    progress = progress.progress, 
+                    duration = progress.duration
+                )
             }
 
             val continueWatching = (continueMovies + continueEpisodes).sortedByDescending { it.progress } // Sort by recent
@@ -150,11 +164,12 @@ class HomeViewModel(
                                     val nextEpisodeProgress = progressMap[nextEpisodeId]
 
                                     if (nextEpisodeProgress == null || !nextEpisodeProgress.isWatched) {
-                                        val poster = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/w500$it" }
-                                            ?: showDetails.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                        // Use series poster for episodes instead of episode thumbnail
+                                        val poster = showDetails.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                            ?: nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/w500$it" }
 
-                                        val background = nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/original$it" }
-                                            ?: showDetails.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                        val background = showDetails.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                            ?: nextEpDetails.still_path?.let { "https://image.tmdb.org/t/p/original$it" }
 
                                         val metaItem = MetaItem(
                                             id = nextEpisodeId,
@@ -213,6 +228,34 @@ class HomeViewModel(
         } catch (e: Exception) {
             null
         }
+    }
+
+    /**
+     * Get the series poster for an episode from WatchProgress.
+     * Episodes should display the series poster, not the episode thumbnail.
+     */
+    private suspend fun getSeriesPosterForEpisode(progress: WatchProgress): String? {
+        // Try to get series ID from parentId or parse from itemId
+        val seriesId = progress.parentId ?: run {
+            // Parse from itemId format: tmdb:12345:1:5 -> tmdb:12345
+            val parts = progress.itemId.split(":")
+            if (parts.size >= 2 && parts[0] == "tmdb") {
+                "tmdb:${parts[1]}"
+            } else null
+        }
+
+        if (seriesId != null && apiKey.isNotEmpty()) {
+            try {
+                val tmdbId = seriesId.removePrefix("tmdb:").toIntOrNull()
+                if (tmdbId != null) {
+                    val details = TMDBClient.api.getTVDetails(tmdbId, apiKey)
+                    return details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error fetching series poster for $seriesId", e)
+            }
+        }
+        return null
     }
 }
 

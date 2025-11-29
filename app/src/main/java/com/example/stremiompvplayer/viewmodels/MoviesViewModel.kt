@@ -54,8 +54,8 @@ class MoviesViewModel(
             val rowConfigs = prefsManager.getMovieRowConfigs().sortedBy { it.order }
             val rows = mutableListOf<HomeRow>()
 
-            // Fetch genres first for the Genres row
-            fetchMovieGenres()
+            // Fetch genres first for the Genres row and WAIT for completion
+            fetchMovieGenresSync()
 
             val deferredRows = rowConfigs.map { config ->
                 async {
@@ -195,6 +195,19 @@ class MoviesViewModel(
             } catch (e: Exception) {
                 Log.e("MoviesViewModel", "Error fetching movie genres", e)
             }
+        }
+    }
+
+    /**
+     * Synchronously fetch movie genres - waits for completion before returning.
+     */
+    private suspend fun fetchMovieGenresSync() {
+        try {
+            val response = TMDBClient.api.getMovieGenres(apiKey)
+            _movieGenres.value = response.genres
+            Log.d("MoviesViewModel", "Loaded ${response.genres.size} movie genres")
+        } catch (e: Exception) {
+            Log.e("MoviesViewModel", "Error fetching movie genres", e)
         }
     }
 

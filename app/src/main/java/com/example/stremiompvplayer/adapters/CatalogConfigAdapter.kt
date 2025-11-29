@@ -47,8 +47,21 @@ class CatalogConfigAdapter(
                 onUpdate(item.copy(showInDiscover = isChecked))
             }
 
-            // Show delete button for all lists except built-in local lists
-            val isCustomList = item.catalogId !in listOf("continue_movies", "continue_episodes", "next_up")
+            // Protected catalog IDs that cannot be deleted
+            val protectedCatalogIds = setOf(
+                "popular", "latest", "trending",
+                "continue_movies", "continue_episodes", "next_up",
+                "trakt_next_up", "trakt_continue_movies", "trakt_continue_shows",
+                "watchlist", "genres"
+            )
+            
+            // Check if this is a protected catalog by catalogId
+            val isProtected = item.catalogId in protectedCatalogIds
+            
+            // Custom list = anything not in the protected list
+            val isCustomList = !isProtected
+            
+            // Show delete button only for custom lists
             binding.btnDelete.visibility = if (isCustomList && onDelete != null) View.VISIBLE else View.GONE
             binding.btnDelete.setOnClickListener {
                 onDelete?.invoke(item)

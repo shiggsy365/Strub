@@ -20,7 +20,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.example.stremiompvplayer.adapters.CatalogConfigAdapter
 import com.example.stremiompvplayer.data.AppDatabase
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
@@ -50,8 +49,6 @@ class SettingsActivity : AppCompatActivity() {
             SharedPreferencesManager.getInstance(this)
         )
     }
-    private lateinit var movieAdapter: CatalogConfigAdapter
-    private lateinit var seriesAdapter: CatalogConfigAdapter
     private lateinit var prefsManager: SharedPreferencesManager
 
     private var userInteracted = false
@@ -1405,74 +1402,85 @@ class SettingsActivity : AppCompatActivity() {
     //      CATALOG SECTION
     // ==============================
 
+    private lateinit var movieRowConfigAdapter: com.example.stremiompvplayer.adapters.PageRowConfigAdapter
+    private lateinit var seriesRowConfigAdapter: com.example.stremiompvplayer.adapters.PageRowConfigAdapter
+
     private fun setupCatalogList() {
-        // Setup Movie Adapter
-        movieAdapter = CatalogConfigAdapter(
-            onUpdate = { catalog -> viewModel.updateCatalogConfig(catalog) },
-            onMoveUp = { catalog, pos ->
-                val list = movieAdapter.currentList
+        // Setup Movie Row Config Adapter (shows protected rows: Trending, Latest, Popular, Watchlist, Genres)
+        movieRowConfigAdapter = com.example.stremiompvplayer.adapters.PageRowConfigAdapter(
+            onMoveUp = { config, pos ->
+                val list = prefsManager.getMovieRowConfigs().toMutableList()
                 if (pos > 0) {
+                    // Swap with previous item
                     val prev = list[pos - 1]
-                    viewModel.swapCatalogOrder(catalog, prev)
+                    list[pos - 1] = config.copy(order = prev.order)
+                    list[pos] = prev.copy(order = config.order)
+                    prefsManager.saveMovieRowConfigs(list.sortedBy { it.order })
+                    loadMovieRowConfigs()
                 }
             },
-            onMoveDown = { catalog, pos ->
-                val list = movieAdapter.currentList
+            onMoveDown = { config, pos ->
+                val list = prefsManager.getMovieRowConfigs().toMutableList()
                 if (pos < list.size - 1) {
+                    // Swap with next item
                     val next = list[pos + 1]
-                    viewModel.swapCatalogOrder(catalog, next)
+                    list[pos] = config.copy(order = next.order)
+                    list[pos + 1] = next.copy(order = config.order)
+                    prefsManager.saveMovieRowConfigs(list.sortedBy { it.order })
+                    loadMovieRowConfigs()
                 }
-            },
-            onDelete = { catalog -> deleteCatalog(catalog) }
+            }
         )
 
         binding.rvCatalogConfigs.layoutManager = LinearLayoutManager(this)
-        binding.rvCatalogConfigs.adapter = movieAdapter
+        binding.rvCatalogConfigs.adapter = movieRowConfigAdapter
 
-        // Setup Series Adapter
-        seriesAdapter = CatalogConfigAdapter(
-            onUpdate = { catalog -> viewModel.updateCatalogConfig(catalog) },
-            onMoveUp = { catalog, pos ->
-                val list = seriesAdapter.currentList
+        // Setup Series Row Config Adapter
+        seriesRowConfigAdapter = com.example.stremiompvplayer.adapters.PageRowConfigAdapter(
+            onMoveUp = { config, pos ->
+                val list = prefsManager.getSeriesRowConfigs().toMutableList()
                 if (pos > 0) {
+                    // Swap with previous item
                     val prev = list[pos - 1]
-                    viewModel.swapCatalogOrder(catalog, prev)
+                    list[pos - 1] = config.copy(order = prev.order)
+                    list[pos] = prev.copy(order = config.order)
+                    prefsManager.saveSeriesRowConfigs(list.sortedBy { it.order })
+                    loadSeriesRowConfigs()
                 }
             },
-            onMoveDown = { catalog, pos ->
-                val list = seriesAdapter.currentList
+            onMoveDown = { config, pos ->
+                val list = prefsManager.getSeriesRowConfigs().toMutableList()
                 if (pos < list.size - 1) {
+                    // Swap with next item
                     val next = list[pos + 1]
-                    viewModel.swapCatalogOrder(catalog, next)
+                    list[pos] = config.copy(order = next.order)
+                    list[pos + 1] = next.copy(order = config.order)
+                    prefsManager.saveSeriesRowConfigs(list.sortedBy { it.order })
+                    loadSeriesRowConfigs()
                 }
-            },
-            onDelete = { catalog -> deleteCatalog(catalog) }
+            }
         )
 
         binding.rvSeriesCatalogConfigs.layoutManager = LinearLayoutManager(this)
-        binding.rvSeriesCatalogConfigs.adapter = seriesAdapter
+        binding.rvSeriesCatalogConfigs.adapter = seriesRowConfigAdapter
 
-        viewModel.initDefaultCatalogs()
-        viewModel.initUserLists()
+        // Load initial data
+        loadMovieRowConfigs()
+        loadSeriesRowConfigs()
 
-        // Observe movie catalogs
-        viewModel.movieCatalogs.observe(this) { list ->
-            movieAdapter.submitList(list)
-        }
+        // Hide "Add Custom List" buttons since protected rows cannot be added/removed
+        binding.btnAddMovieList.visibility = View.GONE
+        binding.btnAddSeriesList.visibility = View.GONE
+    }
 
-        // Observe series catalogs
-        viewModel.seriesCatalogs.observe(this) { list ->
-            seriesAdapter.submitList(list)
-        }
+    private fun loadMovieRowConfigs() {
+        val configs = prefsManager.getMovieRowConfigs().sortedBy { it.order }
+        movieRowConfigAdapter.submitList(configs)
+    }
 
-        // Add Custom List Buttons
-        binding.btnAddMovieList.setOnClickListener {
-            showAddCustomListDialog("movies")
-        }
-
-        binding.btnAddSeriesList.setOnClickListener {
-            showAddCustomListDialog("series")
-        }
+    private fun loadSeriesRowConfigs() {
+        val configs = prefsManager.getSeriesRowConfigs().sortedBy { it.order }
+        seriesRowConfigAdapter.submitList(configs)
     }
 
     private fun deleteCatalog(catalog: UserCatalog) {
