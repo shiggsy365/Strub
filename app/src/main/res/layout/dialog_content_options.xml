@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/md_theme_surface"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/menuTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Content Title"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="16dp"
+        android:gravity="center_horizontal"/>
+
+    <!-- Primary Actions -->
+    <TextView
+        android:id="@+id/actionScrape"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scrape Streams"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_play_circle"
+        android:drawablePadding="16dp"
+        android:drawableTint="@color/md_theme_primary"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/actionTrailer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Watch Trailer"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_movie"
+        android:drawablePadding="16dp"
+        android:drawableTint="@color/text_secondary"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/md_theme_outline"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- List Management -->
+    <TextView
+        android:id="@+id/actionWatchlist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add to Watchlist"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_list_view"
+        android:drawablePadding="16dp"
+        android:drawableTint="@color/text_secondary"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/actionLibrary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add to Library"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_library"
+        android:drawablePadding="16dp"
+        android:drawableTint="@color/text_secondary"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/actionWatched"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Mark Watched"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_check_circle"
+        android:drawablePadding="16dp"
+        android:drawableTint="@color/text_secondary"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/actionNotWatching"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Not Watching"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_exit_to_app"
+        android:drawablePadding="16dp"
+        android:drawableTint="@color/error_red"
+        android:textColor="@color/error_red"
+        android:textSize="16sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/md_theme_outline"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Cast Section -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Starring"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_secondary"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="4dp"/>
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/castChipGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:chipSpacing="8dp"
+        app:singleSelection="false">
+        <!-- Chips will be added dynamically -->
+    </com.google.android.material.chip.ChipGroup>
+
+</LinearLayout>
