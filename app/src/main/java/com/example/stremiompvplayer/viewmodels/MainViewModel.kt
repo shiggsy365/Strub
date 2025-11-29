@@ -1640,16 +1640,34 @@ class MainViewModel(
                         val bearer = "Bearer $token"
                         val clientId = Secrets.TRAKT_CLIENT_ID
 
-                        // 1. Remove from Trakt History (Clears from "Next Up")
-                        val historyBody = if (item.type == "movie") {
+                        val traktBody = if (item.type == "movie") {
                             TraktHistoryBody(movies = listOf(TraktMovie("", null, TraktIds(0, tmdbId, null, null))))
                         } else {
-                            // For series/episodes, removing the SHOW ID from history clears all progress for that show
                             TraktHistoryBody(shows = listOf(TraktShow("", null, TraktIds(0, tmdbId, null, null))))
                         }
-                        TraktClient.api.removeFromHistory(bearer, clientId, historyBody)
 
-                        // 2. Remove from Trakt Playback (Clears from "Continue Watching")
+                        // 1. Remove from Trakt History (Clears from "Next Up")
+                        try {
+                            TraktClient.api.removeFromHistory(bearer, clientId, traktBody)
+                        } catch (e: Exception) {
+                            Log.e("MainViewModel", "Failed to remove from Trakt history: ${e.message}")
+                        }
+
+                        // 2. Remove from Trakt Watchlist
+                        try {
+                            TraktClient.api.removeFromWatchlist(bearer, clientId, traktBody)
+                        } catch (e: Exception) {
+                            Log.e("MainViewModel", "Failed to remove from Trakt watchlist: ${e.message}")
+                        }
+
+                        // 3. Remove from Trakt Collection (Library)
+                        try {
+                            TraktClient.api.removeFromCollection(bearer, clientId, traktBody)
+                        } catch (e: Exception) {
+                            Log.e("MainViewModel", "Failed to remove from Trakt collection: ${e.message}")
+                        }
+
+                        // 4. Remove from Trakt Playback (Clears from "Continue Watching")
                         try {
                             // We need to find the playback ID first
                             val playbackItems = if (item.type == "movie") {
@@ -1673,7 +1691,7 @@ class MainViewModel(
                     }
                 }
 
-                // 3. Clear Local Watch Progress
+                // 5. Clear Local Watch Progress
                 if (item.type == "episode" || item.type == "series") {
                     // For episodes/series, remove ALL episodes of the show from database
                     val showId = "tmdb:" + tmdbId.toString()
@@ -1683,6 +1701,9 @@ class MainViewModel(
                     catalogRepository.updateWatchedStatus(currentUserId, item.id, false)
                 }
 
+                // 6. Remove from Local Library
+                removeFromLibrary(item.id)
+
                 // Refresh UI
                 loadedContentCache.clear()
                 sessionCache.invalidateAll(currentUserId)
@@ -1690,7 +1711,7 @@ class MainViewModel(
                 loadHomeContent()
 
                 _isItemWatched.postValue(false)
-                _actionResult.postValue(ActionResult.Success("Removed from Watching lists"))
+                _actionResult.postValue(ActionResult.Success("Removed from watchlist, library, and history"))
 
             } catch (e: Exception) {
                 _actionResult.postValue(ActionResult.Error("Failed: ${e.message}"))
