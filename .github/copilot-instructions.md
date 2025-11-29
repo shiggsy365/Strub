@@ -11,7 +11,7 @@ BINGE is an Android application built with Kotlin that serves as a streaming med
 - **Language**: Kotlin 1.9.22
 - **Min SDK**: 24 (Android 7.0)
 - **Target SDK**: 35 (Android 15)
-- **Build System**: Gradle 8.2.2 with Kotlin DSL
+- **Build System**: Gradle 8.2.2 with Groovy DSL
 - **Architecture**: MVVM (Model-View-ViewModel)
 
 ### Key Dependencies
