@@ -82,6 +82,25 @@ class SearchFragment : Fragment() {
     private var cachedMovieResults: List<MetaItem> = emptyList()
     private var cachedSeriesResults: List<MetaItem> = emptyList()
 
+    /**
+     * Helper data class for parsed season ID components
+     */
+    private data class SeasonIdComponents(val seriesId: String, val seasonNumber: Int)
+
+    /**
+     * Parses a season ID in format "tmdb:12345:2" to extract series ID and season number.
+     * Returns null if the format is invalid.
+     */
+    private fun parseSeasonId(seasonId: String): SeasonIdComponents? {
+        val parts = seasonId.split(":")
+        if (parts.size < 2) return null
+        
+        val seriesId = parts.dropLast(1).joinToString(":")
+        val seasonNum = parts.lastOrNull()?.toIntOrNull() ?: return null
+        
+        return SeasonIdComponents(seriesId, seasonNum)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSearchNewBinding.inflate(inflater, container, false)
         return binding.root
@@ -195,14 +214,12 @@ class SearchFragment : Fragment() {
             }
             "season" -> {
                 // Drill down into season to show episodes
-                val parts = item.id.split(":")
-                if (parts.size >= 2) {
-                    val seriesId = parts.dropLast(1).joinToString(":")
-                    val seasonNum = parts.last().toIntOrNull() ?: 1
+                val seasonComponents = parseSeasonId(item.id)
+                if (seasonComponents != null) {
                     currentDrillDownLevel = DrillDownLevel.SEASON
-                    currentSeriesId = seriesId
-                    currentSeasonNumber = seasonNum
-                    viewModel.loadSeasonEpisodes(seriesId, seasonNum)
+                    currentSeriesId = seasonComponents.seriesId
+                    currentSeasonNumber = seasonComponents.seasonNumber
+                    viewModel.loadSeasonEpisodes(seasonComponents.seriesId, seasonComponents.seasonNumber)
                     updateHeroBanner(item)
                 }
             }
@@ -470,6 +487,9 @@ class SearchFragment : Fragment() {
      * Restores the search results rows view from drill-down state
      */
     private fun restoreSearchRowsView() {
+        // Clear hierarchy listener to prevent memory leaks
+        binding.rvSearchRows.setOnHierarchyChangeListener(null)
+        
         // Restore original layout manager and adapter
         binding.rvSearchRows.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         binding.rvSearchRows.adapter = rowAdapter
@@ -618,6 +638,8 @@ class SearchFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Clean up hierarchy listener to prevent memory leaks
+        _binding?.rvSearchRows?.setOnHierarchyChangeListener(null)
         _binding = null
         viewModel.clearSearchResults()
         heroUpdateJob?.cancel()
