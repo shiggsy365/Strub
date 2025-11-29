@@ -1711,7 +1711,7 @@ class MainViewModel(
                 loadHomeContent()
 
                 _isItemWatched.postValue(false)
-                _actionResult.postValue(ActionResult.Success("Removed from all lists"))
+                _actionResult.postValue(ActionResult.Success("Removed from watchlist, library, and history"))
 
             } catch (e: Exception) {
                 _actionResult.postValue(ActionResult.Error("Failed: ${e.message}"))

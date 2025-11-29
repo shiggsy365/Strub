@@ -3,6 +3,7 @@ package com.example.stremiompvplayer.ui.search
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -597,6 +598,8 @@ class SearchFragment : Fragment() {
                         val personId = idStr.toIntOrNull()
                         if (personId != null) {
                             viewModel.loadPersonCredits(personId)
+                        } else {
+                            Log.w("SearchFragment", "Invalid cast ID format: ${actor.id}")
                         }
                     }
                     binding.actorChips.addView(chip)
