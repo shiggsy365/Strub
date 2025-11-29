@@ -30,6 +30,9 @@ import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
@@ -144,6 +147,7 @@ class LiveTVFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupAdapters()
+        startAutoScroll()
 
         // Only load EPG data if cache is empty (first time or after manual refresh)
         if (cachedChannelsWithPrograms.isEmpty()) {
@@ -592,10 +596,33 @@ class LiveTVFragment : Fragment() {
         return true  // Always return true as we've initiated focus attempt
     }
 
+// In LiveTVFragment.kt
+
+    private var autoScrollJob: Job? = null
+
+    private fun startAutoScroll() {
+        val recyclerView = binding.rvEPGPrograms// Replace with your actual ID
+        autoScrollJob?.cancel()
+        autoScrollJob = lifecycleScope.launch {
+            while (isActive) {
+                recyclerView.smoothScrollBy(8, 0) // Scroll right by 8 pixels
+                delay(1000) // Every second (adjust for speed)
+            }
+        }
+    }
+
+    private fun stopAutoScroll() {
+        autoScrollJob?.cancel()
+    }
+
+
+
+
     override fun onDestroyView() {
         super.onDestroyView()
         // Remove any pending callbacks to prevent crashes
         _binding?.root?.handler?.removeCallbacksAndMessages(null)
         _binding = null
+        stopAutoScroll()
     }
 }

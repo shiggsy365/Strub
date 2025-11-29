@@ -86,9 +86,7 @@ class HomeViewModel(
             // We manually define the rows we want for the "Browse" experience
             val deferredRows = listOf(
                 async { fetchTMDBRow("trending_movie", "Trending Movies", "movie", "trending") },
-                async { fetchTMDBRow("popular_series", "Popular Series", "series", "popular") },
-                async { fetchTMDBRow("popular_movies", "Popular Movies", "movie", "popular") },
-                async { fetchTMDBRow("top_rated_series", "Top Rated Series", "series", "top_rated") }
+                async { fetchTMDBRow("trending_series", "Trending Series", "series", "popular") }
             )
 
             rows.addAll(deferredRows.awaitAll().filterNotNull())

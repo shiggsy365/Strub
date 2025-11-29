@@ -1,5 +1,7 @@
+// Kotlin
 package com.example.stremiompvplayer
 
+import com.example.stremiompvplayer.ui.search.SearchResultsFragment
 import android.content.Intent
 import android.os.Bundle
 import android.view.ContextThemeWrapper
@@ -117,7 +119,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (savedInstanceState == null) {
-            loadFragment(HomeFragment.newInstance())
+            loadFragment(HomeFragment())
         }
 
         handleIntent(intent)
@@ -134,15 +136,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         sidebar.findViewById<View>(R.id.sidebarHome).setOnClickListener {
-            loadFragment(HomeFragment.newInstance())
+            loadFragment(HomeFragment())
         }
 
         sidebar.findViewById<View>(R.id.sidebarMovies).setOnClickListener {
-            loadFragment(MoviesFragment.newInstance())
+            loadFragment(MoviesFragment())
         }
 
         sidebar.findViewById<View>(R.id.sidebarSeries).setOnClickListener {
-            loadFragment(SeriesFragment.newInstance())
+            loadFragment(SeriesFragment())
         }
 
         sidebar.findViewById<View>(R.id.sidebarSearch).setOnClickListener {
@@ -150,14 +152,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         sidebar.findViewById<View>(R.id.sidebarLibrary).setOnClickListener {
-            loadFragment(com.example.stremiompvplayer.ui.library.LibraryFragment.newInstance())
+            loadFragment(com.example.stremiompvplayer.ui.library.LibraryFragment())
         }
 
         val liveTvConfigured = SharedPreferencesManager.getInstance(this).getLiveTVM3UUrl()?.isNotEmpty() == true
         if (liveTvConfigured) {
             sidebar.findViewById<View>(R.id.sidebarLiveTV).visibility = View.VISIBLE
             sidebar.findViewById<View>(R.id.sidebarLiveTV).setOnClickListener {
-                loadFragment(LiveTVFragment.newInstance())
+                loadFragment(LiveTVFragment())
             }
         } else {
             sidebar.findViewById<View>(R.id.sidebarLiveTV).visibility = View.GONE
@@ -241,7 +243,7 @@ class MainActivity : AppCompatActivity() {
     private fun performSearch(query: String) {
         // Navigate to search fragment with query
         val searchFragment = SearchFragment()
-        loadFragment(searchFragment)
+        loadFragment(SearchResultsFragment())
         // Use postDelayed with longer delay to ensure fragment view is ready
         binding.root.postDelayed({
             searchFragment.setSearchText(query)
@@ -331,11 +333,11 @@ class MainActivity : AppCompatActivity() {
         if (currentFragment is MoviesFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
-        
+
         if (currentFragment is SeriesFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
-        
+
         if (currentFragment is com.example.stremiompvplayer.ui.livetv.LiveTVFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
         }
@@ -441,7 +443,7 @@ class MainActivity : AppCompatActivity() {
 
             // If navigation stack is empty, go to Home fragment
             if (currentFragment !is HomeFragment) {
-                loadFragment(HomeFragment.newInstance(), addToStack = false)
+                loadFragment(HomeFragment(), addToStack = false)
                 return true
             }
 
@@ -491,7 +493,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupLegacyNavigation() {
         // HOME
         binding.chipHome.setOnClickListener {
-            loadFragment(HomeFragment.newInstance())
+            loadFragment(HomeFragment())
         }
 
         // Legacy chips are no longer used but keeping the bindings for backward compatibility
@@ -506,7 +508,7 @@ class MainActivity : AppCompatActivity() {
         if (liveTvConfigured) {
             binding.chipLiveTV.visibility = View.VISIBLE
             binding.chipLiveTV.setOnClickListener {
-                loadFragment(LiveTVFragment.newInstance())
+                loadFragment(LiveTVFragment())
             }
         } else {
             binding.chipLiveTV.visibility = View.GONE
