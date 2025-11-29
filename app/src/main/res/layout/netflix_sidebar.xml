@@ -84,7 +84,7 @@
         android:nextFocusUp="@id/sidebarSeries"
         android:layout_marginBottom="8dp" />
 
-    <!-- 6. Live TV (if configured) -->
+    <!-- 6. Live TV - visibility controlled dynamically in MainActivity based on configuration -->
     <ImageButton
         android:id="@+id/sidebarLiveTV"
         android:layout_width="48dp"

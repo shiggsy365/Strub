@@ -477,6 +477,9 @@ class SharedPreferencesManager private constructor(context: Context) {
 
     // --- PAGE ROW CONFIGURATION (Per User) ---
     
+    // Reusable TypeToken for PageRowConfigData list
+    private val pageRowConfigListType = object : TypeToken<List<PageRowConfigData>>() {}.type
+    
     /**
      * Get the movie page row configurations for the current user.
      * Returns default configurations if none are saved.
@@ -486,8 +489,7 @@ class SharedPreferencesManager private constructor(context: Context) {
         val json = prefs.getString("movie_row_configs_$userId", null)
         return if (json != null) {
             try {
-                val type = object : TypeToken<List<PageRowConfigData>>() {}.type
-                gson.fromJson(json, type) ?: getDefaultMovieRowConfigs()
+                gson.fromJson(json, pageRowConfigListType) ?: getDefaultMovieRowConfigs()
             } catch (e: Exception) {
                 getDefaultMovieRowConfigs()
             }
@@ -514,8 +516,7 @@ class SharedPreferencesManager private constructor(context: Context) {
         val json = prefs.getString("series_row_configs_$userId", null)
         return if (json != null) {
             try {
-                val type = object : TypeToken<List<PageRowConfigData>>() {}.type
-                gson.fromJson(json, type) ?: getDefaultSeriesRowConfigs()
+                gson.fromJson(json, pageRowConfigListType) ?: getDefaultSeriesRowConfigs()
             } catch (e: Exception) {
                 getDefaultSeriesRowConfigs()
             }
