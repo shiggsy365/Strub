@@ -54,8 +54,8 @@ class SeriesViewModel(
             val rowConfigs = prefsManager.getSeriesRowConfigs().sortedBy { it.order }
             val rows = mutableListOf<HomeRow>()
 
-            // Fetch genres first for the Genres row
-            fetchTVGenres()
+            // Fetch genres first for the Genres row and WAIT for completion
+            fetchTVGenresSync()
 
             val deferredRows = rowConfigs.map { config ->
                 async {
@@ -195,6 +195,19 @@ class SeriesViewModel(
             } catch (e: Exception) {
                 Log.e("SeriesViewModel", "Error fetching TV genres", e)
             }
+        }
+    }
+
+    /**
+     * Synchronously fetch TV genres - waits for completion before returning.
+     */
+    private suspend fun fetchTVGenresSync() {
+        try {
+            val response = TMDBClient.api.getTVGenres(apiKey)
+            _tvGenres.value = response.genres
+            Log.d("SeriesViewModel", "Loaded ${response.genres.size} TV genres")
+        } catch (e: Exception) {
+            Log.e("SeriesViewModel", "Error fetching TV genres", e)
         }
     }
 
