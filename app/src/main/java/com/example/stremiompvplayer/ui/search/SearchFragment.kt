@@ -4,35 +4,37 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.ContextThemeWrapper
-
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.example.stremiompvplayer.PlayerActivity
 import com.example.stremiompvplayer.R
-import com.example.stremiompvplayer.UserSelectionActivity
+import com.example.stremiompvplayer.adapters.HomeRowAdapter
 import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentSearchNewBinding
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import com.example.stremiompvplayer.viewmodels.HomeRow
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.example.stremiompvplayer.ui.ResultsDisplayModule
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class SearchFragment : Fragment() {
 
@@ -58,22 +60,27 @@ class SearchFragment : Fragment() {
         )
     }
 
-    private fun updateItemUI(item: MetaItem, isWatched: Boolean) {
-        item.isWatched = isWatched
-        item.progress = if (isWatched) item.duration else 0
-
-        val position = contentAdapter.getItemPosition(item)
-        if (position != -1) {
-            contentAdapter.notifyItemChanged(position)
-        }
-    }
-
-    private lateinit var contentAdapter: PosterAdapter
-    private lateinit var searchAdapter: PosterAdapter
+    // Row-based adapter for Home-style layout
+    private lateinit var rowAdapter: HomeRowAdapter
+    
+    // Drill-down adapter for seasons/episodes (when navigating into a series)
+    private var drillDownAdapter: PosterAdapter? = null
+    
     private lateinit var displayModule: ResultsDisplayModule
     private var currentSearchQuery: String? = null
 
-    private var detailsUpdateJob: Job? = null
+    private var heroUpdateJob: Job? = null
+
+    // Drill-down navigation state
+    enum class DrillDownLevel { SEARCH_RESULTS, SERIES, SEASON }
+    private var currentDrillDownLevel = DrillDownLevel.SEARCH_RESULTS
+    private var currentSeriesId: String? = null
+    private var currentSeasonNumber: Int? = null
+    private var currentSeriesName: String? = null
+
+    // Cache search results for restoration after drill-down
+    private var cachedMovieResults: List<MetaItem> = emptyList()
+    private var cachedSeriesResults: List<MetaItem> = emptyList()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSearchNewBinding.inflate(inflater, container, false)
@@ -98,12 +105,12 @@ class SearchFragment : Fragment() {
             detailDate = binding.detailDate,
             detailRating = binding.detailRating,
             detailEpisode = binding.detailEpisodeNumber,
-            actorChips = binding.root.findViewById(R.id.actorChips) ?: com.google.android.material.chip.ChipGroup(requireContext()),
+            actorChips = binding.root.findViewById(R.id.actorChips) ?: ChipGroup(requireContext()),
             btnPlay = binding.btnPlay,
             btnTrailer = null,  // Search doesn't have trailer button
             btnRelated = binding.btnRelated,
-            enableDrillDown = true,  // Enable drill-down for series navigation
-            useGridLayout = true,
+            enableDrillDown = false,  // We handle drill-down manually in this fragment
+            useGridLayout = false,
             showEpisodeDescription = false
         )
         displayModule = ResultsDisplayModule(this, viewModel, config)
@@ -111,14 +118,19 @@ class SearchFragment : Fragment() {
         // Setup callbacks
         displayModule.onActorClicked = { personId, actorName ->
             viewModel.loadPersonCredits(personId)
-            // Label update could be added if needed
         }
 
         displayModule.onRelatedContentLoaded = { similarContent ->
             // Update search results with related content
-            searchAdapter.updateData(similarContent)
+            val movies = similarContent.filter { it.type == "movie" }
+            val series = similarContent.filter { it.type == "series" || it.type == "tv" }.map { item ->
+                if (item.type == "tv") item.copy(type = "series") else item
+            }
+            cachedMovieResults = movies
+            cachedSeriesResults = series
+            updateSearchRows(movies, series)
             if (similarContent.isNotEmpty()) {
-                displayModule.updateDetailsPane(similarContent[0])
+                updateHeroBanner(similarContent[0])
             }
         }
     }
@@ -147,134 +159,194 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        searchAdapter = PosterAdapter(
-            items = emptyList(),
-            onClick = { item -> displayModule.onContentClicked(item) },  // Use standard navigation
-            onLongClick = { item ->
-                val pos = searchAdapter.getItemPosition(item)
-                val holder = binding.resultsRecycler.findViewHolderForAdapterPosition(pos)
-                if (holder != null) showItemMenu(holder.itemView, item)
+        rowAdapter = HomeRowAdapter(
+            onContentClick = { item ->
+                handleContentClick(item)
+            },
+            onContentFocused = { item ->
+                updateHeroBanner(item)
             }
         )
-        binding.resultsRecycler.apply {
-            layoutManager = com.example.stremiompvplayer.utils.AutoFitGridLayoutManager(requireContext(), 140)
-            adapter = searchAdapter
+
+        binding.rvSearchRows.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+            adapter = rowAdapter
+            setItemViewCacheSize(10)
+        }
+    }
+
+    private fun handleContentClick(item: MetaItem) {
+        when (item.type) {
+            "episode", "movie" -> {
+                // DIRECT PLAY: Launch PlayerActivity with MetaItem only.
+                val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
+                    putExtra("meta", item)
+                }
+                startActivity(intent)
+            }
+            "series" -> {
+                // Drill down into series IN-PLACE
+                currentDrillDownLevel = DrillDownLevel.SERIES
+                currentSeriesId = item.id
+                currentSeriesName = item.name
+                currentSeasonNumber = null
+                viewModel.loadSeriesMeta(item.id)
+                updateHeroBanner(item)
+            }
+            "season" -> {
+                // Drill down into season to show episodes
+                val parts = item.id.split(":")
+                if (parts.size >= 2) {
+                    val seriesId = parts.dropLast(1).joinToString(":")
+                    val seasonNum = parts.last().toIntOrNull() ?: 1
+                    currentDrillDownLevel = DrillDownLevel.SEASON
+                    currentSeriesId = seriesId
+                    currentSeasonNumber = seasonNum
+                    viewModel.loadSeasonEpisodes(seriesId, seasonNum)
+                    updateHeroBanner(item)
+                }
+            }
+            else -> {
+                // Fallback for other types
+                displayModule.showStreamDialog(item)
+            }
+        }
+    }
+
+    private fun updateHeroBanner(item: MetaItem) {
+        heroUpdateJob?.cancel()
+        heroUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
+            delay(200)
+            if (!isAdded) return@launch
+
+            Glide.with(this@SearchFragment)
+                .load(item.background ?: item.poster)
+                .into(binding.pageBackground)
+
+            binding.detailTitle.text = item.name
+            binding.detailTitle.visibility = View.VISIBLE
+            binding.detailLogo.visibility = View.GONE
+
+            // Trigger logo fetch
+            viewModel.fetchItemLogo(item)
+
+            binding.detailDescription.text = item.description ?: "No description available."
+
+            binding.detailRating.visibility = if (item.rating != null) View.VISIBLE else View.GONE
+            binding.detailRating.text = "★ ${item.rating}"
+
+            // Format date
+            val dateText = try {
+                item.releaseDate?.take(4) ?: ""
+            } catch (e: Exception) { "" }
+            binding.detailDate.text = dateText
+
+            // Episode Info
+            if (item.type == "episode") {
+                binding.detailEpisodeNumber.visibility = View.VISIBLE
+                if (item.id.split(":").size >= 4) {
+                    val parts = item.id.split(":")
+                    binding.detailEpisodeNumber.text = "S${parts[2]}E${parts[3]}"
+                } else {
+                    binding.detailEpisodeNumber.text = "Episode"
+                }
+            } else {
+                binding.detailEpisodeNumber.visibility = View.GONE
+            }
+
+            // Update play button visibility based on content type
+            binding.btnPlay.visibility = when (item.type) {
+                "movie", "episode" -> View.VISIBLE
+                else -> View.GONE
+            }
+
+            // Show hero card when we have content
+            binding.heroCard.visibility = View.VISIBLE
+        }
+    }
+
+    private fun showLongPressMenu(item: MetaItem) {
+        val dialog = BottomSheetDialog(requireContext())
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_content_options, null)
+        dialog.setContentView(view)
+
+        val titleView = view.findViewById<TextView>(R.id.menuTitle)
+        titleView.text = item.name
+
+        // --- Actions ---
+        // 1. Scrape Streams (Explicit)
+        view.findViewById<View>(R.id.actionScrape).setOnClickListener {
+            dialog.dismiss()
+            displayModule.showStreamDialog(item)
         }
 
-        binding.resultsRecycler.addOnChildAttachStateChangeListener(object : androidx.recyclerview.widget.RecyclerView.OnChildAttachStateChangeListener {
-            override fun onChildViewAttachedToWindow(view: View) {
-                view.setOnFocusChangeListener { v, hasFocus ->
-                    if (hasFocus) {
-                        val position = binding.resultsRecycler.getChildAdapterPosition(v)
-                        if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
-                            val item = searchAdapter.getItem(position)
-                            if (item != null) {
-                                detailsUpdateJob?.cancel()
-                                detailsUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
-                                    delay(1000)
-                                    if (isAdded) {
-                                        displayModule.updateDetailsPane(item)
-                                    }
-                                }
-                            }
+        // 2. Watch Trailer
+        view.findViewById<View>(R.id.actionTrailer).setOnClickListener {
+            dialog.dismiss()
+            displayModule.playTrailer(item)
+        }
+
+        // 3. Watchlist Toggle
+        val actionWatchlist = view.findViewById<TextView>(R.id.actionWatchlist)
+        actionWatchlist.setOnClickListener {
+            dialog.dismiss()
+            viewModel.toggleWatchlist(item)
+        }
+
+        // 4. Library Toggle
+        val actionLibrary = view.findViewById<TextView>(R.id.actionLibrary)
+        lifecycleScope.launch {
+            val inLib = viewModel.isItemInLibrarySync(item.id)
+            actionLibrary.text = if (inLib) "Remove from Library" else "Add to Library"
+        }
+        actionLibrary.setOnClickListener {
+            dialog.dismiss()
+            viewModel.toggleLibrary(item)
+        }
+
+        // 5. Watched Toggle
+        val actionWatched = view.findViewById<TextView>(R.id.actionWatched)
+        actionWatched.text = if (item.isWatched) "Mark as Not Watched" else "Mark as Watched"
+        actionWatched.setOnClickListener {
+            dialog.dismiss()
+            if (item.isWatched) viewModel.clearWatchedStatus(item) else viewModel.markAsWatched(item)
+        }
+
+        // 6. Not Watching
+        view.findViewById<View>(R.id.actionNotWatching).setOnClickListener {
+            dialog.dismiss()
+            viewModel.markAsNotWatching(item)
+        }
+
+        // --- Cast Section ---
+        val castGroup = view.findViewById<ChipGroup>(R.id.castChipGroup)
+
+        val castObserver = androidx.lifecycle.Observer<List<MetaItem>> { castList ->
+            if (dialog.isShowing) {
+                castGroup.removeAllViews()
+                castList.take(10).forEach { actor ->
+                    val chip = Chip(requireContext())
+                    chip.text = actor.name
+                    chip.setOnClickListener {
+                        dialog.dismiss()
+                        val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
+                        if (personId != null) {
+                            viewModel.loadPersonCredits(personId)
                         }
                     }
+                    castGroup.addView(chip)
                 }
             }
-
-            override fun onChildViewDetachedFromWindow(view: View) {
-                view.setOnFocusChangeListener(null)
-            }
-        })
-    }
-
-
-    private fun showItemMenu(view: View, item: MetaItem) {
-        val wrapper = ContextThemeWrapper(requireContext(),
-            android.R.style.Theme_DeviceDefault_Light_NoActionBar)
-        val popup = PopupMenu(wrapper, view)
-
-        // Use lifecycleScope for synchronous library check
-        viewLifecycleOwner.lifecycleScope.launch {
-            val isInLibrary = viewModel.isItemInLibrarySync(item.id)
-
-            if (isInLibrary) {
-                popup.menu.add("Remove from Library")
-            } else {
-                popup.menu.add("Add to Library")
-            }
-
-            popup.menu.add("Mark as Watched")
-            popup.menu.add("Clear Progress")
-            popup.menu.add("Not Watching")
-            popup.menu.add("Add to Trakt Watchlist")
-            popup.menu.add("Remove from Trakt Watchlist")
-            popup.menu.add("Rate on Trakt")
-
-            popup.setOnMenuItemClickListener { menuItem ->
-                when (menuItem.title) {
-                    "Add to Library" -> {
-                        viewModel.addToLibrary(item)
-                        true
-                    }
-                    "Remove from Library" -> {
-                        viewModel.removeFromLibrary(item.id)
-                        true
-                    }
-                    "Mark as Watched" -> {
-                        viewModel.markAsWatched(item)
-                        item.isWatched = true
-                        item.progress = item.duration
-                        refreshItem(item)
-                        true
-                    }
-                    "Clear Progress" -> {
-                        viewModel.clearWatchedStatus(item)
-                        item.isWatched = false
-                        item.progress = 0
-                        refreshItem(item)
-                        true
-                    }
-                    "Not Watching" -> {
-                        viewModel.markAsNotWatching(item)
-                        true
-                    }
-                    "Add to Trakt Watchlist" -> {
-                        viewModel.addToWatchlist(item)
-                        true
-                    }
-                    "Remove from Trakt Watchlist" -> {
-                        viewModel.removeFromWatchlist(item)
-                        true
-                    }
-                    "Rate on Trakt" -> {
-                        showRatingDialog(item)
-                        true
-                    }
-                    else -> false
-                }
-            }
-            popup.show()
         }
-    }
 
-    private fun refreshItem(item: MetaItem) {
-        val position = contentAdapter.getItemPosition(item)
-        if (position != -1) {
-            contentAdapter.notifyItemChanged(position)
+        viewModel.castList.observe(viewLifecycleOwner, castObserver)
+        viewModel.fetchCast(item.id, item.type)
+
+        dialog.setOnDismissListener {
+            viewModel.castList.removeObserver(castObserver)
         }
-    }
 
-    private fun showRatingDialog(item: MetaItem) {
-        val ratings = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Rate ${item.name} on Trakt")
-            .setItems(ratings) { _, which ->
-                val rating = which + 1
-                viewModel.rateOnTrakt(item, rating)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        dialog.show()
     }
 
     fun performSearch(query: String) {
@@ -282,18 +354,140 @@ class SearchFragment : Fragment() {
         currentSearchQuery = query
 
         // Reset drill-down state when performing new search
-        displayModule.currentDrillDownLevel = ResultsDisplayModule.DrillDownLevel.CATALOG
-        displayModule.currentSeriesId = null
-        displayModule.currentSeasonNumber = null
+        currentDrillDownLevel = DrillDownLevel.SEARCH_RESULTS
+        currentSeriesId = null
+        currentSeasonNumber = null
+        currentSeriesName = null
+
+        // Restore row adapter if we were in drill-down mode
+        if (binding.rvSearchRows.adapter !is HomeRowAdapter) {
+            binding.rvSearchRows.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+            binding.rvSearchRows.adapter = rowAdapter
+        }
 
         // Trigger search - results will be handled by the observer
         viewModel.searchTMDB(query)
     }
 
+    private fun updateSearchRows(movies: List<MetaItem>, series: List<MetaItem>) {
+        val rows = mutableListOf<HomeRow>()
+
+        if (movies.isNotEmpty()) {
+            rows.add(HomeRow("search_movies", "Movies", movies))
+        }
+
+        if (series.isNotEmpty()) {
+            rows.add(HomeRow("search_series", "Series", series))
+        }
+
+        rowAdapter.updateData(rows, this::showLongPressMenu)
+
+        // Update visibility
+        if (rows.isEmpty()) {
+            binding.noResultsState.visibility = View.VISIBLE
+            binding.noResultsText.text = "No results found for \"${currentSearchQuery}\""
+            binding.rvSearchRows.visibility = View.GONE
+            binding.heroCard.visibility = View.GONE
+        } else {
+            binding.noResultsState.visibility = View.GONE
+            binding.rvSearchRows.visibility = View.VISIBLE
+            binding.heroCard.visibility = View.VISIBLE
+            binding.emptyState.visibility = View.GONE
+
+            // Update hero banner with first item
+            val firstItem = movies.firstOrNull() ?: series.firstOrNull()
+            if (firstItem != null) {
+                updateHeroBanner(firstItem)
+            }
+
+            // Auto-focus first item
+            binding.root.postDelayed({
+                binding.rvSearchRows.requestFocus()
+            }, 100)
+        }
+    }
+
+    /**
+     * Shows drill-down content (seasons or episodes) in place of search result rows
+     */
+    private fun showDrillDownContent(items: List<MetaItem>, label: String) {
+        if (items.isEmpty()) return
+
+        // Create or update the drill-down adapter
+        if (drillDownAdapter == null) {
+            drillDownAdapter = PosterAdapter(
+                items = items,
+                onClick = { item -> handleContentClick(item) },
+                onLongClick = { item -> showLongPressMenu(item) }
+            )
+        } else {
+            drillDownAdapter?.updateData(items)
+        }
+
+        // Replace rows with drill-down content
+        binding.rvSearchRows.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvSearchRows.adapter = drillDownAdapter
+
+        // Update hero banner with first item
+        if (items.isNotEmpty()) {
+            updateHeroBanner(items[0])
+        }
+
+        // Setup focus change listener for drill-down items
+        binding.rvSearchRows.setOnHierarchyChangeListener(object : ViewGroup.OnHierarchyChangeListener {
+            override fun onChildViewAdded(parent: View?, child: View?) {
+                child?.setOnFocusChangeListener { v, hasFocus ->
+                    if (hasFocus) {
+                        val pos = binding.rvSearchRows.getChildAdapterPosition(v)
+                        if (pos != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
+                            val item = drillDownAdapter?.getItem(pos)
+                            if (item != null) {
+                                heroUpdateJob?.cancel()
+                                heroUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
+                                    delay(200)
+                                    if (isAdded) {
+                                        updateHeroBanner(item)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            override fun onChildViewRemoved(parent: View?, child: View?) {
+                child?.onFocusChangeListener = null
+            }
+        })
+
+        // Focus first item after a short delay
+        binding.root.postDelayed({
+            binding.rvSearchRows.scrollToPosition(0)
+            binding.rvSearchRows.layoutManager?.findViewByPosition(0)?.requestFocus()
+        }, 100)
+    }
+
+    /**
+     * Restores the search results rows view from drill-down state
+     */
+    private fun restoreSearchRowsView() {
+        // Restore original layout manager and adapter
+        binding.rvSearchRows.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.rvSearchRows.adapter = rowAdapter
+
+        // Restore search results
+        updateSearchRows(cachedMovieResults, cachedSeriesResults)
+
+        // Focus first item
+        binding.root.postDelayed({
+            binding.rvSearchRows.scrollToPosition(0)
+            binding.rvSearchRows.requestFocus()
+        }, 100)
+    }
+
     private fun setupObservers() {
-        // Observe search results for actor/person content and search
+        // Observe search results
         viewModel.searchResults.observe(viewLifecycleOwner) { results ->
-            if (results.isNotEmpty() && displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.CATALOG) {
+            if (currentDrillDownLevel == DrillDownLevel.SEARCH_RESULTS) {
                 // Normalize "tv" type to "series" for consistency
                 val normalizedResults = results.map { item ->
                     if (item.type == "tv") {
@@ -303,106 +497,118 @@ class SearchFragment : Fragment() {
                     }
                 }
 
-                searchAdapter.updateData(normalizedResults)
-                if (normalizedResults.isNotEmpty()) {
-                    displayModule.updateDetailsPane(normalizedResults[0])
-                }
+                // Separate movies and series
+                val movies = normalizedResults.filter { it.type == "movie" }
+                val series = normalizedResults.filter { it.type == "series" }
+
+                // Cache for restoration after drill-down
+                cachedMovieResults = movies
+                cachedSeriesResults = series
 
                 // Update visibility
                 binding.emptyState.visibility = View.GONE
-                binding.noResultsState.visibility = View.GONE
                 binding.contentGrid.visibility = View.VISIBLE
-                binding.heroCard.visibility = View.VISIBLE
 
-                // Auto-focus first item when results load
-                binding.root.postDelayed({
-                    if (binding.resultsRecycler.childCount > 0) {
-                        val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
-                        firstView?.requestFocus()
-                    }
-                }, 100)
+                // Update search rows
+                updateSearchRows(movies, series)
             }
         }
+
         viewModel.isSearching.observe(viewLifecycleOwner) { isSearching ->
             binding.progressBar.visibility = if (isSearching) View.VISIBLE else View.GONE
             binding.loadingCard.visibility = if (isSearching) View.VISIBLE else View.GONE
             if (isSearching) binding.noResultsState.visibility = View.GONE
         }
+
         viewModel.actionResult.observe(viewLifecycleOwner) { result ->
             when (result) {
                 is MainViewModel.ActionResult.Success -> {
-                    Toast.makeText(requireContext(), result.message,
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
                 }
                 is MainViewModel.ActionResult.Error -> {
-                    Toast.makeText(requireContext(), result.message,
-                        Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
                 }
             }
         }
 
         // Observe series meta details for drill-down navigation
         viewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
-            if (meta != null && meta.type == "series" && displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SERIES) {
-                // Display seasons in the grid
+            if (meta != null && meta.type == "series" && currentDrillDownLevel == DrillDownLevel.SERIES) {
+                // Display seasons in horizontal list
                 val seasons = meta.videos?.mapNotNull { video ->
                     video.season?.let { seasonNum ->
                         MetaItem(
                             id = "${meta.id}:$seasonNum",
                             type = "season",
-                            name = video.title,
-                            poster = video.thumbnail,
+                            name = video.title ?: "Season $seasonNum",
+                            poster = video.thumbnail ?: meta.poster,
                             background = meta.background,
                             description = "Season $seasonNum",
                             releaseDate = video.released,
                             rating = video.rating
                         )
                     }
-                } ?: emptyList()
+                }?.distinctBy { it.id } ?: emptyList()
 
-                searchAdapter.updateData(seasons)
-                if (seasons.isNotEmpty()) {
-                    displayModule.updateDetailsPane(seasons[0])
-
-                    // Auto-focus first season
-                    binding.root.postDelayed({
-                        if (binding.resultsRecycler.childCount > 0) {
-                            val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
-                            firstView?.requestFocus()
-                        }
-                    }, 100)
-                }
+                showDrillDownContent(seasons, "${meta.name} - Seasons")
             }
         }
 
         // Observe season episodes for drill-down navigation
         viewModel.seasonEpisodes.observe(viewLifecycleOwner) { episodes ->
-            if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.SEASON && episodes.isNotEmpty()) {
-                searchAdapter.updateData(episodes)
-                displayModule.updateDetailsPane(episodes[0])
+            if (currentDrillDownLevel == DrillDownLevel.SEASON && episodes.isNotEmpty()) {
+                val label = currentSeriesName?.let { "$it - Season $currentSeasonNumber" }
+                    ?: "Season $currentSeasonNumber - Episodes"
+                showDrillDownContent(episodes, label)
+            }
+        }
 
-                // Auto-focus first episode
-                binding.root.postDelayed({
-                    if (binding.resultsRecycler.childCount > 0) {
-                        val firstView = binding.resultsRecycler.layoutManager?.findViewByPosition(0)
-                        firstView?.requestFocus()
-                    }
-                }, 100)
+        // Observe Logo updates for the Hero Banner
+        viewModel.currentLogo.observe(viewLifecycleOwner) { logoUrl ->
+            if (!logoUrl.isNullOrEmpty()) {
+                binding.detailTitle.visibility = View.GONE
+                binding.detailLogo.visibility = View.VISIBLE
+                Glide.with(this)
+                    .load(logoUrl)
+                    .fitCenter()
+                    .into(binding.detailLogo)
+            } else {
+                binding.detailTitle.visibility = View.VISIBLE
+                binding.detailLogo.visibility = View.GONE
             }
         }
     }
 
+    /**
+     * Handles back button press for drill-down navigation
+     * Returns true if handled, false otherwise
+     */
     fun handleBackPress(): Boolean {
-        val handled = displayModule.handleBackPress()
-        if (handled) {
-            // If going back to catalog, reload search results
-            if (displayModule.currentDrillDownLevel == ResultsDisplayModule.DrillDownLevel.CATALOG) {
-                currentSearchQuery?.let { query ->
-                    performSearch(query)
+        when (currentDrillDownLevel) {
+            DrillDownLevel.SEASON -> {
+                // Go back to seasons view
+                currentSeriesId?.let { seriesId ->
+                    currentDrillDownLevel = DrillDownLevel.SERIES
+                    currentSeasonNumber = null
+                    viewModel.loadSeriesMeta(seriesId)
+                    return true
                 }
             }
+            DrillDownLevel.SERIES -> {
+                // Go back to search results view
+                currentDrillDownLevel = DrillDownLevel.SEARCH_RESULTS
+                currentSeriesId = null
+                currentSeriesName = null
+                currentSeasonNumber = null
+                restoreSearchRowsView()
+                return true
+            }
+            DrillDownLevel.SEARCH_RESULTS -> {
+                // At top level, don't consume back press
+                return false
+            }
         }
-        return handled
+        return false
     }
 
     fun setSearchText(text: String) { binding.searchEditText.setText(text) }
@@ -414,7 +620,7 @@ class SearchFragment : Fragment() {
         super.onDestroyView()
         _binding = null
         viewModel.clearSearchResults()
-        detailsUpdateJob?.cancel()
+        heroUpdateJob?.cancel()
     }
 
     fun focusSearch() { binding.searchEditText.requestFocus() }

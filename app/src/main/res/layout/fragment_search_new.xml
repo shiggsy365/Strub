@@ -91,19 +91,19 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Hero Details Container (70% height) -->
+        <!-- Hero Details Container (50% height - adjusted for rows layout) -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/detailsContainer"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:paddingStart="32dp"
             android:paddingEnd="32dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             app:layout_constraintTop_toBottomOf="@id/searchBarCard"
             app:layout_constraintBottom_toTopOf="@+id/contentGrid"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_percent="0.6">
+            app:layout_constraintHeight_percent="0.5">
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/heroCard"
@@ -238,7 +238,7 @@
                                 android:paddingVertical="6dp"
                                 android:minHeight="36dp"
                                 android:focusable="true"
-                                android:nextFocusDown="@id/resultsRecycler"
+                                android:nextFocusDown="@id/rvSearchRows"
                                 app:icon="@drawable/ic_play_circle"
                                 app:iconGravity="textStart"
                                 app:iconPadding="4dp"
@@ -257,7 +257,7 @@
                                 android:paddingVertical="6dp"
                                 android:minHeight="36dp"
                                 android:focusable="true"
-                                android:nextFocusDown="@id/resultsRecycler"
+                                android:nextFocusDown="@id/rvSearchRows"
                                 app:icon="@drawable/ic_search"
                                 app:iconGravity="textStart"
                                 app:iconPadding="4dp"
@@ -314,7 +314,8 @@
                     android:layout_height="@dimen/icon_size_xlarge"
                     android:src="@drawable/ic_search"
                     android:layout_marginBottom="@dimen/spacing_md"
-                    app:tint="@color/text_tertiary" />
+                    app:tint="@color/text_tertiary"
+                    android:contentDescription="Search" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -327,8 +328,16 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Horizontal Poster Carousel (Bottom 30%) -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- Bottom-up gradient to blend rows -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="@drawable/gradient_overlay"
+            app:layout_constraintHeight_percent="0.5"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Search Results Rows (Movies and Series) - Home-style layout -->
+        <FrameLayout
             android:id="@+id/contentGrid"
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -336,25 +345,22 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintHeight_percent="0.3"
-            app:cardBackgroundColor="#00000000"
-            app:cardCornerRadius="0dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp"
-            app:contentPadding="8dp">
+            app:layout_constraintHeight_percent="0.4">
 
+            <!-- Vertical RecyclerView for search result rows (Movies row, Series row) -->
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/resultsRecycler"
+                android:id="@+id/rvSearchRows"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:paddingTop="16dp"
+                android:paddingBottom="48dp"
                 android:clipToPadding="false"
-                android:clipChildren="false"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
+                android:requiresFadingEdge="vertical"
+                android:fadingEdgeLength="48dp"
                 android:scrollbars="none"
                 android:overScrollMode="never"
                 android:focusable="true"
-                tools:listitem="@layout/item_poster" />
+                tools:listitem="@layout/item_home_section" />
 
             <!-- No Results State -->
             <LinearLayout
@@ -371,9 +377,11 @@
                     android:layout_height="@dimen/icon_size_xlarge"
                     android:src="@drawable/ic_search_off"
                     android:layout_marginBottom="@dimen/spacing_md"
-                    app:tint="@color/text_tertiary" />
+                    app:tint="@color/text_tertiary"
+                    android:contentDescription="No results" />
 
                 <TextView
+                    android:id="@+id/noResultsText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="No results found"
@@ -382,7 +390,7 @@
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
 
         <!-- Loading Card -->
         <com.google.android.material.card.MaterialCardView
