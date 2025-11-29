@@ -14,14 +14,17 @@ import com.bumptech.glide.Glide
 import com.example.stremiompvplayer.PlayerActivity
 import com.example.stremiompvplayer.R
 import com.example.stremiompvplayer.adapters.HomeRowAdapter
+import com.example.stremiompvplayer.adapters.PosterAdapter
 import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.FragmentHomeBinding
 import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.ui.ResultsDisplayModule
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
+import com.example.stremiompvplayer.viewmodels.HomeRow
 import com.example.stremiompvplayer.viewmodels.HomeViewModel
 import com.example.stremiompvplayer.viewmodels.HomeViewModelFactory
 import com.example.stremiompvplayer.viewmodels.MainViewModel
+import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -42,13 +45,37 @@ class HomeFragment : Fragment() {
     }
 
     // Access MainViewModel for shared logic (player, library actions)
-    private val mainViewModel: MainViewModel by activityViewModels()
+    private val mainViewModel: MainViewModel by activityViewModels {
+        MainViewModelFactory(
+            ServiceLocator.getInstance(requireContext()),
+            SharedPreferencesManager.getInstance(requireContext())
+        )
+    }
 
     private lateinit var rowAdapter: HomeRowAdapter
     private var heroUpdateJob: Job? = null
 
     // Helper module for dialogs (lazy initialized)
     private lateinit var displayModule: ResultsDisplayModule
+
+    // Drill-down navigation state
+    enum class DrillDownLevel { ROWS, SERIES, SEASON, CAST_RESULTS }
+    private var currentDrillDownLevel = DrillDownLevel.ROWS
+    private var currentSeriesId: String? = null
+    private var currentSeasonNumber: Int? = null
+    private var currentSeriesName: String? = null
+
+    // Adapter for drill-down content (seasons/episodes/cast results)
+    private var drillDownAdapter: PosterAdapter? = null
+
+    // Store current home rows for restoration
+    private var cachedHomeRows: List<HomeRow> = emptyList()
+
+    // Cast search results
+    private var castMovieResults: List<MetaItem> = emptyList()
+    private var castShowResults: List<MetaItem> = emptyList()
+    private var currentCastPersonName: String? = null
+    private var isCastMovieSection: Boolean = true // Track which cast section is showing
 
     companion object {
         fun newInstance(): HomeFragment {
@@ -73,7 +100,7 @@ class HomeFragment : Fragment() {
             detailDescription = binding.detailDescription,
             detailDate = binding.detailDate,
             detailRating = binding.detailRating,
-            detailEpisode = binding.detailTitle, // Placeholder
+            detailEpisode = binding.detailEpisode,
             actorChips = binding.actorChips,
             btnPlay = null, btnTrailer = null, btnRelated = null
         )
@@ -114,9 +141,26 @@ class HomeFragment : Fragment() {
                 startActivity(intent)
             }
             "series" -> {
-                // Drill down into series
-                val discoverFragment = com.example.stremiompvplayer.ui.discover.DiscoverFragment.newInstance("series", item.id)
-                (activity as? com.example.stremiompvplayer.MainActivity)?.loadFragment(discoverFragment)
+                // Drill down into series IN-PLACE (not navigating to another fragment)
+                currentDrillDownLevel = DrillDownLevel.SERIES
+                currentSeriesId = item.id
+                currentSeriesName = item.name
+                currentSeasonNumber = null
+                mainViewModel.loadSeriesMeta(item.id)
+                updateHeroBanner(item)
+            }
+            "season" -> {
+                // Drill down into season to show episodes
+                val parts = item.id.split(":")
+                if (parts.size >= 2) {
+                    val seriesId = parts.dropLast(1).joinToString(":")
+                    val seasonNum = parts.last().toIntOrNull() ?: 1
+                    currentDrillDownLevel = DrillDownLevel.SEASON
+                    currentSeriesId = seriesId
+                    currentSeasonNumber = seasonNum
+                    mainViewModel.loadSeasonEpisodes(seriesId, seasonNum)
+                    updateHeroBanner(item)
+                }
             }
             else -> {
                 // Fallback for other types (e.g. Person?)
@@ -193,15 +237,13 @@ class HomeFragment : Fragment() {
                     chip.text = actor.name
                     chip.setOnClickListener {
                         dialog.dismiss()
-                        // Trigger actor search
+                        // Trigger actor search IN-PLACE
                         val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
                         if (personId != null) {
+                            currentCastPersonName = actor.name
                             mainViewModel.loadPersonCredits(personId)
-                            val intent = android.content.Intent(requireContext(), com.example.stremiompvplayer.MainActivity::class.java).apply {
-                                putExtra("SEARCH_PERSON_ID", personId)
-                                putExtra("SEARCH_QUERY", actor.name)
-                            }
-                            startActivity(intent)
+                            // The results will be handled by the personCredits observer
+                            // which splits them into movies and shows
                         }
                     }
                     castGroup.addView(chip)
@@ -277,10 +319,14 @@ class HomeFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.homeRows.observe(viewLifecycleOwner) { rows ->
-            rowAdapter.updateData(rows, this::showLongPressMenu)
+            cachedHomeRows = rows
+            // Only update rows view if we're at ROWS level
+            if (currentDrillDownLevel == DrillDownLevel.ROWS) {
+                rowAdapter.updateData(rows, this::showLongPressMenu)
 
-            if (rows.isNotEmpty() && rows[0].items.isNotEmpty()) {
-                updateHeroBanner(rows[0].items[0])
+                if (rows.isNotEmpty() && rows[0].items.isNotEmpty()) {
+                    updateHeroBanner(rows[0].items[0])
+                }
             }
         }
 
@@ -303,12 +349,244 @@ class HomeFragment : Fragment() {
                 binding.detailLogo.visibility = View.GONE
             }
         }
+
+        // Observer for series metadata (for drill-down navigation)
+        mainViewModel.metaDetails.observe(viewLifecycleOwner) { meta ->
+            if (meta != null && meta.type == "series" && currentDrillDownLevel == DrillDownLevel.SERIES) {
+                // Display seasons in the carousel (replace rows view)
+                val seasons = meta.videos?.mapNotNull { video ->
+                    video.season?.let { seasonNum ->
+                        MetaItem(
+                            id = "${meta.id}:$seasonNum",
+                            type = "season",
+                            name = video.title,
+                            poster = video.thumbnail,
+                            background = meta.background,
+                            description = "Season $seasonNum",
+                            releaseDate = video.released,
+                            rating = video.rating
+                        )
+                    }
+                }?.distinctBy { it.id } ?: emptyList()
+
+                showDrillDownContent(seasons, "${meta.name} - Seasons")
+            }
+        }
+
+        // Observer for season episodes (for drill-down navigation)
+        mainViewModel.seasonEpisodes.observe(viewLifecycleOwner) { episodes ->
+            if (currentDrillDownLevel == DrillDownLevel.SEASON && episodes.isNotEmpty()) {
+                val label = currentSeriesName?.let { "$it - Season $currentSeasonNumber" }
+                    ?: "Season $currentSeasonNumber - Episodes"
+                showDrillDownContent(episodes, label)
+            }
+        }
+
+        // Observer for person credits (cast search results)
+        mainViewModel.searchResults.observe(viewLifecycleOwner) { results ->
+            if (currentCastPersonName != null && results.isNotEmpty()) {
+                // Split results into movies and shows
+                castMovieResults = results.filter { it.type == "movie" }
+                castShowResults = results.filter { it.type == "series" || it.type == "tv" }.map { item ->
+                    // Normalize "tv" type to "series"
+                    if (item.type == "tv") item.copy(type = "series") else item
+                }
+
+                // Show cast results in-place, starting with movies
+                currentDrillDownLevel = DrillDownLevel.CAST_RESULTS
+                isCastMovieSection = true
+                
+                val displayItems = if (castMovieResults.isNotEmpty()) {
+                    castMovieResults
+                } else {
+                    isCastMovieSection = false
+                    castShowResults
+                }
+                
+                val label = if (isCastMovieSection) {
+                    "$currentCastPersonName - Movies (${castMovieResults.size})"
+                } else {
+                    "$currentCastPersonName - Shows (${castShowResults.size})"
+                }
+                
+                showDrillDownContent(displayItems, label)
+                
+                // Note: We keep currentCastPersonName set because we need it for navigation
+                // and switching between movie/show sections. It will be cleared when
+                // the user navigates back to the home rows view.
+            }
+        }
     }
 
     fun focusSidebar() {
         binding.rvHomeRows.post {
             binding.rvHomeRows.requestFocus()
         }
+    }
+
+    /**
+     * Shows drill-down content (seasons, episodes, or cast results) in place of home rows
+     */
+    private fun showDrillDownContent(items: List<MetaItem>, label: String) {
+        if (items.isEmpty()) return
+
+        // Create or update the drill-down adapter
+        if (drillDownAdapter == null) {
+            drillDownAdapter = PosterAdapter(
+                items = items,
+                onClick = { item -> handleSinglePress(item) },
+                onLongClick = { item -> showLongPressMenu(item) }
+            )
+        } else {
+            drillDownAdapter?.updateData(items)
+        }
+
+        // Replace rows with drill-down content
+        // We re-use the same RecyclerView but change the layout manager and adapter
+        binding.rvHomeRows.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvHomeRows.adapter = drillDownAdapter
+
+        // Update hero banner with first item
+        if (items.isNotEmpty()) {
+            updateHeroBanner(items[0])
+        }
+
+        // Setup focus change listener for drill-down items
+        binding.rvHomeRows.setOnHierarchyChangeListener(object : ViewGroup.OnHierarchyChangeListener {
+            override fun onChildViewAdded(parent: View?, child: View?) {
+                child?.setOnFocusChangeListener { v, hasFocus ->
+                    if (hasFocus) {
+                        val pos = binding.rvHomeRows.getChildAdapterPosition(v)
+                        if (pos != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
+                            val item = drillDownAdapter?.getItem(pos)
+                            if (item != null) {
+                                heroUpdateJob?.cancel()
+                                heroUpdateJob = viewLifecycleOwner.lifecycleScope.launch {
+                                    delay(200)
+                                    if (isAdded) {
+                                        updateHeroBanner(item)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            override fun onChildViewRemoved(parent: View?, child: View?) {
+                child?.onFocusChangeListener = null
+            }
+        })
+
+        // Focus first item after a short delay
+        binding.root.postDelayed({
+            binding.rvHomeRows.scrollToPosition(0)
+            binding.rvHomeRows.layoutManager?.findViewByPosition(0)?.requestFocus()
+        }, 100)
+    }
+
+    /**
+     * Restores the home rows view from drill-down state
+     */
+    private fun restoreHomeRowsView() {
+        // Restore original layout manager and adapter
+        binding.rvHomeRows.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.rvHomeRows.adapter = rowAdapter
+
+        // Restore home rows data
+        if (cachedHomeRows.isNotEmpty()) {
+            rowAdapter.updateData(cachedHomeRows, this::showLongPressMenu)
+            if (cachedHomeRows[0].items.isNotEmpty()) {
+                updateHeroBanner(cachedHomeRows[0].items[0])
+            }
+        }
+
+        // Focus first item
+        binding.root.postDelayed({
+            binding.rvHomeRows.scrollToPosition(0)
+            binding.rvHomeRows.requestFocus()
+        }, 100)
+    }
+
+    /**
+     * Handles back button press for drill-down navigation
+     * Returns true if handled, false otherwise
+     */
+    fun handleBackPress(): Boolean {
+        when (currentDrillDownLevel) {
+            DrillDownLevel.SEASON -> {
+                // Go back to seasons view
+                currentSeriesId?.let { seriesId ->
+                    currentDrillDownLevel = DrillDownLevel.SERIES
+                    currentSeasonNumber = null
+                    mainViewModel.loadSeriesMeta(seriesId)
+                    return true
+                }
+            }
+            DrillDownLevel.SERIES -> {
+                // Go back to home rows view
+                currentDrillDownLevel = DrillDownLevel.ROWS
+                currentSeriesId = null
+                currentSeriesName = null
+                currentSeasonNumber = null
+                restoreHomeRowsView()
+                return true
+            }
+            DrillDownLevel.CAST_RESULTS -> {
+                if (!isCastMovieSection && castMovieResults.isNotEmpty()) {
+                    // If showing shows, go back to movies
+                    isCastMovieSection = true
+                    showDrillDownContent(
+                        castMovieResults,
+                        "$currentCastPersonName - Movies (${castMovieResults.size})"
+                    )
+                    return true
+                } else {
+                    // Go back to home rows view
+                    currentDrillDownLevel = DrillDownLevel.ROWS
+                    currentCastPersonName = null
+                    castMovieResults = emptyList()
+                    castShowResults = emptyList()
+                    restoreHomeRowsView()
+                    return true
+                }
+            }
+            DrillDownLevel.ROWS -> {
+                // At top level, don't consume back press
+                return false
+            }
+        }
+        return false
+    }
+
+    /**
+     * Switches between cast movie and show sections using DPAD_DOWN
+     */
+    fun handleKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
+        if (event?.action == android.view.KeyEvent.ACTION_DOWN) {
+            if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                // In cast results mode, cycle between movies and shows sections
+                if (currentDrillDownLevel == DrillDownLevel.CAST_RESULTS) {
+                    if (isCastMovieSection && castShowResults.isNotEmpty()) {
+                        // Switch from movies to shows
+                        isCastMovieSection = false
+                        showDrillDownContent(
+                            castShowResults,
+                            "$currentCastPersonName - Shows (${castShowResults.size})"
+                        )
+                        return true
+                    } else if (!isCastMovieSection && castMovieResults.isNotEmpty()) {
+                        // Switch from shows to movies
+                        isCastMovieSection = true
+                        showDrillDownContent(
+                            castMovieResults,
+                            "$currentCastPersonName - Movies (${castMovieResults.size})"
+                        )
+                        return true
+                    }
+                }
+            }
+        }
+        return false
     }
 
     override fun onDestroyView() {

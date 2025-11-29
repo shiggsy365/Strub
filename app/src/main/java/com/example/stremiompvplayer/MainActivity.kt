@@ -404,9 +404,10 @@ class MainActivity : AppCompatActivity() {
         val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
 
         // 1. Allow specific fragments to intercept keys
-        // HomeFragment no longer needs manual key handling for cycling, so we remove it from here
-        // or define a safe check.
-        // [FIX] Check for handleKeyDown existence dynamically or update fragments.
+        // HomeFragment now handles key events for cast results cycling
+        if (currentFragment is HomeFragment) {
+            if (currentFragment.handleKeyDown(keyCode, event)) return true
+        }
 
         if (currentFragment is DiscoverFragment) {
             if (currentFragment.handleKeyDown(keyCode, event)) return true
@@ -497,8 +498,10 @@ class MainActivity : AppCompatActivity() {
 
         if (keyCode == KeyEvent.KEYCODE_BACK && event?.action == KeyEvent.ACTION_DOWN) {
             // Allow specific fragments to intercept back press
+            if (currentFragment is HomeFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is DiscoverFragment && currentFragment.handleBackPress()) return true
             if (currentFragment is LibraryFragment && currentFragment.handleBackPress()) return true
+            if (currentFragment is SearchFragment && currentFragment.handleBackPress()) return true
 
             // Use navigation stack for back navigation - NEVER exit app
             if (navigationStack.isNotEmpty()) {
