@@ -501,6 +501,7 @@ class PlayerActivity : AppCompatActivity() {
         finish()
     }
 
+    @OptIn(UnstableApi::class)
     private fun applySubtitleStyling() {
         try {
             val prefsManager = SharedPreferencesManager.getInstance(this)
@@ -517,8 +518,18 @@ class PlayerActivity : AppCompatActivity() {
             )
 
             val subtitleView = binding.playerView.subtitleView
-            subtitleView?.setStyle(captionStyle)
-            subtitleView?.setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 20f * textSize)
+            subtitleView?.let { sv ->
+                // Disable embedded styles to ensure user preferences take precedence
+                // This is critical for SSA/ASS subtitles which have embedded styling
+                sv.setApplyEmbeddedStyles(false)
+                sv.setApplyEmbeddedFontSizes(false)
+                
+                // Apply the user's custom caption style
+                sv.setStyle(captionStyle)
+                
+                // Apply text size based on user preference (base size 20sp multiplied by preference factor)
+                sv.setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 20f * textSize)
+            }
         } catch (e: Exception) {
             Log.e("PlayerActivity", "Error applying subtitle styling", e)
         }
