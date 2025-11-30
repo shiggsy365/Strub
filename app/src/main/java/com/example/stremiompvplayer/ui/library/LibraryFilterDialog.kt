@@ -21,13 +21,15 @@ import com.google.android.material.button.MaterialButton
 class LibraryFilterDialog(
     private val context: Context,
     private val currentConfig: LibraryFilterConfig,
-    private val availableGenres: List<TMDBGenre>,
+    private val movieGenres: List<TMDBGenre>,
+    private val tvGenres: List<TMDBGenre>,
     private val onApply: (LibraryFilterConfig) -> Unit,
     private val onClear: () -> Unit
 ) {
     private var selectedSortType: SortType = currentConfig.sortBy
     private var sortAscending: Boolean = currentConfig.sortAscending
-    private var selectedGenreId: String? = currentConfig.genreFilter
+    private var selectedMovieGenreId: String? = currentConfig.movieGenreFilter
+    private var selectedTVGenreId: String? = currentConfig.tvGenreFilter
 
     fun show() {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_library_filter, null)
@@ -35,8 +37,8 @@ class LibraryFilterDialog(
         // Setup sort options
         setupSortOptions(dialogView)
 
-        // Setup genre filter
-        setupGenreFilter(dialogView)
+        // Setup genre filters
+        setupGenreFilters(dialogView)
 
         // Setup buttons
         val btnClear = dialogView.findViewById<MaterialButton>(R.id.btnClearFilters)
@@ -56,7 +58,8 @@ class LibraryFilterDialog(
             val newConfig = LibraryFilterConfig(
                 sortBy = selectedSortType,
                 sortAscending = sortAscending,
-                genreFilter = selectedGenreId
+                movieGenreFilter = selectedMovieGenreId,
+                tvGenreFilter = selectedTVGenreId
             )
             dialog.dismiss()
             onApply(newConfig)
@@ -153,38 +156,69 @@ class LibraryFilterDialog(
         }
     }
 
-    private fun setupGenreFilter(dialogView: View) {
-        val spinnerGenre = dialogView.findViewById<Spinner>(R.id.spinnerGenre)
+    private fun setupGenreFilters(dialogView: View) {
+        val spinnerMovieGenre = dialogView.findViewById<Spinner>(R.id.spinnerMovieGenre)
+        val spinnerTVGenre = dialogView.findViewById<Spinner>(R.id.spinnerTVGenre)
 
-        // Create genre list with "All Genres" option
-        val genreNames = mutableListOf("All Genres")
-        val genreIds = mutableListOf<String?>(null)
+        // Setup Movie Genre Spinner
+        val movieGenreNames = mutableListOf("All Movie Genres")
+        val movieGenreIds = mutableListOf<String?>(null)
 
-        availableGenres.forEach { genre ->
-            genreNames.add(genre.name)
-            genreIds.add(genre.id.toString())
+        movieGenres.forEach { genre ->
+            movieGenreNames.add(genre.name)
+            movieGenreIds.add(genre.id.toString())
         }
 
-        val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, genreNames)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerGenre.adapter = adapter
+        val movieAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, movieGenreNames)
+        movieAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerMovieGenre.adapter = movieAdapter
 
-        // Set current selection
-        val currentIndex = if (selectedGenreId == null) {
+        // Set current movie genre selection
+        val currentMovieIndex = if (selectedMovieGenreId == null) {
             0
         } else {
-            genreIds.indexOf(selectedGenreId).coerceAtLeast(0)
+            movieGenreIds.indexOf(selectedMovieGenreId).coerceAtLeast(0)
         }
-        spinnerGenre.setSelection(currentIndex)
+        spinnerMovieGenre.setSelection(currentMovieIndex)
 
-        // Listen for changes
-        spinnerGenre.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+        spinnerMovieGenre.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedGenreId = genreIds[position]
+                selectedMovieGenreId = movieGenreIds[position]
             }
 
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {
-                selectedGenreId = null
+                selectedMovieGenreId = null
+            }
+        }
+
+        // Setup TV Genre Spinner
+        val tvGenreNames = mutableListOf("All TV Genres")
+        val tvGenreIds = mutableListOf<String?>(null)
+
+        tvGenres.forEach { genre ->
+            tvGenreNames.add(genre.name)
+            tvGenreIds.add(genre.id.toString())
+        }
+
+        val tvAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, tvGenreNames)
+        tvAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerTVGenre.adapter = tvAdapter
+
+        // Set current TV genre selection
+        val currentTVIndex = if (selectedTVGenreId == null) {
+            0
+        } else {
+            tvGenreIds.indexOf(selectedTVGenreId).coerceAtLeast(0)
+        }
+        spinnerTVGenre.setSelection(currentTVIndex)
+
+        spinnerTVGenre.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selectedTVGenreId = tvGenreIds[position]
+            }
+
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {
+                selectedTVGenreId = null
             }
         }
     }

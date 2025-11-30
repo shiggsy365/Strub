@@ -306,12 +306,14 @@ class LibraryFragment : Fragment() {
      */
     private fun showFilterDialog() {
         val currentConfig = viewModel.filterConfig.value ?: LibraryFilterConfig()
-        val availableGenres = viewModel.availableGenres.value ?: emptyList()
+        val movieGenres = viewModel.movieGenres.value ?: emptyList()
+        val tvGenres = viewModel.tvGenres.value ?: emptyList()
         
         LibraryFilterDialog(
             context = requireContext(),
             currentConfig = currentConfig,
-            availableGenres = availableGenres,
+            movieGenres = movieGenres,
+            tvGenres = tvGenres,
             onApply = { newConfig ->
                 viewModel.updateFilterConfig(newConfig)
             },

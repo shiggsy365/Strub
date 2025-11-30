@@ -315,20 +315,58 @@ class HomeViewModel(
 
     private suspend fun fetchTMDBRow(id: String, title: String, type: String, category: String): HomeRow? {
         if (apiKey.isEmpty()) return null
+        
+        // Get current user's age rating for filtering
+        val currentUserId = prefsManager.getCurrentUserId()
+        val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+        val ageRating = currentUser?.ageRating ?: "18" // Default to 18 (no filtering) if not set
+        
         return try {
             val items = if (type == "movie") {
-                val response = when(category) {
-                    "trending" -> TMDBClient.api.getTrendingMovies(apiKey)
-                    "popular" -> TMDBClient.api.getPopularMovies(apiKey)
-                    "top_rated" -> TMDBClient.api.getPopularMovies(apiKey) // Fallback as top_rated endpoint wasn't in interface
-                    else -> TMDBClient.api.getPopularMovies(apiKey)
+                val response = when (ageRating) {
+                    "U", "PG", "12", "15" -> {
+                        // Use discover endpoint with certification filtering
+                        TMDBClient.api.discoverMovies(
+                            apiKey = apiKey,
+                            sortBy = if (category == "trending") "popularity.desc" else "popularity.desc",
+                            certificationCountry = "GB",
+                            certificationLte = ageRating,
+                            includeAdult = false
+                        )
+                    }
+                    else -> {
+                        // Age rating 18 - no certification filtering needed
+                        when(category) {
+                            "trending" -> TMDBClient.api.getTrendingMovies(apiKey)
+                            "popular" -> TMDBClient.api.getPopularMovies(apiKey)
+                            "top_rated" -> TMDBClient.api.getPopularMovies(apiKey)
+                            else -> TMDBClient.api.getPopularMovies(apiKey)
+                        }
+                    }
                 }
                 response.results.map { it.toMetaItem() }
             } else {
-                val response = when(category) {
-                    "trending" -> TMDBClient.api.getTrendingSeries(apiKey)
-                    "popular" -> TMDBClient.api.getPopularSeries(apiKey)
-                    else -> TMDBClient.api.getPopularSeries(apiKey)
+                // For TV shows, TMDB doesn't support direct certification filtering
+                // Use genre-based filtering for kids content as a workaround
+                val response = when (ageRating) {
+                    "U", "PG" -> {
+                        // Filter to kids content using Kids genre (10762)
+                        TMDBClient.api.discoverTV(
+                            apiKey = apiKey,
+                            sortBy = "popularity.desc",
+                            withGenres = "10762", // Kids genre
+                            includeAdult = false
+                        )
+                    }
+                    else -> {
+                        // For 12, 15, 18 - TMDB doesn't support direct TV certification filtering
+                        // Load content but note this is a limitation of the API
+                        when(category) {
+                            "trending" -> TMDBClient.api.getTrendingSeries(apiKey)
+                            "popular" -> TMDBClient.api.getPopularSeries(apiKey)
+                            else -> TMDBClient.api.getPopularSeries(apiKey)
+                        }
+                    }
                 }
                 response.results.map { it.toMetaItem() }
             }

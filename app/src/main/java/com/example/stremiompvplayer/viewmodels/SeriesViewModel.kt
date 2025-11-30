@@ -104,7 +104,24 @@ class SeriesViewModel(
 
     private suspend fun fetchTrendingSeries(): List<MetaItem> {
         return try {
-            val response = TMDBClient.api.getTrendingSeries(apiKey)
+            // Get current user's age rating for filtering
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val ageRating = currentUser?.ageRating ?: "18"
+            
+            // For TV shows, TMDB doesn't support direct certification filtering
+            // Use genre-based filtering for kids content as a workaround
+            val response = when (ageRating) {
+                "U", "PG" -> {
+                    TMDBClient.api.discoverTV(
+                        apiKey = apiKey,
+                        sortBy = "popularity.desc",
+                        withGenres = "10762", // Kids genre
+                        includeAdult = false
+                    )
+                }
+                else -> TMDBClient.api.getTrendingSeries(apiKey)
+            }
             response.results.map { it.toMetaItem() }
         } catch (e: Exception) {
             Log.e("SeriesViewModel", "Error fetching trending series", e)
@@ -114,7 +131,24 @@ class SeriesViewModel(
 
     private suspend fun fetchLatestSeries(): List<MetaItem> {
         return try {
-            val response = TMDBClient.api.getLatestSeries(apiKey)
+            // Get current user's age rating for filtering
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val ageRating = currentUser?.ageRating ?: "18"
+            
+            val response = when (ageRating) {
+                "U", "PG" -> {
+                    val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+                    TMDBClient.api.discoverTV(
+                        apiKey = apiKey,
+                        sortBy = "first_air_date.desc",
+                        withGenres = "10762", // Kids genre
+                        includeAdult = false,
+                        airDate = currentDate
+                    )
+                }
+                else -> TMDBClient.api.getLatestSeries(apiKey)
+            }
             response.results.map { it.toMetaItem() }
         } catch (e: Exception) {
             Log.e("SeriesViewModel", "Error fetching latest series", e)
@@ -124,7 +158,22 @@ class SeriesViewModel(
 
     private suspend fun fetchPopularSeries(): List<MetaItem> {
         return try {
-            val response = TMDBClient.api.getPopularSeries(apiKey)
+            // Get current user's age rating for filtering
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val ageRating = currentUser?.ageRating ?: "18"
+            
+            val response = when (ageRating) {
+                "U", "PG" -> {
+                    TMDBClient.api.discoverTV(
+                        apiKey = apiKey,
+                        sortBy = "popularity.desc",
+                        withGenres = "10762", // Kids genre
+                        includeAdult = false
+                    )
+                }
+                else -> TMDBClient.api.getPopularSeries(apiKey)
+            }
             response.results.map { it.toMetaItem() }
         } catch (e: Exception) {
             Log.e("SeriesViewModel", "Error fetching popular series", e)

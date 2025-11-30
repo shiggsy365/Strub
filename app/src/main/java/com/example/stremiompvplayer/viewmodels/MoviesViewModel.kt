@@ -104,7 +104,23 @@ class MoviesViewModel(
 
     private suspend fun fetchTrendingMovies(): List<MetaItem> {
         return try {
-            val response = TMDBClient.api.getTrendingMovies(apiKey)
+            // Get current user's age rating for filtering
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val ageRating = currentUser?.ageRating ?: "18"
+            
+            val response = when (ageRating) {
+                "U", "PG", "12", "15" -> {
+                    TMDBClient.api.discoverMovies(
+                        apiKey = apiKey,
+                        sortBy = "popularity.desc",
+                        certificationCountry = "GB",
+                        certificationLte = ageRating,
+                        includeAdult = false
+                    )
+                }
+                else -> TMDBClient.api.getTrendingMovies(apiKey)
+            }
             response.results.map { it.toMetaItem() }
         } catch (e: Exception) {
             Log.e("MoviesViewModel", "Error fetching trending movies", e)
@@ -114,7 +130,26 @@ class MoviesViewModel(
 
     private suspend fun fetchLatestMovies(): List<MetaItem> {
         return try {
-            val response = TMDBClient.api.getLatestMovies(apiKey)
+            // Get current user's age rating for filtering
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val ageRating = currentUser?.ageRating ?: "18"
+            
+            val response = when (ageRating) {
+                "U", "PG", "12", "15" -> {
+                    // Get current date for latest movies
+                    val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+                    TMDBClient.api.discoverMovies(
+                        apiKey = apiKey,
+                        sortBy = "release_date.desc",
+                        certificationCountry = "GB",
+                        certificationLte = ageRating,
+                        includeAdult = false,
+                        releaseDate = currentDate
+                    )
+                }
+                else -> TMDBClient.api.getLatestMovies(apiKey)
+            }
             response.results.map { it.toMetaItem() }
         } catch (e: Exception) {
             Log.e("MoviesViewModel", "Error fetching latest movies", e)
@@ -124,7 +159,23 @@ class MoviesViewModel(
 
     private suspend fun fetchPopularMovies(): List<MetaItem> {
         return try {
-            val response = TMDBClient.api.getPopularMovies(apiKey)
+            // Get current user's age rating for filtering
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val ageRating = currentUser?.ageRating ?: "18"
+            
+            val response = when (ageRating) {
+                "U", "PG", "12", "15" -> {
+                    TMDBClient.api.discoverMovies(
+                        apiKey = apiKey,
+                        sortBy = "popularity.desc",
+                        certificationCountry = "GB",
+                        certificationLte = ageRating,
+                        includeAdult = false
+                    )
+                }
+                else -> TMDBClient.api.getPopularMovies(apiKey)
+            }
             response.results.map { it.toMetaItem() }
         } catch (e: Exception) {
             Log.e("MoviesViewModel", "Error fetching popular movies", e)
