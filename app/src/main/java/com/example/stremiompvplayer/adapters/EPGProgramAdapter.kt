@@ -3,6 +3,7 @@ package com.example.stremiompvplayer.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
@@ -39,6 +40,8 @@ class EPGProgramAdapter(
         val programTitle: TextView = view.findViewById(R.id.programTitle)
         val programDescription: TextView = view.findViewById(R.id.programDescription)
         val nowAiringLabel: TextView = view.findViewById(R.id.nowAiringLabel)
+        val programProgress: ProgressBar = view.findViewById(R.id.programProgress)
+        val programDivider: View = view.findViewById(R.id.programDivider)
 
         init {
             view.setOnClickListener {
@@ -60,6 +63,7 @@ class EPGProgramAdapter(
         val program = getItem(position)
         val currentTime = System.currentTimeMillis()
         val isCurrentlyAiring = currentTime >= program.startTime && currentTime <= program.endTime
+        val isFirstItem = position == 0
 
         // Format time slot
         holder.programTime.text = formatTimeRange(program.startTime, program.endTime)
@@ -81,8 +85,22 @@ class EPGProgramAdapter(
             holder.itemView.setBackgroundColor(
                 ContextCompat.getColor(holder.itemView.context, R.color.md_theme_surfaceContainerHigh)
             )
+            
+            // Show progress bar for first item (currently airing)
+            if (isFirstItem) {
+                val progress = calculateProgress(program.startTime, program.endTime, currentTime)
+                holder.programProgress.progress = progress
+                holder.programProgress.visibility = View.VISIBLE
+                // Hide divider when progress bar is shown
+                holder.programDivider.visibility = View.GONE
+            } else {
+                holder.programProgress.visibility = View.GONE
+                holder.programDivider.visibility = View.VISIBLE
+            }
         } else {
             holder.nowAiringLabel.visibility = View.GONE
+            holder.programProgress.visibility = View.GONE
+            holder.programDivider.visibility = View.VISIBLE
             holder.itemView.setBackgroundColor(
                 ContextCompat.getColor(holder.itemView.context, android.R.color.transparent)
             )
@@ -108,5 +126,14 @@ class EPGProgramAdapter(
         val start = timeFormat.format(Date(startTime))
         val end = timeFormat.format(Date(endTime))
         return "$start - $end"
+    }
+
+    private fun calculateProgress(startTime: Long, endTime: Long, currentTime: Long): Int {
+        if (currentTime < startTime) return 0
+        if (currentTime > endTime) return 100
+        val duration = endTime - startTime
+        if (duration <= 0) return 0 // Guard against division by zero
+        val elapsed = currentTime - startTime
+        return ((elapsed.toFloat() / duration.toFloat()) * 100).toInt()
     }
 }

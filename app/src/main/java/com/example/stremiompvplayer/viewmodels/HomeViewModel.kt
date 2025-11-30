@@ -23,6 +23,9 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+// TMDB Kids genre ID for family-friendly content filtering
+private const val TMDB_KIDS_GENRE_ID = "10762"
+
 data class HomeRow(
     val id: String,
     val title: String,
@@ -56,16 +59,19 @@ class HomeViewModel(
             }
 
             // 2. Load "Continue Watching" with full metadata from TMDB
-            val continueMovies = repository.getContinueWatching(userId, "movie").mapNotNull { progress ->
+            // Get all continue watching items and sort by lastUpdated (most recent first)
+            val movieProgress = repository.getContinueWatching(userId, "movie")
+            val episodeProgress = repository.getContinueWatching(userId, "episode")
+            
+            // Combine and sort by lastUpdated (most recently watched first)
+            val allContinueWatching = (movieProgress + episodeProgress)
+                .sortedByDescending { it.lastUpdated }
+            
+            // Enrich with metadata while preserving the sort order
+            val continueWatching = allContinueWatching.mapNotNull { progress ->
                 enrichContinueWatchingItem(progress)
             }
             
-            // For episodes, use series poster instead of episode thumbnail
-            val continueEpisodes = repository.getContinueWatching(userId, "episode").mapNotNull { progress ->
-                enrichContinueWatchingItem(progress)
-            }
-
-            val continueWatching = (continueMovies + continueEpisodes).sortedByDescending { it.progress } // Sort by recent
             if (continueWatching.isNotEmpty()) {
                 rows.add(HomeRow("continue", "Continue Watching", continueWatching))
             }
@@ -298,9 +304,9 @@ class HomeViewModel(
             }
         }.awaitAll().filterNotNull()
 
-        // Sort by lastUpdated (oldest first - longest ago watched) and return only the MetaItems
+        // Sort by lastUpdated (most recent first - descending) and return only the MetaItems
         val result = nextUpItems
-            .sortedBy { it.second }
+            .sortedByDescending { it.second }
             .map { it.first }
             .distinctBy { it.id }  // Remove any duplicate episodes
 
@@ -312,20 +318,58 @@ class HomeViewModel(
 
     private suspend fun fetchTMDBRow(id: String, title: String, type: String, category: String): HomeRow? {
         if (apiKey.isEmpty()) return null
+        
+        // Get current user's age rating for filtering
+        val currentUserId = prefsManager.getCurrentUserId()
+        val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+        val ageRating = currentUser?.ageRating ?: "18" // Default to 18 (no filtering) if not set
+        
         return try {
             val items = if (type == "movie") {
-                val response = when(category) {
-                    "trending" -> TMDBClient.api.getTrendingMovies(apiKey)
-                    "popular" -> TMDBClient.api.getPopularMovies(apiKey)
-                    "top_rated" -> TMDBClient.api.getPopularMovies(apiKey) // Fallback as top_rated endpoint wasn't in interface
-                    else -> TMDBClient.api.getPopularMovies(apiKey)
+                val response = when (ageRating) {
+                    "U", "PG", "12", "15" -> {
+                        // Use discover endpoint with certification filtering
+                        TMDBClient.api.discoverMovies(
+                            apiKey = apiKey,
+                            sortBy = if (category == "trending") "popularity.desc" else "popularity.desc",
+                            certificationCountry = "GB",
+                            certificationLte = ageRating,
+                            includeAdult = false
+                        )
+                    }
+                    else -> {
+                        // Age rating 18 - no certification filtering needed
+                        when(category) {
+                            "trending" -> TMDBClient.api.getTrendingMovies(apiKey)
+                            "popular" -> TMDBClient.api.getPopularMovies(apiKey)
+                            "top_rated" -> TMDBClient.api.getPopularMovies(apiKey)
+                            else -> TMDBClient.api.getPopularMovies(apiKey)
+                        }
+                    }
                 }
                 response.results.map { it.toMetaItem() }
             } else {
-                val response = when(category) {
-                    "trending" -> TMDBClient.api.getTrendingSeries(apiKey)
-                    "popular" -> TMDBClient.api.getPopularSeries(apiKey)
-                    else -> TMDBClient.api.getPopularSeries(apiKey)
+                // For TV shows, TMDB doesn't support direct certification filtering
+                // Use genre-based filtering for kids content as a workaround
+                val response = when (ageRating) {
+                    "U", "PG" -> {
+                        // Filter to kids content using Kids genre
+                        TMDBClient.api.discoverTV(
+                            apiKey = apiKey,
+                            sortBy = "popularity.desc",
+                            withGenres = TMDB_KIDS_GENRE_ID,
+                            includeAdult = false
+                        )
+                    }
+                    else -> {
+                        // For 12, 15, 18 - TMDB doesn't support direct TV certification filtering
+                        // Load content but note this is a limitation of the API
+                        when(category) {
+                            "trending" -> TMDBClient.api.getTrendingSeries(apiKey)
+                            "popular" -> TMDBClient.api.getPopularSeries(apiKey)
+                            else -> TMDBClient.api.getPopularSeries(apiKey)
+                        }
+                    }
                 }
                 response.results.map { it.toMetaItem() }
             }

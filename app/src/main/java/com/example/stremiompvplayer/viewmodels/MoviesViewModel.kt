@@ -20,6 +20,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
+// Default certification country for movie filtering
+private const val DEFAULT_CERTIFICATION_COUNTRY = "GB"
+
 /**
  * ViewModel for the Movies page.
  * Fetches and manages movie rows based on the configuration from Settings.
@@ -104,7 +107,23 @@ class MoviesViewModel(
 
     private suspend fun fetchTrendingMovies(): List<MetaItem> {
         return try {
-            val response = TMDBClient.api.getTrendingMovies(apiKey)
+            // Get current user's age rating for filtering
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val ageRating = currentUser?.ageRating ?: "18"
+            
+            val response = when (ageRating) {
+                "U", "PG", "12", "15" -> {
+                    TMDBClient.api.discoverMovies(
+                        apiKey = apiKey,
+                        sortBy = "popularity.desc",
+                        certificationCountry = DEFAULT_CERTIFICATION_COUNTRY,
+                        certificationLte = ageRating,
+                        includeAdult = false
+                    )
+                }
+                else -> TMDBClient.api.getTrendingMovies(apiKey)
+            }
             response.results.map { it.toMetaItem() }
         } catch (e: Exception) {
             Log.e("MoviesViewModel", "Error fetching trending movies", e)
@@ -114,7 +133,24 @@ class MoviesViewModel(
 
     private suspend fun fetchLatestMovies(): List<MetaItem> {
         return try {
-            val response = TMDBClient.api.getLatestMovies(apiKey)
+            // Get current user's age rating for filtering
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val ageRating = currentUser?.ageRating ?: "18"
+            
+            val response = when (ageRating) {
+                "U", "PG", "12", "15" -> {
+                    // Sort by recent releases (most recent first) with certification filtering
+                    TMDBClient.api.discoverMovies(
+                        apiKey = apiKey,
+                        sortBy = "release_date.desc",
+                        certificationCountry = DEFAULT_CERTIFICATION_COUNTRY,
+                        certificationLte = ageRating,
+                        includeAdult = false
+                    )
+                }
+                else -> TMDBClient.api.getLatestMovies(apiKey)
+            }
             response.results.map { it.toMetaItem() }
         } catch (e: Exception) {
             Log.e("MoviesViewModel", "Error fetching latest movies", e)
@@ -124,7 +160,23 @@ class MoviesViewModel(
 
     private suspend fun fetchPopularMovies(): List<MetaItem> {
         return try {
-            val response = TMDBClient.api.getPopularMovies(apiKey)
+            // Get current user's age rating for filtering
+            val currentUserId = prefsManager.getCurrentUserId()
+            val currentUser = currentUserId?.let { prefsManager.getUser(it) }
+            val ageRating = currentUser?.ageRating ?: "18"
+            
+            val response = when (ageRating) {
+                "U", "PG", "12", "15" -> {
+                    TMDBClient.api.discoverMovies(
+                        apiKey = apiKey,
+                        sortBy = "popularity.desc",
+                        certificationCountry = DEFAULT_CERTIFICATION_COUNTRY,
+                        certificationLte = ageRating,
+                        includeAdult = false
+                    )
+                }
+                else -> TMDBClient.api.getPopularMovies(apiKey)
+            }
             response.results.map { it.toMetaItem() }
         } catch (e: Exception) {
             Log.e("MoviesViewModel", "Error fetching popular movies", e)

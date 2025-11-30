@@ -25,6 +25,7 @@ import com.example.stremiompvplayer.models.MetaItem
 import com.example.stremiompvplayer.ui.ResultsDisplayModule
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.HomeRow
+import com.example.stremiompvplayer.viewmodels.LibraryFilterConfig
 import com.example.stremiompvplayer.viewmodels.LibraryViewModel
 import com.example.stremiompvplayer.viewmodels.LibraryViewModelFactory
 import com.example.stremiompvplayer.viewmodels.MainViewModel
@@ -125,7 +126,8 @@ class LibraryFragment : Fragment() {
             },
             onContentFocused = { item ->
                 updateHeroBanner(item)
-            }
+            },
+            showRatings = true  // Show ratings on library posters
         )
 
         binding.rvHomeRows.apply {
@@ -184,6 +186,16 @@ class LibraryFragment : Fragment() {
 
         val titleView = view.findViewById<TextView>(R.id.menuTitle)
         titleView.text = item.name
+
+        // --- Library-specific: Show Sort and Filter option at the top ---
+        val actionSortFilter = view.findViewById<View>(R.id.actionSortFilter)
+        val dividerSortFilter = view.findViewById<View>(R.id.dividerSortFilter)
+        actionSortFilter.visibility = View.VISIBLE
+        dividerSortFilter.visibility = View.VISIBLE
+        actionSortFilter.setOnClickListener {
+            dialog.dismiss()
+            showFilterDialog()
+        }
 
         // --- Actions ---
 
@@ -287,6 +299,28 @@ class LibraryFragment : Fragment() {
         viewModel.loadLibraryContent()
         
         // Focus will be restored in the observer after data loads
+    }
+
+    /**
+     * Shows the library filter/sort dialog.
+     */
+    private fun showFilterDialog() {
+        val currentConfig = viewModel.filterConfig.value ?: LibraryFilterConfig()
+        val movieGenres = viewModel.movieGenres.value ?: emptyList()
+        val tvGenres = viewModel.tvGenres.value ?: emptyList()
+        
+        LibraryFilterDialog(
+            context = requireContext(),
+            currentConfig = currentConfig,
+            movieGenres = movieGenres,
+            tvGenres = tvGenres,
+            onApply = { newConfig ->
+                viewModel.updateFilterConfig(newConfig)
+            },
+            onClear = {
+                viewModel.clearFilters()
+            }
+        ).show()
     }
 
     /**

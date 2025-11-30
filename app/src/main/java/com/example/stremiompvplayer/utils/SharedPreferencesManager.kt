@@ -612,6 +612,48 @@ class SharedPreferencesManager private constructor(context: Context) {
             prefs.edit().putString("library_genre_filter_$userId", genreId).apply()
         }
     }
+
+    /**
+     * Get the library movie genre filter preference.
+     * Returns null (all genres) by default.
+     */
+    fun getLibraryMovieGenreFilter(): String? {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getString("library_movie_genre_filter_$userId", null)
+    }
+
+    /**
+     * Set the library movie genre filter preference.
+     */
+    fun setLibraryMovieGenreFilter(genreId: String?) {
+        val userId = getCurrentUserId() ?: "default"
+        if (genreId == null) {
+            prefs.edit().remove("library_movie_genre_filter_$userId").apply()
+        } else {
+            prefs.edit().putString("library_movie_genre_filter_$userId", genreId).apply()
+        }
+    }
+
+    /**
+     * Get the library TV genre filter preference.
+     * Returns null (all genres) by default.
+     */
+    fun getLibraryTVGenreFilter(): String? {
+        val userId = getCurrentUserId() ?: "default"
+        return prefs.getString("library_tv_genre_filter_$userId", null)
+    }
+
+    /**
+     * Set the library TV genre filter preference.
+     */
+    fun setLibraryTVGenreFilter(genreId: String?) {
+        val userId = getCurrentUserId() ?: "default"
+        if (genreId == null) {
+            prefs.edit().remove("library_tv_genre_filter_$userId").apply()
+        } else {
+            prefs.edit().putString("library_tv_genre_filter_$userId", genreId).apply()
+        }
+    }
 }
 
 enum class AgeRating(val displayName: String, val value: String) {

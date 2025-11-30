@@ -42,6 +42,32 @@
                     android:layout_marginBottom="16dp"
                     android:gravity="center_horizontal"/>
 
+                <!-- Sort and Filter Action (Hidden by default, shown in Library) -->
+                <TextView
+                    android:id="@+id/actionSortFilter"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Sort and Filter"
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawableStart="@drawable/ic_grid_view"
+                    android:drawablePadding="16dp"
+                    android:drawableTint="@color/md_theme_primary"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+
+                <!-- Divider for Sort and Filter (Hidden by default) -->
+                <View
+                    android:id="@+id/dividerSortFilter"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/md_theme_outline"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:visibility="gone" />
+
                 <!-- Primary Actions -->
                 <TextView
                     android:id="@+id/actionScrape"
@@ -134,22 +160,6 @@
                     android:drawableTint="@color/error_red"
                     android:textColor="@color/error_red"
                     android:textSize="16sp" />
-
-                <!-- Filter Action (Hidden by default, shown in Library) -->
-                <TextView
-                    android:id="@+id/actionFilter"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Filter"
-                    android:padding="12dp"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground"
-                    android:drawableStart="@drawable/ic_grid_view"
-                    android:drawablePadding="16dp"
-                    android:drawableTint="@color/md_theme_primary"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:visibility="gone" />
 
                 <View
                     android:layout_width="match_parent"

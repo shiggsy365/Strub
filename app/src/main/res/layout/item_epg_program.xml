@@ -51,6 +51,20 @@
 
     </LinearLayout>
 
+    <!-- Progress bar for currently airing program -->
+    <ProgressBar
+        android:id="@+id/programProgress"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginTop="4dp"
+        android:max="100"
+        android:progress="50"
+        android:progressTint="@color/md_theme_primary"
+        android:progressBackgroundTint="@color/md_theme_outline"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
     <!-- Program description (detail below) -->
     <TextView
         android:id="@+id/programDescription"
@@ -65,8 +79,9 @@
         tools:text="Tonight's headlines including breaking news..."
         tools:visibility="visible" />
 
-    <!-- Divider -->
+    <!-- Divider (hidden for first item with progress bar) -->
     <View
+        android:id="@+id/programDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/md_theme_outline"

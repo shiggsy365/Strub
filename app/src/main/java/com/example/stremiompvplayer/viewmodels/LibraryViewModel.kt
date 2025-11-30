@@ -22,7 +22,8 @@ import kotlinx.coroutines.launch
 data class LibraryFilterConfig(
     val sortBy: SortType = SortType.ADDED_DATE,
     val sortAscending: Boolean = false,  // false = newest first / Z-A
-    val genreFilter: String? = null      // null = all genres
+    val movieGenreFilter: String? = null,  // null = all movie genres
+    val tvGenreFilter: String? = null      // null = all TV genres
 )
 
 /**
@@ -30,6 +31,7 @@ data class LibraryFilterConfig(
  */
 enum class SortType {
     ADDED_DATE,    // When added to library
+    RATING,        // By rating (highest first)
     RELEASE_DATE,  // Original release date
     TITLE          // Alphabetical
 }
@@ -52,6 +54,13 @@ class LibraryViewModel(
     private val _filterConfig = MutableLiveData(loadFilterConfigFromPrefs())
     val filterConfig: LiveData<LibraryFilterConfig> = _filterConfig
 
+    private val _movieGenres = MutableLiveData<List<TMDBGenre>>()
+    val movieGenres: LiveData<List<TMDBGenre>> = _movieGenres
+
+    private val _tvGenres = MutableLiveData<List<TMDBGenre>>()
+    val tvGenres: LiveData<List<TMDBGenre>> = _tvGenres
+
+    // Combined genres for backwards compatibility
     private val _availableGenres = MutableLiveData<List<TMDBGenre>>()
     val availableGenres: LiveData<List<TMDBGenre>> = _availableGenres
 
@@ -142,9 +151,9 @@ class LibraryViewModel(
     private fun applyFilterAndUpdateRows() {
         val config = _filterConfig.value ?: LibraryFilterConfig()
         
-        // Apply genre filter
-        val filteredMovies = applyGenreFilter(cachedMovies, config.genreFilter)
-        val filteredSeries = applyGenreFilter(cachedSeries, config.genreFilter)
+        // Apply genre filters (separate for movies and TV)
+        val filteredMovies = applyGenreFilter(cachedMovies, config.movieGenreFilter)
+        val filteredSeries = applyGenreFilter(cachedSeries, config.tvGenreFilter)
         
         // Apply sorting
         val sortedMovies = applySorting(filteredMovies, config)
@@ -186,6 +195,14 @@ class LibraryViewModel(
                 // Items are stored in order of addition, reverse if needed
                 if (config.sortAscending) items else items.reversed()
             }
+            SortType.RATING -> {
+                // Sort by rating (convert string to float for numeric comparison)
+                // Use -1f for items without ratings so they appear at the end
+                val sorted = items.sortedBy { 
+                    it.rating?.toFloatOrNull() ?: -1f
+                }
+                if (config.sortAscending) sorted else sorted.reversed()
+            }
             SortType.RELEASE_DATE -> {
                 val sorted = items.sortedBy { it.releaseDate ?: "" }
                 if (config.sortAscending) sorted else sorted.reversed()
@@ -204,12 +221,15 @@ class LibraryViewModel(
         if (apiKey.isEmpty()) return
         
         try {
-            // Load both movie and TV genres
-            val movieGenres = TMDBClient.api.getMovieGenres(apiKey).genres
-            val tvGenres = TMDBClient.api.getTVGenres(apiKey).genres
+            // Load both movie and TV genres separately
+            val movieGenresList = TMDBClient.api.getMovieGenres(apiKey).genres.sortedBy { it.name }
+            val tvGenresList = TMDBClient.api.getTVGenres(apiKey).genres.sortedBy { it.name }
             
-            // Combine and deduplicate
-            val allGenres = (movieGenres + tvGenres).distinctBy { it.id }.sortedBy { it.name }
+            _movieGenres.postValue(movieGenresList)
+            _tvGenres.postValue(tvGenresList)
+            
+            // Combine and deduplicate for backwards compatibility
+            val allGenres = (movieGenresList + tvGenresList).distinctBy { it.id }.sortedBy { it.name }
             _availableGenres.postValue(allGenres)
         } catch (e: Exception) {
             Log.e("LibraryViewModel", "Error loading genres", e)
@@ -239,7 +259,8 @@ class LibraryViewModel(
     private fun loadFilterConfigFromPrefs(): LibraryFilterConfig {
         val sortByName = prefsManager.getLibrarySortBy()
         val sortAscending = prefsManager.getLibrarySortAscending()
-        val genreFilter = prefsManager.getLibraryGenreFilter()
+        val movieGenreFilter = prefsManager.getLibraryMovieGenreFilter()
+        val tvGenreFilter = prefsManager.getLibraryTVGenreFilter()
         
         val sortBy = try {
             SortType.valueOf(sortByName)
@@ -250,7 +271,8 @@ class LibraryViewModel(
         return LibraryFilterConfig(
             sortBy = sortBy,
             sortAscending = sortAscending,
-            genreFilter = genreFilter
+            movieGenreFilter = movieGenreFilter,
+            tvGenreFilter = tvGenreFilter
         )
     }
 
@@ -260,7 +282,8 @@ class LibraryViewModel(
     private fun saveFilterConfigToPrefs(config: LibraryFilterConfig) {
         prefsManager.setLibrarySortBy(config.sortBy.name)
         prefsManager.setLibrarySortAscending(config.sortAscending)
-        prefsManager.setLibraryGenreFilter(config.genreFilter)
+        prefsManager.setLibraryMovieGenreFilter(config.movieGenreFilter)
+        prefsManager.setLibraryTVGenreFilter(config.tvGenreFilter)
     }
 
     /**
