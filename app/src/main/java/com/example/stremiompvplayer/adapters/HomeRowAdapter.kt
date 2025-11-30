@@ -1,6 +1,7 @@
 package com.example.stremiompvplayer.adapters
 
 import android.os.Parcelable
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,7 +42,7 @@ class HomeRowAdapter(
 
     override fun onBindViewHolder(holder: RowViewHolder, position: Int) {
         val row = rows[position]
-        holder.bind(row)
+        holder.bind(row, position)
     }
 
     override fun getItemCount(): Int = rows.size
@@ -57,8 +58,11 @@ class HomeRowAdapter(
     inner class RowViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val titleView: TextView = itemView.findViewById(R.id.rowTitle)
         val recyclerView: RecyclerView = itemView.findViewById(R.id.rvHorizontalList)
+        
+        // Cache the parent RecyclerView to avoid repeated lookups
+        private var cachedParentRv: RecyclerView? = null
 
-        fun bind(row: HomeRow) {
+        fun bind(row: HomeRow, rowPosition: Int) {
             titleView.text = row.title
 
             val layoutManager = LinearLayoutManager(itemView.context, LinearLayoutManager.HORIZONTAL, false)
@@ -77,6 +81,11 @@ class HomeRowAdapter(
             scrollStates[row.id]?.let { state ->
                 layoutManager.onRestoreInstanceState(state)
             }
+            
+            // Cache the parent RecyclerView on first access
+            if (cachedParentRv == null) {
+                cachedParentRv = findParentRecyclerView(itemView)
+            }
 
             recyclerView.setOnHierarchyChangeListener(object : ViewGroup.OnHierarchyChangeListener {
                 override fun onChildViewAdded(parent: View?, child: View?) {
@@ -89,11 +98,53 @@ class HomeRowAdapter(
                             }
                         }
                     }
+                    
+                    // Set up key listener to scroll to first item when navigating between rows
+                    child?.setOnKeyListener { v, keyCode, event ->
+                        if (event.action == KeyEvent.ACTION_DOWN) {
+                            when (keyCode) {
+                                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                    val parentRv = cachedParentRv ?: return@setOnKeyListener false
+                                    val targetRow = if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                                        rowPosition + 1
+                                    } else {
+                                        rowPosition - 1
+                                    }
+                                    
+                                    if (targetRow in 0 until rows.size) {
+                                        // Scroll the target row to the first item
+                                        val targetViewHolder = parentRv.findViewHolderForAdapterPosition(targetRow) as? RowViewHolder
+                                        targetViewHolder?.let { holder ->
+                                            holder.recyclerView.scrollToPosition(0)
+                                            // Focus the first item after scroll
+                                            holder.recyclerView.post {
+                                                holder.recyclerView.layoutManager?.findViewByPosition(0)?.requestFocus()
+                                            }
+                                            return@setOnKeyListener true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        false
+                    }
                 }
                 override fun onChildViewRemoved(parent: View?, child: View?) {
                     child?.onFocusChangeListener = null
+                    child?.setOnKeyListener(null)
                 }
             })
+        }
+        
+        private fun findParentRecyclerView(view: View): RecyclerView? {
+            var parent = view.parent
+            while (parent != null) {
+                if (parent is RecyclerView) {
+                    return parent
+                }
+                parent = parent.parent
+            }
+            return null
         }
     }
 }

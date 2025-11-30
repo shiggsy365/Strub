@@ -55,26 +55,14 @@ class HomeViewModel(
                 rows.add(HomeRow("next_up", "Next Up", nextUpItems))
             }
 
-            // 2. Load "Continue Watching"
-            val continueMovies = repository.getContinueWatching(userId, "movie").map {
-                MetaItem(it.itemId, "movie", it.name ?: "Unknown", it.poster, it.background, null, isWatched = false, progress = it.progress, duration = it.duration)
+            // 2. Load "Continue Watching" with full metadata from TMDB
+            val continueMovies = repository.getContinueWatching(userId, "movie").mapNotNull { progress ->
+                enrichContinueWatchingItem(progress)
             }
             
             // For episodes, use series poster instead of episode thumbnail
-            val continueEpisodes = repository.getContinueWatching(userId, "episode").map { progress ->
-                // Try to get series poster from parentId or extract from item ID
-                val seriesPoster = getSeriesPosterForEpisode(progress)
-                MetaItem(
-                    progress.itemId, 
-                    "episode", 
-                    progress.name ?: "Unknown", 
-                    seriesPoster ?: progress.poster,  // Use series poster if available, fallback to episode still
-                    progress.background, 
-                    null, 
-                    isWatched = false, 
-                    progress = progress.progress, 
-                    duration = progress.duration
-                )
+            val continueEpisodes = repository.getContinueWatching(userId, "episode").mapNotNull { progress ->
+                enrichContinueWatchingItem(progress)
             }
 
             val continueWatching = (continueMovies + continueEpisodes).sortedByDescending { it.progress } // Sort by recent
@@ -94,6 +82,126 @@ class HomeViewModel(
             _homeRows.postValue(rows)
             _isLoading.postValue(false)
         }
+    }
+
+    /**
+     * Enriches a Continue Watching item with full metadata from TMDB.
+     * This ensures description, rating, and date are available for the hero banner.
+     */
+    private suspend fun enrichContinueWatchingItem(progress: WatchProgress): MetaItem? {
+        if (apiKey.isEmpty()) {
+            // Fallback to basic metadata if no API key
+            return MetaItem(
+                progress.itemId,
+                progress.type,
+                progress.name ?: "Unknown",
+                progress.poster,
+                progress.background,
+                null,
+                isWatched = false,
+                progress = progress.progress,
+                duration = progress.duration
+            )
+        }
+
+        return try {
+            when (progress.type) {
+                "movie" -> {
+                    val tmdbId = progress.itemId.removePrefix("tmdb:").toIntOrNull()
+                    if (tmdbId != null) {
+                        val details = TMDBClient.api.getMovieDetails(tmdbId, apiKey)
+                        val posterUrl = details.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                        val backgroundUrl = details.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                        MetaItem(
+                            progress.itemId,
+                            progress.type,
+                            details.title ?: progress.name ?: "Unknown",
+                            posterUrl ?: progress.poster,
+                            backgroundUrl ?: progress.background,
+                            details.overview,
+                            releaseDate = details.release_date,
+                            rating = details.vote_average?.let { String.format("%.1f", it) },
+                            isWatched = false,
+                            progress = progress.progress,
+                            duration = progress.duration
+                        )
+                    } else {
+                        createBasicMetaItem(progress)
+                    }
+                }
+                "episode" -> {
+                    // Parse episode ID format: tmdb:12345:1:5 (series:season:episode)
+                    val parts = progress.itemId.split(":")
+                    if (parts.size >= 4 && parts[0] == "tmdb") {
+                        val seriesTmdbId = parts[1].toIntOrNull()
+                        val seasonNum = parts[2].toIntOrNull()
+                        val episodeNum = parts[3].toIntOrNull()
+                        
+                        if (seriesTmdbId != null && seasonNum != null && episodeNum != null) {
+                            try {
+                                val showDetails = TMDBClient.api.getTVDetails(seriesTmdbId, apiKey)
+                                val seasonDetails = TMDBClient.api.getTVSeasonDetails(seriesTmdbId, seasonNum, apiKey)
+                                val episodeDetails = seasonDetails.episodes.find { it.episode_number == episodeNum }
+                                
+                                // Use series poster for episode
+                                val posterUrl = showDetails.poster_path?.let { "https://image.tmdb.org/t/p/w500$it" }
+                                val backgroundUrl = showDetails.backdrop_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                    ?: episodeDetails?.still_path?.let { "https://image.tmdb.org/t/p/original$it" }
+                                
+                                MetaItem(
+                                    progress.itemId,
+                                    progress.type,
+                                    episodeDetails?.name ?: progress.name ?: "Unknown",
+                                    posterUrl ?: progress.poster,
+                                    backgroundUrl ?: progress.background,
+                                    episodeDetails?.overview ?: showDetails.overview,
+                                    releaseDate = episodeDetails?.airDate ?: showDetails.first_air_date,
+                                    rating = episodeDetails?.voteAverage?.let { String.format("%.1f", it) }
+                                        ?: showDetails.vote_average?.let { String.format("%.1f", it) },
+                                    isWatched = false,
+                                    progress = progress.progress,
+                                    duration = progress.duration
+                                )
+                            } catch (e: Exception) {
+                                Log.e("HomeViewModel", "Error fetching episode details", e)
+                                createBasicMetaItem(progress)
+                            }
+                        } else {
+                            createBasicMetaItem(progress)
+                        }
+                    } else {
+                        createBasicMetaItem(progress)
+                    }
+                }
+                else -> createBasicMetaItem(progress)
+            }
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "Error enriching Continue Watching item", e)
+            createBasicMetaItem(progress)
+        }
+    }
+
+    /**
+     * Creates a basic MetaItem from WatchProgress without TMDB enrichment.
+     */
+    private suspend fun createBasicMetaItem(progress: WatchProgress): MetaItem {
+        val poster = if (progress.type == "episode") {
+            getSeriesPosterForEpisode(progress) ?: progress.poster
+        } else {
+            progress.poster
+        }
+        
+        return MetaItem(
+            progress.itemId,
+            progress.type,
+            progress.name ?: "Unknown",
+            poster,
+            progress.background,
+            null,
+            isWatched = false,
+            progress = progress.progress,
+            duration = progress.duration
+        )
     }
 
     // === NEXT UP GENERATION ===

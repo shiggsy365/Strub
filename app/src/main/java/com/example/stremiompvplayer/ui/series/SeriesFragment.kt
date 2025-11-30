@@ -332,7 +332,9 @@ class SeriesFragment : Fragment() {
                 binding.detailEpisode.visibility = View.GONE
             }
 
+            // Fetch cast for hero banner
             binding.actorChips.removeAllViews()
+            mainViewModel.fetchCast(item.id, item.type)
         }
     }
 
@@ -364,6 +366,29 @@ class SeriesFragment : Fragment() {
             } else {
                 binding.detailTitle.visibility = View.VISIBLE
                 binding.detailLogo.visibility = View.GONE
+            }
+        }
+
+        // Observe cast list and update actor chips in hero banner
+        mainViewModel.castList.observe(viewLifecycleOwner) { castList ->
+            binding.actorChips.removeAllViews()
+            if (castList.isNotEmpty()) {
+                castList.take(3).forEach { actor ->
+                    val chip = Chip(requireContext())
+                    chip.text = actor.name
+                    chip.isClickable = true
+                    chip.isFocusable = true
+                    chip.setChipBackgroundColorResource(R.color.md_theme_surfaceContainer)
+                    chip.setTextColor(resources.getColor(R.color.text_primary, null))
+                    chip.setOnClickListener {
+                        val personId = actor.id.removePrefix("tmdb:").toIntOrNull()
+                        if (personId != null) {
+                            currentCastPersonName = actor.name
+                            mainViewModel.loadPersonCredits(personId)
+                        }
+                    }
+                    binding.actorChips.addView(chip)
+                }
             }
         }
 

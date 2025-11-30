@@ -654,6 +654,17 @@ class SearchFragment : Fragment() {
     }
 
 
+    /**
+     * Focuses the first item in the search results RecyclerView.
+     * Called when navigating to search from the main menu.
+     */
+    fun focusFirstItem() {
+        binding.root.post {
+            binding.rvSearchRows.scrollToPosition(0)
+            binding.rvSearchRows.requestFocus()
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         // Clean up hierarchy listener to prevent memory leaks
