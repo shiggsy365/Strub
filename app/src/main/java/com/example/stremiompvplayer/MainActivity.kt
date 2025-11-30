@@ -137,22 +137,27 @@ class MainActivity : AppCompatActivity() {
 
         sidebar.findViewById<View>(R.id.sidebarHome).setOnClickListener {
             loadFragment(HomeFragment())
+            hideSidebarAndFocusContent(sidebar)
         }
 
         sidebar.findViewById<View>(R.id.sidebarMovies).setOnClickListener {
             loadFragment(MoviesFragment())
+            hideSidebarAndFocusContent(sidebar)
         }
 
         sidebar.findViewById<View>(R.id.sidebarSeries).setOnClickListener {
             loadFragment(SeriesFragment())
+            hideSidebarAndFocusContent(sidebar)
         }
 
         sidebar.findViewById<View>(R.id.sidebarSearch).setOnClickListener {
             showSearchDialog()
+            hideSidebarAndFocusContent(sidebar)
         }
 
         sidebar.findViewById<View>(R.id.sidebarLibrary).setOnClickListener {
             loadFragment(com.example.stremiompvplayer.ui.library.LibraryFragment())
+            hideSidebarAndFocusContent(sidebar)
         }
 
         val liveTvConfigured = SharedPreferencesManager.getInstance(this).getLiveTVM3UUrl()?.isNotEmpty() == true
@@ -160,6 +165,7 @@ class MainActivity : AppCompatActivity() {
             sidebar.findViewById<View>(R.id.sidebarLiveTV).visibility = View.VISIBLE
             sidebar.findViewById<View>(R.id.sidebarLiveTV).setOnClickListener {
                 loadFragment(LiveTVFragment())
+                hideSidebarAndFocusContent(sidebar)
             }
         } else {
             sidebar.findViewById<View>(R.id.sidebarLiveTV).visibility = View.GONE
@@ -170,6 +176,28 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupSidebarAutoHide(sidebar)
+    }
+
+    /**
+     * Hides the sidebar and focuses the first item in the current fragment's content.
+     * This is called when an item is selected from the main menu.
+     */
+    private fun hideSidebarAndFocusContent(sidebar: View) {
+        // Hide the sidebar
+        sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(100).start()
+        
+        // Focus the first item in the fragment's content after a delay
+        binding.root.postDelayed({
+            val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+            when (currentFragment) {
+                is HomeFragment -> currentFragment.focusSidebar()
+                is MoviesFragment -> currentFragment.focusSidebar()
+                is SeriesFragment -> currentFragment.focusSidebar()
+                is SearchFragment -> currentFragment.focusFirstItem()
+                is com.example.stremiompvplayer.ui.library.LibraryFragment -> currentFragment.focusSidebar()
+                is LiveTVFragment -> currentFragment.focusSidebar()
+            }
+        }, 200)
     }
 
     private fun setupSidebarAutoHide(sidebar: View) {
