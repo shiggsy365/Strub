@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -30,6 +31,12 @@ import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
+import kotlin.text.format
+import kotlin.text.toInt
+import androidx.constraintlayout.widget.ConstraintLayout
+import kotlin.times
 
 class HomeFragment : Fragment() {
 
@@ -266,7 +273,13 @@ class HomeFragment : Fragment() {
         }
 
         dialog.show()
+        dialog.window?.apply {
+            val width = (resources.displayMetrics.widthPixels * 0.8).toInt()
+            setLayout(width, android.view.WindowManager.LayoutParams.WRAP_CONTENT)
+            setGravity(android.view.Gravity.CENTER)
+        }
     }
+
 
     private fun updateHeroBanner(item: MetaItem) {
         heroUpdateJob?.cancel()
@@ -296,10 +309,8 @@ class HomeFragment : Fragment() {
             binding.detailRating.text = "★ ${item.rating}"
 
             // Format date
-            val dateText = try {
-                item.releaseDate?.take(4) ?: ""
-            } catch (e: Exception) { "" }
-            binding.detailDate.text = dateText
+
+            binding.detailDate.text = formatReleaseDate(item.releaseDate)
 
             // Episode Info
             if (item.type == "episode") {
@@ -307,7 +318,9 @@ class HomeFragment : Fragment() {
                 // Try to parse SxxExx from ID or Name if not explicit
                 if (item.id.split(":").size >= 4) {
                     val parts = item.id.split(":")
-                    binding.detailEpisode.text = "S${parts[2]}E${parts[3]}"
+                    val season = parts[2].toIntOrNull() ?: 0
+                    val episode = parts[3].toIntOrNull() ?: 0
+                    binding.detailEpisode.text = "S%02d - E%02d".format(season, episode)
                 } else {
                     binding.detailEpisode.text = "Episode"
                 }
@@ -317,9 +330,48 @@ class HomeFragment : Fragment() {
 
             // --- Cast Chips in Hero ---
             // Clear existing
-            binding.actorChips.removeAllViews()
+            mainViewModel.fetchCast(item.id, item.type)
+
+// Observe cast and update actorChips
+            mainViewModel.castList.observe(viewLifecycleOwner) { castList ->
+                binding.actorChips.removeAllViews()
+                castList.take(3).forEach { actor ->
+                    val chip = Chip(requireContext())
+                    chip.text = actor.name
+                    chip.setOnClickListener {
+                        // Optional: handle chip click
+                    }
+                    binding.actorChips.addView(chip)
+                }
+            }
+
+            mainViewModel.fetchCast(item.id, item.type)
+
             // We won't trigger a network call for cast on every scroll to avoid rate limiting.
             // Only update if we already have data or maybe for the very first item.
+        }
+    }
+
+
+
+    fun formatReleaseDate(dateStr: String?): String {
+        if (dateStr.isNullOrBlank()) return ""
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val outputFormat = SimpleDateFormat("d MMM yyyy", Locale.US)
+        return try {
+            val date = inputFormat.parse(dateStr)
+            val day = SimpleDateFormat("d", Locale.US).format(date).toInt()
+            val suffix = when {
+                day in 11..13 -> "th"
+                day % 10 == 1 -> "st"
+                day % 10 == 2 -> "nd"
+                day % 10 == 3 -> "rd"
+                else -> "th"
+            }
+            val formatted = outputFormat.format(date)
+            formatted.replaceFirst(Regex("\\d+"), "$day$suffix")
+        } catch (e: Exception) {
+            ""
         }
     }
 
@@ -385,6 +437,19 @@ class HomeFragment : Fragment() {
                 val label = currentSeriesName?.let { "$it - Season $currentSeasonNumber" }
                     ?: "Season $currentSeasonNumber - Episodes"
                 showDrillDownContent(episodes, label)
+            }
+        }
+
+        mainViewModel.castList.observe(viewLifecycleOwner) { castList ->
+            binding.actorChips.removeAllViews()
+            castList.take(3).forEach { actor ->
+                val chip = Chip(requireContext()).apply {
+                    text = actor.name
+                    setOnClickListener {
+                        // Optional: handle chip click, e.g. show actor's credits
+                    }
+                }
+                binding.actorChips.addView(chip)
             }
         }
 

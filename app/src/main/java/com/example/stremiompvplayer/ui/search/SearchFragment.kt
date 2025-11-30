@@ -33,6 +33,9 @@ import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
+import kotlin.text.format
 
 class SearchFragment : Fragment() {
 
@@ -121,14 +124,9 @@ class SearchFragment : Fragment() {
             detailDescription = binding.detailDescription,
             detailDate = binding.detailDate,
             detailRating = binding.detailRating,
-            detailEpisode = binding.detailEpisodeNumber,
-            actorChips = binding.root.findViewById(R.id.actorChips) ?: ChipGroup(requireContext()),
-            btnTrailer = null,  // Search doesn't have trailer button
-            btnRelated = null,
-            btnPlay = null,
-            enableDrillDown = false,  // We handle drill-down manually in this fragment
-            useGridLayout = false,
-            showEpisodeDescription = false
+            detailEpisode = binding.detailEpisode,
+            actorChips = binding.actorChips,
+            btnPlay = null, btnTrailer = null, btnRelated = null
         )
         displayModule = ResultsDisplayModule(this, viewModel, config)
 
@@ -235,19 +233,21 @@ class SearchFragment : Fragment() {
             val dateText = try {
                 item.releaseDate?.take(4) ?: ""
             } catch (e: Exception) { "" }
-            binding.detailDate.text = dateText
+            binding.detailDate.text = formatReleaseDate(dateText)
 
             // Episode Info
             if (item.type == "episode") {
-                binding.detailEpisodeNumber.visibility = View.VISIBLE
+                binding.detailEpisode.visibility = View.VISIBLE
                 if (item.id.split(":").size >= 4) {
                     val parts = item.id.split(":")
-                    binding.detailEpisodeNumber.text = "S${parts[2]}E${parts[3]}"
+                    val season = parts[2].toIntOrNull() ?: 0
+                    val episode = parts[3].toIntOrNull() ?: 0
+                    binding.detailEpisode.text = "S%02d - E%02d".format(season, episode)
                 } else {
-                    binding.detailEpisodeNumber.text = "Episode"
+                    binding.detailEpisode.text = "Episode"
                 }
             } else {
-                binding.detailEpisodeNumber.visibility = View.GONE
+                binding.detailEpisode.visibility = View.GONE
             }
 
             // Fetch and update cast chips
@@ -255,7 +255,28 @@ class SearchFragment : Fragment() {
             viewModel.fetchCast(item.id, item.type)
 
             // Show hero card when we have content
-            binding.heroCard.visibility = View.VISIBLE
+            binding.pageBackground.visibility = View.VISIBLE
+        }
+    }
+
+    fun formatReleaseDate(dateStr: String?): String {
+        if (dateStr.isNullOrBlank()) return ""
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val outputFormat = SimpleDateFormat("d MMM yyyy", Locale.US)
+        return try {
+            val date = inputFormat.parse(dateStr)
+            val day = SimpleDateFormat("d", Locale.US).format(date).toInt()
+            val suffix = when {
+                day in 11..13 -> "th"
+                day % 10 == 1 -> "st"
+                day % 10 == 2 -> "nd"
+                day % 10 == 3 -> "rd"
+                else -> "th"
+            }
+            val formatted = outputFormat.format(date)
+            formatted.replaceFirst(Regex("\\d+"), "$day$suffix")
+        } catch (e: Exception) {
+            ""
         }
     }
 
@@ -324,7 +345,7 @@ class SearchFragment : Fragment() {
         val castObserver = androidx.lifecycle.Observer<List<MetaItem>> { castList ->
             if (dialog.isShowing) {
                 castGroup.removeAllViews()
-                castList.take(10).forEach { actor ->
+                castList.take(3).forEach { actor ->
                     val chip = Chip(requireContext())
                     chip.text = actor.name
                     chip.setOnClickListener {
@@ -347,6 +368,11 @@ class SearchFragment : Fragment() {
         }
 
         dialog.show()
+        dialog.window?.apply {
+            val width = (resources.displayMetrics.widthPixels * 0.8).toInt()
+            setLayout(width, android.view.WindowManager.LayoutParams.WRAP_CONTENT)
+            setGravity(android.view.Gravity.CENTER)
+        }
     }
 
     fun performSearch(query: String) {
@@ -384,15 +410,12 @@ class SearchFragment : Fragment() {
 
         // Update visibility
         if (rows.isEmpty()) {
-            binding.noResultsState.visibility = View.VISIBLE
-            binding.noResultsText.text = "No results found for \"${currentSearchQuery}\""
             binding.rvSearchRows.visibility = View.GONE
-            binding.heroCard.visibility = View.GONE
+            binding.pageBackground.visibility = View.GONE
         } else {
-            binding.noResultsState.visibility = View.GONE
             binding.rvSearchRows.visibility = View.VISIBLE
-            binding.heroCard.visibility = View.VISIBLE
-            binding.emptyState.visibility = View.GONE
+            binding.pageBackground.visibility = View.VISIBLE
+
 
             // Update hero banner with first item
             val firstItem = movies.firstOrNull() ?: series.firstOrNull()
@@ -508,19 +531,9 @@ class SearchFragment : Fragment() {
                 cachedMovieResults = movies
                 cachedSeriesResults = series
 
-                // Update visibility
-                binding.emptyState.visibility = View.GONE
-                binding.contentGrid.visibility = View.VISIBLE
-
                 // Update search rows
                 updateSearchRows(movies, series)
             }
-        }
-
-        viewModel.isSearching.observe(viewLifecycleOwner) { isSearching ->
-            binding.progressBar.visibility = if (isSearching) View.VISIBLE else View.GONE
-            binding.loadingCard.visibility = if (isSearching) View.VISIBLE else View.GONE
-            if (isSearching) binding.noResultsState.visibility = View.GONE
         }
 
         viewModel.actionResult.observe(viewLifecycleOwner) { result ->
@@ -585,7 +598,7 @@ class SearchFragment : Fragment() {
         viewModel.castList.observe(viewLifecycleOwner) { castList ->
             binding.actorChips.removeAllViews()
             if (castList.isNotEmpty()) {
-                castList.take(5).forEach { actor ->
+                castList.take(3).forEach { actor ->
                     val chip = Chip(requireContext())
                     chip.text = actor.name
                     chip.isClickable = true

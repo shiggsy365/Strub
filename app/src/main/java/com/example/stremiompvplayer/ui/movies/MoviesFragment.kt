@@ -261,6 +261,11 @@ class MoviesFragment : Fragment() {
         }
 
         dialog.show()
+        dialog.window?.apply {
+            val width = (resources.displayMetrics.widthPixels * 0.8).toInt()
+            setLayout(width, android.view.WindowManager.LayoutParams.WRAP_CONTENT)
+            setGravity(android.view.Gravity.CENTER)
+        }
     }
 
     private fun updateHeroBanner(item: MetaItem) {
