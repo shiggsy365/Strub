@@ -370,6 +370,44 @@
                     android:textColor="@android:color/white"
                     android:focusable="true" />
 
+                <!-- Backup & Restore Section -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Backup &amp; Restore"
+                    android:textAppearance="@style/TextAppearance.App.TitleMedium"
+                    android:textColor="@color/md_theme_primary"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tvBackupInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.BodySmall"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp"
+                    android:text="Securely backup and restore all your data" />
+
+                <Button
+                    android:id="@+id/btnCreateBackup"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Create Backup"
+                    android:textColor="@android:color/white"
+                    android:focusable="true"
+                    android:layout_marginBottom="8dp" />
+
+                <Button
+                    android:id="@+id/btnRestoreBackup"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Restore Backup"
+                    android:textColor="@android:color/white"
+                    android:focusable="true" />
+
             </LinearLayout>
         </ScrollView>
     </com.google.android.material.card.MaterialCardView>

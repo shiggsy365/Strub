@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Cache directory for temporary backup files -->
+    <cache-path
+        name="backup_cache"
+        path="/" />
+    
+    <!-- External files directory for shared backups -->
+    <external-files-path
+        name="backup_external"
+        path="backups/" />
+</paths>
