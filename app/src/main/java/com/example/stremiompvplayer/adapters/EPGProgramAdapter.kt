@@ -132,6 +132,7 @@ class EPGProgramAdapter(
         if (currentTime < startTime) return 0
         if (currentTime > endTime) return 100
         val duration = endTime - startTime
+        if (duration <= 0) return 0 // Guard against division by zero
         val elapsed = currentTime - startTime
         return ((elapsed.toFloat() / duration.toFloat()) * 100).toInt()
     }

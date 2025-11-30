@@ -23,6 +23,9 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+// TMDB Kids genre ID for family-friendly content filtering
+private const val TMDB_KIDS_GENRE_ID = "10762"
+
 data class HomeRow(
     val id: String,
     val title: String,
@@ -350,11 +353,11 @@ class HomeViewModel(
                 // Use genre-based filtering for kids content as a workaround
                 val response = when (ageRating) {
                     "U", "PG" -> {
-                        // Filter to kids content using Kids genre (10762)
+                        // Filter to kids content using Kids genre
                         TMDBClient.api.discoverTV(
                             apiKey = apiKey,
                             sortBy = "popularity.desc",
-                            withGenres = "10762", // Kids genre
+                            withGenres = TMDB_KIDS_GENRE_ID,
                             includeAdult = false
                         )
                     }

@@ -197,8 +197,9 @@ class LibraryViewModel(
             }
             SortType.RATING -> {
                 // Sort by rating (convert string to float for numeric comparison)
+                // Use -1f for items without ratings so they appear at the end
                 val sorted = items.sortedBy { 
-                    it.rating?.toFloatOrNull() ?: 0f
+                    it.rating?.toFloatOrNull() ?: -1f
                 }
                 if (config.sortAscending) sorted else sorted.reversed()
             }

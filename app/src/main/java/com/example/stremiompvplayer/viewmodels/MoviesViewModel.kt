@@ -20,6 +20,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
+// Default certification country for movie filtering
+private const val DEFAULT_CERTIFICATION_COUNTRY = "GB"
+
 /**
  * ViewModel for the Movies page.
  * Fetches and manages movie rows based on the configuration from Settings.
@@ -114,7 +117,7 @@ class MoviesViewModel(
                     TMDBClient.api.discoverMovies(
                         apiKey = apiKey,
                         sortBy = "popularity.desc",
-                        certificationCountry = "GB",
+                        certificationCountry = DEFAULT_CERTIFICATION_COUNTRY,
                         certificationLte = ageRating,
                         includeAdult = false
                     )
@@ -137,15 +140,13 @@ class MoviesViewModel(
             
             val response = when (ageRating) {
                 "U", "PG", "12", "15" -> {
-                    // Get current date for latest movies
-                    val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+                    // Sort by recent releases (most recent first) with certification filtering
                     TMDBClient.api.discoverMovies(
                         apiKey = apiKey,
                         sortBy = "release_date.desc",
-                        certificationCountry = "GB",
+                        certificationCountry = DEFAULT_CERTIFICATION_COUNTRY,
                         certificationLte = ageRating,
-                        includeAdult = false,
-                        releaseDate = currentDate
+                        includeAdult = false
                     )
                 }
                 else -> TMDBClient.api.getLatestMovies(apiKey)
@@ -169,7 +170,7 @@ class MoviesViewModel(
                     TMDBClient.api.discoverMovies(
                         apiKey = apiKey,
                         sortBy = "popularity.desc",
-                        certificationCountry = "GB",
+                        certificationCountry = DEFAULT_CERTIFICATION_COUNTRY,
                         certificationLte = ageRating,
                         includeAdult = false
                     )

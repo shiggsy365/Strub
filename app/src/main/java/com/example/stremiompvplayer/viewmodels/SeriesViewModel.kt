@@ -20,6 +20,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
+// TMDB Kids genre ID for family-friendly content filtering
+private const val TMDB_KIDS_GENRE_ID = "10762"
+
 /**
  * ViewModel for the Series page.
  * Fetches and manages series rows based on the configuration from Settings.
@@ -116,7 +119,7 @@ class SeriesViewModel(
                     TMDBClient.api.discoverTV(
                         apiKey = apiKey,
                         sortBy = "popularity.desc",
-                        withGenres = "10762", // Kids genre
+                        withGenres = TMDB_KIDS_GENRE_ID,
                         includeAdult = false
                     )
                 }
@@ -138,13 +141,11 @@ class SeriesViewModel(
             
             val response = when (ageRating) {
                 "U", "PG" -> {
-                    val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
                     TMDBClient.api.discoverTV(
                         apiKey = apiKey,
                         sortBy = "first_air_date.desc",
-                        withGenres = "10762", // Kids genre
-                        includeAdult = false,
-                        airDate = currentDate
+                        withGenres = TMDB_KIDS_GENRE_ID,
+                        includeAdult = false
                     )
                 }
                 else -> TMDBClient.api.getLatestSeries(apiKey)
@@ -168,7 +169,7 @@ class SeriesViewModel(
                     TMDBClient.api.discoverTV(
                         apiKey = apiKey,
                         sortBy = "popularity.desc",
-                        withGenres = "10762", // Kids genre
+                        withGenres = TMDB_KIDS_GENRE_ID,
                         includeAdult = false
                     )
                 }
