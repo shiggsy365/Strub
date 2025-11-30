@@ -56,16 +56,19 @@ class HomeViewModel(
             }
 
             // 2. Load "Continue Watching" with full metadata from TMDB
-            val continueMovies = repository.getContinueWatching(userId, "movie").mapNotNull { progress ->
+            // Get all continue watching items and sort by lastUpdated (most recent first)
+            val movieProgress = repository.getContinueWatching(userId, "movie")
+            val episodeProgress = repository.getContinueWatching(userId, "episode")
+            
+            // Combine and sort by lastUpdated (most recently watched first)
+            val allContinueWatching = (movieProgress + episodeProgress)
+                .sortedByDescending { it.lastUpdated }
+            
+            // Enrich with metadata while preserving the sort order
+            val continueWatching = allContinueWatching.mapNotNull { progress ->
                 enrichContinueWatchingItem(progress)
             }
             
-            // For episodes, use series poster instead of episode thumbnail
-            val continueEpisodes = repository.getContinueWatching(userId, "episode").mapNotNull { progress ->
-                enrichContinueWatchingItem(progress)
-            }
-
-            val continueWatching = (continueMovies + continueEpisodes).sortedByDescending { it.progress } // Sort by recent
             if (continueWatching.isNotEmpty()) {
                 rows.add(HomeRow("continue", "Continue Watching", continueWatching))
             }
@@ -298,9 +301,9 @@ class HomeViewModel(
             }
         }.awaitAll().filterNotNull()
 
-        // Sort by lastUpdated (oldest first - longest ago watched) and return only the MetaItems
+        // Sort by lastUpdated (most recent first - descending) and return only the MetaItems
         val result = nextUpItems
-            .sortedBy { it.second }
+            .sortedByDescending { it.second }
             .map { it.first }
             .distinctBy { it.id }  // Remove any duplicate episodes
 

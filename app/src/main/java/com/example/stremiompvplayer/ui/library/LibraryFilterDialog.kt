@@ -71,10 +71,12 @@ class LibraryFilterDialog(
 
     private fun setupSortOptions(dialogView: View) {
         val radioAddedDate = dialogView.findViewById<RadioButton>(R.id.radioAddedDate)
+        val radioRating = dialogView.findViewById<RadioButton>(R.id.radioRating)
         val radioReleaseDate = dialogView.findViewById<RadioButton>(R.id.radioReleaseDate)
         val radioTitle = dialogView.findViewById<RadioButton>(R.id.radioTitle)
 
         val indicatorAddedDate = dialogView.findViewById<TextView>(R.id.indicatorAddedDate)
+        val indicatorRating = dialogView.findViewById<TextView>(R.id.indicatorRating)
         val indicatorReleaseDate = dialogView.findViewById<TextView>(R.id.indicatorReleaseDate)
         val indicatorTitle = dialogView.findViewById<TextView>(R.id.indicatorTitle)
 
@@ -84,6 +86,11 @@ class LibraryFilterDialog(
                 radioAddedDate.isChecked = true
                 indicatorAddedDate.text = if (sortAscending) "▲" else "▼"
                 indicatorAddedDate.visibility = View.VISIBLE
+            }
+            SortType.RATING -> {
+                radioRating.isChecked = true
+                indicatorRating.text = if (sortAscending) "▲" else "▼"
+                indicatorRating.visibility = View.VISIBLE
             }
             SortType.RELEASE_DATE -> {
                 radioReleaseDate.isChecked = true
@@ -100,11 +107,13 @@ class LibraryFilterDialog(
         // Helper to update indicators
         fun updateIndicators(selectedType: SortType) {
             indicatorAddedDate.visibility = if (selectedType == SortType.ADDED_DATE) View.VISIBLE else View.INVISIBLE
+            indicatorRating.visibility = if (selectedType == SortType.RATING) View.VISIBLE else View.INVISIBLE
             indicatorReleaseDate.visibility = if (selectedType == SortType.RELEASE_DATE) View.VISIBLE else View.INVISIBLE
             indicatorTitle.visibility = if (selectedType == SortType.TITLE) View.VISIBLE else View.INVISIBLE
 
             when (selectedType) {
                 SortType.ADDED_DATE -> indicatorAddedDate.text = if (sortAscending) "▲" else "▼"
+                SortType.RATING -> indicatorRating.text = if (sortAscending) "▲" else "▼"
                 SortType.RELEASE_DATE -> indicatorReleaseDate.text = if (sortAscending) "▲" else "▼"
                 SortType.TITLE -> indicatorTitle.text = if (sortAscending) "▲" else "▼"
             }
@@ -120,6 +129,7 @@ class LibraryFilterDialog(
                 selectedSortType = type
                 sortAscending = when (type) {
                     SortType.TITLE -> true  // A-Z by default
+                    SortType.RATING -> false  // Highest first by default
                     else -> false  // Newest first by default
                 }
             }
@@ -128,6 +138,10 @@ class LibraryFilterDialog(
 
         radioAddedDate.setOnClickListener {
             handleSortSelection(SortType.ADDED_DATE)
+        }
+
+        radioRating.setOnClickListener {
+            handleSortSelection(SortType.RATING)
         }
 
         radioReleaseDate.setOnClickListener {

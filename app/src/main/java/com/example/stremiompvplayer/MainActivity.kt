@@ -383,15 +383,14 @@ class MainActivity : AppCompatActivity() {
                 sidebar.animate().translationX(-sidebar.width.toFloat()).setDuration(100).start()
                 val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
 
-                // Call focusSidebar only if it exists
-                if (currentFragment is HomeFragment) {
-                    currentFragment.focusSidebar()
-                } else if (currentFragment is MoviesFragment) {
-                    currentFragment.focusSidebar()
-                } else if (currentFragment is SeriesFragment) {
-                    currentFragment.focusSidebar()
-                } else if (currentFragment is com.example.stremiompvplayer.ui.livetv.LiveTVFragment) {
-                    currentFragment.focusSidebar()
+                // Call focusSidebar/focusFirstItem based on fragment type
+                when (currentFragment) {
+                    is HomeFragment -> currentFragment.focusSidebar()
+                    is MoviesFragment -> currentFragment.focusSidebar()
+                    is SeriesFragment -> currentFragment.focusSidebar()
+                    is SearchFragment -> currentFragment.focusFirstItem()
+                    is com.example.stremiompvplayer.ui.library.LibraryFragment -> currentFragment.focusSidebar()
+                    is com.example.stremiompvplayer.ui.livetv.LiveTVFragment -> currentFragment.focusSidebar()
                 }
                 return true
             }

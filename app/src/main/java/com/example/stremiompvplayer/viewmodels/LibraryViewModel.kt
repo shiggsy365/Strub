@@ -30,6 +30,7 @@ data class LibraryFilterConfig(
  */
 enum class SortType {
     ADDED_DATE,    // When added to library
+    RATING,        // By rating (highest first)
     RELEASE_DATE,  // Original release date
     TITLE          // Alphabetical
 }
@@ -185,6 +186,13 @@ class LibraryViewModel(
             SortType.ADDED_DATE -> {
                 // Items are stored in order of addition, reverse if needed
                 if (config.sortAscending) items else items.reversed()
+            }
+            SortType.RATING -> {
+                // Sort by rating (convert string to float for numeric comparison)
+                val sorted = items.sortedBy { 
+                    it.rating?.toFloatOrNull() ?: 0f
+                }
+                if (config.sortAscending) sorted else sorted.reversed()
             }
             SortType.RELEASE_DATE -> {
                 val sorted = items.sortedBy { it.releaseDate ?: "" }

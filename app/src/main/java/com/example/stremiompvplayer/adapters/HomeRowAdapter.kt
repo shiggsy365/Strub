@@ -14,7 +14,8 @@ import com.example.stremiompvplayer.viewmodels.HomeRow
 
 class HomeRowAdapter(
     private val onContentClick: (MetaItem) -> Unit,
-    private val onContentFocused: (MetaItem) -> Unit
+    private val onContentFocused: (MetaItem) -> Unit,
+    private val showRatings: Boolean = false
 ) : RecyclerView.Adapter<HomeRowAdapter.RowViewHolder>() {
 
     private var rows = listOf<HomeRow>()
@@ -73,7 +74,8 @@ class HomeRowAdapter(
             val adapter = PosterAdapter(
                 items = row.items,
                 onClick = onContentClick,
-                onLongClick = onContentLongClick
+                onLongClick = onContentLongClick,
+                showRatings = showRatings
             )
 
             recyclerView.adapter = adapter

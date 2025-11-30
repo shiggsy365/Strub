@@ -14,7 +14,8 @@ import com.example.stremiompvplayer.models.MetaItem
 class PosterAdapter(
     private var items: List<MetaItem>,
     private val onClick: (MetaItem) -> Unit,
-    private val onLongClick: ((MetaItem) -> Unit)? = null
+    private val onLongClick: ((MetaItem) -> Unit)? = null,
+    private val showRatings: Boolean = false
 ) : RecyclerView.Adapter<PosterAdapter.ViewHolder>() {
 
     class ViewHolder(val binding: ItemPosterBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -22,6 +23,7 @@ class PosterAdapter(
         val iconWatched: ImageView = binding.iconWatched
         val iconInProgress: ImageView = binding.iconInProgress
         val genreText: android.widget.TextView = binding.genreText
+        val ratingBadge: android.widget.TextView = binding.ratingBadge
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -60,6 +62,14 @@ class PosterAdapter(
             holder.genreText.visibility = View.VISIBLE
         } else {
             holder.genreText.visibility = View.GONE
+        }
+
+        // Rating Badge (show if ratings enabled and item has rating)
+        if (showRatings && !item.rating.isNullOrEmpty()) {
+            holder.ratingBadge.text = "★ ${item.rating}"
+            holder.ratingBadge.visibility = View.VISIBLE
+        } else {
+            holder.ratingBadge.visibility = View.GONE
         }
 
         holder.itemView.setOnClickListener { onClick(item) }
