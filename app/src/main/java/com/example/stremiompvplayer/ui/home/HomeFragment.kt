@@ -210,6 +210,8 @@ class HomeFragment : Fragment() {
             dialog.dismiss()
             // Toggle watchlist - adds if not present, removes if present
             mainViewModel.toggleWatchlist(item)
+            // Refresh home content to update Next Up and Continue Watching
+            refreshHomeContent()
         }
 
         // 4. Library Toggle - Shows proper toggle state
@@ -221,6 +223,8 @@ class HomeFragment : Fragment() {
         actionLibrary.setOnClickListener {
             dialog.dismiss()
             mainViewModel.toggleLibrary(item)
+            // Refresh home content to update lists
+            refreshHomeContent()
         }
 
         // 5. Watched Toggle - Shows proper toggle state
@@ -229,12 +233,16 @@ class HomeFragment : Fragment() {
         actionWatched.setOnClickListener {
             dialog.dismiss()
             if (item.isWatched) mainViewModel.clearWatchedStatus(item) else mainViewModel.markAsWatched(item)
+            // Refresh home content to update Next Up and Continue Watching
+            refreshHomeContent()
         }
 
         // 6. Not Watching - Complete removal from all lists
         view.findViewById<View>(R.id.actionNotWatching).setOnClickListener {
             dialog.dismiss()
             mainViewModel.markAsNotWatching(item)
+            // Refresh home content to update lists
+            refreshHomeContent()
         }
 
         // --- Cast Section ---
@@ -278,6 +286,16 @@ class HomeFragment : Fragment() {
             setLayout(width, android.view.WindowManager.LayoutParams.WRAP_CONTENT)
             setGravity(android.view.Gravity.CENTER)
         }
+    }
+
+    /**
+     * Refreshes home content after context menu actions.
+     * Uses a small delay to allow the action to complete.
+     */
+    private fun refreshHomeContent() {
+        binding.root.postDelayed({
+            viewModel.loadHomeContent()
+        }, 500)
     }
 
 
