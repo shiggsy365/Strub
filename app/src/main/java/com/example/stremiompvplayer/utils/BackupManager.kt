@@ -353,15 +353,31 @@ class BackupManager(private val context: Context) {
 
     /**
      * Check if a backup file is encrypted.
+     * Checks for common ZIP file signatures.
      */
     fun isEncryptedBackup(backupBytes: ByteArray): Boolean {
-        // Try to detect ZIP signature (PK..)
-        // If it's not a ZIP, it's likely encrypted
-        return !(backupBytes.size >= 4 &&
-                backupBytes[0] == 0x50.toByte() &&
+        if (backupBytes.size < 4) return true
+        
+        // Check for ZIP local file header (most common)
+        val isLocalHeader = backupBytes[0] == 0x50.toByte() &&
                 backupBytes[1] == 0x4B.toByte() &&
                 backupBytes[2] == 0x03.toByte() &&
-                backupBytes[3] == 0x04.toByte())
+                backupBytes[3] == 0x04.toByte()
+        
+        // Check for ZIP empty archive signature
+        val isEmptyArchive = backupBytes[0] == 0x50.toByte() &&
+                backupBytes[1] == 0x4B.toByte() &&
+                backupBytes[2] == 0x05.toByte() &&
+                backupBytes[3] == 0x06.toByte()
+        
+        // Check for ZIP spanned archive signature
+        val isSpannedArchive = backupBytes[0] == 0x50.toByte() &&
+                backupBytes[1] == 0x4B.toByte() &&
+                backupBytes[2] == 0x07.toByte() &&
+                backupBytes[3] == 0x08.toByte()
+        
+        // If it matches any ZIP signature, it's not encrypted
+        return !(isLocalHeader || isEmptyArchive || isSpannedArchive)
     }
 
     /**
@@ -430,10 +446,19 @@ class BackupManager(private val context: Context) {
     }
 
     private fun extractZip(zipFile: File, destDir: File) {
+        val canonicalDestDir = destDir.canonicalPath
+        
         ZipInputStream(FileInputStream(zipFile)).use { zipIn ->
             var entry = zipIn.nextEntry
             while (entry != null) {
                 val filePath = File(destDir, entry.name)
+                val canonicalFilePath = filePath.canonicalPath
+                
+                // ZIP Slip protection: ensure the extracted file path is within the destination directory
+                if (!canonicalFilePath.startsWith(canonicalDestDir + File.separator)) {
+                    throw SecurityException("ZIP entry attempts to write outside of target directory: ${entry.name}")
+                }
+                
                 if (!entry.isDirectory) {
                     // Ensure parent directory exists
                     filePath.parentFile?.mkdirs()

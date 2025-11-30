@@ -261,7 +261,6 @@ object EncryptionHelper {
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(KEY_LENGTH)
-            .setRandomizedEncryptionRequired(false)
             .build()
 
         keyGenerator.init(keyGenSpec)
