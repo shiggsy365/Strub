@@ -12,10 +12,12 @@ import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,11 +27,13 @@ import com.example.stremiompvplayer.data.ServiceLocator
 import com.example.stremiompvplayer.databinding.ActivitySettingsBinding
 import com.example.stremiompvplayer.models.UserCatalog
 import com.example.stremiompvplayer.network.TraktDeviceCodeResponse
+import com.example.stremiompvplayer.utils.BackupManager
 import com.example.stremiompvplayer.utils.SharedPreferencesManager
 import com.example.stremiompvplayer.viewmodels.MainViewModel
 import com.example.stremiompvplayer.viewmodels.MainViewModelFactory
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -50,10 +54,11 @@ class SettingsActivity : AppCompatActivity() {
         )
     }
     private lateinit var prefsManager: SharedPreferencesManager
+    private lateinit var backupManager: BackupManager
 
     private var userInteracted = false
     // Track active Trakt dialog to dismiss it on success
-    private var traktAuthDialog: androidx.appcompat.app.AlertDialog? = null
+    private var traktAuthDialog: AlertDialog? = null
 
     // Activity result launchers for import/export
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -64,12 +69,27 @@ class SettingsActivity : AppCompatActivity() {
         uri?.let { importFromFile(it) }
     }
 
+    // Activity result launchers for backup/restore
+    private var pendingBackupPassword: String? = null
+    private var pendingRestorePassword: String? = null
+    private var currentRestoreDialog: AlertDialog? = null
+    
+    private val backupLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        uri?.let { performBackup(it, pendingBackupPassword) }
+        pendingBackupPassword = null
+    }
+
+    private val restoreLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { handleRestoreFileSelected(it) }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         prefsManager = SharedPreferencesManager.getInstance(this)
+        backupManager = BackupManager(this)
 
         setupUserSection()
         setupImportExportButtons()
@@ -78,6 +98,7 @@ class SettingsActivity : AppCompatActivity() {
         setupAIOStreamsSection()
         setupLiveTVSection()
         setupSubtitleSettings()
+        setupBackupRestoreSection()
         setupCatalogList()
         setupObservers()
 
@@ -1396,6 +1417,315 @@ class SettingsActivity : AppCompatActivity() {
             (resources.displayMetrics.widthPixels * 0.9).toInt(),
             maxHeight
         )
+    }
+
+    // ==============================
+    //    BACKUP & RESTORE SECTION
+    // ==============================
+
+    private fun setupBackupRestoreSection() {
+        binding.btnCreateBackup.setOnClickListener {
+            showBackupDialog()
+        }
+
+        binding.btnRestoreBackup.setOnClickListener {
+            showRestoreDialog()
+        }
+
+        // Update backup info text
+        lifecycleScope.launch {
+            val size = backupManager.getEstimatedBackupSize()
+            val sizeText = formatFileSize(size)
+            binding.tvBackupInfo.text = "Securely backup all your data (~$sizeText)"
+        }
+    }
+
+    private fun showBackupDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_backup, null)
+        
+        val cbPasswordProtect = dialogView.findViewById<CheckBox>(R.id.cbPasswordProtect)
+        val passwordInputLayout = dialogView.findViewById<TextInputLayout>(R.id.passwordInputLayout)
+        val confirmPasswordInputLayout = dialogView.findViewById<TextInputLayout>(R.id.confirmPasswordInputLayout)
+        val etPassword = dialogView.findViewById<TextInputEditText>(R.id.etPassword)
+        val etConfirmPassword = dialogView.findViewById<TextInputEditText>(R.id.etConfirmPassword)
+        val tvEstimatedSize = dialogView.findViewById<TextView>(R.id.tvEstimatedSize)
+        val progressSection = dialogView.findViewById<LinearLayout>(R.id.progressSection)
+        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBar)
+        val tvProgressStatus = dialogView.findViewById<TextView>(R.id.tvProgressStatus)
+        val tvStatusMessage = dialogView.findViewById<TextView>(R.id.tvStatusMessage)
+        val passwordSection = dialogView.findViewById<LinearLayout>(R.id.passwordSection)
+        val backupInfoSection = dialogView.findViewById<LinearLayout>(R.id.backupInfoSection)
+
+        // Toggle password fields visibility
+        cbPasswordProtect.setOnCheckedChangeListener { _, isChecked ->
+            passwordInputLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
+            confirmPasswordInputLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+
+        // Update estimated size
+        lifecycleScope.launch {
+            val size = backupManager.getEstimatedBackupSize()
+            tvEstimatedSize.text = "Estimated size: ${formatFileSize(size)}"
+        }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .setPositiveButton("Create Backup", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                val password = if (cbPasswordProtect.isChecked) {
+                    val pwd = etPassword.text.toString()
+                    val confirmPwd = etConfirmPassword.text.toString()
+                    
+                    if (pwd.isEmpty()) {
+                        etPassword.error = "Password required"
+                        return@setOnClickListener
+                    }
+                    if (pwd.length < 4) {
+                        etPassword.error = "Password too short (min 4 characters)"
+                        return@setOnClickListener
+                    }
+                    if (pwd != confirmPwd) {
+                        etConfirmPassword.error = "Passwords don't match"
+                        return@setOnClickListener
+                    }
+                    pwd
+                } else {
+                    null
+                }
+
+                // Store password for use after file picker
+                pendingBackupPassword = password
+                
+                // Launch file picker
+                val filename = backupManager.generateBackupFilename()
+                backupLauncher.launch(filename)
+                dialog.dismiss()
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun performBackup(uri: Uri, password: String?) {
+        // Show progress dialog
+        val progressDialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Creating Backup")
+            .setMessage("Preparing backup...")
+            .setCancelable(false)
+            .setView(ProgressBar(this).apply {
+                isIndeterminate = true
+                setPadding(50, 50, 50, 50)
+            })
+            .create()
+        progressDialog.show()
+
+        lifecycleScope.launch {
+            backupManager.createBackup(uri, password, object : BackupManager.BackupCallback {
+                override fun onProgress(progress: Int, message: String) {
+                    runOnUiThread {
+                        progressDialog.setMessage(message)
+                    }
+                }
+
+                override fun onSuccess(message: String) {
+                    runOnUiThread {
+                        progressDialog.dismiss()
+                        MaterialAlertDialogBuilder(this@SettingsActivity)
+                            .setTitle("Backup Complete")
+                            .setMessage(message)
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
+                }
+
+                override fun onError(error: String) {
+                    runOnUiThread {
+                        progressDialog.dismiss()
+                        MaterialAlertDialogBuilder(this@SettingsActivity)
+                            .setTitle("Backup Failed")
+                            .setMessage(error)
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
+                }
+            })
+        }
+    }
+
+    private fun showRestoreDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Restore Backup")
+            .setMessage("This will replace all current data including users, settings, and watch progress. This cannot be undone.\n\nContinue?")
+            .setPositiveButton("Select Backup File") { _, _ ->
+                restoreLauncher.launch(arrayOf("*/*"))
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun handleRestoreFileSelected(uri: Uri) {
+        // Show password dialog if needed, otherwise proceed with restore
+        lifecycleScope.launch {
+            // First, check if backup is encrypted by trying to read metadata without password
+            val metadata = backupManager.readBackupMetadata(uri, null)
+            
+            if (metadata == null) {
+                // File might be encrypted or invalid, ask for password
+                runOnUiThread {
+                    showRestorePasswordDialog(uri)
+                }
+            } else {
+                // Not encrypted, proceed with restore
+                runOnUiThread {
+                    showRestoreConfirmationDialog(uri, metadata, null)
+                }
+            }
+        }
+    }
+
+    private fun showRestorePasswordDialog(uri: Uri) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_restore, null)
+        
+        val passwordInputLayout = dialogView.findViewById<TextInputLayout>(R.id.passwordInputLayout)
+        val etPassword = dialogView.findViewById<TextInputEditText>(R.id.etPassword)
+        val warningSection = dialogView.findViewById<LinearLayout>(R.id.warningSection)
+        val backupInfoSection = dialogView.findViewById<LinearLayout>(R.id.backupInfoSection)
+        val progressSection = dialogView.findViewById<LinearLayout>(R.id.progressSection)
+        val tvStatusMessage = dialogView.findViewById<TextView>(R.id.tvStatusMessage)
+
+        passwordInputLayout.visibility = View.VISIBLE
+        warningSection.visibility = View.VISIBLE
+        
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Password Required")
+            .setMessage("This backup is password protected. Enter the password to continue.")
+            .setView(dialogView)
+            .setPositiveButton("Restore", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        currentRestoreDialog = dialog
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                val password = etPassword.text.toString()
+                
+                if (password.isEmpty()) {
+                    etPassword.error = "Password required"
+                    return@setOnClickListener
+                }
+
+                // Try to read metadata with password
+                lifecycleScope.launch {
+                    val metadata = backupManager.readBackupMetadata(uri, password)
+                    
+                    if (metadata == null) {
+                        runOnUiThread {
+                            etPassword.error = "Incorrect password or invalid backup"
+                        }
+                    } else {
+                        dialog.dismiss()
+                        runOnUiThread {
+                            showRestoreConfirmationDialog(uri, metadata, password)
+                        }
+                    }
+                }
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun showRestoreConfirmationDialog(uri: Uri, metadata: BackupManager.BackupMetadata, password: String?) {
+        val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+        val backupDate = dateFormat.format(Date(metadata.backupDate))
+        val deviceInfo = "${metadata.deviceManufacturer} ${metadata.deviceModel}"
+        
+        val message = buildString {
+            append("Backup Details:\n\n")
+            append("Date: $backupDate\n")
+            append("Device: $deviceInfo\n")
+            append("App Version: ${metadata.appVersionName}\n")
+            append("Protected: ${if (metadata.isPasswordProtected) "Yes" else "No"}\n\n")
+            append("⚠️ This will replace ALL current data. Continue?")
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Confirm Restore")
+            .setMessage(message)
+            .setPositiveButton("Restore") { _, _ ->
+                performRestore(uri, password)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun performRestore(uri: Uri, password: String?) {
+        // Show progress dialog
+        val progressDialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Restoring Backup")
+            .setMessage("Preparing restore...")
+            .setCancelable(false)
+            .setView(ProgressBar(this).apply {
+                isIndeterminate = true
+                setPadding(50, 50, 50, 50)
+            })
+            .create()
+        progressDialog.show()
+
+        lifecycleScope.launch {
+            backupManager.restoreBackup(uri, password, object : BackupManager.BackupCallback {
+                override fun onProgress(progress: Int, message: String) {
+                    runOnUiThread {
+                        progressDialog.setMessage(message)
+                    }
+                }
+
+                override fun onSuccess(message: String) {
+                    runOnUiThread {
+                        progressDialog.dismiss()
+                        MaterialAlertDialogBuilder(this@SettingsActivity)
+                            .setTitle("Restore Complete")
+                            .setMessage(message)
+                            .setPositiveButton("Restart App") { _, _ ->
+                                // Restart the app
+                                val intent = Intent(this@SettingsActivity, MainActivity::class.java)
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                startActivity(intent)
+                                finish()
+                            }
+                            .setCancelable(false)
+                            .show()
+                    }
+                }
+
+                override fun onError(error: String) {
+                    runOnUiThread {
+                        progressDialog.dismiss()
+                        MaterialAlertDialogBuilder(this@SettingsActivity)
+                            .setTitle("Restore Failed")
+                            .setMessage(error)
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
+                }
+            })
+        }
+    }
+
+    private fun formatFileSize(bytes: Long): String {
+        return when {
+            bytes < 1024 -> "$bytes B"
+            bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+            bytes < 1024 * 1024 * 1024 -> "${bytes / (1024 * 1024)} MB"
+            else -> "${bytes / (1024 * 1024 * 1024)} GB"
+        }
     }
 
     // ==============================
